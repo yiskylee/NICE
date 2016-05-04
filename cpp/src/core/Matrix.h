@@ -26,7 +26,7 @@
 
 namespace nice {
 
-template <typename T>
+template<typename T>
 class Matrix {
  public:
   Matrix(int num_rows, int num_cols);
