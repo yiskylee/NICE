@@ -13,4 +13,5 @@ under development.
 4. Develop your own feature branch in your local repository: `git add`, `git commit`, etc..
 5. After your own branch is completed, make sure to merge the latest development branch to your own feature branch: 1) `git checkout your-own-feature-branch` 2) `git pull origin develop`
 6. Update your own feature branch on the remote repository by: `git push origin your-own-feature-branch`
-7. Make a pull request
+7. Make a pull request with base being develop and compare being your-own-feature-branch
+8. After the pull request is merged, your-own-feature-branch on the remote repository will be soon deleted, delete it on your local repository by: `git branch -d your-own-feature-branch`
