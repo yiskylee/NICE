@@ -15,3 +15,6 @@ under development.
 6. Update your own feature branch on the remote repository by: `git push origin your-own-feature-branch`
 7. Make a pull request with base being develop and compare being your-own-feature-branch
 8. After the pull request is merged, your-own-feature-branch on the remote repository will be soon deleted, delete it on your local repository by: `git branch -d your-own-feature-branch`
+
+## Coding Style:
+We are following Google [c++ style guide](https://google.github.io/styleguide/cppguide.html), make sure to use `google_styleguide/cpplint/cpplint.py` to check your program file before push. You can also import `google_styleguide/eclipse-cpp-google-style.xml` into Eclipse to auto-format your code.
