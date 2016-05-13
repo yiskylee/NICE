@@ -20,17 +20,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include <string>
 #ifndef CPP_SRC_CORE_MATRIX_H_
 #define CPP_SRC_CORE_MATRIX_H_
+
+#include <string>
 
 namespace nice {
 
 template<typename T>
 class Matrix {
  public:
-  Matrix(int num_rows, int num_cols);
-  ~Matrix();
+  Matrix();
+  virtual ~Matrix();
+  T GetRawBuffer() const;
   int GetNumRows() const;
   int GetNumCols() const;
   bool FromFile(std::string);
@@ -40,8 +42,14 @@ class Matrix {
   T* raw_buffer_;
   int num_rows_;
   int num_cols_;
-  bool transpose_;
 };
-}  // namespace nice
 
-#endif  // CPP_SRC_CORE_MATRIX_H_
+} // namespace nice
+
+#endif // CPP_SRC_CORE_MATRIX_H_
+
+
+
+
+
+
