@@ -35,12 +35,14 @@ class Matrix;
 template <typename T>
 class CpuOperations {
  public:
-  static Matrix<T> Multiply(const Matrix<T> &a, const Matrix<T> &b);
+  static Matrix<T> Transpose(const Matrix<T> &a);
+  static Vector<T> Transpose(const Vector<T> &a);
   static Matrix<T> Multiply(const Matrix<T> &a, const T &scalar);
-  static Matrix<T> Add(const Matrix<T> &a, const Matrix<T> &b);
+  static Matrix<T> Multiply(const Matrix<T> &a, const Matrix<T> &b);
   static Matrix<T> Add(const Matrix<T> &a, const T &scalar);
-  static Matrix<T> Substract(const Matrix<T> &a, const Matrix<T> &b);
+  static Matrix<T> Add(const Matrix<T> &a, const Matrix<T> &b);
   static Matrix<T> Substract(const Matrix<T> &a, const T &scalar);
+  static Matrix<T> Substract(const Matrix<T> &a, const Matrix<T> &b);
   static Matrix<T> LogicalAnd(const Matrix<T> &a, const Matrix<T> &b);
   static Matrix<T> LogicalOr(const Matrix<T> &a, const Matrix<T> &b);
   static Matrix<T> LogicalNot(const Matrix<T> &a, const Matrix<T> &b);
