@@ -8,6 +8,7 @@ under development.
 
 ## For Contributors:
 There are two ways to contribute to this project. If you are added to the project as a collaborator, please follow the steps in "Using Branch" section. Otherwise, you can fork the project and submit pull requests; the instructions are listed in "Using Fork" section. The most important rule here is that we only use pull request to contribute and we never push directy to the master or develop branch.
+
 ### Using Branch:
 1. Git clone the repository: `git clone git@github.com:yiskylee/NICE.git`
 2. Create your own local feature branch: `git checkout -b your-own-feature-branch develop`
@@ -17,6 +18,7 @@ There are two ways to contribute to this project. If you are added to the projec
 6. Update your own feature branch on the remote repository by: `git push origin your-own-feature-branch`
 7. Make a pull request with base being develop and compare being your-own-feature-branch
 8. After the pull request is merged, your-own-feature-branch on the remote repository will be soon deleted, delete it on your local repository by: `git branch -d your-own-feature-branch`
+
 ### Using Fork:
 1. Fork the repository to your own remote repository.
 2. Git clone the repository: `git clone git@github.com:your_account_name/NICE.git`
