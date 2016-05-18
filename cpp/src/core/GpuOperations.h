@@ -39,8 +39,8 @@ class GpuOperations {
   static Matrix<T> Multiply(const Matrix<T> &a, const Matrix<T> &b);
   static Matrix<T> Add(const Matrix<T> &a, const T &scalar);
   static Matrix<T> Add(const Matrix<T> &a, const Matrix<T> &b);
-  static Matrix<T> Substract(const Matrix<T> &a, const T &scalar);
-  static Matrix<T> Substract(const Matrix<T> &a, const Matrix<T> &b);
+  static Matrix<T> Subtract(const Matrix<T> &a, const T &scalar);
+  static Matrix<T> Subtract(const Matrix<T> &a, const Matrix<T> &b);
   static Matrix<T> Inverse(const Matrix<T> &a);
   static Matrix<T> Norm(const int &p = 2, const int &axis = 0);
   static T Determinant(const Matrix<T> &a);
