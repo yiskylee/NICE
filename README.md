@@ -30,6 +30,7 @@ There are two ways to contribute to this project. If you are added to the projec
 7. You should also update the develop branch on your own remote repository by: 1) `git checkout develop` 2) `git pull upstream develop` 3) `git push origin develop`
 8. Make a pull request from your own feature branch on your own remote repository on github to the develop branch of this repository.
 9. After the pull request is merged, you can delete your own feature branch by 1) `git push origin --delete your-own-feature-branch` to delete the remote branch and 2) `git branch -d your-own-feature-branch` to delete your local branch.
+10. More instructions on using fork can be found [here](https://help.github.com/articles/fork-a-repo/).
 
 ## Coding Style:
 We are following [Google c++ style guide](https://google.github.io/styleguide/cppguide.html), make sure to use `google_styleguide/cpplint/cpplint.py` to check your code and make sure there are no errors. You can also import `google_styleguide/eclipse-cpp-google-style.xml` into Eclipse to auto-format your code before using `cpplint.py`.
