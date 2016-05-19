@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 #include <string>
+#include <Eigen/Dense>
 #ifndef CPP_SRC_CORE_MATRIX_H_
 #define CPP_SRC_CORE_MATRIX_H_
 
@@ -30,6 +31,7 @@ template<typename T>
 class Matrix {
  public:
   Matrix(int num_rows, int num_cols);
+  Matrix(int num_rows, int num_cols, std::string);
   ~Matrix();
   int GetNumRows() const;
   int GetNumCols() const;
@@ -37,10 +39,9 @@ class Matrix {
   bool FromSql(std::string);
   void Print() const;
  private:
-  T* raw_buffer_;
+  std::shared_ptr<T> raw_buffer_;
   int num_rows_;
   int num_cols_;
-  bool transpose_;
 };
 }  // namespace nice
 
