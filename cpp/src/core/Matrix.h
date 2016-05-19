@@ -48,8 +48,3 @@ class Matrix {
 
 #endif // CPP_SRC_CORE_MATRIX_H_
 
-
-
-
-
-
