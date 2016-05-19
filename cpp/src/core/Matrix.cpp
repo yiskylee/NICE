@@ -21,14 +21,46 @@
 // SOFTWARE.
 
 #include "Matrix.h"
+#include <stdlib.h>
+#include <fstream>
+#include <iostream>
 
 namespace nice {
-
-Matrix::Matrix() {
-
+template<typename T>
+Matrix<T>::Matrix(int num_rows,
+		int num_cols) {
+	num_rows_ = num_rows;
+	num_cols_ = num_cols;
+	raw_buffer_ = nullptr;
+}
+template<typename T>
+Matrix<T>::Matrix(int num_rows, int num_cols, std::string input_file_path) : Matrix(int num_rows, int num_cols){
+	Matrix(num_rows, num_cols);
+	FromFile(ipnut_file_path);
+}
+template<typename T>
+Matrix<T>::~Matrix() {
+}
+template<typename T>
+int Matrix<T>::GetNumRows() const {
+	return num_rows_;
+}
+template<typename T>
+int Matrix<T>::GetNumCols() const {
+	return num_cols_;
+}
+template<typename T>
+bool Matrix<T>::FromFile(std::string input_file_path) {
+	std::ifstream input_file(input_file_path);
+	if (input_file) {
+		for (int i = 0; i < num_rows_ * num_cols_; i++) {
+			input_file >> raw_buffer_[i];
+		}
+		input_file.close();
+		return true;
+	} else {
+		return false;
+	}
 }
 
-Matrix::~Matrix() {
 }
-
-} // namespace nice

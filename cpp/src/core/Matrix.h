@@ -20,6 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#include <string>
+#include <Eigen/Dense>
 #ifndef CPP_SRC_CORE_MATRIX_H_
 #define CPP_SRC_CORE_MATRIX_H_
 
@@ -33,13 +35,16 @@ class Matrix {
   Matrix();
   virtual ~Matrix();
   T GetRawBuffer() const;
+  Matrix(int num_rows, int num_cols);
+  Matrix(int num_rows, int num_cols, std::string);
+  ~Matrix();
   int GetNumRows() const;
   int GetNumCols() const;
   bool FromFile(std::string);
   bool FromSql(std::string);
   void Print() const;
  private:
-  T* raw_buffer_;
+  std::shared_ptr<T> raw_buffer_;
   int num_rows_;
   int num_cols_;
 };
