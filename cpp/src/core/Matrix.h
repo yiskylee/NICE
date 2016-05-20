@@ -21,7 +21,9 @@
 // SOFTWARE.
 
 #include <string>
-#include <Eigen/Dense>
+#include <memory>
+#include "Eigen/Dense"
+#include "Eigen/Core"
 #ifndef CPP_SRC_CORE_MATRIX_H_
 #define CPP_SRC_CORE_MATRIX_H_
 
@@ -34,17 +36,23 @@ class Matrix {
  public:
   Matrix();
   virtual ~Matrix();
-  T GetRawBuffer() const;
+  T* GetRawBuffer() const;
+  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> &GetEigenMatrix(void) {
+	  return matrix_;
+  }
   Matrix(int num_rows, int num_cols);
-  Matrix(int num_rows, int num_cols, std::string);
+  Matrix(int num_rows, int num_cols, std::string input_file_path);
   ~Matrix();
   int GetNumRows() const;
   int GetNumCols() const;
+  T Get(int row_num, int col_num) const;
   bool FromFile(std::string);
   bool FromSql(std::string);
   void Print() const;
  private:
-  std::shared_ptr<T> raw_buffer_;
+  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> matrix_;
+//  std::shared_ptr<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> matrix_ptr_;
+  T* raw_buffer_;
   int num_rows_;
   int num_cols_;
 };
@@ -52,4 +60,3 @@ class Matrix {
 } // namespace nice
 
 #endif // CPP_SRC_CORE_MATRIX_H_
-

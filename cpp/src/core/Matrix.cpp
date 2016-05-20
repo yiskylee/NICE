@@ -25,19 +25,29 @@
 #include <fstream>
 #include <iostream>
 
+
+
 namespace nice {
 template<typename T>
-Matrix<T>::Matrix(int num_rows,
-		int num_cols) {
+Matrix<T>::Matrix(int num_rows, int num_cols) {
 	num_rows_ = num_rows;
 	num_cols_ = num_cols;
-	raw_buffer_ = nullptr;
+	matrix_.resize(num_rows_, num_cols_);
+	raw_buffer_ = &matrix_(0);
 }
+
 template<typename T>
-Matrix<T>::Matrix(int num_rows, int num_cols, std::string input_file_path) : Matrix(int num_rows, int num_cols){
-	Matrix(num_rows, num_cols);
-	FromFile(ipnut_file_path);
+Matrix<T>::Matrix(int num_rows, int num_cols, std::string input_file_path) {
+	num_rows_ = num_rows;
+	num_cols_ = num_cols;
+	matrix_.resize(num_rows_, num_cols_);
+	raw_buffer_ = &matrix_(0);
+	if (!FromFile(input_file_path)) {
+		std::cerr << "Error opening file: " + input_file_path << std::endl;
+		exit(-1);
+	}
 }
+
 template<typename T>
 Matrix<T>::~Matrix() {
 }
@@ -53,14 +63,19 @@ template<typename T>
 bool Matrix<T>::FromFile(std::string input_file_path) {
 	std::ifstream input_file(input_file_path);
 	if (input_file) {
-		for (int i = 0; i < num_rows_ * num_cols_; i++) {
-			input_file >> raw_buffer_[i];
-		}
+		for (int i = 0; i < num_rows_; i++)
+			for (int j = 0; j < num_cols_; j++)
+				input_file >> (*matrix_)(i, j);
 		input_file.close();
 		return true;
-	} else {
-		return false;
 	}
+	else
+		return false;
 }
-
+template<typename T>
+T Matrix<T>::Get(int row_num, int col_num) const {
+	// Need to use return some Map stuff?
+	Eigen::Matrix m = Eigen::Map<Eigen::Matrix<T, num_rows_, num_cols_>> (raw_buffer_);
+	return m(row_num, col_num);
+}
 }
