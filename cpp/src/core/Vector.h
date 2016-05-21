@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "Eigen/Eigen/Dense"
+#include "Eigen/Dense"
 #ifndef CPP_SRC_CORE_VECTOR_H_
 #define CPP_SRC_CORE_VECTOR_H_
 

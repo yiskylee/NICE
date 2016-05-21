@@ -20,15 +20,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "Eigen/Dense"
-#ifndef CPP_SRC_CORE_MATRIX_H_
-#define CPP_SRC_CORE_MATRIX_H_
+#ifndef CPP_SRC_CORE_UTIL_H_
+#define CPP_SRC_CORE_UTIL_H_
+
+#include "Matrix.h"
+#include "Vector.h"
 
 namespace nice {
 
-template<typename T>
-//typedef Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> Matrix<T>;
-using Matrix = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>;
+template <typename T>
+class Util {
+ public:
+  static Matrix<T> FromFile(std::string input_file_path);
+};
+
 }  // namespace nice
 
-#endif // CPP_SRC_CORE_MATRIX_H_
+#endif  // CPP_SRC_CORE_UTIL_H_
+

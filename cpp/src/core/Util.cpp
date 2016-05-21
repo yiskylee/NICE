@@ -20,15 +20,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "Matrix.h"
-#include "Vector.h"
+#include "Util.h"
+#include <fstream>
+#include <iostream>
+
+namespace nice {
 
 template<typename T>
-namespace nice {
-class Util {
- public:
-  static Matrix<T> FromFile(const std::string &input_file_path);
-  static Vector<T> FromFile(const std::string &input_file_path);
+Matrix<T> Util<T>::FromFile(std::string input_file_path) {
 
-};
+
 }
+
+
+//}
+//  std::ifstream input_file(input_file_path);
+//  if (input_file) {
+////    for (int i = 0; i < num_rows_; i++)
+////      for (int j = 0; j < num_cols_; j++)
+////        input_file >> (*matrix_)(i, j);
+//    input_file.close();
+//    return true;
+//  } else
+//    return false;
+//}
+}  // namespace nice
