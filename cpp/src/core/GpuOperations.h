@@ -27,10 +27,6 @@
 
 namespace nice {
 
-// Forward declaration
-template <typename T>
-class Matrix;
-
 // Abstract class of common matrix operation interface
 template <typename T>
 class GpuOperations {
