@@ -21,14 +21,14 @@
 // SOFTWARE.
 
 #include "Eigen/Eigen/Dense"
-#ifndef CPP_SRC_CORE_MATRIX_H_
-#define CPP_SRC_CORE_MATRIX_H_
+#ifndef CPP_SRC_CORE_VECTOR_H_
+#define CPP_SRC_CORE_VECTOR_H_
 
 namespace nice {
 
 template<typename T>
-//typedef Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> Matrix<T>;
-using Matrx = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>;
+//typedef Eigen::Matrix<T, Eigen::Dynamic, 1> Vector<T>;
+using Vector = Eigen::Matrix<T, Eigen::Dynamic, 1>;
 } // namespace nice
 
-#endif // CPP_SRC_CORE_MATRIX_H_
+#endif // CPP_SRC_CORE_VECTOR_H_
