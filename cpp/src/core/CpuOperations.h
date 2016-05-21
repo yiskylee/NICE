@@ -24,6 +24,7 @@
 #define CPP_SRC_CORE_CPUOPERATIONS_H_
 
 #include "Matrix.h"
+#include "Vector.h"
 
 namespace nice {
 

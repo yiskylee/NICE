@@ -20,43 +20,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include <string>
-#include <memory>
-#include "Eigen/Dense"
-#include "Eigen/Core"
+#include "Eigen/Eigen/Dense"
 #ifndef CPP_SRC_CORE_MATRIX_H_
 #define CPP_SRC_CORE_MATRIX_H_
-
-#include <string>
 
 namespace nice {
 
 template<typename T>
-class Matrix {
- public:
-  Matrix();
-  virtual ~Matrix();
-  T* GetRawBuffer() const;
-  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> &GetEigenMatrix(void) {
-	  return matrix_;
-  }
-  Matrix(int num_rows, int num_cols);
-  Matrix(int num_rows, int num_cols, std::string input_file_path);
-  ~Matrix();
-  int GetNumRows() const;
-  int GetNumCols() const;
-  T Get(int row_num, int col_num) const;
-  bool FromFile(std::string);
-  bool FromSql(std::string);
-  void Print() const;
- private:
-  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> matrix_;
-//  std::shared_ptr<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> matrix_ptr_;
-  T* raw_buffer_;
-  int num_rows_;
-  int num_cols_;
-};
-
+typedef Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> Matrix<T>;
 } // namespace nice
 
 #endif // CPP_SRC_CORE_MATRIX_H_
