@@ -1,4 +1,4 @@
-#include "CpuOperations.h"
+#include "cpu_operations.h"
 
 namespace nice {
 template <typename T>

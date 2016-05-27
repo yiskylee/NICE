@@ -20,23 +20,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef CPP_SRC_CORE_GPUOPERATIONS_H_
-#define CPP_SRC_CORE_GPUOPERATIONS_H_
+#ifndef CPP_SRC_CORE_CPU_OPERATIONS_H_
+#define CPP_SRC_CORE_CPU_OPERATIONS_H_
 
-#include "Matrix.h"
+#include "matrix.h"
+#include "vector.h"
 
 namespace nice {
 
 // Abstract class of common matrix operation interface
 template <typename T>
-class GpuOperations {
+class CpuOperations {
  public:
+  static Matrix<T> FromFile(std::string input_file_path);
+  static Matrix<T> Transpose(const Matrix<T> &a);
+  static Vector<T> Transpose(const Vector<T> &a);
   static Matrix<T> Multiply(const Matrix<T> &a, const T &scalar);
   static Matrix<T> Multiply(const Matrix<T> &a, const Matrix<T> &b);
   static Matrix<T> Add(const Matrix<T> &a, const T &scalar);
   static Matrix<T> Add(const Matrix<T> &a, const Matrix<T> &b);
   static Matrix<T> Subtract(const Matrix<T> &a, const T &scalar);
   static Matrix<T> Subtract(const Matrix<T> &a, const Matrix<T> &b);
+  static Matrix<T> LogicalAnd(const Matrix<T> &a, const Matrix<T> &b);
+  static Matrix<T> LogicalOr(const Matrix<T> &a, const Matrix<T> &b);
+  static Matrix<T> LogicalNot(const Matrix<T> &a, const Matrix<T> &b);
   static Matrix<T> Inverse(const Matrix<T> &a);
   static Matrix<T> Norm(const int &p = 2, const int &axis = 0);
   static T Determinant(const Matrix<T> &a);
@@ -45,9 +52,12 @@ class GpuOperations {
   static T Trace(const Matrix<T> &a);
   static T DotProduct(const Vector<T> &a, const Vector<T> &b);
   static Matrix<T> OuterProduct(const Vector<T> &a, const Vector<T> &b);
+  static Vector<T> LogicalAnd(const Vector<T> &a, const Vector<T> &b);
+  static Vector<T> LogicalOr(const Vector<T> &a, const Vector<T> &b);
+  static Vector<T> LogicalNot(const Vector<T> &a, const Vector<T> &b);
 };
 
 }  // namespace nice
 
-#endif  // CPP_SRC_CORE_GPUOPERATIONS_H_
+#endif  // CPP_SRC_CORE_CPU_OPERATIONS_H_
 

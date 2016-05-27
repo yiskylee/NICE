@@ -23,18 +23,17 @@
 #ifndef CPP_SRC_CORE_UTIL_H_
 #define CPP_SRC_CORE_UTIL_H_
 
-#include "Matrix.h"
-#include "Vector.h"
+#include "matrix.h"
+#include "vector.h"
 
 namespace nice {
 
+namespace util {
+
 template <typename T>
-class Util {
- public:
   static Matrix<T> FromFile(std::string input_file_path);
 };
 
 }  // namespace nice
 
 #endif  // CPP_SRC_CORE_UTIL_H_
-
