@@ -27,8 +27,8 @@
 namespace nice {
 
 template<typename T>
-//typedef Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> Matrix<T>;
+// typedef Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> Matrix<T>;
 using Matrix = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>;
 }  // namespace nice
 
-#endif // CPP_SRC_CORE_MATRIX_H_
+#endif  // CPP_SRC_CORE_MATRIX_H_

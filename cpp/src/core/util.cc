@@ -20,11 +20,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "util.h"
+#include "core/util.h"
 
 #include <fstream>
 #include <iostream>
 #include <algorithm>
+#include <string>
 
 namespace nice {
 
@@ -32,15 +33,12 @@ namespace util {
 
 template<typename T>
 Matrix<T> FromFile(std::string input_file_path, int num_rows, int num_cols) {
-	std::ifstream input_file(input_file_path, std::ifstream::in);
-	if (input_file) {
-		std::cout << "File still open";
-	}
-
-
+  std::ifstream input_file(input_file_path, std::ifstream::in);
+  if (input_file) {
+    std::cout << "File still open";
+  }
 }
-}
-
+}  // namespace util
 
 //}
 //  std::ifstream input_file(input_file_path);

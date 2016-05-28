@@ -23,13 +23,15 @@
 #ifndef CPP_SRC_CORE_CPU_OPERATIONS_H_
 #define CPP_SRC_CORE_CPU_OPERATIONS_H_
 
-#include "matrix.h"
-#include "vector.h"
+#include <string>
+#include "core/matrix.h"
+#include "core/vector.h"
+
 
 namespace nice {
 
 // Abstract class of common matrix operation interface
-template <typename T>
+template<typename T>
 class CpuOperations {
  public:
   static Matrix<T> FromFile(std::string input_file_path);

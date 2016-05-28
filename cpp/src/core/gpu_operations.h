@@ -23,7 +23,7 @@
 #ifndef CPP_SRC_CORE_GPU_OPERATIONS_H_
 #define CPP_SRC_CORE_GPU_OPERATIONS_H_
 
-#include "matrix.h"
+#include "core/matrix.h"
 
 namespace nice {
 
