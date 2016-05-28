@@ -31,7 +31,7 @@ namespace nice {
 namespace util {
 
 template <typename T>
-  static Matrix<T> FromFile(std::string input_file_path);
+  static Matrix<T> FromFile(std::string input_file_path, int num_rows, int num_cols);
 };
 
 }  // namespace nice

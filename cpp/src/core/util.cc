@@ -31,12 +31,9 @@ namespace nice {
 namespace util {
 
 template<typename T>
-Matrix<T> FromFile(std::string input_file_path) {
+Matrix<T> FromFile(std::string input_file_path, int num_rows, int num_cols) {
 	std::ifstream input_file(input_file_path, std::ifstream::in);
-	int num_rows = std::count(std::istreambuf_iterator<char>(input_file),
-			std::istreambuf_iterator<char>(), '\n');
 	if (input_file) {
-//		for (int i = 0; i < num_rows_)
 		std::cout << "File still open";
 	}
 
