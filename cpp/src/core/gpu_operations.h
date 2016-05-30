@@ -20,16 +20,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef CPP_SRC_CORE_GPUOPERATIONS_H_
-#define CPP_SRC_CORE_GPUOPERATIONS_H_
+#ifndef CPP_SRC_CORE_GPU_OPERATIONS_H_
+#define CPP_SRC_CORE_GPU_OPERATIONS_H_
 
-#include "Matrix.h"
+#include "core/matrix.h"
 
 namespace nice {
-
-// Forward declaration
-template <typename T>
-class Matrix;
 
 // Abstract class of common matrix operation interface
 template <typename T>
@@ -53,5 +49,5 @@ class GpuOperations {
 
 }  // namespace nice
 
-#endif  // CPP_SRC_CORE_GPUOPERATIONS_H_
+#endif  // CPP_SRC_CORE_GPU_OPERATIONS_H_
 

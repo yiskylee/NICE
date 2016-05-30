@@ -20,43 +20,35 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include <string>
-#include <memory>
-#include "Eigen/Dense"
-#include "Eigen/Core"
-#ifndef CPP_SRC_CORE_MATRIX_H_
-#define CPP_SRC_CORE_MATRIX_H_
+#include "core/util.h"
 
+#include <fstream>
+#include <iostream>
+#include <algorithm>
 #include <string>
 
 namespace nice {
 
+namespace util {
+
 template<typename T>
-class Matrix {
- public:
-  Matrix();
-  virtual ~Matrix();
-  T* GetRawBuffer() const;
-  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> &GetEigenMatrix(void) {
-	  return matrix_;
+Matrix<T> FromFile(std::string input_file_path, int num_rows, int num_cols) {
+  std::ifstream input_file(input_file_path, std::ifstream::in);
+  if (input_file) {
+    std::cout << "File still open";
   }
-  Matrix(int num_rows, int num_cols);
-  Matrix(int num_rows, int num_cols, std::string input_file_path);
-  ~Matrix();
-  int GetNumRows() const;
-  int GetNumCols() const;
-  T Get(int row_num, int col_num) const;
-  bool FromFile(std::string);
-  bool FromSql(std::string);
-  void Print() const;
- private:
-  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> matrix_;
-//  std::shared_ptr<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> matrix_ptr_;
-  T* raw_buffer_;
-  int num_rows_;
-  int num_cols_;
-};
+}
+}  // namespace util
 
-} // namespace nice
-
-#endif // CPP_SRC_CORE_MATRIX_H_
+//}
+//  std::ifstream input_file(input_file_path);
+//  if (input_file) {
+////    for (int i = 0; i < num_rows_; i++)
+////      for (int j = 0; j < num_cols_; j++)
+////        input_file >> (*matrix_)(i, j);
+//    input_file.close();
+//    return true;
+//  } else
+//    return false;
+//}
+}  // namespace nice
