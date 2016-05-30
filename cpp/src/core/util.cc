@@ -20,38 +20,35 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef CPP_SRC_CORE_GPUOPERATIONS_H_
-#define CPP_SRC_CORE_GPUOPERATIONS_H_
+#include "core/util.h"
 
-#include "Matrix.h"
+#include <fstream>
+#include <iostream>
+#include <algorithm>
+#include <string>
 
 namespace nice {
 
-// Forward declaration
-template <typename T>
-class Matrix;
+namespace util {
 
-// Abstract class of common matrix operation interface
-template <typename T>
-class GpuOperations {
- public:
-  static Matrix<T> Multiply(const Matrix<T> &a, const T &scalar);
-  static Matrix<T> Multiply(const Matrix<T> &a, const Matrix<T> &b);
-  static Matrix<T> Add(const Matrix<T> &a, const T &scalar);
-  static Matrix<T> Add(const Matrix<T> &a, const Matrix<T> &b);
-  static Matrix<T> Subtract(const Matrix<T> &a, const T &scalar);
-  static Matrix<T> Subtract(const Matrix<T> &a, const Matrix<T> &b);
-  static Matrix<T> Inverse(const Matrix<T> &a);
-  static Matrix<T> Norm(const int &p = 2, const int &axis = 0);
-  static T Determinant(const Matrix<T> &a);
-  static T Rank(const Matrix<T> &a);
-  static T FrobeniusNorm(const Matrix<T> &a);
-  static T Trace(const Matrix<T> &a);
-  static T DotProduct(const Vector<T> &a, const Vector<T> &b);
-  static Matrix<T> OuterProduct(const Vector<T> &a, const Vector<T> &b);
-};
+template<typename T>
+Matrix<T> FromFile(std::string input_file_path, int num_rows, int num_cols) {
+  std::ifstream input_file(input_file_path, std::ifstream::in);
+  if (input_file) {
+    std::cout << "File still open";
+  }
+}
+}  // namespace util
 
+//}
+//  std::ifstream input_file(input_file_path);
+//  if (input_file) {
+////    for (int i = 0; i < num_rows_; i++)
+////      for (int j = 0; j < num_cols_; j++)
+////        input_file >> (*matrix_)(i, j);
+//    input_file.close();
+//    return true;
+//  } else
+//    return false;
+//}
 }  // namespace nice
-
-#endif  // CPP_SRC_CORE_GPUOPERATIONS_H_
-

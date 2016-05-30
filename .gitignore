@@ -1,2 +1,5 @@
 .project
 .cproject
+.settings
+/Debug/
+cpp/cling_test
