@@ -22,8 +22,8 @@
 
 #include <string>
 #include <memory>
-#include "Eigen/Dense"
-#include "Eigen/Core"
+#include "Eigen/Eigen/Dense"
+#include "Eigen/Eigen/Core"
 #ifndef CPP_SRC_CORE_MATRIX_H_
 #define CPP_SRC_CORE_MATRIX_H_
 
