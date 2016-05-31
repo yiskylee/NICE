@@ -20,9 +20,12 @@ Eigen::Matrix3i transpose(Eigen::Matrix3i m) {
 
 // The test checks to make sure that the matrix was transposed
 TEST(Transpose, IsTransposed) {
-  Eigen::Matrix3i m1 = Eigen::Matrix3i::Random(3, 3);
-  Eigen::Matrix2i m2 = transpose(m1);
-  EXPECT_EQ (2 + 2, 4);
+  nice::Matrix<int> m1;
+  nice::m1::Random(3,3);
+  Eigen::Matrix3i m2=nice::m1;
+  Eigen::Matrix3i m3 = transpose(m2);
+  nice::Transpose(m1);
+  EXPECT_EQ (Eigen::m3(1, 2), nice::m1(1, 2));
 }
 
 // Start and run the tests
