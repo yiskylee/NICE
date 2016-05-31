@@ -28,12 +28,12 @@ namespace nice {
 // This function creates the transpose of a matrix
 template<typename T>
 Matrix<T> CpuOperations<T>::Transpose(const Matrix<T> &a) {
-  Eigen::a.transposeInPlace();  // In place allows for completion without aliasing effect
+  a.transposeInPlace();  // In place allows for completion without aliasing effect
 }
 
 template<typename T>
 Vector<T> CpuOperations<T>::Transpose(const Vector<T> &a) {
-  Eigen::a.tranposeInPlace();  // Same function because both are matrices
+  a.tranposeInPlace();  // Same function because both are matrices
 }
 
 }  //  namespace nice

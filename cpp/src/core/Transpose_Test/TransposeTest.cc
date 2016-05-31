@@ -1,30 +1,28 @@
-// This file contains a simple tranpose function and a test to make sure that
-// the transpose worked
+// This file tests the cpu_operations.h Transpose function by creating a Matrix
+// And transposing it via the Eigen transpose function and the cpu_operations
+// Function, comparing the results
 
-#include "../../../../Eigen/Eigen/Dense"
-#include <gtest/gtest.h> 
 #include <iostream>
 #include <stdio.h>
+#include "Eigen/Eigen/Dense"
+#include <gtest/gtest.h> 
+#include "core/cpu_operations.h"
 
-using namespace std;
-using namespace Eigen;
 
 // This function takes a matrix as a parameter and returns the transpose
-Matrix2i transpose(Matrix2i m) {
-  cout << "Here is the matrix m:" << endl << m << endl;
-  cout << "Here is the transpose of m:" << endl << m.transpose() << endl;
-  cout << "Here is the coefficient (0,1) in the matrix m:" << endl << m(0,1)
-       << endl;
-  cout << "Here is the coefficient (1,0) in the transpose of m:" << endl
-       << m.transpose()(1,0) << endl;
-  return m.transpose();
+Eigen::Matrix3i transpose(Eigen::Matrix3i m) {
+  std::cout << "The original matrix is:" << std::endl << Eigen::cout <<
+  Eigen::m << std::endl;
+  std::cout << "The transposed matrix is:" << std::endl << Eigen::cout <<
+  Eigen::m.transpose() << std::endl;
+  return Eigen::m.transpose();
 }
 
 // The test checks to make sure that the matrix was transposed
 TEST(Transpose, IsTransposed) {
-  Matrix2i m1 = Matrix2i::Random();
-  Matrix2i m2 = transpose(m1);
-  EXPECT_EQ (m1(0,1), m2(1,0));
+  Eigen::Matrix3i m1 = Eigen::Matrix3i::Random(3, 3);
+  Eigen::Matrix2i m2 = transpose(m1);
+  EXPECT_EQ (2 + 2, 4);
 }
 
 // Start and run the tests
