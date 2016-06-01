@@ -24,10 +24,10 @@
 #define CPP_SRC_CORE_UTIL_H_
 
 #include <string>
-#include "core/matrix.h"
-#include "core/vector.h"
+#include "matrix.h"
+#include "vector.h"
 
-namespace nice {
+namespace Nice {
 
 namespace util {
 

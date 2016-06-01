@@ -20,15 +20,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#ifndef CPP_INCLUDE_VECTOR_H_
+#define CPP_INCLUDE_VECTOR_H_
+
 #include "Eigen/Dense"
-#ifndef CPP_SRC_CORE_VECTOR_H_
-#define CPP_SRC_CORE_VECTOR_H_
 
-namespace nice {
+namespace Nice {
 
-template<typename T>
+template<typename T> using Vector = Eigen::Matrix<T, Eigen::Dynamic, 1>;
 // typedef Eigen::Matrix<T, Eigen::Dynamic, 1> Vector<T>;
-using Vector = Eigen::Matrix<T, Eigen::Dynamic, 1>;
 }  // namespace nice
 
-#endif  // CPP_SRC_CORE_VECTOR_H_
+#endif  // CPP_INCLUDE_VECTOR_H_

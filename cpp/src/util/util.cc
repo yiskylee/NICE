@@ -20,14 +20,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "core/util.h"
+#include "util.h"
 
 #include <fstream>
 #include <iostream>
 #include <algorithm>
 #include <string>
 
-namespace nice {
+namespace Nice {
 
 namespace util {
 

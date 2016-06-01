@@ -20,15 +20,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef CPP_SRC_CORE_CPU_OPERATIONS_H_
-#define CPP_SRC_CORE_CPU_OPERATIONS_H_
+#ifndef CPP_INCLUDE_CPU_OPERATIONS_H_
+#define CPP_INCLUDE_CPU_OPERATIONS_H_
 
 #include <string>
-#include "core/matrix.h"
-#include "core/vector.h"
+#include "matrix.h"
+#include "vector.h"
 
 
-namespace nice {
+namespace Nice {
 
 // Abstract class of common matrix operation interface
 template<typename T>
@@ -61,5 +61,5 @@ class CpuOperations {
 
 }  // namespace nice
 
-#endif  // CPP_SRC_CORE_CPU_OPERATIONS_H_
+#endif  // CPP_INCLUDE_CPU_OPERATIONS_H_
 

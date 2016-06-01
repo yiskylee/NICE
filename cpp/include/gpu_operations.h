@@ -25,7 +25,7 @@
 
 #include "core/matrix.h"
 
-namespace nice {
+namespace Nice {
 
 // Abstract class of common matrix operation interface
 template <typename T>

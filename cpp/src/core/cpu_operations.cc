@@ -20,9 +20,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "core/cpu_operations.h"
+#include "cpu_operations.h"
 
-namespace nice {
+namespace Nice {
 template<typename T>
 Matrix<T> CpuOperations<T>::Transpose(const Matrix<T> &a) {
 }
