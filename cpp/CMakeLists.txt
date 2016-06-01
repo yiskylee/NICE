@@ -3,7 +3,7 @@ project(nice)
 set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_CXX_FLAGS "-std=c++11")
 
-include_directories(../Eigen include)
+include_directories(../Eigen)
 
 set(SOURCES src/core/cpu_operations.cc src/util/util.cc)
 

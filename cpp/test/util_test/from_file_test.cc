@@ -20,18 +20,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "cpu_operations.h"
+#include "util.h"
+#include "gtest/gtest.h"
 
-#include <unistd.h>
-
-#include <iostream>
-
-#include "Eigen/Dense"
-
-#include "include/matrix.h"
-
-namespace Nice {
-template<typename T>
-Matrix<T> CpuOperations<T>::Transpose(const Matrix<T> &a) {
+TEST(from_file_test, if_file_open) {
+	Nice::util::FromFile("./matrix.txt", 2, 2);
 }
-}  //  namespace nice
