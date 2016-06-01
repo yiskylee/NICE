@@ -20,34 +20,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef CPP_SRC_CORE_GPU_OPERATIONS_H_
-#define CPP_SRC_CORE_GPU_OPERATIONS_H_
+#ifndef CPP_INCLUDE_VECTOR_H_
+#define CPP_INCLUDE_VECTOR_H_
 
-#include "core/matrix.h"
+#include "Eigen/Dense"
 
-namespace nice {
+namespace Nice {
 
-// Abstract class of common matrix operation interface
-template <typename T>
-class GpuOperations {
- public:
-  static Matrix<T> Multiply(const Matrix<T> &a, const T &scalar);
-  static Matrix<T> Multiply(const Matrix<T> &a, const Matrix<T> &b);
-  static Matrix<T> Add(const Matrix<T> &a, const T &scalar);
-  static Matrix<T> Add(const Matrix<T> &a, const Matrix<T> &b);
-  static Matrix<T> Subtract(const Matrix<T> &a, const T &scalar);
-  static Matrix<T> Subtract(const Matrix<T> &a, const Matrix<T> &b);
-  static Matrix<T> Inverse(const Matrix<T> &a);
-  static Matrix<T> Norm(const int &p = 2, const int &axis = 0);
-  static T Determinant(const Matrix<T> &a);
-  static T Rank(const Matrix<T> &a);
-  static T FrobeniusNorm(const Matrix<T> &a);
-  static T Trace(const Matrix<T> &a);
-  static T DotProduct(const Vector<T> &a, const Vector<T> &b);
-  static Matrix<T> OuterProduct(const Vector<T> &a, const Vector<T> &b);
-};
-
+template<typename T> using Vector = Eigen::Matrix<T, Eigen::Dynamic, 1>;
+// typedef Eigen::Matrix<T, Eigen::Dynamic, 1> Vector<T>;
 }  // namespace nice
 
-#endif  // CPP_SRC_CORE_GPU_OPERATIONS_H_
-
+#endif  // CPP_INCLUDE_VECTOR_H_
