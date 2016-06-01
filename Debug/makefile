@@ -8,8 +8,8 @@ RM := rm -rf
 
 # All of the sources participating in the build are defined here
 -include sources.mk
+-include cpp/src/core/Transpose_Test/subdir.mk
 -include cpp/src/core/subdir.mk
--include Test_Files/subdir.mk
 -include Eigen/unsupported/test/subdir.mk
 -include Eigen/unsupported/doc/examples/subdir.mk
 -include Eigen/unsupported/bench/subdir.mk

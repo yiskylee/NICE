@@ -24,11 +24,11 @@
 #ifndef CPP_SRC_CORE_VECTOR_H_
 #define CPP_SRC_CORE_VECTOR_H_
 
-namespace nice {
+namespace nunice {
 
 template<typename T>
 // typedef Eigen::Matrix<T, Eigen::Dynamic, 1> Vector<T>;
 using Vector = Eigen::Matrix<T, Eigen::Dynamic, 1>;
-}  // namespace nice
+}  // namespace nunice
 
 #endif  // CPP_SRC_CORE_VECTOR_H_

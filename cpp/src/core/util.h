@@ -27,15 +27,15 @@
 #include "core/matrix.h"
 #include "core/vector.h"
 
-namespace nice {
+namespace nunice {
 
 namespace util {
 
 template <typename T>
   static Matrix<T> FromFile(std::string input_file_path,
                             int num_rows, int num_cols);
-};
+}
 
-}  // namespace nice
+}  // namespace nunice
 
 #endif  // CPP_SRC_CORE_UTIL_H_

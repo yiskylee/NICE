@@ -23,7 +23,7 @@
 #include "core/cpu_operations.h"
 #include "Eigen/Dense"  // Dependant on the placement of the library
 
-namespace nice {
+namespace nunice {
 
 // This function creates the transpose of a matrix
 template<typename T>
@@ -36,4 +36,4 @@ Vector<T> CpuOperations<T>::Transpose(const Vector<T> &a) {
   a.tranposeInPlace();  // Same function because both are matrices
 }
 
-}  //  namespace nice
+}  //  namespace nunice

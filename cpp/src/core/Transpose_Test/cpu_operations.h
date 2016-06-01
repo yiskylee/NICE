@@ -28,7 +28,7 @@
 #include "core/vector.h"
 
 
-namespace nice {
+namespace nunice {
 
 // Abstract class of common matrix operation interface
 template<typename T>
@@ -59,7 +59,7 @@ class CpuOperations {
   static Vector<T> LogicalNot(const Vector<T> &a, const Vector<T> &b);
 };
 
-}  // namespace nice
+}  // namespace nunice
 
 #endif  // CPP_SRC_CORE_CPU_OPERATIONS_H_
 
