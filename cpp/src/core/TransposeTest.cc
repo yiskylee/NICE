@@ -10,22 +10,22 @@
 #include "core/matrix.h"
 
 // This function takes a matrix as a parameter and returns the transpose
-void transpose(Eigen::Matrix3i m) {
-  //std::cout << "The original matrix is:" << std::endl << std::cout <<
-  //m << std::endl;
-  //std::cout << "The transposed matrix is:" << std::endl << std::cout <<
-  //m.transpose() << std::endl;
+Eigen::MatrixXi transpose(Eigen::MatrixXi m) {
+  std::cout << "The original matrix is:" << std::endl << std::cout <<
+  m << std::endl;
+  std::cout << "The transposed matrix is:" << std::endl << std::cout <<
+  m.transpose() << std::endl;
+  return m;
 }
 
 // The test checks to make sure that the matrix was transposed
 TEST(Transpose, IsTransposed) {
-  nunice::Matrix<int> m1;
-  m1(0,0)=1;
-  //Eigen::MatrixXi m2(3,3);
+  nunice::Matrix<int> m = Eigen::MatrixXi::Random(3,3);
+  Eigen::MatrixXi m2 = m; // Eigen::MatrixXi::Random(3,3);
   //m2=m1;
   std::cout << "The original matrix is:" << std::endl << std::cout <<
-  m1 << std::endl;
-  //transpose(m2);
+  m2 << std::endl;
+  Eigen::MatrixXi m3 = transpose(m2);
   //nunice::CpuOperations<int>::Transpose(m1);
   EXPECT_EQ (2+2, 4);
 }
