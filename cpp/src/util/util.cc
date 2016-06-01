@@ -32,7 +32,7 @@ namespace Nice {
 namespace util {
 
 template<typename T>
-Matrix<T> FromFile(std::string input_file_path, int num_rows, int num_cols) {
+Matrix<T> FromFile(const std::string &input_file_path, int num_rows, int num_cols) {
   std::ifstream input_file(input_file_path, std::ifstream::in);
   if (input_file) {
     std::cout << "File still open";
