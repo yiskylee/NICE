@@ -27,8 +27,7 @@
 
 namespace Nice {
 
-template<typename T> using Vector = Eigen::Matrix<T, Eigen::Dynamic, 1>;
-// typedef Eigen::Matrix<T, Eigen::Dynamic, 1> Vector<T>;
+template<typename T>
 using Vector = Eigen::Matrix<T, Eigen::Dynamic, 1>;
 }  // namespace Nice
 

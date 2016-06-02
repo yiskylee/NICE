@@ -51,6 +51,7 @@ Eigen/test/eigen2 \
 Eigen/unsupported/bench \
 Eigen/unsupported/doc/examples \
 Eigen/unsupported/test \
-cpp/src/core/Transpose_Test \
 cpp/src/core \
+cpp/src/util \
+cpp/test/cpu_operations_test \
 

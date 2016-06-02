@@ -1,0 +1,1 @@
+/home/jason.b/Desktop/Github/NICE/cpp/build/CMakeFiles/nice_lib.dir

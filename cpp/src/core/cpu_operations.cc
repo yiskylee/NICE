@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "core/cpu_operations.h"
+#include "cpu_operations.h"
 #include "Eigen/Dense"  // Dependant on the placement of the library
 
 namespace Nice {
@@ -28,7 +28,7 @@ namespace Nice {
 // This function creates the transpose of a matrix
 template<typename T>
 Matrix<T> CpuOperations<T>::Transpose(const Matrix<T> &a) {
-  Matrix<T> at = transpose(a);  // In place allows for completion without aliasing effect
+  Matrix<T> at = a.transpose();  // In place allows for completion without aliasing effect
   return at;
 }
 

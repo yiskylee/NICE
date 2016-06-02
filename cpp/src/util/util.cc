@@ -27,11 +27,7 @@
 #include <algorithm>
 #include <string>
 
-<<<<<<< HEAD:cpp/src/core/util.cc
 namespace Nice {
-=======
-namespace Nice {
->>>>>>> 0c92e38abd2c9de627bb2d60d6ddf52448019d82:cpp/src/util/util.cc
 
 namespace util {
 

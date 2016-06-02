@@ -4,10 +4,10 @@
 
 #include <iostream>
 #include <stdio.h>
-#include "Eigen/Eigen/Dense"
+#include "Eigen/Dense"
 #include <gtest/gtest.h> 
-#include "core/cpu_operations.h"
-#include "core/matrix.h"
+#include "cpu_operations.h"
+#include "matrix.h"
 
 // This function takes a matrix as a parameter and returns the transpose
 Eigen::MatrixXi transpose(Eigen::MatrixXi m) {

@@ -1,13 +1,13 @@
 # Generic Makefile for a program compiled with gtest
 
 # This flag denotes which compiler is used
-CC = g++ -std=c++14
+CC = g++ -std=c++11
 
 # Includes: must include pthread library and the path to the library includes
-INCLUDES = -I/usr/include -I/home/jason.b/Desktop/Github/NICE/cpp/src/ -I/home/jason.b/Desktop/Github/NICE/Eigen -pthread
+INCLUDES = -I/usr/include -I/home/jason.b/Desktop/Github/NICE/cpp/include -I/home/jason.b/Desktop/Github/NICE/Eigen -pthread
 
 # Dependencies: this variable is used to make the Makefile more general
-DEPS = cpu_operations.h /usr/lib/libgtest.a
+DEPS = /usr/lib/libgtest.a
 
 # Gtest: for compilation gtest has to appear at the end of the script
 GTEST = -lgtest

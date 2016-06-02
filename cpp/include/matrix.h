@@ -24,20 +24,11 @@
 #define CPP_INCLUDE_MATRIX_H_
 
 #include "Eigen/Dense"
-
-<<<<<<< HEAD:cpp/src/core/matrix.h
 namespace Nice {
-=======
-namespace Nice {
->>>>>>> 0c92e38abd2c9de627bb2d60d6ddf52448019d82:cpp/include/matrix.h
 
-template<typename T> using Matrix = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>;
-// typedef Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> Matrix<T>;
-<<<<<<< HEAD:cpp/src/core/matrix.h
+template<typename T>
 using Matrix = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>;
+// typedef Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> Matrix<T>;
 }  // namespace Nice
-=======
-}  // namespace nice
->>>>>>> 0c92e38abd2c9de627bb2d60d6ddf52448019d82:cpp/include/matrix.h
 
 #endif  // CPP_INCLUDE_MATRIX_H_

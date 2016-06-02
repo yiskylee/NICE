@@ -4,10 +4,10 @@
 
 #include <iostream>
 #include <stdio.h>
-#include "Eigen/Eigen/Dense"
+#include "Eigen/Dense"
 #include <gtest/gtest.h>
-#include "core/cpu_operations.h"
-#include "core/matrix.h"
+#include "cpu_operations.h"
+#include "matrix.h"
 
 class MyTest : public ::testing::Test {
  public:
@@ -22,23 +22,23 @@ class MyTest : public ::testing::Test {
   }
 
   void Transposer() {
-    std::cout << "The original matrix is:" << std::endl << std::cout <<
+    std::cout << "The original matrix m2 is:" << std::endl << std::cout <<
     m2 << std::endl;  // Display original
     m2.transposeInPlace();  // Transpose
     std::cout << "The transposed matrix is:" << std::endl << std::cout <<
     m2 << std::endl;  // Display transposed
   }
 
-
-
 };
 
 // This function takes a matrix as a parameter and returns the transpose
 TEST_F(MyTest, TransposeTest) {
   Nice::Matrix<int> m1 = Eigen::MatrixXi::Random(3,3);  // Matrix of integers
+  std::cout << "The original matrix m1 is:" << std::endl << std::cout <<
+  m1 << std::endl;  // Display original
   m2 = m1;  // Set m2=m1
-  //Transposer();  // Transpose m2
-  //Nice::Transpose(m1);  // Transpose m1
+  Transposer();  // Transpose m2
+  Nice::Matrix<int> m3 = Nice::CpuOperations<int>::Transpose(m1);  // Transpose m1
   EXPECT_EQ(2 + 2, 4);  // Check equality
 }
 
