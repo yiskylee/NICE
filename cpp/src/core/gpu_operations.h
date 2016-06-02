@@ -25,7 +25,7 @@
 
 #include "core/matrix.h"
 
-namespace nunice {
+namespace Nice {
 
 // Abstract class of common matrix operation interface
 template <typename T>
@@ -47,7 +47,7 @@ class GpuOperations {
   static Matrix<T> OuterProduct(const Vector<T> &a, const Vector<T> &b);
 };
 
-}  // namespace nunice
+}  // namespace Nice
 
 #endif  // CPP_SRC_CORE_GPU_OPERATIONS_H_
 

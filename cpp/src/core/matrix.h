@@ -24,11 +24,11 @@
 #ifndef CPP_SRC_CORE_MATRIX_H_
 #define CPP_SRC_CORE_MATRIX_H_
 
-namespace nunice {
+namespace Nice {
 
 template<typename T>
 // typedef Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> Matrix<T>;
 using Matrix = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>;
-}  // namespace nunice
+}  // namespace Nice
 
 #endif  // CPP_SRC_CORE_MATRIX_H_

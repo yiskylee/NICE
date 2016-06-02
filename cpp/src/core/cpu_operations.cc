@@ -23,17 +23,19 @@
 #include "core/cpu_operations.h"
 #include "Eigen/Dense"  // Dependant on the placement of the library
 
-namespace nunice {
+namespace Nice {
 
 // This function creates the transpose of a matrix
 template<typename T>
 Matrix<T> CpuOperations<T>::Transpose(const Matrix<T> &a) {
-  a.transposeInPlace();  // In place allows for completion without aliasing effect
+  Matrix<T> at = transpose(a);  // In place allows for completion without aliasing effect
+  return at;
 }
 
 template<typename T>
 Vector<T> CpuOperations<T>::Transpose(const Vector<T> &a) {
-  a.tranposeInPlace();  // Same function because both are matrices
+  Matrix<T> at = tranpose(a);  // Same function because both are matrices
+  return at;
 }
 
-}  //  namespace nunice
+}  //  namespace Nice

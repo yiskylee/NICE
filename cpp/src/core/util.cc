@@ -27,7 +27,7 @@
 #include <algorithm>
 #include <string>
 
-namespace nunice {
+namespace Nice {
 
 namespace util {
 
@@ -51,4 +51,4 @@ Matrix<T> FromFile(std::string input_file_path, int num_rows, int num_cols) {
 //  } else
 //    return false;
 //}
-}  // namespace nunice
+}  // namespace Nice

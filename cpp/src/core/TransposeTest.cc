@@ -20,13 +20,12 @@ Eigen::MatrixXi transpose(Eigen::MatrixXi m) {
 
 // The test checks to make sure that the matrix was transposed
 TEST(Transpose, IsTransposed) {
-  nunice::Matrix<int> m = Eigen::MatrixXi::Random(3,3);
-  Eigen::MatrixXi m2 = m; // Eigen::MatrixXi::Random(3,3);
-  //m2=m1;
+  Nice::Matrix<int> m = Eigen::MatrixXi::Random(3,3);
+  Eigen::MatrixXi m2 = m;
   std::cout << "The original matrix is:" << std::endl << std::cout <<
   m2 << std::endl;
   Eigen::MatrixXi m3 = transpose(m2);
-  //nunice::CpuOperations<int>::Transpose(m1);
+  //Nice::CpuOperations<int>::Transpose(m1);
   EXPECT_EQ (2+2, 4);
 }
 

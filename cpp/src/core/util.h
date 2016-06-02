@@ -27,7 +27,7 @@
 #include "core/matrix.h"
 #include "core/vector.h"
 
-namespace nunice {
+namespace Nice {
 
 namespace util {
 
@@ -36,6 +36,6 @@ template <typename T>
                             int num_rows, int num_cols);
 }
 
-}  // namespace nunice
+}  // namespace Nice
 
 #endif  // CPP_SRC_CORE_UTIL_H_
