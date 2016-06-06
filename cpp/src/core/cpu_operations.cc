@@ -34,7 +34,7 @@ Matrix<T> CpuOperations<T>::Transpose(const Matrix<T> &a) {
 
 template<typename T>
 Vector<T> CpuOperations<T>::Transpose(const Vector<T> &a) {
-  Matrix<T> at = tranpose(a);  // Same function because both are matrices
+  Vector<T> at = tranpose(a);  // Same function because both are matrices
   return at;
 }
 
