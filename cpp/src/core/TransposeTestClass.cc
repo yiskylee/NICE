@@ -8,6 +8,7 @@
 #include <gtest/gtest.h>
 #include "cpu_operations.h"
 #include "matrix.h"
+#include "cpu_operations.cc"
 
 class MyTest : public ::testing::Test {
  public:
@@ -22,11 +23,14 @@ class MyTest : public ::testing::Test {
   }
 
   void Transposer() {
+    std::cout << "------------------------------" << std::cout << std::endl;
     std::cout << "The original matrix m2 is:" << std::endl << std::cout <<
     m2 << std::endl;  // Display original
     m2.transposeInPlace();  // Transpose
+    std::cout << "------------------------------" << std::cout << std::endl;
     std::cout << "The transposed matrix is:" << std::endl << std::cout <<
     m2 << std::endl;  // Display transposed
+    std::cout << "------------------------------" << std::cout << std::endl;
   }
 
 };
@@ -34,12 +38,13 @@ class MyTest : public ::testing::Test {
 // This function takes a matrix as a parameter and returns the transpose
 TEST_F(MyTest, TransposeTest) {
   Nice::Matrix<int> m1 = Eigen::MatrixXi::Random(3,3);  // Matrix of integers
+  std::cout << "------------------------------" << std::cout << std::endl;
   std::cout << "The original matrix m1 is:" << std::endl << std::cout <<
   m1 << std::endl;  // Display original
   m2 = m1;  // Set m2=m1
   Transposer();  // Transpose m2
   Nice::Matrix<int> m3 = Nice::CpuOperations<int>::Transpose(m1);  // Transpose m1
-  EXPECT_EQ(2 + 2, 4);  // Check equality
+  EXPECT_EQ(m1(1,1), m2(1,0));  // Check equality
 }
 
 /*

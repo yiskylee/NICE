@@ -6,16 +6,19 @@
 CC_SRCS += \
 ../cpp/src/core/TransposeTest.cc \
 ../cpp/src/core/TransposeTestClass.cc \
+../cpp/src/core/TransposeTestClass2.cc \
 ../cpp/src/core/cpu_operations.cc 
 
 OBJS += \
 ./cpp/src/core/TransposeTest.o \
 ./cpp/src/core/TransposeTestClass.o \
+./cpp/src/core/TransposeTestClass2.o \
 ./cpp/src/core/cpu_operations.o 
 
 CC_DEPS += \
 ./cpp/src/core/TransposeTest.d \
 ./cpp/src/core/TransposeTestClass.d \
+./cpp/src/core/TransposeTestClass2.d \
 ./cpp/src/core/cpu_operations.d 
 
 

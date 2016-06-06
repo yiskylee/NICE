@@ -51,7 +51,16 @@ Eigen/test/eigen2 \
 Eigen/unsupported/bench \
 Eigen/unsupported/doc/examples \
 Eigen/unsupported/test \
+cpp/build/CMakeFiles/2.8.12.2/CompilerIdC \
+cpp/build/CMakeFiles/2.8.12.2/CompilerIdCXX \
+cpp/build/CMakeFiles/nice_lib.dir/src/core \
+cpp/build/CMakeFiles/nice_lib.dir/src/util \
 cpp/src/core \
 cpp/src/util \
 cpp/test/cpu_operations_test \
+googletest/codegear \
+googletest/samples \
+googletest/src \
+googletest/test \
+googletest/xcode/Samples/FrameworkSample \
 

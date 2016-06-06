@@ -15,7 +15,7 @@ GTEST = -lgtest
 TARGET = executable
 
 # Source refers to the .cpp file you are trying to compile
-SRC = cpu_operations.cc TransposeTestClass.cc
+SRC = cpu_operations.cc TransposeTestClass2.cc
 
 # Objects: refers to the object file generated
 OBJS = $(SRC:.cc=.o)

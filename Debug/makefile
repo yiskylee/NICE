@@ -8,9 +8,18 @@ RM := rm -rf
 
 # All of the sources participating in the build are defined here
 -include sources.mk
+-include googletest/xcode/Samples/FrameworkSample/subdir.mk
+-include googletest/test/subdir.mk
+-include googletest/src/subdir.mk
+-include googletest/samples/subdir.mk
+-include googletest/codegear/subdir.mk
 -include cpp/test/cpu_operations_test/subdir.mk
 -include cpp/src/util/subdir.mk
 -include cpp/src/core/subdir.mk
+-include cpp/build/CMakeFiles/nice_lib.dir/src/util/subdir.mk
+-include cpp/build/CMakeFiles/nice_lib.dir/src/core/subdir.mk
+-include cpp/build/CMakeFiles/2.8.12.2/CompilerIdCXX/subdir.mk
+-include cpp/build/CMakeFiles/2.8.12.2/CompilerIdC/subdir.mk
 -include Eigen/unsupported/test/subdir.mk
 -include Eigen/unsupported/doc/examples/subdir.mk
 -include Eigen/unsupported/bench/subdir.mk
