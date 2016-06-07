@@ -22,14 +22,6 @@ class MyTest : public ::testing::Test {  // Inherits from testing::Test
   Nice::Matrix<T> _matrix_nice;
   Nice::Matrix<T> _transpose_nice;
 
-  /* Don't need constructors or destructors
-  virtual void SetUp() {  // Constructor
-  }
-
-  virtual void TearDown() {  // Destructor
-  }
-  */
-
   // Prints out the original and transposed Eigen matrix for reference
   void Transposer() {
     std::cout << std::endl << "------------------------------" << std::endl;
