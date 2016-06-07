@@ -60,6 +60,5 @@ class CpuOperations {
 };
 
 }  // namespace Nice
-
 #endif  // CPP_INCLUDE_CPU_OPERATIONS_H_
 
