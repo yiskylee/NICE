@@ -28,14 +28,23 @@ namespace Nice {
 // This function creates the transpose of a matrix
 template<typename T>
 Matrix<T> CpuOperations<T>::Transpose(const Matrix<T> &a) {
-  Matrix<T> at = a.transpose();  // In place allows for completion without aliasing effect
-  return at;
+  return a.transpose();
 }
 
 template<typename T>
 Vector<T> CpuOperations<T>::Transpose(const Vector<T> &a) {
-  Vector<T> at = tranpose(a);  // Same function because both are matrices
-  return at;
+  return a.transpose();
+}
+
+template<typename T>
+Matrix<T> CpuOperations<T>::LogicalAnd(const Matrix<T> &a, const Matrix<T> &b) {
+  return ((a.array() != 0) && (b.array() != 0));
+  // Will return a matrix due to implicit conversion
+}
+
+template<typename T>
+Vector<T> CpuOperations<T>::LogicalAnd(const Vector<T> &a, const Vector<T> &b) {
+  return ((a.array() != 0) && (b.array() != 0));
 }
 
 }  //  namespace Nice
