@@ -45,11 +45,11 @@ TYPED_TEST(MyTest, IsTransposed) {
   this->_matrix_nice.setRandom(3,3);
   this->Transposer();
   for(int i; i < 3; ++i) {
-      for(int j; j < 3; ++i) {
-        // Check equality for each element
-        EXPECT_EQ(this->_matrix_nice(i, j), this->_transpose_nice(j, i));
-      }
+    for(int j; j < 3; ++i) {
+    // Check equality for each element
+      EXPECT_EQ(this->_matrix_nice(i, j), this->_transpose_nice(j, i));
     }
+  }
 }
 
 // Transposes a matrix instantiated with random ints/floats and compares
@@ -70,22 +70,22 @@ TYPED_TEST(MyTest, TransposeTypes){
 // This function uses a non-square matrix size and compares the number of rows
 // And Columns after the transposition
 TYPED_TEST(MyTest, oddShape1){
-this->_matrix_nice.setRandom(1,4);
-this->_matrix_eigen = this->_matrix_nice;
-this->Transposer();
-//Check equality
-EXPECT_EQ(this->_transpose_nice.rows(),this->_transpose_eigen.rows());
-EXPECT_EQ(this->_transpose_nice.cols(),this->_transpose_eigen.cols());
+  this->_matrix_nice.setRandom(1,4);
+  this->_matrix_eigen = this->_matrix_nice;
+  this->Transposer();
+  //Check equality
+  EXPECT_EQ(this->_transpose_nice.rows(),this->_transpose_eigen.rows());
+  EXPECT_EQ(this->_transpose_nice.cols(),this->_transpose_eigen.cols());
 }
 
 // This function uses a matrix with size (0,2) and compares the number of rows
 // And Columns after the transposition
 TYPED_TEST(MyTest, oddShape2){
-this->_matrix_nice.setRandom(0,2);
-this->_matrix_eigen = this->_matrix_nice;
-this->Transposer();
-EXPECT_EQ(this->_transpose_nice.rows(),this->_transpose_eigen.rows());
-EXPECT_EQ(this->_transpose_nice.cols(),this->_transpose_eigen.cols());
+  this->_matrix_nice.setRandom(0,2);
+  this->_matrix_eigen = this->_matrix_nice;
+  this->Transposer();
+  EXPECT_EQ(this->_transpose_nice.rows(),this->_transpose_eigen.rows());
+  EXPECT_EQ(this->_transpose_nice.cols(),this->_transpose_eigen.cols());
 }
 
 // Start and run the tests
