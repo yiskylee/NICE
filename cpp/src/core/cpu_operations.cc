@@ -36,14 +36,15 @@ Vector<T> CpuOperations<T>::Transpose(const Vector<T> &a) {
   return a.transpose();
 }
 
-Matrix<bool> CpuOperations::LogicalAnd(const Matrix<bool> &a, const Matrix<bool> &b) {
+template<typename T>
+Matrix<bool> CpuOperations<T>::LogicalAnd(const Matrix<bool> &a, const Matrix<bool> &b) {
   return ((a.array() != 0) && (b.array() != 0));
   // Will return a matrix due to implicit conversion
 }
-
+/*
 template<typename T>
 Vector<T> CpuOperations<T>::LogicalAnd(const Vector<T> &a, const Vector<T> &b) {
   return ((a.array() != 0) && (b.array() != 0));
-}
+}*/
 
 }  //  namespace Nice

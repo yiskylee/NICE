@@ -29,29 +29,25 @@ class MyTest : public ::testing::Test {  // Inherits from testing::Test
     std::cout << _matrix_nice2 << std::endl;  // Display original
     std::cout << "------------------------------" << std::endl;
     // Apply logic to matrixNice
-    _logical_and = Nice::CpuOperations::LogicalAnd(_matrix_nice1, _matrix_nice2);
-    std::cout << "The transposed matrix is:" << std::endl << _logical_and
+    _logical_and = Nice::CpuOperations<bool>::LogicalAnd(_matrix_nice1, _matrix_nice2);
+    std::cout << "The LogicalAnd matrix is:" << std::endl << _logical_and
         << std::endl;  // Display transposed
     std::cout << "------------------------------" << std::endl;
   }
 };
 
-// Establishes a test case with the given types
-typedef ::testing::Types<int, float> MyTypes;
-TYPED_TEST_CASE(MyTest, MyTypes);
-
-TYPED_TEST(MyTest, IsTransposed) {
+TEST_F(MyTest, LogicalAnd) {
   this->_matrix_nice1.setRandom(3,3);
   this->_matrix_nice2.setRandom(3,3);
   this->_logical_and.setZero(3,3);
   this->LogicalAnd();
-//  for(int i=0; i < 3; ++i) {
-//    for(int j=0; j < 3; ++i) {
-    // Check equality for each element
-      //EXPECT_EQ(((this->_matrix_nice1(i, j)) && (this->_matrix_nice2(i, j))), this->_logical_and(i, j));
-      EXPECT_EQ(2+2, 4);
-//    }
-//  }
+  std::cout << ((this->_matrix_nice1(0, 0)) && (this->_matrix_nice2(0, 0))) << std::endl;
+  for(int i=0; i < 3; ++i) {
+    for(int j=0; j < 3; ++j) {
+      //Check equality for each element
+      EXPECT_EQ(((this->_matrix_nice1(i, j)) && (this->_matrix_nice2(i, j))), (this->_logical_and(i, j)));
+    }
+  }
 }
 
 /*
