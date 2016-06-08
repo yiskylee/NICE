@@ -36,9 +36,8 @@ Vector<T> CpuOperations<T>::Transpose(const Vector<T> &a) {
   return a.transpose();
 }
 
-template<typename T>
-Matrix<T> CpuOperations<T>::LogicalAnd(const Matrix<T> &a, const Matrix<T> &b) {
-  return (((a.array() != 0) && (b.array() != 0)).matrix());
+Matrix<bool> CpuOperations::LogicalAnd(const Matrix<bool> &a, const Matrix<bool> &b) {
+  return ((a.array() != 0) && (b.array() != 0));
   // Will return a matrix due to implicit conversion
 }
 

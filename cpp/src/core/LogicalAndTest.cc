@@ -13,13 +13,12 @@
 #include "matrix.h"  // This is included for testing purposes
 
 // This is a template test fixture class containing Eigen and NICE matrices
-template<class T>  // Template
 class MyTest : public ::testing::Test {  // Inherits from testing::Test
  public:
 
-  Nice::Matrix<T> _matrix_nice1;
-  Nice::Matrix<T> _matrix_nice2;
-  Nice::Matrix<T> _logical_and;
+  Nice::Matrix<bool> _matrix_nice1;
+  Nice::Matrix<bool> _matrix_nice2;
+  Nice::Matrix<bool> _logical_and;
 
   // Prints out the original and transposed Eigen matrix for reference
   void LogicalAnd() {
@@ -30,7 +29,7 @@ class MyTest : public ::testing::Test {  // Inherits from testing::Test
     std::cout << _matrix_nice2 << std::endl;  // Display original
     std::cout << "------------------------------" << std::endl;
     // Apply logic to matrixNice
-    _logical_and = Nice::CpuOperations<T>::LogicalAnd(_matrix_nice1, _matrix_nice2);
+    _logical_and = Nice::CpuOperations::LogicalAnd(_matrix_nice1, _matrix_nice2);
     std::cout << "The transposed matrix is:" << std::endl << _logical_and
         << std::endl;  // Display transposed
     std::cout << "------------------------------" << std::endl;
@@ -38,7 +37,7 @@ class MyTest : public ::testing::Test {  // Inherits from testing::Test
 };
 
 // Establishes a test case with the given types
-typedef ::testing::Types<short, int, float, double, char> MyTypes;
+typedef ::testing::Types<int, float> MyTypes;
 TYPED_TEST_CASE(MyTest, MyTypes);
 
 TYPED_TEST(MyTest, IsTransposed) {

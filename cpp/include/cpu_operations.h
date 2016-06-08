@@ -43,7 +43,7 @@ class CpuOperations {
   static Matrix<T> Add(const Matrix<T> &a, const Matrix<T> &b);
   static Matrix<T> Subtract(const Matrix<T> &a, const T &scalar);
   static Matrix<T> Subtract(const Matrix<T> &a, const Matrix<T> &b);
-  static Matrix<T> LogicalAnd(const Matrix<T> &a, const Matrix<T> &b);
+  static Matrix<bool> LogicalAnd(const Matrix<bool> &a, const Matrix<bool> &b);
   static Matrix<T> LogicalOr(const Matrix<T> &a, const Matrix<T> &b);
   static Matrix<T> LogicalNot(const Matrix<T> &a, const Matrix<T> &b);
   static Matrix<T> Inverse(const Matrix<T> &a);
