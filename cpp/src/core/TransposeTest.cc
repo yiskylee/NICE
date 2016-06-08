@@ -44,8 +44,8 @@ TYPED_TEST_CASE(MyTest, MyTypes);
 TYPED_TEST(MyTest, IsTransposed) {
   this->_matrix_nice.setRandom(3,3);
   this->Transposer();
-  for(int i; i < 3; ++i) {
-    for(int j; j < 3; ++i) {
+  for(int i=0; i < 3; ++i) {
+    for(int j=0; j < 3; ++i) {
     // Check equality for each element
       EXPECT_EQ(this->_matrix_nice(i, j), this->_transpose_nice(j, i));
     }
@@ -59,8 +59,8 @@ TYPED_TEST(MyTest, TransposeTypes){
   this->_matrix_nice.setRandom(3,3);  // Random values
   this->_matrix_eigen = this->_matrix_nice;// Set _matrix_eigen=_matrix_Nice
   this->Transposer();// Transpose _matrix_eigen
-  for(int i; i < 3; ++i) {
-    for(int j; j < 3; ++i) {
+  for(int i=0; i < 3; ++i) {
+    for(int j=0; j < 3; ++i) {
       // Check equality for each element
       EXPECT_EQ(this->_transpose_nice(i, j), this->_transpose_eigen(i, j));
     }
