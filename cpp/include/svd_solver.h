@@ -23,8 +23,8 @@
 #ifndef CPP_INCLUDE_SVD_SOLVER_H_
 #define CPP_INCLUDE_SVD_SOLVER_H_
 
-#include "matrix.h"
-#include "vector.h"
+#include "include/matrix.h"
+#include "include/vector.h"
 
 #include "Eigen/SVD"
 
