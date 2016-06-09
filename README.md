@@ -12,7 +12,7 @@ There are two ways to contribute to this project. If you are added to the projec
 ### Using Branch:
 1. Clone the repository: `git clone git@github.com:yiskylee/NICE.git`.
 2. Create your own local feature branch: `git checkout -b your-own-feature-branch develop`
-3. Make your own feature branch visible by pushing it to the remote repo (DO NOT PUSH IT TO THE DEVELOP BRANCH): `git push origin your-own-feature-branch`
+3. Make your own feature branch visible by pushing it to the remote repo (DO NOT PUSH IT TO THE DEVELOP BRANCH): `git push --set-upstream origin your-own-feature-branch`
 4. Develop your own feature branch in your local repository: `git add`, `git commit`, etc..
 5. After your own branch is completed, make sure to merge the latest change from the remote develop branch to your own local develop branch: 1) `git checkout develop` 2) `git pull`.
 6. Now that your local develop branch is up to date, you can update your own feature branch by: 1) `git checkout your-own-feature-branch` 2) `git pull origin develop`.
