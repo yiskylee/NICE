@@ -61,7 +61,7 @@ TEST(Tests, IntTest) {
   matrix_int_1.setRandom(3,3);
   Nice::Matrix<int> matrix_int_2;
   matrix_int_2.setRandom(3,3);
-  Nice::Matrix<bool> matrix_bool = Nice::CpuOperations<bool>::LogicalAnd(matrix_int_1, matrix_int_2);
+//  Nice::Matrix<int> matrix_logical_and = Nice::CpuOperations<int>::LogicalAnd(matrix_int_1, matrix_int_2);
 }
 
 // Start and run the tests

@@ -21,6 +21,8 @@
 // SOFTWARE.
 
 #include <iostream>
+#include <boost/static_assert.hpp>
+#include <type_traits>
 #include "cpu_operations.h"
 #include "Eigen/Dense"  // Dependant on the placement of the library
 
@@ -38,7 +40,8 @@ Vector<T> CpuOperations<T>::Transpose(const Vector<T> &a) {
 }
 
 template<typename T>
-Matrix<bool> CpuOperations<T>::LogicalAnd(const Matrix<bool> &a, const Matrix<bool> &b) {
+Matrix<T> CpuOperations<T>::LogicalAnd(const Matrix<T> &a, const Matrix<T> &b) {
+  BOOST_STATIC_ASSERT_MSG((std::is_same<T, bool>::value), "ERROR:Parameter must be of type bool");
   if ((a.rows() != b.rows()) || (a.cols() != b.cols())) {
     std::cout << std::endl << "ERROR: MARTRICES ARE NOT THE SAME SIZE!" << std::endl << std::endl;
     exit(-1);
