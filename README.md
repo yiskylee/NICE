@@ -35,3 +35,6 @@ There are two ways to contribute to this project. If you are added to the projec
 
 ## Coding Style:
 We are following [Google c++ style guide](https://google.github.io/styleguide/cppguide.html), make sure to use `google_styleguide/cpplint/cpplint.py` to check your code and make sure there are no errors. You can also import `google_styleguide/eclipse-cpp-google-style.xml` into Eclipse to auto-format your code before using `cpplint.py`.
+
+## Compile and Test Nice:
+We use CMake tool to automatically build and test the framework. After you download the repository, you need to go to NICE/cpp and run `./configure.sh`. This is only a one time operation as it will create a build directory where all executables generated will be put into. To build the code and the tests, go to build directory and run 1) `cmake ..` 2) `make` 3) `make test ARGS="-V"`.

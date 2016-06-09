@@ -20,22 +20,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef CPP_SRC_CORE_UTIL_H_
-#define CPP_SRC_CORE_UTIL_H_
+#ifndef CPP_INCLUDE_UTIL_H_
+#define CPP_INCLUDE_UTIL_H_
 
 #include <string>
-#include "matrix.h"
-#include "vector.h"
+#include "include/matrix.h"
+#include "include/vector.h"
 
 namespace Nice {
 
 namespace util {
 
-template <typename T>
-  static Matrix<T> FromFile(std::string input_file_path,
-                            int num_rows, int num_cols);
-};
+template<typename T>
+Matrix<T> FromFile(const std::string &input_file_path,
+                   int num_rows, int num_cols);
 
-}  // namespace nice
+}  // namespace util
 
-#endif  // CPP_SRC_CORE_UTIL_H_
+}  // namespace Nice
+
+#endif  // CPP_INCLUDE_UTIL_H_

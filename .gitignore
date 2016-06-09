@@ -1,12 +1,7 @@
+*.swp
 .project
 .cproject
 .settings
-/Debug/
-cpp/cling_test
-CMakeCache.txt
-CMakeFiles
-CMakeScripts
-Makefile
-cmake_install.cmake
-install_manifest.txt
-CTestTestfile.cmake
+Debug
+cpp/build
+*.m
