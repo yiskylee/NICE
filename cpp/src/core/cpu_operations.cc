@@ -20,18 +20,32 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "cpu_operations.h"
-
+#include "include/cpu_operations.h"
 #include <unistd.h>
-
 #include <iostream>
-
 #include "Eigen/Dense"
-
 #include "include/matrix.h"
+#include "include/vector.h"
+
 
 namespace Nice {
+
+// This function creates the transpose of a matrix
 template<typename T>
 Matrix<T> CpuOperations<T>::Transpose(const Matrix<T> &a) {
+  Matrix<T> at = a.transpose();
+  return at;
 }
-}  //  namespace nice
+
+template<typename T>
+Vector<T> CpuOperations<T>::Transpose(const Vector<T> &a) {
+  // Same function because both are matrices
+  Vector<T> at = a.transpose();
+  return at;
+}
+
+template class CpuOperations<int>;
+template class CpuOperations<float>;
+template class CpuOperations<double>;
+
+}  //  namespace Nice

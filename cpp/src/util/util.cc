@@ -20,24 +20,34 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "util.h"
-
+#include "include/util.h"
 #include <fstream>
 #include <iostream>
 #include <algorithm>
 #include <string>
+#include "include/matrix.h"
+#include "include/vector.h"
 
 namespace Nice {
 
 namespace util {
 
 template<typename T>
-Matrix<T> FromFile(const std::string &input_file_path, int num_rows, int num_cols) {
-  std::ifstream input_file(input_file_path, std::ifstream::in);
-  if (input_file) {
-    std::cout << "File still open";
-  }
+Matrix<T> FromFile(const std::string &input_file_path, int num_rows,
+                   int num_cols) {
+  return Matrix<T>::Random(num_rows, num_cols);
 }
+
+template Matrix<int> FromFile<int>(const std::string &input_file_path,
+                                   int num_rows, int num_cols);
+
+//  std::ifstream input_file(input_file_path, std::ifstream::in);
+//
+////  if (input_file) {
+////    std::cout << "File still open";
+////  }
+//}
+
 }  // namespace util
 
 //}
@@ -51,4 +61,4 @@ Matrix<T> FromFile(const std::string &input_file_path, int num_rows, int num_col
 //  } else
 //    return false;
 //}
-}  // namespace nice
+}  // namespace Nice

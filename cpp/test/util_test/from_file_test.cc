@@ -20,11 +20,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "util.h"
-#include "matrix.h"
+#include "include/util.h"
+#include "include/matrix.h"
 #include "gtest/gtest.h"
 #include "Eigen/Dense"
 
 TEST(from_file_test, if_file_open) {
-	Nice::Matrix<float> m = Nice::util::FromFile(std::string("matrix.txt"), 2, 2);
+	Nice::Matrix<int> m = Nice::util::FromFile<int>("matrix.txt", 2, 2);
+	EXPECT_EQ (2+2, 4);
 }
