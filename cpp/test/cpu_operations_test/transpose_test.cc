@@ -21,11 +21,11 @@ Eigen::MatrixXi transpose(Eigen::MatrixXi m) {
 // The test checks to make sure that the matrix was transposed
 TEST(Transpose, IsTransposed) {
   Nice::Matrix<int> m1 = Eigen::MatrixXi::Random(3,3);
-  std::cout << "The matrix m1 is:" << std::endl << std::cout <<
-  m1 << std::cout << std::endl;
+//  std::cout << "The matrix m1 is:" << std::endl << std::cout <<
+//  m1 << std::cout << std::endl;
   Eigen::MatrixXi m2 = Eigen::MatrixXi::Random(3,3);
-  std::cout << "The matrix m2 is:" << std::endl << std::cout <<
-  m2 << std::cout << std::endl;
+//  std::cout << "The matrix m2 is:" << std::endl << std::cout <<
+//  m2 << std::cout << std::endl;
   Nice::Matrix<int> m3 = Nice::CpuOperations<int>::Transpose(m1);
   EXPECT_EQ (2+2, 4);
 }

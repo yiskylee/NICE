@@ -26,5 +26,5 @@
 #include "Eigen/Dense"
 
 TEST(from_file_test, if_file_open) {
-	Nice::Matrix<int> m = Nice::util::FromFile<int>("matrix.txt", 2, 2);
+	Nice::Matrix<int> m = Nice::util::FromFile<int>("matrix1.txt", 2, 2);
 }

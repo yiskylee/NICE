@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 #include "include/util.h"
+#include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <algorithm>
@@ -38,9 +39,10 @@ Matrix<T> FromFile(const std::string &input_file_path, int num_rows,
   std::ifstream input_file(input_file_path, std::ifstream::in);
   if (input_file) {
     std::cout << "File Open";
-  }
-  else {
-    std::cout << "File Not Open";
+  } else {
+    std::cout << "Cannot open file " + input_file_path + " , exiting...";
+//    exit(1);
+
   }
   return Matrix<T>::Random(num_rows, num_cols);
 }
@@ -49,6 +51,7 @@ template Matrix<int> FromFile<int>(const std::string &input_file_path,
                                    int num_rows, int num_cols);
 
 }  // namespace util
+}  // namespace Nice
 
 //}
 //  std::ifstream input_file(input_file_path);
@@ -60,5 +63,5 @@ template Matrix<int> FromFile<int>(const std::string &input_file_path,
 //    return true;
 //  } else
 //    return false;
-//}
-}  // namespace Nice
+//  }
+
