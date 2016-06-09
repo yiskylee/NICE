@@ -27,5 +27,4 @@
 
 TEST(from_file_test, if_file_open) {
 	Nice::Matrix<int> m = Nice::util::FromFile<int>("matrix.txt", 2, 2);
-	EXPECT_EQ (2+2, 4);
 }

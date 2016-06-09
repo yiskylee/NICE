@@ -35,18 +35,18 @@ namespace util {
 template<typename T>
 Matrix<T> FromFile(const std::string &input_file_path, int num_rows,
                    int num_cols) {
+  std::ifstream input_file(input_file_path, std::ifstream::in);
+  if (input_file) {
+    std::cout << "File Open";
+  }
+  else {
+    std::cout << "File Not Open";
+  }
   return Matrix<T>::Random(num_rows, num_cols);
 }
 
 template Matrix<int> FromFile<int>(const std::string &input_file_path,
                                    int num_rows, int num_cols);
-
-//  std::ifstream input_file(input_file_path, std::ifstream::in);
-//
-////  if (input_file) {
-////    std::cout << "File still open";
-////  }
-//}
 
 }  // namespace util
 
