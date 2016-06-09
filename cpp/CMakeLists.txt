@@ -19,7 +19,7 @@ add_library(Nice SHARED ${SOURCES})
 
 # Test
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
-option (enable-test "Compile all Nice unit tests" OFF)
+option (enable-test "Compile all Nice unit tests" ON)
 
 if (enable-test)
   include(gtest)
