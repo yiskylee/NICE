@@ -21,7 +21,7 @@
 // SOFTWARE.
 
 #include "cpu_operations.h"
-
+ 
 namespace Nice {
 template<typename T>
 Matrix<T> CpuOperations<T>::Transpose(const Matrix<T> &a) {
