@@ -30,10 +30,10 @@
 
 namespace Nice {
 
-// This function creates the transpose of a matrix
+// This function returns the transpose of a matrix
 template<typename T>
 Matrix<T> CpuOperations<T>::Transpose(const Matrix<T> &a) {
-  return a.transpose();
+  return a.transpose();  // Return transpose
 }
 
 template<typename T>
