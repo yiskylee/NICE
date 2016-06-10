@@ -1,15 +1,4 @@
 cmake_minimum_required(VERSION 2.8.9)
-<<<<<<< HEAD
-project(nice)
-set(CMAKE_BUILD_TYPE Release)
-set(CMAKE_CXX_FLAGS "-std=c++11")
-
-include_directories(../Eigen include)
-
-set(SOURCES src/core/cpu_operations.cc src/util/util.cc)
-
-add_library(nice_lib SHARED ${SOURCES})
-=======
 set(PROJECT_NAME_STR Nice)
 project(Nice)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
@@ -53,4 +42,3 @@ if (enable-test)
   target_link_libraries(${PROJECT_TEST_NAME} ${CMAKE_THREAD_LIBS_INIT})
   add_test(test1 ${PROJECT_TEST_NAME} "--gtest_color=yes")
 endif()
->>>>>>> 1e3c62be9bef83f6cc5f282d73d6e3ca02d7adfa
