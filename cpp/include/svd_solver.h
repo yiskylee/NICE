@@ -20,16 +20,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef CPP_INCLUDE_MATRIX_H_
-#define CPP_INCLUDE_MATRIX_H_
+#ifndef CPP_INCLUDE_SVD_SOLVER_H_
+#define CPP_INCLUDE_SVD_SOLVER_H_
 
-#include "Eigen/Dense"
+#include "include/matrix.h"
+#include "include/vector.h"
+
+#include "Eigen/SVD"
+
 
 namespace Nice {
 
+// Abstract class of svd solver
 template<typename T>
-using Matrix = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>;
+class SvdSolver {
+ private:
+  Eigen::JacobiSVD<Matrix> svd_;
+ public:
+  SvdSolver();
+  void Compute(const Matrix<T> &a);
+  Matrix<T> MatrixU() const;
+  Matrix<T> MatrixV() const;
+  Vector<T> SingularValues() const;
+};
 
 }  // namespace Nice
 
-#endif  // CPP_INCLUDE_MATRIX_H_
+#endif  // CPP_INCLUDE_SVD_SOLVER_H_
+

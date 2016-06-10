@@ -1,5 +1,7 @@
+*.swp
 .project
 .cproject
 .settings
-/Debug/
-cpp/cling_test
+Debug
+cpp/build
+*.m

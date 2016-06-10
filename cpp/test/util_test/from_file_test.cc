@@ -20,16 +20,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef CPP_INCLUDE_MATRIX_H_
-#define CPP_INCLUDE_MATRIX_H_
-
+#include "include/util.h"
+#include "include/matrix.h"
+#include "gtest/gtest.h"
 #include "Eigen/Dense"
 
-namespace Nice {
-
-template<typename T>
-using Matrix = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>;
-
-}  // namespace Nice
-
-#endif  // CPP_INCLUDE_MATRIX_H_
+TEST(from_file_test, if_file_open) {
+	Nice::Matrix<int> m = Nice::util::FromFile<int>("matrix.txt", 2, 2);
+	EXPECT_EQ (2+2, 4);
+}

@@ -21,10 +21,13 @@
 // SOFTWARE.
 
 #include <iostream>
-//#include <boost/static_assert.hpp>
 #include <type_traits>
-#include "cpu_operations.h"
-#include "Eigen/Dense"  // Dependant on the placement of the library
+#include "include/cpu_operations.h"
+#include <iostream>
+#include "Eigen/Dense"
+#include "include/matrix.h"
+#include "include/vector.h"
+
 
 namespace Nice {
 
@@ -41,16 +44,22 @@ Vector<T> CpuOperations<T>::Transpose(const Vector<T> &a) {
 
 template<typename T>
 Matrix<T> CpuOperations<T>::LogicalAnd(const Matrix<T> &a, const Matrix<T> &b) {
-//  BOOST_STATIC_ASSERT_MSG((std::is_same<T, bool>::value), "ERROR:Parameter must be of type bool");  // Not necessary because of Eigen assert
-  std::cout << std::is_same<T, bool>::value << std::endl;
+  if ((a.rows() != b.rows()) || (a.cols() != b.cols()))
     std::cout << std::endl << "ERROR: MARTRICES ARE NOT THE SAME SIZE!" << std::endl << std::endl;
   return (a.array() && b.array());
   // Will return a matrix due to implicit conversion
 }
-/*
+
 template<typename T>
 Vector<T> CpuOperations<T>::LogicalAnd(const Vector<T> &a, const Vector<T> &b) {
+  if ((a.rows() != b.rows()) || (a.cols() != b.cols()))
+      std::cout << std::endl << "ERROR: MARTRICES ARE NOT THE SAME SIZE!" << std::endl << std::endl;
   return ((a.array() != 0) && (b.array() != 0));
-}*/
+}
+
+template class CpuOperations<int>;
+template class CpuOperations<float>;
+template class CpuOperations<double>;
+
 
 }  //  namespace Nice

@@ -24,9 +24,9 @@
 #define CPP_INCLUDE_CPU_OPERATIONS_H_
 
 #include <string>
-#include "matrix.h"
-#include "vector.h"
 
+#include "include/matrix.h"
+#include "include/vector.h"
 
 namespace Nice {
 
@@ -58,7 +58,7 @@ class CpuOperations {
   static Vector<T> LogicalOr(const Vector<T> &a, const Vector<T> &b);
   static Vector<T> LogicalNot(const Vector<T> &a, const Vector<T> &b);
 };
-
 }  // namespace Nice
-#endif  // CPP_INCLUDE_CPU_OPERATIONS_H_
 
+
+#endif  // CPP_INCLUDE_CPU_OPERATIONS_H_
