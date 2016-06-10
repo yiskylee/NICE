@@ -67,6 +67,16 @@ rebuild_cache:
 rebuild_cache/fast: rebuild_cache
 .PHONY : rebuild_cache/fast
 
+# Special rule for the target test
+test:
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running tests..."
+	/usr/bin/ctest --force-new-ctest-process $(ARGS)
+.PHONY : test
+
+# Special rule for the target test
+test/fast: test
+.PHONY : test/fast
+
 # The main all target
 all: cmake_check_build_system
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/jason.b/Desktop/Github/NICE/cpp/build/CMakeFiles /home/jason.b/Desktop/Github/NICE/cpp/build/CMakeFiles/progress.marks
@@ -99,24 +109,76 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named nice_lib
+# Target rules for targets named Nice
 
 # Build rule for target.
-nice_lib: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 nice_lib
-.PHONY : nice_lib
+Nice: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 Nice
+.PHONY : Nice
 
 # fast build rule for target.
-nice_lib/fast:
-	$(MAKE) -f CMakeFiles/nice_lib.dir/build.make CMakeFiles/nice_lib.dir/build
-.PHONY : nice_lib/fast
+Nice/fast:
+	$(MAKE) -f CMakeFiles/Nice.dir/build.make CMakeFiles/Nice.dir/build
+.PHONY : Nice/fast
+
+#=============================================================================
+# Target rules for targets named Nice_test
+
+# Build rule for target.
+Nice_test: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 Nice_test
+.PHONY : Nice_test
+
+# fast build rule for target.
+Nice_test/fast:
+	$(MAKE) -f CMakeFiles/Nice_test.dir/build.make CMakeFiles/Nice_test.dir/build
+.PHONY : Nice_test/fast
+
+#=============================================================================
+# Target rules for targets named check
+
+# Build rule for target.
+check: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 check
+.PHONY : check
+
+# fast build rule for target.
+check/fast:
+	$(MAKE) -f CMakeFiles/check.dir/build.make CMakeFiles/check.dir/build
+.PHONY : check/fast
+
+#=============================================================================
+# Target rules for targets named eigen
+
+# Build rule for target.
+eigen: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 eigen
+.PHONY : eigen
+
+# fast build rule for target.
+eigen/fast:
+	$(MAKE) -f CMakeFiles/eigen.dir/build.make CMakeFiles/eigen.dir/build
+.PHONY : eigen/fast
+
+#=============================================================================
+# Target rules for targets named googletest
+
+# Build rule for target.
+googletest: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 googletest
+.PHONY : googletest
+
+# fast build rule for target.
+googletest/fast:
+	$(MAKE) -f CMakeFiles/googletest.dir/build.make CMakeFiles/googletest.dir/build
+.PHONY : googletest/fast
 
 src/core/cpu_operations.o: src/core/cpu_operations.cc.o
 .PHONY : src/core/cpu_operations.o
 
 # target to build an object file
 src/core/cpu_operations.cc.o:
-	$(MAKE) -f CMakeFiles/nice_lib.dir/build.make CMakeFiles/nice_lib.dir/src/core/cpu_operations.cc.o
+	$(MAKE) -f CMakeFiles/Nice.dir/build.make CMakeFiles/Nice.dir/src/core/cpu_operations.cc.o
 .PHONY : src/core/cpu_operations.cc.o
 
 src/core/cpu_operations.i: src/core/cpu_operations.cc.i
@@ -124,7 +186,7 @@ src/core/cpu_operations.i: src/core/cpu_operations.cc.i
 
 # target to preprocess a source file
 src/core/cpu_operations.cc.i:
-	$(MAKE) -f CMakeFiles/nice_lib.dir/build.make CMakeFiles/nice_lib.dir/src/core/cpu_operations.cc.i
+	$(MAKE) -f CMakeFiles/Nice.dir/build.make CMakeFiles/Nice.dir/src/core/cpu_operations.cc.i
 .PHONY : src/core/cpu_operations.cc.i
 
 src/core/cpu_operations.s: src/core/cpu_operations.cc.s
@@ -132,7 +194,7 @@ src/core/cpu_operations.s: src/core/cpu_operations.cc.s
 
 # target to generate assembly for a file
 src/core/cpu_operations.cc.s:
-	$(MAKE) -f CMakeFiles/nice_lib.dir/build.make CMakeFiles/nice_lib.dir/src/core/cpu_operations.cc.s
+	$(MAKE) -f CMakeFiles/Nice.dir/build.make CMakeFiles/Nice.dir/src/core/cpu_operations.cc.s
 .PHONY : src/core/cpu_operations.cc.s
 
 src/util/util.o: src/util/util.cc.o
@@ -140,7 +202,7 @@ src/util/util.o: src/util/util.cc.o
 
 # target to build an object file
 src/util/util.cc.o:
-	$(MAKE) -f CMakeFiles/nice_lib.dir/build.make CMakeFiles/nice_lib.dir/src/util/util.cc.o
+	$(MAKE) -f CMakeFiles/Nice.dir/build.make CMakeFiles/Nice.dir/src/util/util.cc.o
 .PHONY : src/util/util.cc.o
 
 src/util/util.i: src/util/util.cc.i
@@ -148,7 +210,7 @@ src/util/util.i: src/util/util.cc.i
 
 # target to preprocess a source file
 src/util/util.cc.i:
-	$(MAKE) -f CMakeFiles/nice_lib.dir/build.make CMakeFiles/nice_lib.dir/src/util/util.cc.i
+	$(MAKE) -f CMakeFiles/Nice.dir/build.make CMakeFiles/Nice.dir/src/util/util.cc.i
 .PHONY : src/util/util.cc.i
 
 src/util/util.s: src/util/util.cc.s
@@ -156,8 +218,56 @@ src/util/util.s: src/util/util.cc.s
 
 # target to generate assembly for a file
 src/util/util.cc.s:
-	$(MAKE) -f CMakeFiles/nice_lib.dir/build.make CMakeFiles/nice_lib.dir/src/util/util.cc.s
+	$(MAKE) -f CMakeFiles/Nice.dir/build.make CMakeFiles/Nice.dir/src/util/util.cc.s
 .PHONY : src/util/util.cc.s
+
+test/cpu_operations_test/transpose_test.o: test/cpu_operations_test/transpose_test.cc.o
+.PHONY : test/cpu_operations_test/transpose_test.o
+
+# target to build an object file
+test/cpu_operations_test/transpose_test.cc.o:
+	$(MAKE) -f CMakeFiles/Nice_test.dir/build.make CMakeFiles/Nice_test.dir/test/cpu_operations_test/transpose_test.cc.o
+.PHONY : test/cpu_operations_test/transpose_test.cc.o
+
+test/cpu_operations_test/transpose_test.i: test/cpu_operations_test/transpose_test.cc.i
+.PHONY : test/cpu_operations_test/transpose_test.i
+
+# target to preprocess a source file
+test/cpu_operations_test/transpose_test.cc.i:
+	$(MAKE) -f CMakeFiles/Nice_test.dir/build.make CMakeFiles/Nice_test.dir/test/cpu_operations_test/transpose_test.cc.i
+.PHONY : test/cpu_operations_test/transpose_test.cc.i
+
+test/cpu_operations_test/transpose_test.s: test/cpu_operations_test/transpose_test.cc.s
+.PHONY : test/cpu_operations_test/transpose_test.s
+
+# target to generate assembly for a file
+test/cpu_operations_test/transpose_test.cc.s:
+	$(MAKE) -f CMakeFiles/Nice_test.dir/build.make CMakeFiles/Nice_test.dir/test/cpu_operations_test/transpose_test.cc.s
+.PHONY : test/cpu_operations_test/transpose_test.cc.s
+
+test/util_test/from_file_test.o: test/util_test/from_file_test.cc.o
+.PHONY : test/util_test/from_file_test.o
+
+# target to build an object file
+test/util_test/from_file_test.cc.o:
+	$(MAKE) -f CMakeFiles/Nice_test.dir/build.make CMakeFiles/Nice_test.dir/test/util_test/from_file_test.cc.o
+.PHONY : test/util_test/from_file_test.cc.o
+
+test/util_test/from_file_test.i: test/util_test/from_file_test.cc.i
+.PHONY : test/util_test/from_file_test.i
+
+# target to preprocess a source file
+test/util_test/from_file_test.cc.i:
+	$(MAKE) -f CMakeFiles/Nice_test.dir/build.make CMakeFiles/Nice_test.dir/test/util_test/from_file_test.cc.i
+.PHONY : test/util_test/from_file_test.cc.i
+
+test/util_test/from_file_test.s: test/util_test/from_file_test.cc.s
+.PHONY : test/util_test/from_file_test.s
+
+# target to generate assembly for a file
+test/util_test/from_file_test.cc.s:
+	$(MAKE) -f CMakeFiles/Nice_test.dir/build.make CMakeFiles/Nice_test.dir/test/util_test/from_file_test.cc.s
+.PHONY : test/util_test/from_file_test.cc.s
 
 # Help Target
 help:
@@ -165,15 +275,26 @@ help:
 	@echo "... all (the default if no target is provided)"
 	@echo "... clean"
 	@echo "... depend"
+	@echo "... Nice"
+	@echo "... Nice_test"
+	@echo "... check"
 	@echo "... edit_cache"
-	@echo "... nice_lib"
+	@echo "... eigen"
+	@echo "... googletest"
 	@echo "... rebuild_cache"
+	@echo "... test"
 	@echo "... src/core/cpu_operations.o"
 	@echo "... src/core/cpu_operations.i"
 	@echo "... src/core/cpu_operations.s"
 	@echo "... src/util/util.o"
 	@echo "... src/util/util.i"
 	@echo "... src/util/util.s"
+	@echo "... test/cpu_operations_test/transpose_test.o"
+	@echo "... test/cpu_operations_test/transpose_test.i"
+	@echo "... test/cpu_operations_test/transpose_test.s"
+	@echo "... test/util_test/from_file_test.o"
+	@echo "... test/util_test/from_file_test.i"
+	@echo "... test/util_test/from_file_test.s"
 .PHONY : help
 
 
