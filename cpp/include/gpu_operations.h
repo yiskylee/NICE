@@ -20,10 +20,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef CPP_SRC_CORE_GPU_OPERATIONS_H_
-#define CPP_SRC_CORE_GPU_OPERATIONS_H_
+#ifndef CPP_INCLUDE_GPU_OPERATIONS_H_
+#define CPP_INCLUDE_GPU_OPERATIONS_H_
 
-#include "core/matrix.h"
+#include "include/matrix.h"
 
 namespace Nice {
 
@@ -49,5 +49,5 @@ class GpuOperations {
 
 }  // namespace Nice
 
-#endif  // CPP_SRC_CORE_GPU_OPERATIONS_H_
+#endif  // CPP_INCLUDE_GPU_OPERATIONS_H_
 

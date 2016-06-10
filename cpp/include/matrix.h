@@ -22,13 +22,13 @@
 
 #ifndef CPP_INCLUDE_MATRIX_H_
 #define CPP_INCLUDE_MATRIX_H_
-
 #include "Eigen/Dense"
+
 namespace Nice {
 
 template<typename T>
 using Matrix = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>;
-// typedef Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> Matrix<T>;
+
 }  // namespace Nice
 
 #endif  // CPP_INCLUDE_MATRIX_H_

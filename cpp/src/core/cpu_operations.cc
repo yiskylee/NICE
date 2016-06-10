@@ -20,8 +20,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "cpu_operations.h"
-#include "Eigen/Dense"  // Dependant on the placement of the library
+#include "include/cpu_operations.h"
+#include <unistd.h>
+#include <iostream>
+#include "Eigen/Dense"
+#include "include/matrix.h"
+#include "include/vector.h"
+
 
 namespace Nice {
 
@@ -35,5 +40,9 @@ template<typename T>
 Vector<T> CpuOperations<T>::Transpose(const Vector<T> &a) {
   return a.transpose();
 }
+
+template class CpuOperations<int>;
+template class CpuOperations<float>;
+template class CpuOperations<double>;
 
 }  //  namespace Nice
