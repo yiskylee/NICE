@@ -1,0 +1,42 @@
+Start testing: Jun 09 19:59 EDT
+----------------------------------------------------------
+1/1 Testing: test1
+1/1 Test: test1
+Command: "/home/jason.b/Desktop/Github/NICE/cpp/build/Nice_test" "--gtest_color=yes"
+Directory: /home/jason.b/Desktop/Github/NICE/cpp/build
+"test1" start time: Jun 09 19:59 EDT
+Output:
+----------------------------------------------------------
+Running main() from gtest_main.cc
+[0;32m[==========] [mRunning 2 tests from 2 test cases.
+[0;32m[----------] [mGlobal test environment set-up.
+[0;32m[----------] [m1 test from Transpose
+[0;32m[ RUN      ] [mTranspose.IsTransposed
+The matrix m1 is:
+ 730547559  640895091 -353856438
+-226810938  884005969  576018668
+ 607950953 -649503489 -477225175
+The matrix m2 is:
+ 115899597 -290373134  893772102
+ -48539462   28778235  291438716
+ 276748203  971155939  466641602
+[0;32m[       OK ] [mTranspose.IsTransposed (0 ms)
+[0;32m[----------] [m1 test from Transpose (0 ms total)
+
+[0;32m[----------] [m1 test from from_file_test
+[0;32m[ RUN      ] [mfrom_file_test.if_file_open
+[0;32m[       OK ] [mfrom_file_test.if_file_open (0 ms)
+[0;32m[----------] [m1 test from from_file_test (0 ms total)
+
+[0;32m[----------] [mGlobal test environment tear-down
+[0;32m[==========] [m2 tests from 2 test cases ran. (1 ms total)
+[0;32m[  PASSED  ] [m2 tests.
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"test1" end time: Jun 09 19:59 EDT
+"test1" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Jun 09 19:59 EDT

@@ -36,7 +36,7 @@ class MyTest : public ::testing::Test {  // Inherits from testing::Test
   }
 };
 
-TEST_F(MyTest, LogicalAndTest1) {
+TEST_F(MyTest, LogicalAndTestFunctionality) {
   this->_matrix_nice1.setRandom(3,3);  // Random bool values
   this->_matrix_nice2.setRandom(3,3);
   this->_logical_and.setZero(3,3);
@@ -49,19 +49,11 @@ TEST_F(MyTest, LogicalAndTest1) {
   }
 }
 
-TEST_F(MyTest, LogicalAndTest2) {
+TEST_F(MyTest, LogicalAndTestWrongSize) {
   this->_matrix_nice1.setRandom(3,4);  // Random bool values
   this->_matrix_nice2.setRandom(2,3);
   this->_logical_and.setZero(3,3);
-  this->LogicalAnd();  // Expect failure, display message
-}
-
-TEST(Tests, IntTest) {
-  Nice::Matrix<int> matrix_int_1;
-  matrix_int_1.setRandom(3,3);
-  Nice::Matrix<int> matrix_int_2;
-  matrix_int_2.setRandom(3,3);
-//  Nice::Matrix<int> matrix_logical_and = Nice::CpuOperations<int>::LogicalAnd(matrix_int_1, matrix_int_2);
+  EXPECT_DEATH(this->LogicalAnd(), ".*");  // Expect failure, any error messsage
 }
 
 // Start and run the tests
