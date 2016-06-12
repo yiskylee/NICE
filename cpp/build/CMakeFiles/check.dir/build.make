@@ -48,7 +48,7 @@ include CMakeFiles/check.dir/progress.make
 CMakeFiles/check:
 	$(CMAKE_COMMAND) -E cmake_progress_report /home/jason.b/Desktop/Github/NICE/cpp/build/CMakeFiles $(CMAKE_PROGRESS_1)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold "Linting source code based on google code style"
-	/usr/bin/cmake -E chdir /home/jason.b/Desktop/Github/NICE/cpp /home/jason.b/Desktop/Github/NICE/cpp/cpplint.py --root=/home/jason.b/Desktop/Github/NICE src/util/util.cc src/core/cpu_operations.cc include/gpu_operations.h include/util.h include/vector.h include/matrix.h include/svd_solver.h include/cpu_operations.h
+	/usr/bin/cmake -E chdir /home/jason.b/Desktop/Github/NICE/cpp /home/jason.b/Desktop/Github/NICE/cpp/cpplint.py --root=/home/jason.b/Desktop/Github/NICE src/util/util.cc src/core/cpu_operations.cc src/core/LogicalAndTest.cc include/gpu_operations.h include/util.h include/vector.h include/matrix.h include/svd_solver.h include/cpu_operations.h
 
 check: CMakeFiles/check
 check: CMakeFiles/check.dir/build.make

@@ -18,23 +18,15 @@ include/vector.h
 Eigen/Dense
 ../include/Eigen/Dense
 
-../include/util.h
-string
--
-include/matrix.h
-../include/include/matrix.h
-include/vector.h
-../include/include/vector.h
-
 ../include/vector.h
 Eigen/Dense
 ../include/Eigen/Dense
 
 /home/jason.b/Desktop/Github/NICE/cpp/src/core/cpu_operations.cc
+iostream
+-
 include/cpu_operations.h
 /home/jason.b/Desktop/Github/NICE/cpp/src/core/include/cpu_operations.h
-unistd.h
--
 iostream
 -
 Eigen/Dense
@@ -43,22 +35,6 @@ include/matrix.h
 /home/jason.b/Desktop/Github/NICE/cpp/src/core/include/matrix.h
 include/vector.h
 /home/jason.b/Desktop/Github/NICE/cpp/src/core/include/vector.h
-
-/home/jason.b/Desktop/Github/NICE/cpp/src/util/util.cc
-include/util.h
-/home/jason.b/Desktop/Github/NICE/cpp/src/util/include/util.h
-fstream
--
-iostream
--
-algorithm
--
-string
--
-include/matrix.h
-/home/jason.b/Desktop/Github/NICE/cpp/src/util/include/matrix.h
-include/vector.h
-/home/jason.b/Desktop/Github/NICE/cpp/src/util/include/vector.h
 
 eigen/src/eigen/Eigen/Cholesky
 Core

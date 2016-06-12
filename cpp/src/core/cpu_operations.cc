@@ -21,7 +21,6 @@
 // SOFTWARE.
 
 #include <iostream>
-#include <type_traits>
 #include "include/cpu_operations.h"
 #include <iostream>
 #include "Eigen/Dense"
@@ -43,19 +42,20 @@ Vector<T> CpuOperations<T>::Transpose(const Vector<T> &a) {
 }
 
 template<typename T>
-Matrix<T> CpuOperations<T>::LogicalAnd(const Matrix<T> &a, const Matrix<T> &b) {
+Matrix<bool> CpuOperations<T>::LogicalAnd(const Matrix<bool> &a, const Matrix<bool> &b) {
   if ((a.rows() != b.rows()) || (a.cols() != b.cols()))
     std::cout << std::endl << "ERROR: MARTRICES ARE NOT THE SAME SIZE!" << std::endl << std::endl;
   return (a.array() && b.array());
   // Will return a matrix due to implicit conversion
 }
 
-template<typename T>
+/*template<typename T>
 Vector<T> CpuOperations<T>::LogicalAnd(const Vector<T> &a, const Vector<T> &b) {
   if ((a.rows() != b.rows()) || (a.cols() != b.cols()))
-      std::cout << std::endl << "ERROR: MARTRICES ARE NOT THE SAME SIZE!" << std::endl << std::endl;
-  return ((a.array() != 0) && (b.array() != 0));
-}
+    std::cout << std::endl << "ERROR: VECTORS ARE NOT THE SAME SIZE!" << std::endl << std::endl;
+  return (a.array() && b.array());
+  // Will return a matrix due to implicit conversion
+}*/
 
 template class CpuOperations<int>;
 template class CpuOperations<float>;
