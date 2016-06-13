@@ -27,7 +27,6 @@
 #include "include/matrix.h"
 #include "include/vector.h"
 
-
 namespace Nice {
 
 // This function returns the transpose of a matrix

@@ -40,16 +40,16 @@
 template<class T>  // Template
 class MyTest : public ::testing::Test {  // Inherits from testing::Test
  public:  // Members must be public to be accessed by tests
-  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> _matrix_eigen;
-  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> _transpose_eigen;
-  Nice::Matrix<T> _matrix_nice;
-  Nice::Matrix<T> _transpose_nice;
+  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> matrix_eigen_;
+  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> transpose_eigen_;
+  Nice::Matrix<T> matrix_nice_;
+  Nice::Matrix<T> transpose_nice_;
 
   // Transposes the Eigen and Nice matrices
   void Transposer() {
-    _transpose_eigen = _matrix_eigen.transpose();  // Transpose Eigen
+    transpose_eigen_ = matrix_eigen_.transpose();  // Transpose Eigen
     // Transpose matrixNice
-    _transpose_nice = Nice::CpuOperations<T>::Transpose(_matrix_nice);
+    transpose_nice_ = Nice::CpuOperations<T>::Transpose(matrix_nice_);
   }
 };
 
@@ -61,12 +61,12 @@ TYPED_TEST_CASE(MyTest, MyTypes);
 // Checks to see if each element is transposed using the Transpose() function
 TYPED_TEST(MyTest, IsTransposed) {
   // this-> refers to the test fixture object
-  this->_matrix_nice.setRandom(3, 3);  // Assign random values
+  this->matrix_nice_.setRandom(3, 3);  // Assign random values
   this->Transposer();
   for (int i = 0; i < 3; ++i) {
     for (int j = 0; j < 3; ++j) {
       // Check equality for each element
-      EXPECT_EQ(this->_matrix_nice(i, j), this->_transpose_nice(j, i));
+      EXPECT_EQ(this->matrix_nice_(i, j), this->transpose_nice_(j, i));
     }
   }
 }
@@ -74,13 +74,13 @@ TYPED_TEST(MyTest, IsTransposed) {
 // Transposes a matrix instantiated with random values and compares
 // Each element of the Eigen and Nice matrices
 TYPED_TEST(MyTest, TransposeEigen) {
-  this->_matrix_nice.setRandom(3, 3);  // Random values
-  this->_matrix_eigen = this->_matrix_nice;  // Set _matrix_eigen=_matrix_Nice
+  this->matrix_nice_.setRandom(3, 3);  // Random values
+  this->matrix_eigen_ = this->matrix_nice_;  // Set matrix_eigen_=matrix_nice_
   this->Transposer();  // Transpose matrices
   for (int i = 0; i < 3; ++i) {
     for (int j = 0; j < 3; ++j) {
       // Check equality for each element
-      EXPECT_EQ(this->_transpose_nice(i, j), this->_transpose_eigen(i, j));
+      EXPECT_EQ(this->transpose_nice_(i, j), this->transpose_eigen_(i, j));
     }
   }
 }
@@ -88,23 +88,23 @@ TYPED_TEST(MyTest, TransposeEigen) {
 // This function uses a non-square matrix size and compares the number of rows
 // And Columns after the transposition
 TYPED_TEST(MyTest, DifferentShapes) {
-  this->_matrix_nice.setRandom(1, 4);
-  this->_matrix_eigen = this->_matrix_nice;
+  this->matrix_nice_.setRandom(1, 4);
+  this->matrix_eigen_ = this->matrix_nice_;
   this->Transposer();
   // .rows() and .cols() return the number of rows and columns respectively
   // Check equality
-  EXPECT_EQ(this->_transpose_nice.rows(), this->_transpose_eigen.rows());
-  EXPECT_EQ(this->_transpose_nice.cols(), this->_transpose_eigen.cols());
+  EXPECT_EQ(this->transpose_nice_.rows(), this->transpose_eigen_.rows());
+  EXPECT_EQ(this->transpose_nice_.cols(), this->transpose_eigen_.cols());
 }
 
 // This function uses a matrix with size (0,2) and compares the number of rows
 // And Columns after the transposition
 TYPED_TEST(MyTest, TransposeZeroRows) {
-  this->_matrix_nice.setRandom(0, 2);
-  this->_matrix_eigen = this->_matrix_nice;
+  this->matrix_nice_.setRandom(0, 2);
+  this->matrix_eigen_ = this->matrix_nice_;
   this->Transposer();
-  EXPECT_EQ(this->_transpose_nice.rows(), this->_transpose_eigen.rows());
-  EXPECT_EQ(this->_transpose_nice.cols(), this->_transpose_eigen.cols());
+  EXPECT_EQ(this->transpose_nice_.rows(), this->transpose_eigen_.rows());
+  EXPECT_EQ(this->transpose_nice_.cols(), this->transpose_eigen_.cols());
   // It should be noted that the creation of matrix with no rows or columns is
   // Legal, and could potentially disrupt future operations
 }
