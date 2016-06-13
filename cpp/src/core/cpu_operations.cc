@@ -27,41 +27,24 @@
 #include "include/matrix.h"
 #include "include/vector.h"
 
-
 namespace Nice {
 
-// This function creates the transpose of a matrix
+// This function returns the logical AND of two boolean matrices
 template<typename T>
-Matrix<T> CpuOperations<T>::Transpose(const Matrix<T> &a) {
-  return a.transpose();
-}
-
-template<typename T>
-Vector<T> CpuOperations<T>::Transpose(const Vector<T> &a) {
-  return a.transpose();
-}
-
-template<typename T>
-Matrix<bool> CpuOperations<T>::LogicalAnd(const Matrix<bool> &a, const Matrix<bool> &b) {
+Matrix<bool> CpuOperations<T>::LogicalAnd(const Matrix<bool> &a,
+                                          const Matrix<bool> &b) {
+  // Checks to see that the number of rows and columns are the same
   if ((a.rows() != b.rows()) || (a.cols() != b.cols())) {
-    std::cout << std::endl << "ERROR: MARTRICES ARE NOT THE SAME SIZE!" << std::endl << std::endl;
-    exit(-1);
+    std::cout << std::endl << "ERROR: MARTRICES ARE NOT THE SAME SIZE!"
+    << std::endl << std::endl;
+    exit(-1);  // Exits the program
   }
   return (a.array() && b.array());
   // Will return a matrix due to implicit conversion
 }
 
-/*template<typename T>
-Vector<T> CpuOperations<T>::LogicalAnd(const Vector<T> &a, const Vector<T> &b) {
-  if ((a.rows() != b.rows()) || (a.cols() != b.cols()))
-    std::cout << std::endl << "ERROR: VECTORS ARE NOT THE SAME SIZE!" << std::endl << std::endl;
-  return (a.array() && b.array());
-  // Will return a matrix due to implicit conversion
-}*/
-
 template class CpuOperations<int>;
 template class CpuOperations<float>;
 template class CpuOperations<double>;
-
 
 }  //  namespace Nice

@@ -1,5 +1,5 @@
 FILE(REMOVE_RECURSE
-  "CMakeFiles/Nice_test.dir/test/cpu_operations_test/transpose_test.cc.o"
+  "CMakeFiles/Nice_test.dir/test/cpu_operations_test/LogicalAnd_test.cc.o"
   "CMakeFiles/Nice_test.dir/test/util_test/from_file_test.cc.o"
   "Nice_test.pdb"
   "Nice_test"

@@ -22,21 +22,7 @@ Eigen/Dense
 Eigen/Dense
 ../include/Eigen/Dense
 
-../src/core/cpu_operations.cc
-include/cpu_operations.h
-../src/core/include/cpu_operations.h
-unistd.h
--
-iostream
--
-Eigen/Dense
-../src/core/Eigen/Dense
-include/matrix.h
-../src/core/include/matrix.h
-include/vector.h
-../src/core/include/vector.h
-
-/home/jason.b/Desktop/Github/NICE/cpp/test/cpu_operations_test/transpose_test.cc
+/home/jason.b/Desktop/Github/NICE/cpp/test/cpu_operations_test/LogicalAnd_test.cc
 stdio.h
 -
 iostream
@@ -49,8 +35,6 @@ include/cpu_operations.h
 /home/jason.b/Desktop/Github/NICE/cpp/test/cpu_operations_test/include/cpu_operations.h
 include/matrix.h
 /home/jason.b/Desktop/Github/NICE/cpp/test/cpu_operations_test/include/matrix.h
-src/core/cpu_operations.cc
-/home/jason.b/Desktop/Github/NICE/cpp/test/cpu_operations_test/src/core/cpu_operations.cc
 
 eigen/src/eigen/Eigen/Cholesky
 Core

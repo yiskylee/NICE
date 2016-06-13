@@ -4,7 +4,7 @@ SET(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 SET(CMAKE_DEPENDS_CHECK_CXX
-  "/home/jason.b/Desktop/Github/NICE/cpp/test/cpu_operations_test/transpose_test.cc" "/home/jason.b/Desktop/Github/NICE/cpp/build/CMakeFiles/Nice_test.dir/test/cpu_operations_test/transpose_test.cc.o"
+  "/home/jason.b/Desktop/Github/NICE/cpp/test/cpu_operations_test/LogicalAnd_test.cc" "/home/jason.b/Desktop/Github/NICE/cpp/build/CMakeFiles/Nice_test.dir/test/cpu_operations_test/LogicalAnd_test.cc.o"
   "/home/jason.b/Desktop/Github/NICE/cpp/test/util_test/from_file_test.cc" "/home/jason.b/Desktop/Github/NICE/cpp/build/CMakeFiles/Nice_test.dir/test/util_test/from_file_test.cc.o"
   )
 SET(CMAKE_CXX_COMPILER_ID "GNU")

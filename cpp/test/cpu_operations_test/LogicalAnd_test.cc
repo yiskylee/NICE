@@ -33,12 +33,10 @@
 #include "gtest/gtest.h"
 #include "include/cpu_operations.h"
 #include "include/matrix.h"
-#include "src/core/cpu_operations.cc"  // TEMPORARY
 
 // This is a test fixture class containing NICE matrices
 class MyTest : public ::testing::Test {  // Inherits from testing::Test
  public:
-
   Nice::Matrix<bool> _matrix_nice_1;  // First boolean Matrix
   Nice::Matrix<bool> _matrix_nice_2;  // Second boolean Matrix
   Nice::Matrix<bool> _logical_and;  // Resulting Matrix
@@ -73,8 +71,7 @@ TEST_F(MyTest, LogicalAndTestWrongSize) {
   this->_matrix_nice_1.setRandom(3, 4);  // Random bool values
   this->_matrix_nice_2.setRandom(2, 3);
   this->_logical_and.setZero(3, 3);
-  //this->LogicalAnd();
-  ASSERT_DEATH( { this->LogicalAnd(); }, ".*");  // Expect failure
+  ASSERT_DEATH({this->LogicalAnd();}, ".*");  // Expect failure
   // ".*" denotes any failure message
 }
 

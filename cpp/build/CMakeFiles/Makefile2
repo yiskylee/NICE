@@ -92,8 +92,8 @@ clean: CMakeFiles/Nice.dir/clean
 
 # All Build rule for target.
 CMakeFiles/Nice_test.dir/all: CMakeFiles/eigen.dir/all
-CMakeFiles/Nice_test.dir/all: CMakeFiles/googletest.dir/all
 CMakeFiles/Nice_test.dir/all: CMakeFiles/Nice.dir/all
+CMakeFiles/Nice_test.dir/all: CMakeFiles/googletest.dir/all
 	$(MAKE) -f CMakeFiles/Nice_test.dir/build.make CMakeFiles/Nice_test.dir/depend
 	$(MAKE) -f CMakeFiles/Nice_test.dir/build.make CMakeFiles/Nice_test.dir/build
 	$(CMAKE_COMMAND) -E cmake_progress_report /home/jason.b/Desktop/Github/NICE/cpp/build/CMakeFiles  3 4

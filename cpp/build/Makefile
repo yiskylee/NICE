@@ -221,29 +221,29 @@ src/util/util.cc.s:
 	$(MAKE) -f CMakeFiles/Nice.dir/build.make CMakeFiles/Nice.dir/src/util/util.cc.s
 .PHONY : src/util/util.cc.s
 
-test/cpu_operations_test/transpose_test.o: test/cpu_operations_test/transpose_test.cc.o
-.PHONY : test/cpu_operations_test/transpose_test.o
+test/cpu_operations_test/LogicalAnd_test.o: test/cpu_operations_test/LogicalAnd_test.cc.o
+.PHONY : test/cpu_operations_test/LogicalAnd_test.o
 
 # target to build an object file
-test/cpu_operations_test/transpose_test.cc.o:
-	$(MAKE) -f CMakeFiles/Nice_test.dir/build.make CMakeFiles/Nice_test.dir/test/cpu_operations_test/transpose_test.cc.o
-.PHONY : test/cpu_operations_test/transpose_test.cc.o
+test/cpu_operations_test/LogicalAnd_test.cc.o:
+	$(MAKE) -f CMakeFiles/Nice_test.dir/build.make CMakeFiles/Nice_test.dir/test/cpu_operations_test/LogicalAnd_test.cc.o
+.PHONY : test/cpu_operations_test/LogicalAnd_test.cc.o
 
-test/cpu_operations_test/transpose_test.i: test/cpu_operations_test/transpose_test.cc.i
-.PHONY : test/cpu_operations_test/transpose_test.i
+test/cpu_operations_test/LogicalAnd_test.i: test/cpu_operations_test/LogicalAnd_test.cc.i
+.PHONY : test/cpu_operations_test/LogicalAnd_test.i
 
 # target to preprocess a source file
-test/cpu_operations_test/transpose_test.cc.i:
-	$(MAKE) -f CMakeFiles/Nice_test.dir/build.make CMakeFiles/Nice_test.dir/test/cpu_operations_test/transpose_test.cc.i
-.PHONY : test/cpu_operations_test/transpose_test.cc.i
+test/cpu_operations_test/LogicalAnd_test.cc.i:
+	$(MAKE) -f CMakeFiles/Nice_test.dir/build.make CMakeFiles/Nice_test.dir/test/cpu_operations_test/LogicalAnd_test.cc.i
+.PHONY : test/cpu_operations_test/LogicalAnd_test.cc.i
 
-test/cpu_operations_test/transpose_test.s: test/cpu_operations_test/transpose_test.cc.s
-.PHONY : test/cpu_operations_test/transpose_test.s
+test/cpu_operations_test/LogicalAnd_test.s: test/cpu_operations_test/LogicalAnd_test.cc.s
+.PHONY : test/cpu_operations_test/LogicalAnd_test.s
 
 # target to generate assembly for a file
-test/cpu_operations_test/transpose_test.cc.s:
-	$(MAKE) -f CMakeFiles/Nice_test.dir/build.make CMakeFiles/Nice_test.dir/test/cpu_operations_test/transpose_test.cc.s
-.PHONY : test/cpu_operations_test/transpose_test.cc.s
+test/cpu_operations_test/LogicalAnd_test.cc.s:
+	$(MAKE) -f CMakeFiles/Nice_test.dir/build.make CMakeFiles/Nice_test.dir/test/cpu_operations_test/LogicalAnd_test.cc.s
+.PHONY : test/cpu_operations_test/LogicalAnd_test.cc.s
 
 test/util_test/from_file_test.o: test/util_test/from_file_test.cc.o
 .PHONY : test/util_test/from_file_test.o
@@ -289,9 +289,9 @@ help:
 	@echo "... src/util/util.o"
 	@echo "... src/util/util.i"
 	@echo "... src/util/util.s"
-	@echo "... test/cpu_operations_test/transpose_test.o"
-	@echo "... test/cpu_operations_test/transpose_test.i"
-	@echo "... test/cpu_operations_test/transpose_test.s"
+	@echo "... test/cpu_operations_test/LogicalAnd_test.o"
+	@echo "... test/cpu_operations_test/LogicalAnd_test.i"
+	@echo "... test/cpu_operations_test/LogicalAnd_test.s"
 	@echo "... test/util_test/from_file_test.o"
 	@echo "... test/util_test/from_file_test.i"
 	@echo "... test/util_test/from_file_test.s"

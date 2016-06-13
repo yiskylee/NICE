@@ -1,10 +1,10 @@
-Start testing: Jun 12 20:01 EDT
+Start testing: Jun 13 08:15 EDT
 ----------------------------------------------------------
 1/1 Testing: test1
 1/1 Test: test1
 Command: "/home/jason.b/Desktop/Github/NICE/cpp/build/Nice_test" "--gtest_color=yes"
 Directory: /home/jason.b/Desktop/Github/NICE/cpp/build
-"test1" start time: Jun 12 20:01 EDT
+"test1" start time: Jun 13 08:15 EDT
 Output:
 ----------------------------------------------------------
 Running main() from gtest_main.cc
@@ -17,8 +17,8 @@ Running main() from gtest_main.cc
 
 ERROR: MARTRICES ARE NOT THE SAME SIZE!
 
-[0;32m[       OK ] [mMyTest.LogicalAndTestWrongSize (1 ms)
-[0;32m[----------] [m2 tests from MyTest (1 ms total)
+[0;32m[       OK ] [mMyTest.LogicalAndTestWrongSize (2 ms)
+[0;32m[----------] [m2 tests from MyTest (2 ms total)
 
 [0;32m[----------] [m1 test from from_file_test
 [0;32m[ RUN      ] [mfrom_file_test.if_file_open
@@ -26,14 +26,14 @@ ERROR: MARTRICES ARE NOT THE SAME SIZE!
 [0;32m[----------] [m1 test from from_file_test (0 ms total)
 
 [0;32m[----------] [mGlobal test environment tear-down
-[0;32m[==========] [m3 tests from 2 test cases ran. (2 ms total)
+[0;32m[==========] [m3 tests from 2 test cases ran. (3 ms total)
 [0;32m[  PASSED  ] [m3 tests.
 <end of output>
 Test time =   0.01 sec
 ----------------------------------------------------------
 Test Passed.
-"test1" end time: Jun 12 20:01 EDT
+"test1" end time: Jun 13 08:15 EDT
 "test1" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-End testing: Jun 12 20:01 EDT
+End testing: Jun 13 08:15 EDT
