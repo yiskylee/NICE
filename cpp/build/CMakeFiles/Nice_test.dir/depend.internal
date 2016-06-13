@@ -5,6 +5,7 @@ CMakeFiles/Nice_test.dir/test/cpu_operations_test/transpose_test.cc.o
  ../include/cpu_operations.h
  ../include/matrix.h
  ../include/vector.h
+ ../src/core/cpu_operations.cc
  /home/jason.b/Desktop/Github/NICE/cpp/test/cpu_operations_test/transpose_test.cc
  eigen/src/eigen/Eigen/Cholesky
  eigen/src/eigen/Eigen/Core

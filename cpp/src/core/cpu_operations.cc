@@ -20,8 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include <iostream>
 #include "include/cpu_operations.h"
+#include <unistd.h>
 #include <iostream>
 #include "Eigen/Dense"
 #include "include/matrix.h"
@@ -43,8 +43,10 @@ Vector<T> CpuOperations<T>::Transpose(const Vector<T> &a) {
 
 template<typename T>
 Matrix<bool> CpuOperations<T>::LogicalAnd(const Matrix<bool> &a, const Matrix<bool> &b) {
-  if ((a.rows() != b.rows()) || (a.cols() != b.cols()))
+  if ((a.rows() != b.rows()) || (a.cols() != b.cols())) {
     std::cout << std::endl << "ERROR: MARTRICES ARE NOT THE SAME SIZE!" << std::endl << std::endl;
+    exit(-1);
+  }
   return (a.array() && b.array());
   // Will return a matrix due to implicit conversion
 }

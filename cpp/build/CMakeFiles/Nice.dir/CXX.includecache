@@ -23,10 +23,10 @@ Eigen/Dense
 ../include/Eigen/Dense
 
 /home/jason.b/Desktop/Github/NICE/cpp/src/core/cpu_operations.cc
-iostream
--
 include/cpu_operations.h
 /home/jason.b/Desktop/Github/NICE/cpp/src/core/include/cpu_operations.h
+unistd.h
+-
 iostream
 -
 Eigen/Dense

@@ -4,6 +4,7 @@
 CMakeFiles/Nice_test.dir/test/cpu_operations_test/transpose_test.cc.o: ../include/cpu_operations.h
 CMakeFiles/Nice_test.dir/test/cpu_operations_test/transpose_test.cc.o: ../include/matrix.h
 CMakeFiles/Nice_test.dir/test/cpu_operations_test/transpose_test.cc.o: ../include/vector.h
+CMakeFiles/Nice_test.dir/test/cpu_operations_test/transpose_test.cc.o: ../src/core/cpu_operations.cc
 CMakeFiles/Nice_test.dir/test/cpu_operations_test/transpose_test.cc.o: ../test/cpu_operations_test/transpose_test.cc
 CMakeFiles/Nice_test.dir/test/cpu_operations_test/transpose_test.cc.o: eigen/src/eigen/Eigen/Cholesky
 CMakeFiles/Nice_test.dir/test/cpu_operations_test/transpose_test.cc.o: eigen/src/eigen/Eigen/Core

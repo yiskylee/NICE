@@ -18,22 +18,28 @@ include/vector.h
 Eigen/Dense
 ../include/Eigen/Dense
 
-../include/util.h
-string
--
-include/matrix.h
-../include/include/matrix.h
-include/vector.h
-../include/include/vector.h
-
 ../include/vector.h
 Eigen/Dense
 ../include/Eigen/Dense
 
-/home/jason.b/Desktop/Github/NICE/cpp/test/cpu_operations_test/transpose_test.cc
+../src/core/cpu_operations.cc
+include/cpu_operations.h
+../src/core/include/cpu_operations.h
+unistd.h
+-
 iostream
 -
+Eigen/Dense
+../src/core/Eigen/Dense
+include/matrix.h
+../src/core/include/matrix.h
+include/vector.h
+../src/core/include/vector.h
+
+/home/jason.b/Desktop/Github/NICE/cpp/test/cpu_operations_test/transpose_test.cc
 stdio.h
+-
+iostream
 -
 Eigen/Dense
 /home/jason.b/Desktop/Github/NICE/cpp/test/cpu_operations_test/Eigen/Dense
@@ -43,16 +49,8 @@ include/cpu_operations.h
 /home/jason.b/Desktop/Github/NICE/cpp/test/cpu_operations_test/include/cpu_operations.h
 include/matrix.h
 /home/jason.b/Desktop/Github/NICE/cpp/test/cpu_operations_test/include/matrix.h
-
-/home/jason.b/Desktop/Github/NICE/cpp/test/util_test/from_file_test.cc
-include/util.h
-/home/jason.b/Desktop/Github/NICE/cpp/test/util_test/include/util.h
-include/matrix.h
-/home/jason.b/Desktop/Github/NICE/cpp/test/util_test/include/matrix.h
-gtest/gtest.h
-/home/jason.b/Desktop/Github/NICE/cpp/test/util_test/gtest/gtest.h
-Eigen/Dense
-/home/jason.b/Desktop/Github/NICE/cpp/test/util_test/Eigen/Dense
+src/core/cpu_operations.cc
+/home/jason.b/Desktop/Github/NICE/cpp/test/cpu_operations_test/src/core/cpu_operations.cc
 
 eigen/src/eigen/Eigen/Cholesky
 Core
