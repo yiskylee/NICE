@@ -4,4 +4,4 @@
 .settings
 Debug
 *.m
-cpu/build
+build
