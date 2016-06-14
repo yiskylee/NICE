@@ -25,5 +25,14 @@
 namespace Nice {
 template<typename T>
 Matrix<T> CpuOperations<T>::Transpose(const Matrix<T> &a) {
+
 }
+
+Matrix<T> CpuOperations<T>::Add(const Matrix<T> &a, const T &scalar) {
+
+}
+
 }  //  namespace nice
+
+
+
