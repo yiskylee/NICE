@@ -15,10 +15,11 @@ if(NOT CPP_LINT_PY)
   message ("cpplint.py not found")
 endif()
 
+get_filename_component(ROOT_DIR ${CMAKE_SOURCE_DIR} PATH)
 add_custom_target(check
   COMMAND "${CMAKE_COMMAND}" 
     -E chdir "${CMAKE_SOURCE_DIR}"
-    ${CMAKE_SOURCE_DIR}/cpplint.py
+    ${CMAKE_SOURCE_DIR}/cpplint.py --root=${ROOT_DIR}
     ${ALL_SOURCE_FILES}
   DEPENDS ${AlL_SOURCE_FILES}
   COMMENT "Linting source code based on google code style"
