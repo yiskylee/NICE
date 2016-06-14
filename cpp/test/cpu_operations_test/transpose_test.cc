@@ -26,7 +26,7 @@ TEST(Transpose, IsTransposed) {
   Eigen::MatrixXi m2 = Eigen::MatrixXi::Random(3,3);
 //  std::cout << "The matrix m2 is:" << std::endl << std::cout <<
 //  m2 << std::cout << std::endl;
-  Nice::Matrix<int> m3 = Nice::CpuOperations<int>::Transpose(m1);
+//  Nice::Matrix<int> m3 = Nice::CpuOperations<int>::Transpose(m1);
   EXPECT_EQ (2+2, 4);
 }
 
