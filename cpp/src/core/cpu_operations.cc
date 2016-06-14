@@ -44,9 +44,14 @@ Vector<T> CpuOperations<T>::Transpose(const Vector<T> &a) {
   return at;
 }
 
+template<typename T>
+static Matrix<T> Add(const Matrix<T> &a, const Matrix<T> &b) {
+  Matrix<T> sum = a + b;
+  return sum;
+}
+
 template class CpuOperations<int>;
 template class CpuOperations<float>;
 template class CpuOperations<double>;
 
 }  //  namespace Nice
->>>>>>> 1e3c62be9bef83f6cc5f282d73d6e3ca02d7adfa
