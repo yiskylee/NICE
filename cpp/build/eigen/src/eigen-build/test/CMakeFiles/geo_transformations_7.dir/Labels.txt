@@ -1,4 +1,0 @@
-# Target labels
- BuildOfficial
-# Source files and their labels
-/home/jason.b/Desktop/Github/NICE/cpp/build/eigen/src/eigen/test/geo_transformations.cpp

@@ -1,4 +1,0 @@
-/home/jason.b/Desktop/Github/NICE/cpp/build/gtest/src/googletest-build/googlemock/CMakeFiles/gmock.dir
-/home/jason.b/Desktop/Github/NICE/cpp/build/gtest/src/googletest-build/googlemock/CMakeFiles/gmock_main.dir
-/home/jason.b/Desktop/Github/NICE/cpp/build/gtest/src/googletest-build/googlemock/gtest/CMakeFiles/gtest.dir
-/home/jason.b/Desktop/Github/NICE/cpp/build/gtest/src/googletest-build/googlemock/gtest/CMakeFiles/gtest_main.dir
