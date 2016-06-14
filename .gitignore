@@ -4,4 +4,4 @@
 .settings
 Debug
 *.m
-build
+cpp/build/

@@ -37,14 +37,16 @@ template<typename T>
 Matrix<T> FromFile(const std::string &input_file_path, int num_rows,
                    int num_cols) {
   std::ifstream input_file(input_file_path, std::ifstream::in);
+  Matrix<T> m(num_rows, num_cols);
   if (input_file) {
-    std::cout << "File Open";
+    for (int i = 0; i < num_rows; i++)
+      for (int j = 0; j < num_cols; j++)
+        input_file >> m(i, j);
+    return m;
   } else {
     std::cerr << "Cannot open file " + input_file_path + ", exiting...";
     exit(1);
-
   }
-  return Matrix<T>::Random(num_rows, num_cols);
 }
 
 // Template instantiation
