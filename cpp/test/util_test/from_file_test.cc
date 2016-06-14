@@ -23,8 +23,9 @@
 #include "include/util.h"
 #include "include/matrix.h"
 #include "gtest/gtest.h"
-#include "Eigen/Dense"
 
-TEST(from_file_test, if_file_open) {
-	Nice::Matrix<int> m = Nice::util::FromFile<int>("matrix1.txt", 2, 2);
+TEST(FromFileTest, IfFileNotExist) {
+  ASSERT_DEATH(
+      {Nice::Matrix<int> m = Nice::util::FromFile<int>("matrix.txt", 2, 2);},
+       "Cannot open file .*, exiting...");
 }
