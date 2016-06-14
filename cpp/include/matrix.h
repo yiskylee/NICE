@@ -27,8 +27,9 @@
 
 namespace Nice {
 
-template<typename T> using Matrix = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>;
-// typedef Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> Matrix<T>;
-}  // namespace nice
+template<typename T>
+using Matrix = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>;
+
+}  // namespace Nice
 
 #endif  // CPP_INCLUDE_MATRIX_H_
