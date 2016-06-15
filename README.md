@@ -16,7 +16,7 @@ There are two ways to contribute to this project. If you are added to the projec
 4. Develop your own feature branch in your local repository: `git add`, `git commit`, etc..
 5. After your own branch is completed, make sure to merge the latest change from the remote develop branch to your own local develop branch: 1) `git checkout develop` 2) `git pull`.
 6. Now that your local develop branch is up to date, you can update your own feature branch by: 1) `git checkout your-own-feature-branch` 2) `git pull origin develop`.
-7. Update your own feature branch on the remote repository by: `git push --set-upstream origin your-own-feature-branch`
+7. Update your own feature branch on the remote repository by: `git push origin your-own-feature-branch`
 8. Make a pull request with base being develop and compare being your-own-feature-branch
 9. After the pull request is merged, your-own-feature-branch on the remote repository will be soon deleted, delete it on your local repository by: `git branch -d your-own-feature-branch`
 
@@ -25,7 +25,7 @@ There are two ways to contribute to this project. If you are added to the projec
 2. Git clone the repository: `git clone git@github.com/your_account_name/NICE.git`
 3. Add this project as an upstream to your local repository by `git remote add upstream https://github.com/yiskylee/NICE.git`. You can use `git remote -v` to view the upstream.
 4. Create your own local feature branch: `git checkout -b your-own-feature-branch develop`
-3. Make your own feature branch visible by pushing it to your own remote repository (DO NOT PUSH IT TO THE DEVELOP BRANCH): `git push origin your-own-feature-branch`
+3. Make your own feature branch visible by pushing it to your own remote repository (DO NOT PUSH IT TO THE DEVELOP BRANCH): `git push --set-upstream origin your-own-feature-branch`
 4. Develop your own feature branch in your local repository: `git add`, `git commit`, etc..
 5. After your own branch is completed, make sure to merge the latest change from upstream develop branch to your own origin develop branch: 1) `git checkout develop` 2) `git pull upstream develop` 3) `git push origin develop`
 6. Since that you have the latest change in your own origin develop branch from upstream one, now you can update your own feature branch on the your own remote repository by: 1) `git checkout your-own-feature-branch` 2) `git pull origin develop` 3) `git push origin your-own-feature-branch`
