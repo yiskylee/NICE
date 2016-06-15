@@ -24,7 +24,7 @@ There are two ways to contribute to this project. If you are added to the projec
 1. Fork the repository to your own remote repository.
 2. Git clone the repository: `git clone git@github.com/your_account_name/NICE.git`
 3. Add this project as an upstream to your local repository by `git remote add upstream https://github.com/yiskylee/NICE.git`. You can use `git remote -v` to view the upstream.
-4. Create your own local feature branch: git checkout -b your-own-feature-branch develop
+4. Create your own local feature branch: `git checkout -b your-own-feature-branch develop`
 3. Make your own feature branch visible by pushing it to your own remote repository (DO NOT PUSH IT TO THE DEVELOP BRANCH): `git push origin your-own-feature-branch`
 4. Develop your own feature branch in your local repository: `git add`, `git commit`, etc..
 5. After your own branch is completed, make sure to merge the latest change from upstream develop branch to your own origin develop branch: 1) `git checkout develop` 2) `git pull upstream develop` 3) `git push origin develop`
