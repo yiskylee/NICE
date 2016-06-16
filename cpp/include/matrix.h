@@ -22,7 +22,6 @@
 
 #ifndef CPP_INCLUDE_MATRIX_H_
 #define CPP_INCLUDE_MATRIX_H_
-
 #include "Eigen/Dense"
 
 namespace Nice {

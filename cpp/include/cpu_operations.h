@@ -28,7 +28,6 @@
 #include "include/vector.h"
 
 
-
 namespace Nice {
 
 // Abstract class of common matrix operation interface
@@ -59,6 +58,5 @@ class CpuOperations {
   static Vector<T> LogicalNot(const Vector<T> &a, const Vector<T> &b);
 };
 }  // namespace Nice
-
 
 #endif  // CPP_INCLUDE_CPU_OPERATIONS_H_
