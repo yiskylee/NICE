@@ -44,8 +44,11 @@ Vector<T> CpuOperations<T>::Transpose(const Vector<T> &a) {
   return at;
 }
 
+template<typename T>
+Matrix<T> LogicalOr(const Matrix<T> &a, const Matrix<T> &b) {
+  //stuff goes here    
+}
 template class CpuOperations<int>;
 template class CpuOperations<float>;
 template class CpuOperations<double>;
-
 }  //  namespace Nice
