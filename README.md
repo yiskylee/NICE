@@ -12,7 +12,7 @@ There are two ways to contribute to this project. If you are added to the projec
 ### Using Branch:
 1. Clone the repository: `git clone git@github.com:yiskylee/NICE.git`.
 2. Create your own local feature branch: `git checkout -b your-own-feature-branch develop`
-3. Make your own feature branch visible by pushing it to the remote repo (DO NOT PUSH IT TO THE DEVELOP BRANCH): `git push origin your-own-feature-branch`
+3. Make your own feature branch visible by pushing it to the remote repo (DO NOT PUSH IT TO THE DEVELOP BRANCH): `git push --set-upstream origin your-own-feature-branch`
 4. Develop your own feature branch in your local repository: `git add`, `git commit`, etc..
 5. After your own branch is completed, make sure to merge the latest change from the remote develop branch to your own local develop branch: 1) `git checkout develop` 2) `git pull`.
 6. Now that your local develop branch is up to date, you can update your own feature branch by: 1) `git checkout your-own-feature-branch` 2) `git pull origin develop`.
@@ -23,9 +23,9 @@ There are two ways to contribute to this project. If you are added to the projec
 ### Using Fork:
 1. Fork the repository to your own remote repository.
 2. Git clone the repository: `git clone git@github.com/your_account_name/NICE.git`
-3. Add this project as an upstream to your local repository by `git remote add upstream https://github.com/yiskylee/NICE.git`. You can use `git remote -v` to view the updatream.
-4. Create your own local feature branch: git checkout -b your-own-feature-branch develop
-3. Make your own feature branch visible by pushing it to your own remote repository (DO NOT PUSH IT TO THE DEVELOP BRANCH): `git push origin your-own-feature-branch`
+3. Add this project as an upstream to your local repository by `git remote add upstream https://github.com/yiskylee/NICE.git`. You can use `git remote -v` to view the upstream.
+4. Create your own local feature branch: `git checkout -b your-own-feature-branch develop`
+3. Make your own feature branch visible by pushing it to your own remote repository (DO NOT PUSH IT TO THE DEVELOP BRANCH): `git push --set-upstream origin your-own-feature-branch`
 4. Develop your own feature branch in your local repository: `git add`, `git commit`, etc..
 5. After your own branch is completed, make sure to merge the latest change from upstream develop branch to your own origin develop branch: 1) `git checkout develop` 2) `git pull upstream develop` 3) `git push origin develop`
 6. Since that you have the latest change in your own origin develop branch from upstream one, now you can update your own feature branch on the your own remote repository by: 1) `git checkout your-own-feature-branch` 2) `git pull origin develop` 3) `git push origin your-own-feature-branch`
@@ -33,5 +33,9 @@ There are two ways to contribute to this project. If you are added to the projec
 8. After the pull request is merged, you can delete your own feature branch by 1) `git push origin --delete your-own-feature-branch` to delete the remote branch and 2) `git branch -d your-own-feature-branch` to delete your local branch.
 9. More instructions on using fork can be found [here](https://help.github.com/articles/fork-a-repo/).
 
+## Compile and Test Nice:
+We use CMake tool to automatically build and test the framework. After you download the repository, you need to go to NICE/cpp and run `./configure.sh`. This is only a one time operation as it will create a build directory where all executables generated will be put into. To build the code and the tests, go to build directory and run 1) `make` 2) `make test ARGS="-V"`.
+
 ## Coding Style:
-We are following [Google c++ style guide](https://google.github.io/styleguide/cppguide.html), make sure to use `google_styleguide/cpplint/cpplint.py` to check your code and make sure there are no errors. You can also import `google_styleguide/eclipse-cpp-google-style.xml` into Eclipse to auto-format your code before using `cpplint.py`.
+We are following [Google c++ style guide](https://google.github.io/styleguide/cppguide.html), make sure to use `google_styleguide/cpplint/cpplint.py` to check your code and make sure there are no errors. Additionally, `cpplint.py` has been integrated to Nice together with cmake, so you should be able to check your code through cmake-generated Makefile. After you run `./configure.sh` indicated in previous section, go to build directory and run `make check`.
+For developers preferring IDE like Eclipse, you can also import `eclipse-cpp-google-style.xml`(Can be found from [Google c++ style guide](https://google.github.io/styleguide/cppguide.html)) into Eclipse to auto-format your code before using `cpplint.py` or `make check`.

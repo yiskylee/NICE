@@ -20,45 +20,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "include/util.h"
-#include <fstream>
-#include <iostream>
-#include <algorithm>
-#include <string>
+#ifndef CPP_INCLUDE_SVD_SOLVER_H_
+#define CPP_INCLUDE_SVD_SOLVER_H_
+
 #include "include/matrix.h"
 #include "include/vector.h"
 
+#include "Eigen/SVD"
+
+
 namespace Nice {
 
-namespace util {
-
+// Abstract class of svd solver
 template<typename T>
-Matrix<T> FromFile(const std::string &input_file_path, int num_rows,
-                   int num_cols) {
-  return Matrix<T>::Random(num_rows, num_cols);
-}
+class SvdSolver {
+ private:
+  Eigen::JacobiSVD<Matrix> svd_;
+ public:
+  SvdSolver();
+  void Compute(const Matrix<T> &a);
+  Matrix<T> MatrixU() const;
+  Matrix<T> MatrixV() const;
+  Vector<T> SingularValues() const;
+};
 
-template Matrix<int> FromFile<int>(const std::string &input_file_path,
-                                   int num_rows, int num_cols);
-
-//  std::ifstream input_file(input_file_path, std::ifstream::in);
-//
-////  if (input_file) {
-////    std::cout << "File still open";
-////  }
-//}
-
-}  // namespace util
-
-//}
-//  std::ifstream input_file(input_file_path);
-//  if (input_file) {
-////    for (int i = 0; i < num_rows_; i++)
-////      for (int j = 0; j < num_cols_; j++)
-////        input_file >> (*matrix_)(i, j);
-//    input_file.close();
-//    return true;
-//  } else
-//    return false;
-//}
 }  // namespace Nice
+
+#endif  // CPP_INCLUDE_SVD_SOLVER_H_
+
