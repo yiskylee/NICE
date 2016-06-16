@@ -46,15 +46,13 @@ Vector<T> CpuOperations<T>::Transpose(const Vector<T> &a) {
     // This function is for scalar-matrix multiplication
 template<typename T>
 Matrix<T> CpuOperations<T>::Multiply(const Matrix<T> &a, const T &scalar) {
-    Matrix<T> product = a * scalar;
-    return product;
+    return a * scalar;
 }
 
     // This function is for matrix-matrix multiplication
 template<typename T>
 Matrix<T> CpuOperations<T>::Multiply(const Matrix<T> &a, const Matrix<T> &b) {
-    Matrix<T> product = a * b;
-    return product;
+    return a * b;
 }
 
 template class CpuOperations<int>;
