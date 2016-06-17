@@ -15,9 +15,16 @@ set(COMMON_INCLUDES ${PROJECT_SOURCE_DIR})
 include_directories(${COMMON_INCLUDES})
 include_directories(${EIGEN_INCLUDE_DIRS})
 
-set(SOURCES src/core/cpu_operations.cc src/util/util.cc)
+if(EXISTS /usr/local/cuda-7.0/include/)
+    set(CUDA_INCLUDE_DIRS /usr/local/cuda-7.0/include/)
+    include_directories(${CUDA_INCLUDE_DIRS})
+    set(SOURCES src/core/cpu_operations.cc src/core/gpu_svd_solver.cc src/util/util.cc)
+    add_library(${PROJECT_NAME_STR} SHARED ${SOURCES} ${CUDA_INCLUDE_DIRS})
+else()
+   set(SOURCES src/core/cpu_operations.cc src/util/util.cc)
+   add_library(${PROJECT_NAME_STR} SHARED ${SOURCES})
+endif()
 
-add_library(${PROJECT_NAME_STR} SHARED ${SOURCES})
 add_dependencies(${PROJECT_NAME_STR} eigen)
 
 # Test
