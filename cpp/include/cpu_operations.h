@@ -34,7 +34,6 @@ namespace Nice {
 template<typename T>
 class CpuOperations {
  public:
-  static Matrix<T> FromFile(std::string input_file_path);
   static Matrix<T> Transpose(const Matrix<T> &a);
   static Vector<T> Transpose(const Vector<T> &a);
   static Matrix<T> Multiply(const Matrix<T> &a, const T &scalar);
