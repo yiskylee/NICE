@@ -20,26 +20,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef CPP_INCLUDE_MODEL_H_
-#define CPP_INCLUDE_MODEL_H_
+#include "gtest/gtest.h"
+#include "include/spectral_clustering.h"
 
-#include <string>
-#include "include/matrix.h"
-#include "include/vector.h"
-
-namespace Nice {
-
-template<typename T>
-class Model {
- public:
-//  static Vector<T> default_label = Vector<T>::Random(1,1);
-//  virtual void Fit(Matrix<T> input_data, Vector<T> label = default_label) = 0;
-  virtual Matrix<T> FitPredict(Matrix<T> input_data) = 0;
-//  virtual Vector<T> Predict(Matrix<T> x) = 0;
-  virtual ~Model() {}
-};
-
-
-
-
-#endif  // CPP_INCLUDE_MODEL_H_

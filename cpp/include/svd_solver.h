@@ -25,7 +25,6 @@
 
 #include "include/matrix.h"
 #include "include/vector.h"
-
 #include "Eigen/SVD"
 
 
@@ -47,4 +46,3 @@ class SvdSolver {
 }  // namespace Nice
 
 #endif  // CPP_INCLUDE_SVD_SOLVER_H_
-
