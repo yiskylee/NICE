@@ -44,14 +44,15 @@ Vector<T> CpuOperations<T>::Transpose(const Vector<T> &a) {
 template<typename T>
 Matrix<bool> CpuOperations<T>::LogicalNot(const Matrix<bool> &a) {
   Matrix<bool> b = a.replicate(1,1);
+  int r;
   //Iterate through the copied matrix
-  for(int r = 0; r < b.rows(); ++r) {
+  for(r = 0; r < b.rows(); ++r) {
     for(int c = 0; c < b.cols(); ++c) {
-      if(b(r,c) != 0 && b(r,c) != 1) {
-    	  throw std::invalid_argument("Empty Matrix as Argument!");
-      }
       b(r,c) = !b(r,c);
     }
+  }
+  if(r == 0) {
+	  throw std::invalid_argument("Empty Matrix as Argument!");
   }
   return b;
 }
@@ -59,10 +60,14 @@ Matrix<bool> CpuOperations<T>::LogicalNot(const Matrix<bool> &a) {
 template<typename T>
 Vector<bool> CpuOperations<T>::LogicalNot(const Vector<bool> &a) {
   Vector<bool> b = a.replicate(1,1);
+  int i;
   //Iterate through vector
-  for(int i = 0; i < b.size(); ++i) {
+  for(i = 0; i < b.size(); ++i) {
     b(i) = !b(i);
   }
+  if(i == 0) {
+  	  throw std::invalid_argument("Empty Matrix as Argument!");
+    }
   return b;
 }
 
