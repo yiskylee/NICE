@@ -28,18 +28,31 @@
 #include "include/cpu_operations.h"
 #include "include/matrix.h"
 
-Nice::Matrix<bool> a(4,4); //Matrix for method input
-Nice::Matrix<bool> b(4,4); //Expected Matrix output
-Nice::Matrix<bool> c(4,4);
+Nice::Matrix<bool> ma(4,4);  //Matrix for method input
+Nice::Matrix<bool> mb(4,4);  //Expected Matrix output
+Nice::Matrix<bool> mc(4,4);  //Will not be assigned value
+Nice::Vector<bool> va(4); //Vector for method input
+Nice::Vector<bool> vb(4); //Vector for method output
+Nice::Vector<bool> vc(4);
 
 TEST(MyTest, LogicalNotMatrix) {
-  a << 1, 1, 1, 1,
-       1, 1, 1, 1,
-       0, 0, 0, 0,
-       0, 0, 0, 0;
-  b << 0, 0, 0, 0,
-       0, 0, 0, 0,
-       1, 1, 1, 1,
-       1, 1, 1, 1;
-  ASSERT_TRUE( b.isApprox( Nice::CpuOperations<bool>::LogicalNot( a ) ) );
+  ma << 1, 1, 1, 1,
+        1, 1, 1, 1,
+        0, 0, 0, 0,
+        0, 0, 0, 0;
+  mb << 0, 0, 0, 0,
+        0, 0, 0, 0,
+        1, 1, 1, 1,
+        1, 1, 1, 1;
+  ASSERT_TRUE( mb.isApprox( Nice::CpuOperations<bool>::LogicalNot( ma ) ) );
+}
+
+TEST(MyTest, LogicalNotVector) {
+  va << 1, 0, 1, 0;
+  vb << 0, 1, 0, 1;
+  ASSERT_TRUE( vb.isApprox( Nice::CpuOperations<bool>::LogicalNot( va ) ) );
+}
+
+TEST(MyTest, MatrixNoValue) {
+  ASSERT_ANY_THROW(Nice::CpuOperations<bool>::LogicalNot(mc));
 }
