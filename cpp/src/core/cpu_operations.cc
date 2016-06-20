@@ -27,21 +27,17 @@
 #include "include/matrix.h"
 #include "include/vector.h"
 
-
 namespace Nice {
 
-// This function creates the transpose of a matrix
+// This function returns the transpose of a matrix
 template<typename T>
 Matrix<T> CpuOperations<T>::Transpose(const Matrix<T> &a) {
-  Matrix<T> at = a.transpose();
-  return at;
+  return a.transpose();  // Return transpose
 }
 
 template<typename T>
 Vector<T> CpuOperations<T>::Transpose(const Vector<T> &a) {
-  // Same function because both are matrices
-  Vector<T> at = a.transpose();
-  return at;
+  return a.transpose();
 }
 
 template<typename T>
