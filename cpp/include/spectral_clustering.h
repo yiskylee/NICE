@@ -24,10 +24,11 @@
 #define CPP_INCLUDE_SPECTRAL_CLUSTERING_H_
 
 #include "include/matrix.h"
+#include "include/model.h"
 
 namespace Nice {
 
-template<T>
+template<typename T>
 class SpectralClustering : public Model {
  public:
   Matrix<T> FitPredict(const Matrix<T> &input_data);

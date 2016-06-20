@@ -21,7 +21,7 @@
 // SOFTWARE.
 
 #include "include/spectral_clustering.h"
-#include <dlib/clustering>
+#include "include/dlib/clustering.h"
 #include "include/matrix.h"
 namespace Nice {
 

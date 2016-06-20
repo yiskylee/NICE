@@ -16,7 +16,8 @@ set(COMMON_INCLUDES ${PROJECT_SOURCE_DIR})
 include_directories(${COMMON_INCLUDES})
 include_directories(${EIGEN_INCLUDE_DIRS})
 
-set(SOURCES src/core/cpu_operations.cc src/util/util.cc)
+#set(SOURCES src/core/cpu_operations.cc src/util/util.cc src/model/spectral_clustering.cc)
+file(GLOB SOURCES "src/core/*.cc" "src/model/*.cc" "src/util/*.cc")
 
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
 add_dependencies(${PROJECT_NAME} eigen)
