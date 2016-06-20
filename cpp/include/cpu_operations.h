@@ -44,7 +44,7 @@ class CpuOperations {
   static Matrix<T> Subtract(const Matrix<T> &a, const Matrix<T> &b);
   static Matrix<T> LogicalAnd(const Matrix<T> &a, const Matrix<T> &b);
   static Matrix<T> LogicalOr(const Matrix<T> &a, const Matrix<T> &b);
-  static Matrix<T> LogicalNot(const Matrix<T> &a, const Matrix<T> &b);
+  static Matrix<bool> LogicalNot(const Matrix<bool> &a);
   static Matrix<T> Inverse(const Matrix<T> &a);
   static Matrix<T> Norm(const int &p = 2, const int &axis = 0);
   static T Determinant(const Matrix<T> &a);
@@ -55,7 +55,7 @@ class CpuOperations {
   static Matrix<T> OuterProduct(const Vector<T> &a, const Vector<T> &b);
   static Vector<T> LogicalAnd(const Vector<T> &a, const Vector<T> &b);
   static Vector<T> LogicalOr(const Vector<T> &a, const Vector<T> &b);
-  static Vector<T> LogicalNot(const Vector<T> &a, const Vector<T> &b);
+  static Vector<bool> LogicalNot(const Vector<bool> &a);
 };
 }  // namespace Nice
 

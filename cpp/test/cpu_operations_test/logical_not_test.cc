@@ -20,41 +20,26 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "include/cpu_operations.h"
-#include <unistd.h>
+
+#include <stdio.h>
 #include <iostream>
 #include "Eigen/Dense"
+#include "gtest/gtest.h"
+#include "include/cpu_operations.h"
 #include "include/matrix.h"
-#include "include/vector.h"
 
-namespace Nice {
+Nice::Matrix<bool> a(4,4); //Matrix for method input
+Nice::Matrix<bool> b(4,4); //Expected Matrix output
+Nice::Matrix<bool> c(4,4);
 
-// This function returns the transpose of a matrix
-template<typename T>
-Matrix<T> CpuOperations<T>::Transpose(const Matrix<T> &a) {
-  return a.transpose();  // Return transpose
+TEST(MyTest, LogicalNotMatrix) {
+  a << 1, 1, 1, 1,
+       1, 1, 1, 1,
+       0, 0, 0, 0,
+       0, 0, 0, 0;
+  b << 0, 0, 0, 0,
+       0, 0, 0, 0,
+       1, 1, 1, 1,
+       1, 1, 1, 1;
+  ASSERT_TRUE( b.isApprox( Nice::CpuOperations<bool>::LogicalNot( a ) ) );
 }
-
-template<typename T>
-Vector<T> CpuOperations<T>::Transpose(const Vector<T> &a) {
-  return a.transpose();
-}
-
-template<typename T>
-Matrix<bool> CpuOperations<T>::LogicalNot(const Matrix<bool> &a) {
-  Matrix<bool> b = a.replicate(1,1);
-  //Iterate through matrix
-  for(int r = 0; r < b.rows(); ++r) {
-    for(int c = 0; c < b.cols(); ++c) {
-      b(r,c) = !b(r,c);
-    }
-  }
-  return b;
-}
-
-template class CpuOperations<int>;
-template class CpuOperations<float>;
-template class CpuOperations<double>;
-template class CpuOperations<bool>;
-
-}  //  namespace Nice
