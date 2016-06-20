@@ -1,0 +1,7 @@
+*.swp
+.project
+.cproject
+.settings
+Debug
+*.m
+cpp/build/
