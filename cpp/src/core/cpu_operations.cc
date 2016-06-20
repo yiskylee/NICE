@@ -43,30 +43,30 @@ Vector<T> CpuOperations<T>::Transpose(const Vector<T> &a) {
 
 template<typename T>
 Matrix<bool> CpuOperations<T>::LogicalNot(const Matrix<bool> &a) {
-  Matrix<bool> b = a.replicate(1,1);
+  Matrix<bool> b = a.replicate(1, 1);
   int r;
-  //Iterate through the copied matrix
-  for(r = 0; r < b.rows(); ++r) {
-    for(int c = 0; c < b.cols(); ++c) {
-      b(r,c) = !b(r,c);
+  // Iterate through the copied matrix
+  for (r = 0; r < b.rows(); ++r) {
+    for (int c = 0; c < b.cols(); ++c) {
+      b(r, c) = !b(r, c);
     }
   }
-  if(r == 0) {
-	  throw std::invalid_argument("Empty Matrix as Argument!");
+  if (r == 0) {
+    throw std::invalid_argument("Empty Matrix as Argument!");
   }
   return b;
 }
 
 template<typename T>
 Vector<bool> CpuOperations<T>::LogicalNot(const Vector<bool> &a) {
-  Vector<bool> b = a.replicate(1,1);
+  Vector<bool> b = a.replicate(1, 1);
   int i;
-  //Iterate through vector
-  for(i = 0; i < b.size(); ++i) {
+  // Iterate through vector
+  for (i = 0; i < b.size(); ++i) {
     b(i) = !b(i);
   }
-  if(i == 0) {
-  	  throw std::invalid_argument("Empty Matrix as Argument!");
+  if (i == 0) {
+    throw std::invalid_argument("Empty Matrix as Argument!");
     }
   return b;
 }
