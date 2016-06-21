@@ -41,7 +41,7 @@ Vector<T> CpuOperations<T>::Transpose(const Vector<T> &a) {
 }
 
 template<typename T>
-static Matrix<T> Add(const Matrix<T> &a, const Matrix<T> &b) {
+Matrix<T> CpuOperations<T>::Add(const Matrix<T> &a, const Matrix<T> &b) {
   Matrix<T> sum = a + b;
   return sum;
 }
