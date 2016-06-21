@@ -44,7 +44,7 @@ Vector<T> CpuOperations<T>::Transpose(const Vector<T> &a) {
 // Returns the resulting matrix that is created by running a logical or
 // operation on the two input matrices
 template<typename T>
-Matrix<bool>CpuOperations<T>::LogicalOr(const Matrix<bool> &a,
+Matrix<bool> CpuOperations<T>::LogicalOr(const Matrix<bool> &a,
                                         const Matrix<bool> &b) {
   if(( a.rows() != b.rows() ) || ( a.cols() != b.cols() )) {
     throw std::invalid_argument("ERROR: MATRICES ARE NOT THE SAME SIZE!");
@@ -55,16 +55,46 @@ Matrix<bool>CpuOperations<T>::LogicalOr(const Matrix<bool> &a,
 // Returns the resulting vector that is created by running a logical or
 // operation on the two input vectors
 template<typename T>
-Vector<bool>CpuOperations<T>::LogicalOr(const Vector<bool> &a,
+Vector<bool> CpuOperations<T>::LogicalOr(const Vector<bool> &a,
                                         const Vector<bool> &b) {
   if(( a.rows() != b.rows() ) || ( a.cols() != b.cols() )) {
     throw std::invalid_argument("ERROR: VECTORS ARE NOT THE SAME SIZE!");
   }
   return (a.array() || b.array());
 }
+template<typename T>
+Matrix<bool> CpuOperations<T>::LogicalNot(const Matrix<bool> &a) {
+  Matrix<bool> b = a.replicate(1, 1);
+  int r;
+  // Iterate through the copied matrix
+  for (r = 0; r < b.rows(); ++r) {
+    for (int c = 0; c < b.cols(); ++c) {
+      b(r, c) = !b(r, c);
+    }
+  }
+  if (r == 0) {
+    throw std::invalid_argument("Empty Matrix as Argument!");
+  }
+  return b;
+}
+
+template<typename T>
+Vector<bool> CpuOperations<T>::LogicalNot(const Vector<bool> &a) {
+  Vector<bool> b = a.replicate(1, 1);
+  int i;
+  // Iterate through vector
+  for (i = 0; i < b.size(); ++i) {
+    b(i) = !b(i);
+  }
+  if (i == 0) {
+    throw std::invalid_argument("Empty Matrix as Argument!");
+    }
+  return b;
+}
 
 template class CpuOperations<int>;
 template class CpuOperations<float>;
 template class CpuOperations<double>;
+template class CpuOperations<bool>;
 
 }  //  namespace Nice
