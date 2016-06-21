@@ -10,21 +10,32 @@ set(CMAKE_BUILD_TYPE Release)
 if(CMAKE_COMPILER_IS_GNUCXX)
     add_definitions(-Wall -ansi -Wno-deprecated -pthread -std=c++11)
 endif()
+ 
 message(STATUS ${EIGEN_INCLUDE_DIRS})
 set(COMMON_INCLUDES ${PROJECT_SOURCE_DIR})
-include_directories(${COMMON_INCLUDES})
 include_directories(${EIGEN_INCLUDE_DIRS})
+include_directories(${COMMON_INCLUDES}) 
 
-if(EXISTS /usr/local/cuda-7.0/include/)
-    find_package(CUDA QUIET REQUIRED)
-    set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -O3 -gencode arch=compute_22,code=sm_22)
-    set(CUDA_INCLUDE_DIRS /usr/local/cuda-7.0/include/)
-    include_directories(${CUDA_INCLUDE_DIRS})
+
+if(EXISTS /usr/local/cuda/include)
+    message("-- CUDA Found")
+   
+    find_package(CUDA)
+    find_package(CUDA REQUIRED) 
+    find_package(CUDA QUIET REQUIRED) 
+#    FILE(GLOB SOURCES "*.cu" "*.cpp" "*.c" "*.h" "*.cc")
+    set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -std=c++11 -O3 -gencode arch=compute_50,code=sm_50)
+    set(CUDA_HEADER_FILES /usr/local/cuda/include)
     set(SOURCES src/core/cpu_operations.cc src/core/gpu_svd_solver.cu src/util/util.cc)
-    add_library(${PROJECT_NAME_STR} SHARED ${SOURCES} ${CUDA_INCLUDE_DIRS})
+    cuda_include_directories(${CUDA_HEADER_FILES})
+    cuda_add_library(${PROJECT_NAME_STR} SHARED ${SOURCES})
+
 else()
+   message("-- CUDA Not Found")
+
    set(SOURCES src/core/cpu_operations.cc src/util/util.cc)
    add_library(${PROJECT_NAME_STR} SHARED ${SOURCES})
+
 endif()
 
 add_dependencies(${PROJECT_NAME_STR} eigen)
@@ -44,9 +55,9 @@ if (enable-test)
   add_dependencies(${PROJECT_TEST_NAME} eigen)
   add_dependencies(${PROJECT_TEST_NAME} ${PROJECT_NAME_STR})
   target_link_libraries(${PROJECT_TEST_NAME}
+      ${PROJECT_SOURCE_DIR}/build/libNice.so
       ${GTEST_LIBS_DIR}/libgtest.a
       ${GTEST_LIBS_DIR}/libgtest_main.a
-      ${PROJECT_SOURCE_DIR}/build/libNice.so
       )
   target_link_libraries(${PROJECT_TEST_NAME} ${CMAKE_THREAD_LIBS_INIT})
   add_test(test1 ${PROJECT_TEST_NAME} "--gtest_color=yes")
