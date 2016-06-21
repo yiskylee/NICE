@@ -17,25 +17,15 @@ include_directories(${EIGEN_INCLUDE_DIRS})
 include_directories(${COMMON_INCLUDES}) 
 
 
-if(EXISTS /usr/local/cuda/include)
+if(EXISTS /usr/local/cuda/)
     message("-- CUDA Found")
    
     find_package(CUDA)
-    find_package(CUDA REQUIRED) 
-    find_package(CUDA QUIET REQUIRED) 
-#    FILE(GLOB SOURCES "*.cu" "*.cpp" "*.c" "*.h" "*.cc")
     set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -std=c++11 -O3 -gencode arch=compute_50,code=sm_50)
-    set(CUDA_HEADER_FILES /usr/local/cuda/include)
-    set(CUDA_64_LIBRARY /usr/local/cuda/lib64)
     set(SOURCES src/core/cpu_operations.cc src/core/gpu_svd_solver.cu src/util/util.cc)
-#    cuda_include_directories(${CUDA_HEADER_FILES})
-    cuda_include_directories(${CUDA_INCLUDE_DIR})
-    cuda_include_directories(${CUDA_HEADER_FILES})
-    cuda_add_library(${PROJECT_NAME_STR} SHARED ${SOURCES} ${CUDA_LIBRARIES})
- #   cuda_add_executable(svd_solver ${PROJECT_SOURCE_DIR}/test/gpu_svd_solver_test/gpu_svd_solver.cc ${PROJECT_SOURCE_DIR}/src/core/gpu_svd_solver.cu ${PROJECT_SOURCE_DIR}/include/gpu_svd_solver.h)
-#    target_link_libraries( ${CUDA_LIBRARIES})
     find_library(CUDA_LIBRARY cusolver HINTS /usr/local/cuda/lib64)
- 
+    cuda_include_directories(${CUDA_INCLUDE_DIR})
+    cuda_add_library(${PROJECT_NAME_STR} SHARED ${SOURCES})
 
 else()
    message("-- CUDA Not Found")
@@ -67,6 +57,6 @@ if (enable-test)
       ${GTEST_LIBS_DIR}/libgtest_main.a
       ${CUDA_LIBRARY}
       )
-  target_link_libraries(${PROJECT_TEST_NAME} ${CMAKE_THREAD_LIBS_INIT} ${CUDA_LIBRARIES})
+  target_link_libraries(${PROJECT_TEST_NAME} ${CMAKE_THREAD_LIBS_INIT})
   add_test(test1 ${PROJECT_TEST_NAME} "--gtest_color=yes")
 endif()
