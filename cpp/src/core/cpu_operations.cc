@@ -46,7 +46,7 @@ Vector<T> CpuOperations<T>::Transpose(const Vector<T> &a) {
 template<typename T>
 Matrix<bool> CpuOperations<T>::LogicalOr(const Matrix<bool> &a,
                                         const Matrix<bool> &b) {
-  if(( a.rows() != b.rows() ) || ( a.cols() != b.cols() )) {
+  if ((a.rows() != b.rows()) || (a.cols() != b.cols())) {
     throw std::invalid_argument("ERROR: MATRICES ARE NOT THE SAME SIZE!");
   }
   return (a.array() || b.array());
@@ -57,11 +57,12 @@ Matrix<bool> CpuOperations<T>::LogicalOr(const Matrix<bool> &a,
 template<typename T>
 Vector<bool> CpuOperations<T>::LogicalOr(const Vector<bool> &a,
                                         const Vector<bool> &b) {
-  if(( a.rows() != b.rows() ) || ( a.cols() != b.cols() )) {
+  if ( a.size() != b.size() ) {
     throw std::invalid_argument("ERROR: VECTORS ARE NOT THE SAME SIZE!");
   }
   return (a.array() || b.array());
 }
+
 template<typename T>
 Matrix<bool> CpuOperations<T>::LogicalNot(const Matrix<bool> &a) {
   Matrix<bool> b = a.replicate(1, 1);
@@ -73,7 +74,7 @@ Matrix<bool> CpuOperations<T>::LogicalNot(const Matrix<bool> &a) {
     }
   }
   if (r == 0) {
-    throw std::invalid_argument("Empty Matrix as Argument!");
+    throw std::invalid_argument("ERROR: EMPTY MATRIX AS ARGUMENT!");
   }
   return b;
 }
@@ -87,7 +88,7 @@ Vector<bool> CpuOperations<T>::LogicalNot(const Vector<bool> &a) {
     b(i) = !b(i);
   }
   if (i == 0) {
-    throw std::invalid_argument("Empty Matrix as Argument!");
+    throw std::invalid_argument("ERROR: EMPTY VECTOR AS ARGUMENT!");
     }
   return b;
 }

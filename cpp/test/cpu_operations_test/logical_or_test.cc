@@ -30,8 +30,39 @@
 
 Nice::Matrix<bool> m1;  // First boolean matrix
 Nice::Matrix<bool> m2;  // Second boolean matrix
+Nice::Matrix<bool> m3;  // Stores LogicalOr return value for matrices
+Nice::Vector<bool> v1;  // First boolean vector
+Nice::Vector<bool> v2;  // Second boolean vector
+Nice::Vector<bool> v3;  // Stores LogicalOr return value for vectors
 
+// Tests the basic functionality of LogicalOr for Matrices
 TEST(MyTest, LogicalOrMatrixFunctionality) {
   m1.setRandom(4,4);
   m2.setRandom(4,4);
+  m3 = Nice::CpuOperations<bool>::LogicalOr(m1, m2);
+  ASSERT_TRUE( m3.isApprox( ( m1.array() || m2.array() ).matrix() ) );
+}
+
+// Tests to see if LogicalOr for matrices throws an error when matrices are of
+// different sizes
+TEST(MyTest, LogicalOrMatrixDiffSize) {
+  m1.setRandom(4,4);
+  m2.setRandom(4,3);
+  ASSERT_ANY_THROW(Nice::CpuOperations<bool>::LogicalOr(m1, m2));
+}
+
+// Tests the basic functionality of LogicalOr for Vectors
+TEST(MyTest, LogicalOrVectorFunctionality) {
+  v1.setRandom(4);
+  v2.setRandom(4);
+  v3 = Nice::CpuOperations<bool>::LogicalOr(v1, v2);
+  ASSERT_TRUE( v3.isApprox( ( v1.array() || v2.array() ) ) );
+}
+
+// Tests to see if LogicalOr for vectors throws an error when vectors are of
+// different sizes
+TEST(MyTest, LogicalOrVectorDiffSize) {
+  v1.setRandom(4);
+  v2.setRandom(3);
+  ASSERT_ANY_THROW(Nice::CpuOperations<bool>::LogicalOr(v1, v2));
 }
