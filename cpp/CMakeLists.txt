@@ -26,9 +26,16 @@ if(EXISTS /usr/local/cuda/include)
 #    FILE(GLOB SOURCES "*.cu" "*.cpp" "*.c" "*.h" "*.cc")
     set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -std=c++11 -O3 -gencode arch=compute_50,code=sm_50)
     set(CUDA_HEADER_FILES /usr/local/cuda/include)
+    set(CUDA_64_LIBRARY /usr/local/cuda/lib64)
     set(SOURCES src/core/cpu_operations.cc src/core/gpu_svd_solver.cu src/util/util.cc)
+#    cuda_include_directories(${CUDA_HEADER_FILES})
+    cuda_include_directories(${CUDA_INCLUDE_DIR})
     cuda_include_directories(${CUDA_HEADER_FILES})
-    cuda_add_library(${PROJECT_NAME_STR} SHARED ${SOURCES})
+    cuda_add_library(${PROJECT_NAME_STR} SHARED ${SOURCES} ${CUDA_LIBRARIES})
+ #   cuda_add_executable(svd_solver ${PROJECT_SOURCE_DIR}/test/gpu_svd_solver_test/gpu_svd_solver.cc ${PROJECT_SOURCE_DIR}/src/core/gpu_svd_solver.cu ${PROJECT_SOURCE_DIR}/include/gpu_svd_solver.h)
+#    target_link_libraries( ${CUDA_LIBRARIES})
+    find_library(CUDA_LIBRARY cusolver HINTS /usr/local/cuda/lib64)
+ 
 
 else()
    message("-- CUDA Not Found")
@@ -58,7 +65,8 @@ if (enable-test)
       ${PROJECT_SOURCE_DIR}/build/libNice.so
       ${GTEST_LIBS_DIR}/libgtest.a
       ${GTEST_LIBS_DIR}/libgtest_main.a
+      ${CUDA_LIBRARY}
       )
-  target_link_libraries(${PROJECT_TEST_NAME} ${CMAKE_THREAD_LIBS_INIT})
+  target_link_libraries(${PROJECT_TEST_NAME} ${CMAKE_THREAD_LIBS_INIT} ${CUDA_LIBRARIES})
   add_test(test1 ${PROJECT_TEST_NAME} "--gtest_color=yes")
 endif()
