@@ -41,6 +41,28 @@ Vector<T> CpuOperations<T>::Transpose(const Vector<T> &a) {
   return a.transpose();
 }
 
+// Returns the resulting matrix that is created by running a logical or
+// operation on the two input matrices
+template<typename T>
+Matrix<bool>CpuOperations<T>::LogicalOr(const Matrix<bool> &a,
+                                        const Matrix<bool> &b) {
+  if(( a.rows() != b.rows() ) || ( a.cols() != b.cols() )) {
+    throw std::invalid_argument("ERROR: Matrices ARE NOT THE SAME SIZE!");
+  }
+  return (a.array() || b.array());
+}
+
+// Returns the resulting vector that is created by running a logical or
+// operation on the two input vectors
+template<typename T>
+Vector<bool>CpuOperations<T>::LogicalOr(const Vector<bool> &a,
+                                        const Vector<bool> &b) {
+  if(( a.rows() != b.rows() ) || ( a.cols() != b.cols() )) {
+    throw std::invalid_argument("ERROR: VECTORS ARE NOT THE SAME SIZE!");
+  }
+  return (a.array() || b.array());
+}
+
 template class CpuOperations<int>;
 template class CpuOperations<float>;
 template class CpuOperations<double>;

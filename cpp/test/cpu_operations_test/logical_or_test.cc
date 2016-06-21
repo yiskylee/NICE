@@ -27,7 +27,9 @@
 #include "include/cpu_operations.h"
 #include "include/matrix.h"
 
+
 Nice::Matrix<bool> m1;  // First boolean matrix
 Nice::Matrix<bool> m2;  // Second boolean matrix
-Nice::Matrix<bool> m3;
+
+
 
