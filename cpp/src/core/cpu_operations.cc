@@ -40,6 +40,12 @@ Vector<T> CpuOperations<T>::Transpose(const Vector<T> &a) {
   return a.transpose();
 }
 
+template<typename T>
+Matrix<T> CpuOperations<T>::Add(const Matrix<T> &a, const Matrix<T> &b) {
+  Matrix<T> sum = a + b;
+  return sum;
+}
+
 template class CpuOperations<int>;
 template class CpuOperations<float>;
 template class CpuOperations<double>;
