@@ -31,5 +31,7 @@
 Nice::Matrix<bool> m1;  // First boolean matrix
 Nice::Matrix<bool> m2;  // Second boolean matrix
 
-
-
+TEST(MyTest, LogicalOrMatrixFunctionality) {
+  m1.setRandom(4,4);
+  m2.setRandom(4,4);
+}

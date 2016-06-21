@@ -47,7 +47,7 @@ template<typename T>
 Matrix<bool>CpuOperations<T>::LogicalOr(const Matrix<bool> &a,
                                         const Matrix<bool> &b) {
   if(( a.rows() != b.rows() ) || ( a.cols() != b.cols() )) {
-    throw std::invalid_argument("ERROR: Matrices ARE NOT THE SAME SIZE!");
+    throw std::invalid_argument("ERROR: MATRICES ARE NOT THE SAME SIZE!");
   }
   return (a.array() || b.array());
 }
