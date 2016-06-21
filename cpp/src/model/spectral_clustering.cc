@@ -21,7 +21,7 @@
 // SOFTWARE.
 
 #include "include/spectral_clustering.h"
-#include "include/dlib/clustering.h"
+//#include "include/dlib/clustering.h"
 #include "include/matrix.h"
 namespace Nice {
 
@@ -29,4 +29,8 @@ template<typename T>
 Matrix<T> SpectralClustering<T>::FitPredict(const Matrix<T> &input_data) {
 
 }
+
+//template class SpectralClustering<int>;
+//template class SpectralClustering<float>;
+//template class SpectralClustering<double>;
 }

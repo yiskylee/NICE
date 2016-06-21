@@ -23,9 +23,9 @@
 #ifndef CPP_INCLUDE_MODEL_H_
 #define CPP_INCLUDE_MODEL_H_
 
-#include <string>
+//#include <string>
 #include "include/matrix.h"
-#include "include/vector.h"
+//#include "include/vector.h"
 
 namespace Nice {
 
@@ -38,6 +38,8 @@ class Model {
 //  virtual Vector<T> Predict(Matrix<T> x) = 0;
   virtual ~Model() {}
 };
+
+}
 
 
 

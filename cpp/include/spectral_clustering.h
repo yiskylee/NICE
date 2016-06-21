@@ -29,12 +29,11 @@
 namespace Nice {
 
 template<typename T>
-class SpectralClustering : public Model {
+class SpectralClustering : public Model<T> {
  public:
   Matrix<T> FitPredict(const Matrix<T> &input_data);
 };
 
 }
 
-
-#endif /* CPP_INCLUDE_SPECTRAL_CLUSTERING_H_ */
+#endif  // CPP_INCLUDE_SPECTRAL_CLUSTERING_H_

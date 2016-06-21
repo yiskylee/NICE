@@ -34,7 +34,7 @@ namespace Nice {
 template<typename T>
 class SvdSolver {
  private:
-  Eigen::JacobiSVD<Matrix> svd_;
+  Eigen::JacobiSVD<Matrix<T>> svd_;
  public:
   SvdSolver();
   void Compute(const Matrix<T> &a);
