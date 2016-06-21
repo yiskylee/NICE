@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 #include "include/cpu_operations.h"
+#include <stdexcept>
 #include <unistd.h>
 #include <iostream>
 #include "Eigen/Dense"
