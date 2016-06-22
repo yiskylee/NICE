@@ -4,6 +4,7 @@ project(Nice)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
 include(eigen)
 include(check)
+include(dlib/cmake)
 find_package(Threads REQUIRED)
 
 set(CMAKE_BUILD_TYPE Release)
@@ -40,7 +41,7 @@ if (enable-test)
       ${GTEST_LIBS_DIR}/libgtest.a
       ${GTEST_LIBS_DIR}/libgtest_main.a
       ${PROJECT_NAME}
-      #      ${PROJECT_SOURCE_DIR}/build/libNice.so
+      dlib
       )
   target_link_libraries(${PROJECT_TEST_NAME} ${CMAKE_THREAD_LIBS_INIT})
   add_test(test1 ${PROJECT_TEST_NAME} "--gtest_color=yes")
