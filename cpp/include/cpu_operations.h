@@ -28,14 +28,12 @@
 #include "include/vector.h"
 
 
-
 namespace Nice {
 
 // Abstract class of common matrix operation interface
 template<typename T>
 class CpuOperations {
  public:
-  static Matrix<T> FromFile(std::string input_file_path);
   static Matrix<T> Transpose(const Matrix<T> &a);
   static Vector<T> Transpose(const Vector<T> &a);
   static Matrix<T> Multiply(const Matrix<T> &a, const T &scalar);
@@ -60,6 +58,5 @@ class CpuOperations {
   static Vector<T> LogicalNot(const Vector<T> &a, const Vector<T> &b);
 };
 }  // namespace Nice
-
 
 #endif  // CPP_INCLUDE_CPU_OPERATIONS_H_
