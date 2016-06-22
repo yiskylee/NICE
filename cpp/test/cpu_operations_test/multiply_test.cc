@@ -5,31 +5,49 @@
 #include "gtest/gtest.h"
 #include "include/cpu_operations.h"
 #include "include/matrix.h"
-//#include "cpu_operations.cc" 
 
-TEST(MultiplyAns, Multiply){  
+TEST(Mutilply, ScalarMatrixMult){  
 
   int scalar;
   scalar = 3; 
   
-  MatrixXi a(3,3);
+  Eigen::MatrixXi a(3,3);
   a << 0, 1, 2,
        3, 2, 1,
        1, 3, 0;
 
-  MatrixXi MultiplyAns(3,3);
-  MultiplyAns << 0, 3, 6,
+  Eigen::MatrixXi correct_ans(3,3);
+  correct_ans << 0, 3, 6,
                  9, 6, 3,
                  3, 9, 0;
 
-  Nice::Matrix<int> Multiply = scalar * a; //look up in Eigen library document
-  for (int i = 0; i < 3; ++i) 
-    for (int j = 0; j < 3; ++j)
-      EXPECT_EQ(MultiplyAns(i,j), Multiply(i,j)); //check i,j notation w/Eigen
+  Nice::Matrix<int> calculated_ans = Nice::CpuOperations<int>::Multiply(a, scalar);
+    for (int i = 0; i < 3; ++i) 
+      for (int j = 0; j < 3; ++j)
+        EXPECT_EQ(correct_ans(i,j), calculated_ans(i,j));
 
-  std::cout << "Here is the scalar: " << scalar << std::endl; 
-  std::cout << "\nHere is the initial matrix:\n\n" << a << std::endl << std::endl;
-  std::cout << "\nThis is the product matrix: \n\n" << MultiplyAns << std::endl;
-  std::cout << "\nThis is the calculated product: \n\n" << Multiply << std::endl;
+}
+
+TEST(Mutilply, MatrixMatrixMult){
+
+  Eigen::MatrixXi a(3,3);
+  a << 0, 1, 2,
+       3, 2, 1,
+       1, 3, 0;
+
+  Eigen::MatrixXi b(3,3);
+  b << 1, 0, 2,
+       2, 1, 0,
+       0, 2, 1;
+
+  Eigen::MatrixXi correct_ans(3,3);
+  correct_ans << 2, 5, 2,
+                 7, 4, 7,
+                 7, 3, 2;
+
+  Nice::Matrix<int> calculated_ans = Nice::CpuOperations<int>::Multiply(a, b);
+    for (int i = 0; i < 3; ++i)
+      for (int j = 0; j < 3; ++j)
+        EXPECT_EQ(correct_ans(i,j), calculated_ans(i,j));
 
 }
