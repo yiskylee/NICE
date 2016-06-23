@@ -57,5 +57,6 @@ Matrix<bool> CpuOperations<T>::LogicalAnd(const Matrix<bool> &a,
 template class CpuOperations<int>;
 template class CpuOperations<float>;
 template class CpuOperations<double>;
-
+template class CpuOperations<bool>;
 }  //  namespace Nice
+
