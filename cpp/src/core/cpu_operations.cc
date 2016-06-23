@@ -40,6 +40,7 @@ Vector<T> CpuOperations<T>::Transpose(const Vector<T> &a) {
   return a.transpose();
 }
 
+<<<<<<< HEAD
 // Scalar-matrix multiplication
 template<typename T>
 Matrix<T> CpuOperations<T>::Multiply(const Matrix<T> &a, const T &scalar) {
@@ -58,14 +59,33 @@ T CpuOperations<T>::Trace(const Matrix<T> &a) {
     return a.trace();
 }
 
+/*
 // Rank of a matrix
 template<typename T>
 T CpuOperations<T>::Rank(const Matrix<T> &a) {
     return a.rank();
 }
+*/
+
+=======
+// This function returns the logical AND of two boolean matrices
+template<typename T>
+Matrix<bool> CpuOperations<T>::LogicalAnd(const Matrix<bool> &a,
+                                          const Matrix<bool> &b) {
+  // Checks to see that the number of rows and columns are the same
+  if ((a.rows() != b.rows()) || (a.cols() != b.cols())) {
+    std::cout << std::endl << "ERROR: MARTRICES ARE NOT THE SAME SIZE!"
+    << std::endl << std::endl;
+    exit(-1);  // Exits the program
+  }
+  return (a.array() && b.array());
+  // Will return a matrix due to implicit conversion
+>>>>>>> 01fc0af948a04b3a8f202a6ff8d21b0731363e3d
+}
 
 template class CpuOperations<int>;
 template class CpuOperations<float>;
 template class CpuOperations<double>;
-
+template class CpuOperations<bool>;
 }  //  namespace Nice
+

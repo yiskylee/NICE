@@ -30,7 +30,6 @@
 namespace Nice {
 
 namespace util {
-
 template<typename T>
 Matrix<T> FromFile(const std::string &input_file_path,
                    int num_rows, int num_cols);
