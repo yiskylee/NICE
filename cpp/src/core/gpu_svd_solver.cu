@@ -7,35 +7,35 @@
 
 #include "include/gpu_svd_solver.h"
 
-/*
-#include<cuda_runtime.h>
-#include "device_launch_parameters.h"
-#include "include/matrix.h"
-#include "include/vector.h"
-#include "include/gpu_util.h"
-#include "Eigen/Dense"
-#include<unistd.h>
-#include<stdio.h>
-#include<iostream>
-#include<stdlib.h>
-#include<stdio.h>
-#include<cusolverDn.h>
-#include<cuda_runtime_api.h>
-
-
-*/
 namespace Nice {
-/*
-template<typename T>
-class GpuSvdSolver {
- public:
-   GpuSvdSolver();
-   void Compute(const Matrix<T> &A);
-   Matrix<T> MatrixU() const;
-   Matrix<T> MatrixV() const;
-   Vector<T> SingularValues() const;
-};
-*/
+/*	template<typename T>
+	void BufferToEigenMap(T* h_M, Matrix<T> E_M, int M, int N){
+		for(int i = 0; i < M; ++i){
+			for(int j = 0; j < N; ++j){
+				E_M(i,j) = *(h_M + i + j*N); 
+			}
+		}
+	}
+
+	template<typename T>
+	void BufferToEigenMap(T* h_M, Vector<T> E_M, int M, int N){
+		for(int i = 0; i < M; ++i){
+			for(int j = 0; j < N; ++j){
+				E_M(i,j) = *(h_M + i + j*N); 
+			}
+		}
+	}
+        
+        				
+	template<typename T>
+	void EigenToBufferMap(T* h_M, Matrix<T> E_M, int M, int N){
+		for(int i = 0; i < M; ++i){
+			for(int j = 0; j < N; ++j){ 
+				*(h_M + j + i*N) = E_M(i,j); 
+			}
+		}  
+	}
+*/				
 	template<typename T>
 	void GpuSvdSolver<T>::Compute(const Matrix<T>& A){
 		//------------------------------------------------------------------------
@@ -51,17 +51,19 @@ class GpuSvdSolver {
 		float *work;    gpuErrchk(cudaMalloc(&work, work_size * sizeof(float)));
 			
 		// Allocate all host and deviec memories 
-		T *h_A = 	(T *)malloc(M * N * sizeof(T)); 
-		T *h_U = 	(T *)malloc(M * M * sizeof(T));
-    		T *h_V = 	(T *)malloc(N * N * sizeof(T));
-    		T *h_S = 	(T *)malloc(N *     sizeof(T));
+		//T *h_A = 	(T *)malloc(M * N * sizeof(T)); 
+		const T *h_A = &A(0); 
+		T *h_U = &u_(0); 	//(T *)malloc(M * M * sizeof(T));
+    		T *h_V = &v_(0);	//(T *)malloc(N * N * sizeof(T));
+    		T *h_S = &s_(0);	//(T *)malloc(N *     sizeof(T));
 		T *d_A;         gpuErrchk(cudaMalloc(&d_A,      M * N * sizeof(T)));
     		T *d_U;         gpuErrchk(cudaMalloc(&d_U,      M * M * sizeof(T)));
     		T *d_V;         gpuErrchk(cudaMalloc(&d_V,      N * N * sizeof(T)));
     		T *d_S;         gpuErrchk(cudaMalloc(&d_S,      N *     sizeof(T)));
 
 		// Map Eigan Matrix A to host matrix h_A and transfer to device matrix d_A
-
+	        //EigenToBufferMap(h_A,A,M,N); 
+		
 		gpuErrchk(cudaMemcpy(d_A, h_A, M * N * sizeof(T), cudaMemcpyHostToDevice));
 	
 		// Initilize cuSolver 
@@ -87,10 +89,18 @@ class GpuSvdSolver {
     		gpuErrchk(cudaMemcpy(h_U, d_U, M * M * sizeof(T), cudaMemcpyDeviceToHost));
 	    	gpuErrchk(cudaMemcpy(h_V, d_V, N * N * sizeof(T), cudaMemcpyDeviceToHost));
 		
-	
+		// Linking host matrices to Eigen matrices
+		//&s_(0) = h_S; 
+		// Mapping host buffer to Eigen matrix
+		// SingularValues() = h_S; 	
+		//BufferToEigenMap(h_S,s_,1,N); 
+		// MatrixU() = h_U; 
+		//BufferToEigenMap(h_U,u_,M,M); 
+		// MatrixV() = h_V; 
+		//BufferToEigenMap(h_V,v_,N,N); 
+
 	}
 	
-//	template class GpuSvdSolver<int>;
 	template class GpuSvdSolver<float>;
 //	template class GpuSvdSolver<double>;
 

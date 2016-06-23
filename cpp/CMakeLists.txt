@@ -21,12 +21,18 @@ if(EXISTS /usr/local/cuda/)
     message("-- CUDA Found")
    
     find_package(CUDA)
-    set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -std=c++11 -O3 -gencode arch=compute_50,code=sm_50)
+    set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -lcuda -lcudart -std=c++11 -O3 -gencode arch=compute_50,code=sm_50)
     set(SOURCES src/core/cpu_operations.cc src/core/gpu_svd_solver.cu src/util/util.cc)
+    set(CUDA_TEST_FILES ${PROJECT_SOURCE_DIR}/test/gpu_svd_solver_test/*.cc)
     find_library(CUDA_LIBRARY cusolver HINTS /usr/local/cuda/lib64)
+    find_library(CUDA_ERROR cudart HINTS /usr/local/cuda/lib64)
+    message(STATUS ${CUDA_LIBRARY})
+    message(STATUS ${CUDA_ERROR})
     cuda_include_directories(${CUDA_INCLUDE_DIR})
     cuda_add_library(${PROJECT_NAME_STR} SHARED ${SOURCES})
-
+    add_dependencies(${PROJECT_NAME_STR} ${CUDA_ERROR})
+    add_dependencies(${PROJECT_NAME_STR} ${CUDA_LIBRARY})
+    target_link_libraries(${PROJECT_NAME_STR} ${CUDA_ERROR} ${CUDA_LIBRARY})
 else()
    message("-- CUDA Not Found")
 
@@ -45,17 +51,20 @@ if (enable-test)
   enable_testing()
   set(PROJECT_TEST_NAME ${PROJECT_NAME_STR}_test)
   include_directories(${GTEST_INCLUDE_DIRS})
-  file(GLOB TEST_SRC_FILES ${PROJECT_SOURCE_DIR}/test/cpu_operations_test/*.cc ${PROJECT_SOURCE_DIR}/test/util_test/*.cc)
+  file(GLOB TEST_SRC_FILES ${PROJECT_SOURCE_DIR}/test/cpu_operations_test/*.cc ${PROJECT_SOURCE_DIR}/test/util_test/*.cc ${CUDA_TEST_FILES})
   #file(GLOB TEST_SRC_FILES ${PROJECT_SOURCE_DIR}/test *.cc)
   add_executable(${PROJECT_TEST_NAME} ${TEST_SRC_FILES})
+  add_dependencies(${PROJECT_TEST_NAME} ${CUDA_ERROR})
+  add_dependencies(${PROJECT_TEST_NAME} ${CUDA_LIBRARY})
   add_dependencies(${PROJECT_TEST_NAME} googletest)
   add_dependencies(${PROJECT_TEST_NAME} eigen)
   add_dependencies(${PROJECT_TEST_NAME} ${PROJECT_NAME_STR})
   target_link_libraries(${PROJECT_TEST_NAME}
+      ${CUDA_ERROR}
+      ${CUDA_LIBRARY}
       ${PROJECT_SOURCE_DIR}/build/libNice.so
       ${GTEST_LIBS_DIR}/libgtest.a
       ${GTEST_LIBS_DIR}/libgtest_main.a
-      ${CUDA_LIBRARY}
       )
   target_link_libraries(${PROJECT_TEST_NAME} ${CMAKE_THREAD_LIBS_INIT})
   add_test(test1 ${PROJECT_TEST_NAME} "--gtest_color=yes")
