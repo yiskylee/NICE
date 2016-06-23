@@ -40,16 +40,28 @@ Vector<T> CpuOperations<T>::Transpose(const Vector<T> &a) {
   return a.transpose();
 }
 
-// This function is for scalar-matrix multiplication
+// Scalar-matrix multiplication
 template<typename T>
 Matrix<T> CpuOperations<T>::Multiply(const Matrix<T> &a, const T &scalar) {
     return scalar * a;
 }
 
-// This function is for matrix-matrix multiplication
+// Matrix-matrix multiplication
 template<typename T>
 Matrix<T> CpuOperations<T>::Multiply(const Matrix<T> &a, const Matrix<T> &b) {
     return a * b;
+}
+
+// Trace of a matrix
+template<typename T>
+T CpuOperations<T>::Trace(const Matrix<T> &a) {
+    return a.trace();
+}
+
+// Rank of a matrix
+template<typename T>
+T CpuOperations<T>::Rank(const Matrix<T> &a) {
+    return a.rank();
 }
 
 template class CpuOperations<int>;
