@@ -40,7 +40,6 @@ Vector<T> CpuOperations<T>::Transpose(const Vector<T> &a) {
   return a.transpose();
 }
 
-<<<<<<< HEAD
 // Scalar-matrix multiplication
 template<typename T>
 Matrix<T> CpuOperations<T>::Multiply(const Matrix<T> &a, const T &scalar) {
@@ -67,7 +66,6 @@ T CpuOperations<T>::Rank(const Matrix<T> &a) {
 }
 */
 
-=======
 // This function returns the logical AND of two boolean matrices
 template<typename T>
 Matrix<bool> CpuOperations<T>::LogicalAnd(const Matrix<bool> &a,
@@ -80,7 +78,6 @@ Matrix<bool> CpuOperations<T>::LogicalAnd(const Matrix<bool> &a,
   }
   return (a.array() && b.array());
   // Will return a matrix due to implicit conversion
->>>>>>> 01fc0af948a04b3a8f202a6ff8d21b0731363e3d
 }
 
 template class CpuOperations<int>;
