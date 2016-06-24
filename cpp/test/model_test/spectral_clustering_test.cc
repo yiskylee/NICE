@@ -20,6 +20,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#include "include/util.h"
 #include "gtest/gtest.h"
 #include "include/spectral_clustering.h"
 
+TEST(SpectralClusteringTest, simpleTest) {
+  Nice::Matrix<int> m = Nice::util::FromFile<int>(
+      "../test/data_for_test/matrix_10_2.txt", 10, 2);
+  Nice::SpectralClustering<int> model;
+  Nice::Vector<unsigned long> assignments = model.FitPredict(m, 3);
+  std::cout << assignments;
+}

@@ -31,7 +31,10 @@ if (enable-test)
   enable_testing()
   set(PROJECT_TEST_NAME ${PROJECT_NAME}_test)
   include_directories(${GTEST_INCLUDE_DIRS})
-  file(GLOB TEST_SRC_FILES ${PROJECT_SOURCE_DIR}/test/cpu_operations_test/*.cc ${PROJECT_SOURCE_DIR}/test/util_test/*.cc)
+  file(GLOB TEST_SRC_FILES 
+    ${PROJECT_SOURCE_DIR}/test/cpu_operations_test/*.cc 
+    ${PROJECT_SOURCE_DIR}/test/util_test/*.cc
+    ${PROJECT_SOURCE_DIR}/test/model_test/*.cc)
   #file(GLOB TEST_SRC_FILES ${PROJECT_SOURCE_DIR}/test *.cc)
   add_executable(${PROJECT_TEST_NAME} ${TEST_SRC_FILES})
   add_dependencies(${PROJECT_TEST_NAME} googletest)
