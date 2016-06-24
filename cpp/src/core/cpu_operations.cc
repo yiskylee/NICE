@@ -58,6 +58,14 @@ T CpuOperations<T>::Trace(const Matrix<T> &a) {
   return a.trace();
 }
 
+/*
+// Rank of a matrix
+template<typename T>
+T CpuOperations<T>::Rank(const Matrix<T> &a) {
+    return a.rank();
+}
+*/
+
 // This function returns the logical AND of two boolean matrices
 template<typename T>
 Matrix<bool> CpuOperations<T>::LogicalAnd(const Matrix<bool> &a,
