@@ -93,9 +93,24 @@ Vector<bool> CpuOperations<T>::LogicalNot(const Vector<bool> &a) {
   return b;
 }
 
+// This function returns the logical AND of two boolean matrices
+template<typename T>
+Matrix<bool> CpuOperations<T>::LogicalAnd(const Matrix<bool> &a,
+                                          const Matrix<bool> &b) {
+  // Checks to see that the number of rows and columns are the same
+  if ((a.rows() != b.rows()) || (a.cols() != b.cols())) {
+    std::cout << std::endl << "ERROR: MARTRICES ARE NOT THE SAME SIZE!"
+    << std::endl << std::endl;
+    exit(-1);  // Exits the program
+  }
+  return (a.array() && b.array());
+  // Will return a matrix due to implicit conversion
+}
+
 template class CpuOperations<int>;
 template class CpuOperations<float>;
 template class CpuOperations<double>;
 template class CpuOperations<bool>;
 
 }  //  namespace Nice
+
