@@ -39,7 +39,7 @@ Nice::Vector<bool> vb(4); //Vector for method output
 Nice::Vector<bool> vc;  //will not be assigned value
 
 //A general test to see if LogicalNot works on Matrices
-TEST(MyTest, LogicalNotMatrix) {
+TEST(LogicalNotTest, LogicalNotMatrix) {
   ma << 1, 1, 1, 1,
         1, 1, 1, 1,
         0, 0, 0, 0,
@@ -52,16 +52,16 @@ TEST(MyTest, LogicalNotMatrix) {
 }
 
 //A general test to see if LogicalNot works on Vectors
-TEST(MyTest, LogicalNotVector) {
+TEST(LogicalNotTest, LogicalNotVector) {
   va << 1, 0, 1, 0;
   vb << 0, 1, 0, 1;
   ASSERT_TRUE( vb.isApprox( Nice::CpuOperations<bool>::LogicalNot( va ) ) );
 }
 //Test to see if LogicalNot for Matrices will throw an exception
-TEST(MyTest, MatrixNoValue) {
+TEST(LogicalNotTest, MatrixNoValue) {
   ASSERT_ANY_THROW(Nice::CpuOperations<bool>::LogicalNot(mc));
 }
 //Test to see if LogicalNot for Vectors will throw an exception
-TEST(MyTest, VectorNoValue) {
+TEST(LogicalNotTest, VectorNoValue) {
   ASSERT_ANY_THROW(Nice::CpuOperations<bool>::LogicalNot(vc));
 }

@@ -99,7 +99,7 @@ Matrix<bool> CpuOperations<T>::LogicalAnd(const Matrix<bool> &a,
                                           const Matrix<bool> &b) {
   // Checks to see that the number of rows and columns are the same
   if ((a.rows() != b.rows()) || (a.cols() != b.cols())) {
-    std::cout << std::endl << "ERROR: MARTRICES ARE NOT THE SAME SIZE!"
+    std::cout << std::endl << "ERROR: MATRICES ARE NOT THE SAME SIZE!"
     << std::endl << std::endl;
     exit(-1);  // Exits the program
   }
