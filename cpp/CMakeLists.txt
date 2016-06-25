@@ -66,14 +66,29 @@ if (enable-test)
   enable_testing()
   set(PROJECT_TEST_NAME ${PROJECT_NAME_STR}_test)
   include_directories(${GTEST_INCLUDE_DIRS})
-  file(GLOB_RECURSE TEST_SRC_FILES RELATIVE ${PROJECT_SOURCE_DIR} test/*.cc)
+
+  # Add source files according to machine setup
+  if (CUDA_FOUND)
+    file(GLOB_RECURSE TEST_SRC_FILES RELATIVE 
+         ${PROJECT_SOURCE_DIR} 
+         test/cpu_operations_test/*.cc
+         test/util_test/*.cc
+         test/gpu_solver_test/*.cc)
+  else()
+    file(GLOB_RECURSE TEST_SRC_FILES RELATIVE 
+         ${PROJECT_SOURCE_DIR} 
+         test/cpu_operations_test/*.cc
+         test/util_test/*.cc)
+  endif()
   message(STATUS "Test case source files: " ${TEST_SRC_FILES})
+
   add_executable(${PROJECT_TEST_NAME} ${TEST_SRC_FILES})
-  add_dependencies(${PROJECT_TEST_NAME} ${CUDA_SOLVER_LIBRARY})
-  add_dependencies(${PROJECT_TEST_NAME} ${CUDA_LIBRARIES})
+
   add_dependencies(${PROJECT_TEST_NAME} googletest)
   add_dependencies(${PROJECT_TEST_NAME} eigen)
   add_dependencies(${PROJECT_TEST_NAME} ${PROJECT_NAME_STR})
+
+  # Add dependencies and link libraries according to machine setup
   if (CUDA_FOUND)
     add_dependencies(${PROJECT_TEST_NAME} ${CUDA_SOLVER_LIBRARY})
     add_dependencies(${PROJECT_TEST_NAME} ${CUDA_LIBRARIES})
@@ -91,6 +106,7 @@ if (enable-test)
         ${GTEST_LIBS_DIR}/libgtest_main.a
         )
   endif()
+
   target_link_libraries(${PROJECT_TEST_NAME} ${CMAKE_THREAD_LIBS_INIT})
   add_test(test1 ${PROJECT_TEST_NAME} "--gtest_color=yes")
 endif()
