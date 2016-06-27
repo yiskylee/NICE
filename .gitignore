@@ -3,5 +3,6 @@
 .cproject
 .settings
 Debug
-cpp/build
 *.m
+cpp/build/
+cpp/dlib/

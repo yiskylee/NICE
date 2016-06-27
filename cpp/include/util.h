@@ -24,15 +24,12 @@
 #define CPP_INCLUDE_UTIL_H_
 
 #include <string>
-
 #include "include/matrix.h"
 #include "include/vector.h"
 
 namespace Nice {
 
 namespace util {
-
-
 template<typename T>
 Matrix<T> FromFile(const std::string &input_file_path,
                    int num_rows, int num_cols);

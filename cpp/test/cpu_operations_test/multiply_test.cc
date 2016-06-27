@@ -20,51 +20,46 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "include/util.h"
-#include <cstdlib>
-#include <fstream>
+#include <stdio.h>
+#include <stdlib.h>
 #include <iostream>
-#include <algorithm>
-#include <string>
+#include "Eigen/Dense"
+#include "gtest/gtest.h"
+#include "include/cpu_operations.h"
 #include "include/matrix.h"
-#include "include/vector.h"
 
-namespace Nice {
-
-namespace util {
-
-template<typename T>
-Matrix<T> FromFile(const std::string &input_file_path, int num_rows,
-                   int num_cols) {
-  std::ifstream input_file(input_file_path, std::ifstream::in);
-  Matrix<T> m(num_rows, num_cols);
-  if (input_file) {
-    for (int i = 0; i < num_rows; i++)
-      for (int j = 0; j < num_cols; j++)
-        input_file >> m(i, j);
-    return m;
-  } else {
-    std::cerr << "Cannot open file " + input_file_path + ", exiting...";
-    exit(1);
-  }
+TEST(Mutilply, ScalarMatrixMult) {
+  int scalar;
+  scalar = 3;
+  Eigen::MatrixXi a(3, 3);
+  a << 0, 1, 2,
+       3, 2, 1,
+       1, 3, 0;
+  Eigen::MatrixXi correct_ans(3, 3);
+  correct_ans << 0, 3, 6,
+                 9, 6, 3,
+                 3, 9, 0;
+  Nice::Matrix<int> calc_ans = Nice::CpuOperations<int>::Multiply(a, scalar);
+    for (int i = 0; i < 3; ++i)
+      for (int j = 0; j < 3; ++j)
+        EXPECT_EQ(correct_ans(i, j), calc_ans(i, j));
 }
 
-// Template instantiation
-template Matrix<int> FromFile<int>(const std::string &input_file_path,
-                                   int num_rows, int num_cols);
-
-}  // namespace util
-}  // namespace Nice
-
-//}
-//  std::ifstream input_file(input_file_path);
-//  if (input_file) {
-////    for (int i = 0; i < num_rows_; i++)
-////      for (int j = 0; j < num_cols_; j++)
-////        input_file >> (*matrix_)(i, j);
-//    input_file.close();
-//    return true;
-//  } else
-//    return false;
-//  }
-
+TEST(Mutilply, MatrixMatrixMult) {
+  Eigen::MatrixXi a(3, 3);
+  a << 0, 1, 2,
+       3, 2, 1,
+       1, 3, 0;
+  Eigen::MatrixXi b(3, 3);
+  b << 1, 0, 2,
+       2, 1, 0,
+       0, 2, 1;
+  Eigen::MatrixXi correct_ans(3, 3);
+  correct_ans << 2, 5, 2,
+                 7, 4, 7,
+                 7, 3, 2;
+  Nice::Matrix<int> calc_ans = Nice::CpuOperations<int>::Multiply(a, b);
+    for (int i = 0; i < 3; ++i)
+      for (int j = 0; j < 3; ++j)
+        EXPECT_EQ(correct_ans(i, j), calc_ans(i, j));
+}
