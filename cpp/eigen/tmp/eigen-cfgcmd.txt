@@ -1,0 +1,1 @@
+cmd='/usr/bin/cmake;-GUnix Makefiles;/home/jason.b/Desktop/Github/NICE/cpp/eigen/src/eigen'

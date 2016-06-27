@@ -1,0 +1,1 @@
+/usr/bin/c++  -fPIC -O3 -DNDEBUG   -shared -Wl,-soname,libNice.so -o libNice.so CMakeFiles/Nice.dir/src/core/cpu_operations.cc.o CMakeFiles/Nice.dir/src/util/util.cc.o 
