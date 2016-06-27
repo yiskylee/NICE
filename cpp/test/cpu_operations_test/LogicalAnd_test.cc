@@ -35,7 +35,7 @@
 #include "include/matrix.h"
 
 // This is a test fixture class containing NICE matrices
-class MyTest : public ::testing::Test {  // Inherits from testing::Test
+class LogicalAndTest : public ::testing::Test {  // Inherits from testing::Test
  public:
   Nice::Matrix<bool> _matrix_nice_1;  // First boolean Matrix
   Nice::Matrix<bool> _matrix_nice_2;  // Second boolean Matrix
@@ -51,7 +51,7 @@ class MyTest : public ::testing::Test {  // Inherits from testing::Test
 
 // This test checks the functionality of LogicalAnd by creating two matrices
 // And comparing the result of the function with the and of each element
-TEST_F(MyTest, LogicalAndFunctionality) {
+TEST_F(LogicalAndTest, LogicalAndFunctionality) {
   this->_matrix_nice_1.setRandom(3, 3);  // Random bool values
   this->_matrix_nice_2.setRandom(3, 3);
   this->_logical_and.setZero(3, 3);  // Set the _logical_and to zero
@@ -67,7 +67,7 @@ TEST_F(MyTest, LogicalAndFunctionality) {
 
 // This test checks the functionality of LogicalAnd by creating two matrices
 // Of different size and asserting a death when the function is called
-TEST_F(MyTest, LogicalAndTestWrongSize) {
+TEST_F(LogicalAndTest, LogicalAndTestWrongSize) {
   this->_matrix_nice_1.setRandom(3, 4);  // Random bool values
   this->_matrix_nice_2.setRandom(2, 3);
   this->_logical_and.setZero(3, 3);
