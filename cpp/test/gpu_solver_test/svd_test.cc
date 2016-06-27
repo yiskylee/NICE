@@ -12,7 +12,7 @@ TEST(SvdTest, floatTest) {
   Nice::GpuSvdSolver<float> gpu_svd; 
 
   // CPU SVD solver from eigen
-  Eigen::JacobiSVD<MatrixXf> cpu_svd
+  Eigen::JacobiSVD<Eigen::MatrixXf> cpu_svd;
 
   // Define the test matrix
   int row = 10;
