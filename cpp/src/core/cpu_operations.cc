@@ -74,7 +74,7 @@ Matrix<bool> CpuOperations<T>::LogicalNot(const Matrix<bool> &a) {
       b(r, c) = !b(r, c);
     }
   }
-  if (r == 0) {
+  if (b.rows() == 0 || b.cols() == 0) {
     throw std::invalid_argument("ERROR: EMPTY MATRIX AS ARGUMENT!");
   }
   return b;
@@ -88,7 +88,7 @@ Vector<bool> CpuOperations<T>::LogicalNot(const Vector<bool> &a) {
   for (i = 0; i < b.size(); ++i) {
     b(i) = !b(i);
   }
-  if (i == 0) {
+  if (a.size() == 0) {
     throw std::invalid_argument("ERROR: EMPTY VECTOR AS ARGUMENT!");
     }
   return b;

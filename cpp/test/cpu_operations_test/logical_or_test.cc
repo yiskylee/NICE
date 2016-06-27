@@ -27,16 +27,17 @@
 #include "include/cpu_operations.h"
 #include "include/matrix.h"
 
-
-Nice::Matrix<bool> m1;  // First boolean matrix
-Nice::Matrix<bool> m2;  // Second boolean matrix
-Nice::Matrix<bool> m3;  // Stores LogicalOr return value for matrices
-Nice::Vector<bool> v1;  // First boolean vector
-Nice::Vector<bool> v2;  // Second boolean vector
-Nice::Vector<bool> v3;  // Stores LogicalOr return value for vectors
-
+class LogicalOrTest : public ::testing::Test {
+ public:
+  Nice::Matrix<bool> m1;  // First boolean matrix
+  Nice::Matrix<bool> m2;  // Second boolean matrix
+  Nice::Matrix<bool> m3;  // Stores LogicalOr return value for matrices
+  Nice::Vector<bool> v1;  // First boolean vector
+  Nice::Vector<bool> v2;  // Second boolean vector
+  Nice::Vector<bool> v3;  // Stores LogicalOr return value for vectors
+};
 // Tests the basic functionality of LogicalOr for Matrices
-TEST(LogicalOrTest, LogicalOrMatrixFunctionality) {
+TEST_F(LogicalOrTest, LogicalOrMatrixFunctionality) {
   m1.setRandom(4, 4);
   m2.setRandom(4, 4);
   m3 = Nice::CpuOperations<bool>::LogicalOr(m1, m2);
@@ -45,14 +46,14 @@ TEST(LogicalOrTest, LogicalOrMatrixFunctionality) {
 
 // Tests to see if LogicalOr for matrices throws an error when matrices are of
 // different sizes
-TEST(LogicalOrTest, LogicalOrMatrixDiffSize) {
+TEST_F(LogicalOrTest, LogicalOrMatrixDiffSize) {
   m1.setRandom(4, 4);
   m2.setRandom(4, 3);
   ASSERT_ANY_THROW(Nice::CpuOperations<bool>::LogicalOr(m1, m2));
 }
 
 // Tests the basic functionality of LogicalOr for Vectors
-TEST(LogicalOrTest, LogicalOrVectorFunctionality) {
+TEST_F(LogicalOrTest, LogicalOrVectorFunctionality) {
   v1.setRandom(4);
   v2.setRandom(4);
   v3 = Nice::CpuOperations<bool>::LogicalOr(v1, v2);
@@ -61,7 +62,7 @@ TEST(LogicalOrTest, LogicalOrVectorFunctionality) {
 
 // Tests to see if LogicalOr for vectors throws an error when vectors are of
 // different sizes
-TEST(LogicalOrTest, LogicalOrVectorDiffSize) {
+TEST_F(LogicalOrTest, LogicalOrVectorDiffSize) {
   v1.setRandom(4);
   v2.setRandom(3);
   ASSERT_ANY_THROW(Nice::CpuOperations<bool>::LogicalOr(v1, v2));

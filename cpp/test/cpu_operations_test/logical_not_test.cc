@@ -31,15 +31,17 @@
 #include "include/cpu_operations.h"
 #include "include/matrix.h"
 
-Nice::Matrix<bool> ma(4, 4);  // Matrix for method input
-Nice::Matrix<bool> mb(4, 4);  // Expected Matrix output
-Nice::Matrix<bool> mc;  // Will not be assigned value
-Nice::Vector<bool> va(4);  // Vector for method input
-Nice::Vector<bool> vb(4);  // Vector for method output
-Nice::Vector<bool> vc;  // will not be assigned value
-
+class LogicalNotTest :public ::testing::Test {
+ public:
+  Nice::Matrix<bool> ma;  // Matrix for method input
+  Nice::Matrix<bool> mb;  // Expected Matrix output
+  Nice::Vector<bool> va;  // Vector for method input
+  Nice::Vector<bool> vb;  // Vector for method output
+};
 // A general test to see if LogicalNot works on Matrices
-TEST(LogicalNotTest, LogicalNotMatrix) {
+TEST_F(LogicalNotTest, LogicalNotMatrix) {
+  ma.resize(4, 4);
+  mb.resize(4, 4);
   ma << 1, 1, 1, 1,
         1, 1, 1, 1,
         0, 0, 0, 0,
@@ -52,16 +54,18 @@ TEST(LogicalNotTest, LogicalNotMatrix) {
 }
 
 // A general test to see if LogicalNot works on Vectors
-TEST(LogicalNotTest, LogicalNotVector) {
+TEST_F(LogicalNotTest, LogicalNotVector) {
+  va.resize(4);
+  vb.resize(4);
   va << 1, 0, 1, 0;
   vb << 0, 1, 0, 1;
   ASSERT_TRUE(vb.isApprox(Nice::CpuOperations<bool>::LogicalNot(va)));
 }
 // Test to see if LogicalNot for Matrices will throw an exception
-TEST(LogicalNotTest, MatrixNoValue) {
-  ASSERT_ANY_THROW(Nice::CpuOperations<bool>::LogicalNot(mc));
+TEST_F(LogicalNotTest, MatrixNoValue) {
+  ASSERT_ANY_THROW(Nice::CpuOperations<bool>::LogicalNot(ma));
 }
 // Test to see if LogicalNot for Vectors will throw an exception
-TEST(LogicalNotTest, VectorNoValue) {
-  ASSERT_ANY_THROW(Nice::CpuOperations<bool>::LogicalNot(vc));
+TEST_F(LogicalNotTest, VectorNoValue) {
+  ASSERT_ANY_THROW(Nice::CpuOperations<bool>::LogicalNot(va));
 }
