@@ -23,7 +23,7 @@ TEST(SvdTest, floatTest) {
   gpu_svd.Compute(m);
 
   // Solve in CPU
-  cpu_svd.compute(m);
+  cpu_svd.compute(m, Eigen::ComputeFullU|Eigen::ComputeFullV);
 
   // Get GPU SVD results
   Nice::Vector<float> gpu_s = gpu_svd.SingularValues(); 
