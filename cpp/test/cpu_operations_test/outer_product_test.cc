@@ -23,9 +23,10 @@
 
 
 
-#include "include/cpu_operations.h"
+
 #include <unistd.h>
 #include <iostream>
+#include "include/cpu_operations.h"
 #include "Eigen/Dense"
 #include "gtest/gtest.h"
 #include "include/matrix.h"
@@ -48,10 +49,11 @@ class OuterProductTest : public ::testing::Test {
 typedef ::testing::Types<int, float, double> MyTypes;
 TYPED_TEST_CASE(OuterProductTest, MyTypes);
 
+// Tests a regular outer product operation
 TYPED_TEST(OuterProductTest, BasicFunctionality) {
   this->v1.resize(2);
   this->v2.resize(3);
-  this->m1.resize(2,3);
+  this->m1.resize(2, 3);
   this->v1 << 1, 2;
   this->v2 << 3, 4, 5;
   this->m1 << 3, 4, 5,
@@ -60,3 +62,7 @@ TYPED_TEST(OuterProductTest, BasicFunctionality) {
   ASSERT_TRUE(this->m1.isApprox(this->m2));
 }
 
+// Tests with empty vectors
+TYPED_TEST(OuterProductTest, EmptyVectors) {
+  ASSERT_DEATH(this->OuterProducter(), ".*");
+}
