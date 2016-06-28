@@ -45,7 +45,7 @@ class OuterProductTest : public ::testing::Test {
   }
 };
 
-typedef ::testing::Types<int> MyTypes;
+typedef ::testing::Types<int, float, double> MyTypes;
 TYPED_TEST_CASE(OuterProductTest, MyTypes);
 
 TYPED_TEST(OuterProductTest, BasicFunctionality) {
@@ -59,3 +59,4 @@ TYPED_TEST(OuterProductTest, BasicFunctionality) {
   this->OuterProducter();
   ASSERT_TRUE(this->m1.isApprox(this->m2));
 }
+

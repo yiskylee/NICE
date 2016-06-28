@@ -138,6 +138,11 @@ Matrix<bool> CpuOperations<T>::LogicalAnd(const Matrix<bool> &a,
 // This function returns the outer product of he two passed in vectors
 template<typename T>
 Matrix<T> CpuOperations<T>::OuterProduct(const Vector<T> &a, const Vector<T> &b) {
+  if (a.size() == 0 || b.size == 0) {
+    std::cout << std::endl << "ERROR: EMPTY VECTOR AS ARGUMENT!"
+    << std::endl << std::endl;
+    exit(-1);
+  }
   return a * b.transpose();
 }
 
