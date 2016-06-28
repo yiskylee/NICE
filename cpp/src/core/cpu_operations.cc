@@ -122,23 +122,25 @@ T CpuOperations<T>::Rank(const Matrix<T> &a) {
 
 // This function returns the dot product of two vectors
 template<typename T>
-T CpuOperations<T>::DotProduct(const Vector<T> &a, 
-                                          const Vector<T> &b) {
-  // Checks to see if the size of the two vectors are not the same
-  if (a.size() != b.size()) {
-    std::cerr << "VECTORS ARE NOT THE SAME SIZE!";
-    exit(1);  
-  }
-  // Checks to see if both vectors contain at least one element
-  // Only one vector is checked because it is known that both 
-  // vectors are the same size
-  else if (a.size() == 0) {
+T CpuOperations<T>::DotProduct(const Vector<T> &a,
+                               const Vector<T> &b) {
+    // Checks to see if the size of the two vectors are not the same
+    if (a.size() != b.size()) {
+      std::cerr << "VECTORS ARE NOT THE SAME SIZE!";
+      exit(1);
+
+    // Checks to see if both vectors contain at least one element
+    // Only one vector is checked because it is known that both
+    // vectors are the same size
+  } else if (a.size() == 0) {
     std::cerr << "VECTORS ARE EMPTY!";
     exit(1);
+
+    // If this point is reached then calculating the dot product
+    // of the two vectors is valid
+  } else {
+       return (a.dot(b));
   }
-  // If this point is reached then calculating the dot product
-  // of the two vectors is valid
-  return (a.dot(b));
 }
 
 // This function returns the logical AND of two boolean matrices
