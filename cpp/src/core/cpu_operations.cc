@@ -21,8 +21,8 @@
 // SOFTWARE.
 
 #include "include/cpu_operations.h"
-#include <stdexcept>
 #include <unistd.h>
+#include <stdexcept>
 #include <iostream>
 #include "Eigen/Dense"
 #include "include/matrix.h"
@@ -48,7 +48,9 @@ template<typename T>
 Matrix<bool> CpuOperations<T>::LogicalOr(const Matrix<bool> &a,
                                         const Matrix<bool> &b) {
   if ((a.rows() != b.rows()) || (a.cols() != b.cols())) {
-    throw std::invalid_argument("ERROR: MATRICES ARE NOT THE SAME SIZE!");
+    std::cout << std::endl << "ERROR: MATRICES ARE NOT THE SAME SIZE!"
+    << std::endl << std::endl;
+      exit(-1);  // Exits the program
   }
   return (a.array() || b.array());
 }
@@ -59,7 +61,9 @@ template<typename T>
 Vector<bool> CpuOperations<T>::LogicalOr(const Vector<bool> &a,
                                         const Vector<bool> &b) {
   if ( a.size() != b.size() ) {
-    throw std::invalid_argument("ERROR: VECTORS ARE NOT THE SAME SIZE!");
+    std::cout << std::endl << "ERROR: VECTORS ARE NOT THE SAME SIZE!"
+    << std::endl << std::endl;
+    exit(-1);  // Exits the program
   }
   return (a.array() || b.array());
 }
@@ -75,7 +79,9 @@ Matrix<bool> CpuOperations<T>::LogicalNot(const Matrix<bool> &a) {
     }
   }
   if (b.rows() == 0 || b.cols() == 0) {
-    throw std::invalid_argument("ERROR: EMPTY MATRIX AS ARGUMENT!");
+    std::cout << std::endl << "ERROR: EMPTY MATRIX AS ARGUMENT!"
+    << std::endl << std::endl;
+    exit(-1);  // Exits the program
   }
   return b;
 }
@@ -89,7 +95,9 @@ Vector<bool> CpuOperations<T>::LogicalNot(const Vector<bool> &a) {
     b(i) = !b(i);
   }
   if (a.size() == 0) {
-    throw std::invalid_argument("ERROR: EMPTY VECTOR AS ARGUMENT!");
+    std::cout << std::endl << "ERROR: EMPTY VECTOR AS ARGUMENT!"
+    << std::endl << std::endl;
+    exit(-1);  // Exits the program
     }
   return b;
 }
