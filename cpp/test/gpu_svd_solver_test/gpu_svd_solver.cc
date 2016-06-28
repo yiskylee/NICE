@@ -20,7 +20,7 @@ void verify(Nice::Matrix<float> m, Nice::Matrix<float> m_ref, char c, char n){
 }
 TEST(Compute, GpuSvdCorrect) {
   Nice::GpuSvdSolver<float> SvdSolver; 
-  Nice::Matrix<float> m1 = Eigen::MatrixXf::Random(2,2); 
+  Nice::Matrix<float> m1(2,2); 
   m1 << 0,2,1,3;
   std::cout << "Matrix 1 is:" << std::endl;
   std::cout << m1 << std::endl;
@@ -31,7 +31,7 @@ TEST(Compute, GpuSvdCorrect) {
   Nice::Matrix<float> m1_U     = SvdSolver.MatrixU();
   Nice::Matrix<float> m1_V     = SvdSolver.MatrixV();  
 
-  Nice::Vector<float> m1_S_ref(1,2); m1_S_ref <<  3.70246 , 0.540182;
+  Nice::Vector<float> m1_S_ref(2,1); m1_S_ref <<  3.70246 , 0.540182;
   Nice::Matrix<float> m1_U_ref(2,2); m1_U_ref << -0.525731, -0.850651, -0.850651, 0.525731; 
   Nice::Matrix<float> m1_V_ref(2,2); m1_V_ref << -0.229753, -0.973249, 0.973249, -0.229753; 
  

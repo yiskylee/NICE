@@ -21,7 +21,7 @@ void GpuSvdSolver<T>::Compute(const Matrix<T> &A){
     	gpuErrchk(cudaMemcpy(d_A, h_A, M * N * sizeof(T), cudaMemcpyHostToDevice));
 
    	// --- host side SVD results space 
-    	s_.resize(1,N); 
+    	s_.resize(M,1); 
     	u_.resize(M,M); 
     	v_.resize(N,N); 
 
