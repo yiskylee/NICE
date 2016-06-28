@@ -82,7 +82,7 @@ Matrix<bool> CpuOperations<T>::LogicalAnd(const Matrix<bool> &a,
 
 // This function returns the outer product of he two passed in vectors
 template<typename T>
-Matrix<T> OuterProduct(const Vector<T> &a, const Vector<T> &b) {
+Matrix<T> CpuOperations<T>::OuterProduct(const Vector<T> &a, const Vector<T> &b) {
   return a * b.transpose();
 }
 

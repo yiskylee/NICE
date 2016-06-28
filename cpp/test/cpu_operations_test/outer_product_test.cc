@@ -27,18 +27,35 @@
 #include <unistd.h>
 #include <iostream>
 #include "Eigen/Dense"
+#include "gtest/gtest.h"
 #include "include/matrix.h"
 #include "include/vector.h"
 
-// Value parameterized tests
+// Typed Tests
+template<class T>
 class OuterProductTest : public ::testing::Test {
-  virtual void SetUp() {
-    v1 << 1,2,3,4;
+ public :
+  Nice::Vector<T> v1;
+  Nice::Vector<T> v2;
+  Nice::Matrix<T> m1;
+  Nice::Matrix<T> m2;
+
+  void OuterProducter() {
+    m2 = Nice::CpuOperations<T>::OuterProduct(this->v1, this->v2);
   }
 };
 
-  Nice::Vector<T> v1(4);
+typedef ::testing::Types<int> MyTypes;
+TYPED_TEST_CASE(OuterProductTest, MyTypes);
 
-  TEST_F(OuterProductTest, Basic) {
-    EXPECT_EQ(4, v1.size());
-  }
+TYPED_TEST(OuterProductTest, BasicFunctionality) {
+  this->v1.resize(2);
+  this->v2.resize(3);
+  this->m1.resize(2,3);
+  this->v1 << 1, 2;
+  this->v2 << 3, 4, 5;
+  this->m1 << 3, 4, 5,
+              6, 8, 10;
+  this->OuterProducter();
+  ASSERT_TRUE(this->m1.isApprox(this->m2));
+}
