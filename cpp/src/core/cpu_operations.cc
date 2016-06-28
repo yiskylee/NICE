@@ -51,6 +51,10 @@ Matrix<bool> CpuOperations<T>::LogicalOr(const Matrix<bool> &a,
     std::cout << std::endl << "ERROR: MATRICES ARE NOT THE SAME SIZE!"
     << std::endl << std::endl;
       exit(-1);  // Exits the program
+  } else if (b.rows() == 0 || b.cols() == 0 || a.rows() == 0 || a.cols() == 0) {
+    std::cout << std::endl << "ERROR: EMPTY MATRIX AS ARGUMENT!"
+    << std::endl << std::endl;
+    exit(-1);  // Exits the program
   }
   return (a.array() || b.array());
 }
@@ -62,6 +66,10 @@ Vector<bool> CpuOperations<T>::LogicalOr(const Vector<bool> &a,
                                         const Vector<bool> &b) {
   if ( a.size() != b.size() ) {
     std::cout << std::endl << "ERROR: VECTORS ARE NOT THE SAME SIZE!"
+    << std::endl << std::endl;
+    exit(-1);  // Exits the program
+  } else if (a.size() == 0 || b.size() == 0) {
+    std::cout << std::endl << "ERROR: EMPTY VECTOR AS ARGUMENT!"
     << std::endl << std::endl;
     exit(-1);  // Exits the program
   }
