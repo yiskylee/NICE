@@ -28,10 +28,10 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<cuda_runtime_api.h>
-#include<iostream>
-#include "build/include/cuda_runtime.h"
-#include "build/include/device_launch_parameters.h"
+#include<cuda_runtime.h>
+#include<device_launch_parameters.h>
 #include<cusolverDn.h>
+#include<iostream>
 #include "Eigen/Dense"
 #include "include/matrix.h"
 #include "include/vector.h"
