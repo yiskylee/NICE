@@ -151,6 +151,18 @@ Matrix<bool> CpuOperations<T>::LogicalAnd(const Matrix<bool> &a,
   // Will return a matrix due to implicit conversion
 }
 
+// Returns the frobenius norm of the matrix
+template<typename T>
+T CpuOperations<T>::FrobeniusNorm(const Matrix<T> &a) {
+  if (a.rows() == 0 || a.cols() == 0) {
+    std::cout << std::endl << "ERROR: EMPTY MATRIX AS ARGUMENT!"
+    << std::endl << std::endl;
+    exit(-1);  // Exits the program
+  } else {
+    return a.norm();
+  }
+}
+
 template class CpuOperations<int>;
 template class CpuOperations<float>;
 template class CpuOperations<double>;
