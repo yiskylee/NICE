@@ -38,7 +38,7 @@
 
 // This is a template test fixture class containing Eigen and NICE matrices
 template<class T>  // Template
-class MyTest : public ::testing::Test {  // Inherits from testing::Test
+class TransposeTest : public ::testing::Test {  // Inherits from testing::Test
  public:  // Members must be public to be accessed by tests
   Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> matrix_eigen_;
   Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> transpose_eigen_;
@@ -56,10 +56,10 @@ class MyTest : public ::testing::Test {  // Inherits from testing::Test
 // Establishes a test case with the given types, Char and short types will
 // Throw compiler errors
 typedef ::testing::Types<int, float, double> MyTypes;
-TYPED_TEST_CASE(MyTest, MyTypes);
+TYPED_TEST_CASE(TransposeTest, MyTypes);
 
 // Checks to see if each element is transposed using the Transpose() function
-TYPED_TEST(MyTest, IsTransposed) {
+TYPED_TEST(TransposeTest, IsTransposed) {
   // this-> refers to the test fixture object
   this->matrix_nice_.setRandom(3, 3);  // Assign random values
   this->Transposer();
@@ -73,7 +73,7 @@ TYPED_TEST(MyTest, IsTransposed) {
 
 // Transposes a matrix instantiated with random values and compares
 // Each element of the Eigen and Nice matrices
-TYPED_TEST(MyTest, TransposeEigen) {
+TYPED_TEST(TransposeTest, TransposeEigen) {
   this->matrix_nice_.setRandom(3, 3);  // Random values
   this->matrix_eigen_ = this->matrix_nice_;  // Set matrix_eigen_=matrix_nice_
   this->Transposer();  // Transpose matrices
@@ -87,7 +87,7 @@ TYPED_TEST(MyTest, TransposeEigen) {
 
 // This function uses a non-square matrix size and compares the number of rows
 // And Columns after the transposition
-TYPED_TEST(MyTest, DifferentShapes) {
+TYPED_TEST(TransposeTest, DifferentShapes) {
   this->matrix_nice_.setRandom(1, 4);
   this->matrix_eigen_ = this->matrix_nice_;
   this->Transposer();
@@ -99,7 +99,7 @@ TYPED_TEST(MyTest, DifferentShapes) {
 
 // This function uses a matrix with size (0,2) and compares the number of rows
 // And Columns after the transposition
-TYPED_TEST(MyTest, TransposeZeroRows) {
+TYPED_TEST(TransposeTest, TransposeZeroRows) {
   this->matrix_nice_.setRandom(0, 2);
   this->matrix_eigen_ = this->matrix_nice_;
   this->Transposer();
