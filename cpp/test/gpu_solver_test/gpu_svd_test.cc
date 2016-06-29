@@ -41,7 +41,7 @@
 
 // This is a template test fixture class containing test matrices
 template<class T>  // Template
-class GpuSvdSolverTest : public ::testing::Test {  // Inherits from testing::Test
+class GpuSvdSolverTest : public ::testing::Test {  // Inherits testing::Test
  public:  // Members must be public to be accessed by tests
   Nice::Matrix<T> matrix_;
   Nice::Matrix<T> u_;
@@ -67,16 +67,13 @@ class GpuSvdSolverTest : public ::testing::Test {  // Inherits from testing::Tes
 
     // Solve in CPU
     cpu_svd.compute(matrix_, Eigen::ComputeFullU|Eigen::ComputeFullV);
- 
+
     // Get GPU SVD results
     s_ = cpu_svd.singularValues();
     u_ = cpu_svd.matrixU();
-    v_ = cpu_svd.matrixV(); 
-    
+    v_ = cpu_svd.matrixV();
   }
-  
 };
-
 // Establishes a test case with the given types, Char and short types will
 // Throw compiler errors
 typedef ::testing::Types<float, double> dataTypes;
@@ -87,11 +84,11 @@ TYPED_TEST(GpuSvdSolverTest, FuncionalityTest) {
   this->CreateTestData();
 
   // Test svd solver in Nice
-  Nice::GpuSvdSolver<TypeParam> gpu_svd; 
+  Nice::GpuSvdSolver<TypeParam> gpu_svd;
   gpu_svd.Compute(this->matrix_);
-  Nice::Vector<TypeParam> gpu_s = gpu_svd.SingularValues(); 
+  Nice::Vector<TypeParam> gpu_s = gpu_svd.SingularValues();
   Nice::Matrix<TypeParam> gpu_u = gpu_svd.MatrixU();
-  Nice::Matrix<TypeParam> gpu_v = gpu_svd.MatrixV();  
+  Nice::Matrix<TypeParam> gpu_v = gpu_svd.MatrixV();
 
   // Verify the result U
   for (int i = 0; i < this->row_; i++)
@@ -99,7 +96,7 @@ TYPED_TEST(GpuSvdSolverTest, FuncionalityTest) {
       EXPECT_NEAR(abs(this->u_(i)), abs(gpu_u(i)), 0.001);
 
   // Verify the result V
-  //for (int i = 0; i < this->row_; i++)
+  // for (int i = 0; i < this->row_; i++)
   //  for (int i = 0; i < this->col_; i++)
   //    EXPECT_NEAR(abs(this->v_(i)), abs(gpu_v(i)), 0.001);
 

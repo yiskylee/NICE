@@ -23,38 +23,36 @@
 #ifndef CPP_INCLUDE_GPU_SVD_SOLVER_H_
 #define CPP_INCLUDE_GPU_SVD_SOLVER_H_
 
-#include "cuda_runtime.h"
-#include "device_launch_parameters.h"
-#include "Eigen/Dense"
+
 #include<unistd.h>
 #include<stdio.h>
-#include<iostream>
 #include<stdlib.h>
-#include<stdio.h>
-#include<cusolverDn.h>
 #include<cuda_runtime_api.h>
+#include<iostream>
+#include "build/include/cuda_runtime.h"
+#include "build/include/device_launch_parameters.h"
+#include<cusolverDn.h>
+#include "Eigen/Dense"
 #include "include/matrix.h"
 #include "include/vector.h"
 #include "include/gpu_util.h"
-
-
 
 namespace Nice {
 
 template<typename T>
 class GpuSvdSolver {
- private: 
-   Matrix<T> u_; 
-   Matrix<T> v_; 
-   Vector<T> s_; 
+ private:
+  Matrix<T> u_;
+  Matrix<T> v_;
+  Vector<T> s_;
  public:
-   GpuSvdSolver(){}
-   void      Compute(const Matrix<T> &A);
-   Matrix<T> MatrixU() const              { return u_; }
-   Matrix<T> MatrixV() const              { return v_; }
-   Vector<T> SingularValues() const       { return s_; }
+  GpuSvdSolver() {}
+  void      Compute(const Matrix<T> &A);
+  Matrix<T> MatrixU() const              { return u_; }
+  Matrix<T> MatrixV() const              { return v_; }
+  Vector<T> SingularValues() const       { return s_; }
 };
-}
+}  // namespace Nice
 
 #endif  // CPP_INCLUDE_GPU_SVD_SOLVER_H_
 

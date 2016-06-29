@@ -29,9 +29,9 @@
 // All tests are made using a templated test fixture which attempts
 // Integer, float, and double data types
 
-#include "include/svd_solver.h"
-#include <iostream>
 #include <stdio.h>
+#include <iostream>
+#include "include/svd_solver.h"
 #include "Eigen/Dense"
 #include "gtest/gtest.h"
 #include "include/matrix.h"
@@ -39,7 +39,7 @@
 
 // This is a template test fixture class containing test matrices
 template<class T>  // Template
-class CpuSvdSolverTest : public ::testing::Test {  // Inherits from testing::Test
+class CpuSvdSolverTest : public ::testing::Test {  // Inherits testing::Test
  public:  // Members must be public to be accessed by tests
   Nice::Matrix<T> matrix_;
   Nice::Matrix<T> u_;
@@ -77,7 +77,6 @@ class CpuSvdSolverTest : public ::testing::Test {  // Inherits from testing::Tes
     s_.resize(row_);
     s_ << 4162.54, 2461.32, 1620.37, 1136.40, 265.90;
   }
-  
 };
 
 // Establishes a test case with the given types, Char and short types will
