@@ -143,9 +143,8 @@ Matrix<bool> CpuOperations<T>::LogicalAnd(const Matrix<bool> &a,
                                           const Matrix<bool> &b) {
   // Checks to see that the number of rows and columns are the same
   if ((a.rows() != b.rows()) || (a.cols() != b.cols())) {
-    std::cout << std::endl << "ERROR: MATRICES ARE NOT THE SAME SIZE!"
-    << std::endl << std::endl;
-    exit(-1);  // Exits the program
+    std::cout << "/nERROR: MATRICES ARE NOT THE SAME SIZE!/n/n";
+    exit(1);  // Exits the program
   }
   return (a.array() && b.array());
   // Will return a matrix due to implicit conversion
@@ -156,8 +155,7 @@ template<typename T>
 Matrix<T> CpuOperations<T>::OuterProduct(const Vector<T> &a,
                                          const Vector<T> &b) {
   if (a.size() == 0 || b.size() == 0) {
-    std::cout << std::endl << "ERROR: EMPTY VECTOR AS ARGUMENT!"
-    << std::endl << std::endl;
+    std::cout << std::endl << "ERROR: EMPTY VECTOR AS ARGUMENT!" << std::endl << std::endl;
     exit(-1);
   }
   return a * b.transpose();
