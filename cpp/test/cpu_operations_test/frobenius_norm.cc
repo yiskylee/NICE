@@ -30,25 +30,32 @@
 #include "gtest/gtest.h"
 #include "include/cpu_operations.h"
 #include "include/matrix.h"
+#include "cmath"
 
 template<class T>
-class FrobeniusNorm :public ::testing::Test {
+class FrobeniusNormTest : public ::testing::Test {
  public:
   Nice::Matrix<T> m1;
 
   int FrobeniusNormer() {
     return Nice::CpuOperations<T>::FrobeniusNorm(m1);
   }
+};
+
+
+typedef ::testing::Types<int, float, double> MyTypes;
+TYPED_TEST_CASE(FrobeniusNormTest, MyTypes);
+
+// Tests the basic functionality of FrobeniusNorm
+TYPED_TEST(FrobeniusNormTest, BasicFuntionality) {
+  this->m1.resize(3,3);
+  this->m1 << 1, -1, 1,
+              1, 1, 1,
+              1, 1, -1;
+  EXPECT_EQ(3, this->FrobeniusNormer());
 }
 
-typedef ::testing::Types<int> MyTypes;
-TYPED_TEST_CASE(FrobeniusNorm, MyTypes);
-
-
-TYPED_TEST(FrobeniusNorm, BasicFuntionality) {
-  m1.resize(3,3);
-  m1 << 1, 2, 3,
-        1, 2, 3,
-        1, 2, 3;
-  EXPECT_EQ(42, this->FrobeniusNormer());
+// Passes in an empty matrix to FrobeniusNorm and expects an exit
+TYPED_TEST(FrobeniusNormTest, MatrixNoValue) {
+  ASSERT_DEATH(this->FrobeniusNormer(), ".*");
 }
