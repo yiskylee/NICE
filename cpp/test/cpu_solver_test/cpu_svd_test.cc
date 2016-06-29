@@ -29,17 +29,18 @@
 // All tests are made using a templated test fixture which attempts
 // Integer, float, and double data types
 
-#include <stdio.h>
 #include <iostream>
-#include "include/svd_solver.h"
+#include <cmath>
+
 #include "Eigen/Dense"
 #include "gtest/gtest.h"
+#include "include/svd_solver.h"
 #include "include/matrix.h"
 #include "include/vector.h"
 
 // This is a template test fixture class containing test matrices
 template<class T>  // Template
-class CpuSvdSolverTest : public ::testing::Test {  // Inherits testing::Test
+class CpuSvdSolverTest : public ::testing::Test {
  public:  // Members must be public to be accessed by tests
   Nice::Matrix<T> matrix_;
   Nice::Matrix<T> u_;
@@ -94,6 +95,16 @@ TYPED_TEST(CpuSvdSolverTest, FuncionalityTest) {
   Nice::Matrix<TypeParam> result_u = svd_solver.MatrixU();
   Nice::Matrix<TypeParam> result_v = svd_solver.MatrixV();
   Nice::Vector<TypeParam> result_s = svd_solver.SingularValues();
+
+  // Verify the result U
+  for (int i = 0; i < this->row_; i++)
+    for (int i = 0; i < this->col_; i++)
+      EXPECT_NEAR(abs(this->u_(i)), abs(result_u(i)), 0.001);
+
+  // Verify the result V
+  for (int i = 0; i < this->row_; i++)
+    for (int i = 0; i < this->col_; i++)
+      EXPECT_NEAR(abs(this->v_(i)), abs(result_v(i)), 0.001);
 
   // Verify the result S
   for (int i = 0; i < this->row_; i++)
