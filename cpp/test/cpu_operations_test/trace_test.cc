@@ -20,51 +20,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "include/util.h"
-#include <cstdlib>
-#include <fstream>
+#include <stdio.h>
+#include <stdlib.h>
 #include <iostream>
-#include <algorithm>
-#include <string>
+#include "Eigen/Dense"
+#include "gtest/gtest.h"
+#include "include/cpu_operations.h"
 #include "include/matrix.h"
-#include "include/vector.h"
 
-namespace Nice {
-
-namespace util {
-
-template<typename T>
-Matrix<T> FromFile(const std::string &input_file_path, int num_rows,
-                   int num_cols) {
-  std::ifstream input_file(input_file_path, std::ifstream::in);
-  Matrix<T> m(num_rows, num_cols);
-  if (input_file) {
-    for (int i = 0; i < num_rows; i++)
-      for (int j = 0; j < num_cols; j++)
-        input_file >> m(i, j);
-    return m;
-  } else {
-    std::cerr << "Cannot open file " + input_file_path + ", exiting...";
-    exit(1);
-  }
+TEST(Trace, TraceMatrix) {
+Eigen::MatrixXi a(4, 4);
+a << 8, 5, 3, 4,
+     2, 4, 8, 9,
+     7, 6, 1, 0,
+     9, 2, 5, 7;
+int correct_ans = 20;
+int calc_ans = Nice::CpuOperations<int>::Trace(a);
+EXPECT_EQ(correct_ans, calc_ans);
 }
-
-// Template instantiation
-template Matrix<int> FromFile<int>(const std::string &input_file_path,
-                                   int num_rows, int num_cols);
-
-}  // namespace util
-}  // namespace Nice
-
-//}
-//  std::ifstream input_file(input_file_path);
-//  if (input_file) {
-////    for (int i = 0; i < num_rows_; i++)
-////      for (int j = 0; j < num_cols_; j++)
-////        input_file >> (*matrix_)(i, j);
-//    input_file.close();
-//    return true;
-//  } else
-//    return false;
-//  }
-

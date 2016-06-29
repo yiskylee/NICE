@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.9)
-set(PROJECT_NAME_STR Nice)
+set(PROJECT_NAME Nice)
 project(Nice)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
 include(eigen)
@@ -7,10 +7,15 @@ include(check)
 find_package(Threads REQUIRED)
 
 set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_MACOSX_RPATH 1)
 if(CMAKE_COMPILER_IS_GNUCXX)
     add_definitions(-Wall -ansi -Wno-deprecated -pthread -std=c++11)
 endif()
- 
+
+add_definitions(-std=c++11)
+#if("${CMAKE_COMPILER_ID}" STREQUAL "Clang")
+#    add_definitions(-std=c++11)
+#endif()
 message(STATUS "Eigen path: " ${EIGEN_INCLUDE_DIRS})
 set(COMMON_INCLUDES ${PROJECT_SOURCE_DIR})
 include_directories(${EIGEN_INCLUDE_DIRS})
@@ -38,10 +43,10 @@ if (CUDA_FOUND)
 
   # Add NICE library together with CUDA
   cuda_include_directories(${CUDA_INCLUDE_DIR})
-  cuda_add_library(${PROJECT_NAME_STR} SHARED ${SOURCES})
-  add_dependencies(${PROJECT_NAME_STR} ${CUDA_SOLVER_LIBRARY})
-  add_dependencies(${PROJECT_NAME_STR} ${CUDA_LIBRARIES})
-  target_link_libraries(${PROJECT_NAME_STR} ${CUDA_SOLVER_LIBRARY} ${CUDA_LIBRARIES})
+  cuda_add_library(${PROJECT_NAME} SHARED ${SOURCES})
+  add_dependencies(${PROJECT_NAME} ${CUDA_SOLVER_LIBRARY})
+  add_dependencies(${PROJECT_NAME} ${CUDA_LIBRARIES})
+  target_link_libraries(${PROJECT_NAME} ${CUDA_SOLVER_LIBRARY} ${CUDA_LIBRARIES})
 
 else()
 
@@ -52,11 +57,11 @@ else()
   message(STATUS "Source files: " ${SOURCES})
 
   # Add NICE library
-  add_library(${PROJECT_NAME_STR} SHARED ${SOURCES})
+  add_library(${PROJECT_NAME} SHARED ${SOURCES})
 
 endif()
 
-add_dependencies(${PROJECT_NAME_STR} eigen)
+add_dependencies(${PROJECT_NAME} eigen)
 
 # Test
 option (enable-test "Compile all Nice unit tests" ON)
@@ -64,7 +69,7 @@ option (enable-test "Compile all Nice unit tests" ON)
 if (enable-test)
   include(gtest)
   enable_testing()
-  set(PROJECT_TEST_NAME ${PROJECT_NAME_STR}_test)
+  set(PROJECT_TEST_NAME ${PROJECT_NAME}_test)
   include_directories(${GTEST_INCLUDE_DIRS})
 
   # Add source files according to machine setup
@@ -73,12 +78,14 @@ if (enable-test)
          ${PROJECT_SOURCE_DIR} 
          test/cpu_operations_test/*.cc
          test/util_test/*.cc
+         test/cpu_solver_test/*.cc
          test/gpu_solver_test/*.cc)
   else()
     file(GLOB_RECURSE TEST_SRC_FILES RELATIVE 
          ${PROJECT_SOURCE_DIR} 
          test/cpu_operations_test/*.cc
-         test/util_test/*.cc)
+         test/util_test/*.cc
+         test/cpu_solver_test/*.cc)
   endif()
   message(STATUS "Test case source files: " ${TEST_SRC_FILES})
 
@@ -86,7 +93,7 @@ if (enable-test)
 
   add_dependencies(${PROJECT_TEST_NAME} googletest)
   add_dependencies(${PROJECT_TEST_NAME} eigen)
-  add_dependencies(${PROJECT_TEST_NAME} ${PROJECT_NAME_STR})
+  add_dependencies(${PROJECT_TEST_NAME} ${PROJECT_NAME})
 
   # Add dependencies and link libraries according to machine setup
   if (CUDA_FOUND)
@@ -95,15 +102,15 @@ if (enable-test)
     target_link_libraries(${PROJECT_TEST_NAME}
         ${CUDA_SOLVER_LIBRARY}
         ${CUDA_LIBRARIES}
-        ${PROJECT_SOURCE_DIR}/build/libNice.so
         ${GTEST_LIBS_DIR}/libgtest.a
         ${GTEST_LIBS_DIR}/libgtest_main.a
+        ${PROJECT_NAME}
         )
   else()
     target_link_libraries(${PROJECT_TEST_NAME}
-        ${PROJECT_SOURCE_DIR}/build/libNice.so
         ${GTEST_LIBS_DIR}/libgtest.a
         ${GTEST_LIBS_DIR}/libgtest_main.a
+        ${PROJECT_NAME}
         )
   endif()
 

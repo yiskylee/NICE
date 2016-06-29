@@ -27,15 +27,12 @@
 #include "include/matrix.h"
 #include "include/vector.h"
 
-
-
 namespace Nice {
 
 // Abstract class of common matrix operation interface
 template<typename T>
 class CpuOperations {
  public:
-  static Matrix<T> FromFile(std::string input_file_path);
   static Matrix<T> Transpose(const Matrix<T> &a);
   static Vector<T> Transpose(const Vector<T> &a);
   static Matrix<T> Multiply(const Matrix<T> &a, const T &scalar);
@@ -44,9 +41,9 @@ class CpuOperations {
   static Matrix<T> Add(const Matrix<T> &a, const Matrix<T> &b);
   static Matrix<T> Subtract(const Matrix<T> &a, const T &scalar);
   static Matrix<T> Subtract(const Matrix<T> &a, const Matrix<T> &b);
-  static Matrix<T> LogicalAnd(const Matrix<T> &a, const Matrix<T> &b);
-  static Matrix<T> LogicalOr(const Matrix<T> &a, const Matrix<T> &b);
-  static Matrix<T> LogicalNot(const Matrix<T> &a, const Matrix<T> &b);
+  static Matrix<bool> LogicalOr(const Matrix<bool> &a, const Matrix<bool> &b);
+  static Matrix<bool> LogicalNot(const Matrix<bool> &a);
+  static Matrix<bool> LogicalAnd(const Matrix<bool> &a, const Matrix<bool> &b);
   static Matrix<T> Inverse(const Matrix<T> &a);
   static Matrix<T> Norm(const int &p = 2, const int &axis = 0);
   static T Determinant(const Matrix<T> &a);
@@ -56,10 +53,8 @@ class CpuOperations {
   static T DotProduct(const Vector<T> &a, const Vector<T> &b);
   static Matrix<T> OuterProduct(const Vector<T> &a, const Vector<T> &b);
   static Vector<T> LogicalAnd(const Vector<T> &a, const Vector<T> &b);
-  static Vector<T> LogicalOr(const Vector<T> &a, const Vector<T> &b);
-  static Vector<T> LogicalNot(const Vector<T> &a, const Vector<T> &b);
+  static Vector<bool> LogicalOr(const Vector<bool> &a, const Vector<bool> &b);
+  static Vector<bool> LogicalNot(const Vector<bool> &a);
 };
 }  // namespace Nice
-
-
 #endif  // CPP_INCLUDE_CPU_OPERATIONS_H_

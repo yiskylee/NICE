@@ -20,51 +20,48 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "include/util.h"
-#include <cstdlib>
-#include <fstream>
+#include "include/svd_solver.h"
 #include <iostream>
-#include <algorithm>
-#include <string>
+#include "Eigen/Dense"
+#include "Eigen/SVD"
 #include "include/matrix.h"
 #include "include/vector.h"
 
 namespace Nice {
 
-namespace util {
+template<typename T>
+SvdSolver<T>::SvdSolver()
+:
+svd_() {}
 
 template<typename T>
-Matrix<T> FromFile(const std::string &input_file_path, int num_rows,
-                   int num_cols) {
-  std::ifstream input_file(input_file_path, std::ifstream::in);
-  Matrix<T> m(num_rows, num_cols);
-  if (input_file) {
-    for (int i = 0; i < num_rows; i++)
-      for (int j = 0; j < num_cols; j++)
-        input_file >> m(i, j);
-    return m;
-  } else {
-    std::cerr << "Cannot open file " + input_file_path + ", exiting...";
-    exit(1);
-  }
+void SvdSolver<T>::Compute(const Matrix<T> &a) {
+  svd_.compute(a, Eigen::ComputeFullU|Eigen::ComputeFullV);
 }
 
-// Template instantiation
-template Matrix<int> FromFile<int>(const std::string &input_file_path,
-                                   int num_rows, int num_cols);
+template<typename T>
+Matrix<T> SvdSolver<T>::MatrixU() const {
+  return svd_.matrixU();
+}
 
-}  // namespace util
-}  // namespace Nice
+template<typename T>
+Matrix<T> SvdSolver<T>::MatrixV() const {
+  return svd_.matrixV();
+}
 
-//}
-//  std::ifstream input_file(input_file_path);
-//  if (input_file) {
-////    for (int i = 0; i < num_rows_; i++)
-////      for (int j = 0; j < num_cols_; j++)
-////        input_file >> (*matrix_)(i, j);
-//    input_file.close();
-//    return true;
-//  } else
-//    return false;
-//  }
+template<typename T>
+Vector<T> SvdSolver<T>::SingularValues() const {
+  return svd_.singularValues();
+}
 
+template<typename T>
+int SvdSolver<T>::Rank(const Matrix<T> &a) {
+  Compute(a);
+  return svd_.rank();
+}
+
+
+template class SvdSolver<float>;
+template class SvdSolver<double>;
+
+}  //  namespace Nice
