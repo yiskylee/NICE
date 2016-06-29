@@ -4,6 +4,7 @@
  *  Created on: Jun 16, 2016
  *      Author: cpurc002
  */
+/*
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 
@@ -14,7 +15,7 @@
 #include<stdio.h>
 #include<cusolverDn.h>
 #include<cuda_runtime_api.h>
-
+*/
 /***********************/
 /* CUDA ERROR CHECKING */
 /***********************/
