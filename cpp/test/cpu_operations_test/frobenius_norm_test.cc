@@ -48,7 +48,7 @@ TYPED_TEST_CASE(FrobeniusNormTest, MyTypes);
 
 // Tests the basic functionality of FrobeniusNorm
 TYPED_TEST(FrobeniusNormTest, BasicFuntionality) {
-  this->m1.resize(3,3);
+  this->m1.resize(3, 3);
   this->m1 << 1, -1, 1,
               1, 1, 1,
               1, 1, -1;
