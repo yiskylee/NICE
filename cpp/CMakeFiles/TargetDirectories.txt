@@ -1,5 +1,0 @@
-/home/jason.b/Desktop/Github/NICE/cpp/CMakeFiles/Nice.dir
-/home/jason.b/Desktop/Github/NICE/cpp/CMakeFiles/Nice_test.dir
-/home/jason.b/Desktop/Github/NICE/cpp/CMakeFiles/check.dir
-/home/jason.b/Desktop/Github/NICE/cpp/CMakeFiles/eigen.dir
-/home/jason.b/Desktop/Github/NICE/cpp/CMakeFiles/googletest.dir

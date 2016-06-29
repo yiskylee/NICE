@@ -21,7 +21,7 @@ set(COMMON_INCLUDES ${PROJECT_SOURCE_DIR})
 include_directories(${COMMON_INCLUDES})
 include_directories(${EIGEN_INCLUDE_DIRS})
 
-set(SOURCES src/core/cpu_operations.cc src/util/util.cc)
+set(SOURCES src/core/cpu_operations.cc src/util/util.cc src/core/svd_solver.cc)
 
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
 add_dependencies(${PROJECT_NAME} eigen)
@@ -34,7 +34,10 @@ if (enable-test)
   enable_testing()
   set(PROJECT_TEST_NAME ${PROJECT_NAME}_test)
   include_directories(${GTEST_INCLUDE_DIRS})
-  file(GLOB TEST_SRC_FILES ${PROJECT_SOURCE_DIR}/test/cpu_operations_test/*.cc ${PROJECT_SOURCE_DIR}/test/util_test/*.cc)
+  file(GLOB TEST_SRC_FILES ${PROJECT_SOURCE_DIR}/test/cpu_operations_test/*.cc 
+                           ${PROJECT_SOURCE_DIR}/test/util_test/*.cc
+                           ${PROJECT_SOURCE_DIR}/test/cpu_solver_test/*.cc)
+  #file(GLOB TEST_SRC_FILES ${PROJECT_SOURCE_DIR}/test *.cc)
   add_executable(${PROJECT_TEST_NAME} ${TEST_SRC_FILES})
   add_dependencies(${PROJECT_TEST_NAME} googletest)
   add_dependencies(${PROJECT_TEST_NAME} eigen)

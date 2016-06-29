@@ -20,32 +20,49 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef CPP_INCLUDE_SVD_SOLVER_H_
-#define CPP_INCLUDE_SVD_SOLVER_H_
 
+
+
+
+#include <unistd.h>
+#include <iostream>
+#include "include/cpu_operations.h"
+#include "Eigen/Dense"
+#include "gtest/gtest.h"
 #include "include/matrix.h"
 #include "include/vector.h"
 
-#include "Eigen/SVD"
+// Typed Tests
+template<class T>
+class OuterProductTest : public ::testing::Test {
+ public :
+  Nice::Vector<T> v1;
+  Nice::Vector<T> v2;
+  Nice::Matrix<T> m1;
+  Nice::Matrix<T> m2;
 
-
-namespace Nice {
-
-// Abstract class of svd solver
-template<typename T>
-class SvdSolver {
- private:
-  Eigen::JacobiSVD<Matrix<T>> svd_;
- public:
-  SvdSolver();
-  void Compute(const Matrix<T> &a);
-  Matrix<T> MatrixU() const;
-  Matrix<T> MatrixV() const;
-  Vector<T> SingularValues() const;
-  int Rank(const Matrix<T> &a);
+  void OuterProducter() {
+    m2 = Nice::CpuOperations<T>::OuterProduct(this->v1, this->v2);
+  }
 };
 
-}  // namespace Nice
+typedef ::testing::Types<int, float, double> MyTypes;
+TYPED_TEST_CASE(OuterProductTest, MyTypes);
 
-#endif  // CPP_INCLUDE_SVD_SOLVER_H_
+// Tests a regular outer product operation
+TYPED_TEST(OuterProductTest, BasicFunctionality) {
+  this->v1.resize(2);
+  this->v2.resize(3);
+  this->m1.resize(2, 3);
+  this->v1 << 1, 2;
+  this->v2 << 3, 4, 5;
+  this->m1 << 3, 4, 5,
+              6, 8, 10;
+  this->OuterProducter();
+  ASSERT_TRUE(this->m1.isApprox(this->m2));
+}
 
+// Tests with empty vectors
+TYPED_TEST(OuterProductTest, EmptyVectors) {
+  ASSERT_DEATH(this->OuterProducter(), ".*");
+}
