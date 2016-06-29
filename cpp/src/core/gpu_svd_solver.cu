@@ -95,18 +95,18 @@ void GpuSvdSolver<T>::Compute(const Matrix<T> &A){
 
 	int devInfo_h = 0;
 	gpuErrchk(cudaMemcpy(&devInfo_h, devInfo, sizeof(int), cudaMemcpyDeviceToHost));
-	std::cout << "devInfo = " << devInfo_h << "\n";
+	//std::cout << "devInfo = " << devInfo_h << "\n";
 
-	switch(stat){
-    case CUSOLVER_STATUS_SUCCESS:           std::cout << "SVD computation success\n";                       break;
-    case CUSOLVER_STATUS_NOT_INITIALIZED:   std::cout << "Library cuSolver not initialized correctly\n";    break;
-    case CUSOLVER_STATUS_INVALID_VALUE:     std::cout << "Invalid parameters passed\n";                     break;
-    case CUSOLVER_STATUS_INTERNAL_ERROR:    std::cout << "Internal operation failed\n";                     break;
-    default: break;
-  }
+	//switch(stat){
+  //  case CUSOLVER_STATUS_SUCCESS:           std::cout << "SVD computation success\n";                       break;
+  //  case CUSOLVER_STATUS_NOT_INITIALIZED:   std::cout << "Library cuSolver not initialized correctly\n";    break;
+  //  case CUSOLVER_STATUS_INVALID_VALUE:     std::cout << "Invalid parameters passed\n";                     break;
+  //  case CUSOLVER_STATUS_INTERNAL_ERROR:    std::cout << "Internal operation failed\n";                     break;
+  //  default: break;
+  //}
 
-	if (devInfo_h == 0 && stat == CUSOLVER_STATUS_SUCCESS) std::cout    << "SVD successful\n\n";
-	std::cout<<std::endl;
+	//if (devInfo_h == 0 && stat == CUSOLVER_STATUS_SUCCESS) std::cout    << "SVD successful\n\n";
+	//std::cout<<std::endl;
 
 	// --- Moving the results from device to host
 	gpuErrchk(cudaMemcpy(&s_(0,0), d_S, N * sizeof(T), cudaMemcpyDeviceToHost));

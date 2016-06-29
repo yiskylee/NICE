@@ -62,7 +62,6 @@ class GpuSvdSolverTest : public ::testing::Test {  // Inherits from testing::Tes
 
     // Create matrix
     matrix_ = Nice::Matrix<T>::Random(row_, col_);
-
     // CPU SVD
     Eigen::JacobiSVD< Nice::Matrix<T> > cpu_svd;
 
@@ -88,10 +87,11 @@ TYPED_TEST(GpuSvdSolverTest, FuncionalityTest) {
   this->CreateTestData();
 
   // Test svd solver in Nice
-  Nice::GpuSvdSolver<float> gpu_svd; 
-  Nice::Vector<float> gpu_s = gpu_svd.SingularValues(); 
-  Nice::Matrix<float> gpu_u = gpu_svd.MatrixU();
-  Nice::Matrix<float> gpu_v = gpu_svd.MatrixV();  
+  Nice::GpuSvdSolver<TypeParam> gpu_svd; 
+  gpu_svd.Compute(this->matrix_);
+  Nice::Vector<TypeParam> gpu_s = gpu_svd.SingularValues(); 
+  Nice::Matrix<TypeParam> gpu_u = gpu_svd.MatrixU();
+  Nice::Matrix<TypeParam> gpu_v = gpu_svd.MatrixV();  
 
   // Verify the result U
   for (int i = 0; i < this->row_; i++)
