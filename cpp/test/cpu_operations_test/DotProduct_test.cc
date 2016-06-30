@@ -21,8 +21,13 @@
 // SOFTWARE.
 
 
-// This file tests the cpu_operations.cc DotProduct() function .............
-
+// This file tests the cpu_operations.cc DotProduct() function. First, it tests
+// the functionality to ensure the dot product works properly by manually
+// calculating the dot product and comparing it to the result of the function
+// which calculated dot product with the Eigen built-in functionality. Then
+// the two cases where incorrect function uses will result in fatal error are
+// tested. This involves trying to calculate the dot product of two vectors of
+// different size or trying to calculate the dot product of empty vectors.
 
 #include <stdio.h>
 #include <iostream>
@@ -39,10 +44,15 @@ class DotProductTest : public ::testing::Test {
 };
 
 TEST_F(DotProductTest, DotProductFunctionality) {
-  this->vec1.setRandom(3);
-  this->vec2.setRandom(3);
+  int vec_size = 15;
+  this->vec1.setRandom(vec_size);
+  this->vec2.setRandom(vec_size);
+
   result = Nice::CpuOperations<int>::DotProduct(vec1, vec2);
-  int correct = ((vec1[0]*vec2[0])+(vec1[1]*vec2[1])+(vec1[2]*vec2[2]));
+  int correct = 0;
+  for (int i = 0; i < vec_size; ++i)
+    correct += (vec1[i]*vec2[i]);
+
   EXPECT_EQ(result, correct);
 }
 
