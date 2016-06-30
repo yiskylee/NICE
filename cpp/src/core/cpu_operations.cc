@@ -139,7 +139,7 @@ T CpuOperations<T>::DotProduct(const Vector<T> &a,
     // If this point is reached then calculating the dot product
     // of the two vectors is valid
   } else {
-       return (a.dot(b));
+      return (a.dot(b));
   }
 }
 
