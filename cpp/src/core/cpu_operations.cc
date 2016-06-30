@@ -155,7 +155,7 @@ Matrix<bool> CpuOperations<T>::LogicalAnd(const Matrix<bool> &a,
 template<typename T>
 T CpuOperations<T>::FrobeniusNorm(const Matrix<T> &a) {
   if (a.rows() == 0 || a.cols() == 0) {
-    std::cout << std::endl << "ERROR: EMPTY MATRIX AS ARGUMENT!"
+    std::cerr << std::endl << "ERROR: EMPTY MATRIX AS ARGUMENT!"
     << std::endl << std::endl;
     exit(-1);  // Exits the program
   } else {
@@ -168,7 +168,8 @@ template<typename T>
 Matrix<T> CpuOperations<T>::OuterProduct(const Vector<T> &a,
                                          const Vector<T> &b) {
   if (a.size() == 0 || b.size() == 0) {
-    std::cerr << std::endl << "ERROR: EMPTY VECTOR AS ARGUMENT!" << std::endl << std::endl;
+    std::cerr << std::endl << "ERROR: EMPTY VECTOR AS ARGUMENT!"
+    << std::endl << std::endl;
     exit(1);
   }
   return a * b.transpose();
