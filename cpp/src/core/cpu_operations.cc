@@ -48,13 +48,13 @@ template<typename T>
 Matrix<bool> CpuOperations<T>::LogicalOr(const Matrix<bool> &a,
                                         const Matrix<bool> &b) {
   if ((a.rows() != b.rows()) || (a.cols() != b.cols())) {
-    std::cout << std::endl << "ERROR: MATRICES ARE NOT THE SAME SIZE!"
+    std::cerr << std::endl << "ERROR: MATRICES ARE NOT THE SAME SIZE!"
     << std::endl << std::endl;
-      exit(-1);  // Exits the program
+      exit(1);  // Exits the program
   } else if (b.rows() == 0 || b.cols() == 0 || a.rows() == 0 || a.cols() == 0) {
-    std::cout << std::endl << "ERROR: EMPTY MATRIX AS ARGUMENT!"
+    std::cerr << std::endl << "ERROR: EMPTY MATRIX AS ARGUMENT!"
     << std::endl << std::endl;
-    exit(-1);  // Exits the program
+    exit(1);  // Exits the program
   }
   return (a.array() || b.array());
 }
@@ -65,13 +65,13 @@ template<typename T>
 Vector<bool> CpuOperations<T>::LogicalOr(const Vector<bool> &a,
                                         const Vector<bool> &b) {
   if ( a.size() != b.size() ) {
-    std::cout << std::endl << "ERROR: VECTORS ARE NOT THE SAME SIZE!"
+    std::cerr << std::endl << "ERROR: VECTORS ARE NOT THE SAME SIZE!"
     << std::endl << std::endl;
-    exit(-1);  // Exits the program
+    exit(1);  // Exits the program
   } else if (a.size() == 0 || b.size() == 0) {
-    std::cout << std::endl << "ERROR: EMPTY VECTOR AS ARGUMENT!"
+    std::cerr << std::endl << "ERROR: EMPTY VECTOR AS ARGUMENT!"
     << std::endl << std::endl;
-    exit(-1);  // Exits the program
+    exit(1);  // Exits the program
   }
   return (a.array() || b.array());
 }
@@ -87,9 +87,9 @@ Matrix<bool> CpuOperations<T>::LogicalNot(const Matrix<bool> &a) {
     }
   }
   if (b.rows() == 0 || b.cols() == 0) {
-    std::cout << std::endl << "ERROR: EMPTY MATRIX AS ARGUMENT!"
+    std::cerr << std::endl << "ERROR: EMPTY MATRIX AS ARGUMENT!"
     << std::endl << std::endl;
-    exit(-1);  // Exits the program
+    exit(1);  // Exits the program
   }
   return b;
 }
@@ -103,9 +103,9 @@ Vector<bool> CpuOperations<T>::LogicalNot(const Vector<bool> &a) {
     b(i) = !b(i);
   }
   if (a.size() == 0) {
-    std::cout << std::endl << "ERROR: EMPTY VECTOR AS ARGUMENT!"
+    std::cerr << std::endl << "ERROR: EMPTY VECTOR AS ARGUMENT!"
     << std::endl << std::endl;
-    exit(-1);  // Exits the program
+    exit(1);  // Exits the program
     }
   return b;
 }
@@ -143,7 +143,7 @@ Matrix<bool> CpuOperations<T>::LogicalAnd(const Matrix<bool> &a,
                                           const Matrix<bool> &b) {
   // Checks to see that the number of rows and columns are the same
   if ((a.rows() != b.rows()) || (a.cols() != b.cols())) {
-    std::cout << "/nERROR: MATRICES ARE NOT THE SAME SIZE!/n/n";
+    std::cerr << "/nERROR: MATRICES ARE NOT THE SAME SIZE!/n/n";
     exit(1);  // Exits the program
   }
   return (a.array() && b.array());
@@ -155,8 +155,8 @@ template<typename T>
 Matrix<T> CpuOperations<T>::OuterProduct(const Vector<T> &a,
                                          const Vector<T> &b) {
   if (a.size() == 0 || b.size() == 0) {
-    std::cout << std::endl << "ERROR: EMPTY VECTOR AS ARGUMENT!" << std::endl << std::endl;
-    exit(-1);
+    std::cerr << std::endl << "ERROR: EMPTY VECTOR AS ARGUMENT!" << std::endl << std::endl;
+    exit(1);
   }
   return a * b.transpose();
 }
