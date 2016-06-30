@@ -32,22 +32,16 @@
 
 #include <stdio.h>
 #include <iostream>
-
-#include <iostream>
 #include <cmath>
-
-
 #include "Eigen/Dense"
 #include "include/svd_solver.h"
 #include "gtest/gtest.h"
-#include "include/svd_solver.h"
 #include "include/matrix.h"
 #include "include/vector.h"
 
 // This is a template test fixture class containing test matrices
 template<class T>  // Template
 class CpuSvdSolverTest : public ::testing::Test {
-
   // Inherits from testing::Test
 
 
