@@ -106,6 +106,25 @@ Matrix<T> CpuOperations<T>::Multiply(const Matrix<T> &a, const Matrix<T> &b) {
     return a * b;
 }
 
+// Inverse of a matrix
+template<typename T>
+Matrix<T> Inverse(const Matrix<T> &a) {
+    // If the matrix is not sqaure it will not produce an inverse.
+    if (a.cols() != a.rows()) {
+      std::cerr << "MATRIX IS NOT A SQUARE MATRIX!";
+      exit(1);
+
+    // If the determinant of a matrix is 0, the matrix does not have an inverse.
+  } else if (a.determinant() == 0) {
+      std::cerr << "MATRIX DOES NOT HAVE AN INVERSE (DETERMINANT IS ZERO)!";
+      exit(1);
+
+    // If this point is reached then an inverse of the matrix exists.
+  } else {
+    return a.inverse();
+  }
+}
+
 // Trace of a matrix
 template<typename T>
 T CpuOperations<T>::Trace(const Matrix<T> &a) {
