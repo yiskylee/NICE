@@ -32,38 +32,33 @@
 
 namespace Nice {
 
-//template<typename T>
-//class SpectralClustering : public Model<T> {
-// public:
-//  Vector<unsigned long> FitPredict(const Matrix<T> &input_data,
-//                       int k);
-//};
-
 template<typename T>
 class SpectralClustering {
  public:
-  std::vector<unsigned long> FitPredict(const Matrix<T> &input_data, int k);
+  Vector<unsigned long> FitPredict(const Matrix<T> &input_data, int k);
 };
 
 template<typename T>
-std::vector<unsigned long> SpectralClustering<T>::FitPredict(
+Vector<unsigned long> SpectralClustering<T>::FitPredict(
     const Matrix<T> &input_data, int k) {
   int num_features = input_data.cols();
+  int num_samples = input_data.rows();
   typedef dlib::matrix<T> sample_type;
   typedef dlib::radial_basis_kernel<sample_type> kernel_type;
   std::vector<sample_type> samples;
   sample_type m;
-  m.set_size(2,1);
+  m.set_size(2, 1);
   for (long i = 0; i < 10; i++) {
     for (long j = 0; j < num_features; j++) {
       m(j) = input_data(i, j);
       samples.push_back(m);
     }
   }
-  std::vector<unsigned long> assignments = dlib::spectral_cluster(
-      kernel_type(0.1), samples, 3);
-//  Vector<unsigned long> v(assignments.data());
-//  Vector<unsigned long> v;
+  std::vector<unsigned long> results = dlib::spectral_cluster(kernel_type(0.1),
+                                                              samples, 3);
+  Vector<unsigned long> assignments(num_samples);
+  for (long i = 0; i < num_samples; i++)
+    assignments[i] = results[i];
   return assignments;
 }
 //template class SpectralClustering<int>;

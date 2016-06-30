@@ -19,7 +19,7 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-
+#include <iostream>
 #include "include/util.h"
 #include "gtest/gtest.h"
 #include "include/spectral_clustering.h"
@@ -27,14 +27,10 @@
 TEST(SpectralClusteringTest, SimpleTest) {
   Nice::Matrix<double> m = Nice::util::FromFile<double>(
       "../test/data_for_test/matrix_10_2.txt", 10, 2);
-  std::cout << m << std::endl;
   Nice::SpectralClustering<double> model;
-//  Nice::Vector<unsigned long> assignments(m.rows());
-  std::vector<unsigned long> assignments;
-  assignments = model.FitPredict(m, 3);
-  for (unsigned int i = 0; i < assignments.size(); i++)
-    std::cout << assignments[i];
-  Eigen::MatrixXd::Constant(0);
+  Nice::Vector<unsigned long> assignments = model.FitPredict(m, 3);
+//  for (int i = 0; i < assignments.rows(); i++)
+//    std::cout << assignments[i] << std::endl;
 }
 
 //TEST(SpectralClusteringTest, PrintRowTest) {

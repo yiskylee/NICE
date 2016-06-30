@@ -71,4 +71,3 @@ template Matrix<double> FromFile<double>(const std::string &input_file_path,
 //  } else
 //    return false;
 //  }
-
