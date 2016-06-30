@@ -52,6 +52,10 @@ Matrix<T> FromFile(const std::string &input_file_path, int num_rows,
 // Template instantiation
 template Matrix<int> FromFile<int>(const std::string &input_file_path,
                                    int num_rows, int num_cols);
+template Matrix<float> FromFile<float>(const std::string &input_file_path,
+                                   int num_rows, int num_cols);
+template Matrix<double> FromFile<double>(const std::string &input_file_path,
+                                   int num_rows, int num_cols);
 
 }  // namespace util
 }  // namespace Nice

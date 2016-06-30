@@ -24,10 +24,24 @@
 #include "gtest/gtest.h"
 #include "include/spectral_clustering.h"
 
-TEST(SpectralClusteringTest, simpleTest) {
-  Nice::Matrix<int> m = Nice::util::FromFile<int>(
+TEST(SpectralClusteringTest, SimpleTest) {
+  Nice::Matrix<double> m = Nice::util::FromFile<double>(
       "../test/data_for_test/matrix_10_2.txt", 10, 2);
-  Nice::SpectralClustering<int> model;
-  Nice::Vector<unsigned long> assignments = model.FitPredict(m, 3);
-  std::cout << assignments;
+  std::cout << m << std::endl;
+  Nice::SpectralClustering<double> model;
+//  Nice::Vector<unsigned long> assignments(m.rows());
+  std::vector<unsigned long> assignments;
+  assignments = model.FitPredict(m, 3);
+  for (unsigned int i = 0; i < assignments.size(); i++)
+    std::cout << assignments[i];
+  Eigen::MatrixXd::Constant(0);
 }
+
+//TEST(SpectralClusteringTest, PrintRowTest) {
+//  Eigen::MatrixXf m (4,4);
+//  m << 1,2,3,4,
+//      5,6,7,8,
+//      9,10,11,12,
+//      13,14,15,16;
+//  std::cout << "First Row?" << m[1];
+//}
