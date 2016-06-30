@@ -113,19 +113,19 @@ Vector<bool> CpuOperations<T>::LogicalNot(const Vector<bool> &a) {
 // Scalar-matrix multiplication
 template<typename T>
 Matrix<T> CpuOperations<T>::Multiply(const Matrix<T> &a, const T &scalar) {
-    return scalar * a;
+  return scalar * a;
 }
 
 // Matrix-matrix multiplication
 template<typename T>
 Matrix<T> CpuOperations<T>::Multiply(const Matrix<T> &a, const Matrix<T> &b) {
-    return a * b;
+  return a * b;
 }
 
 // Trace of a matrix
 template<typename T>
 T CpuOperations<T>::Trace(const Matrix<T> &a) {
-    return a.trace();
+  return a.trace();
 }
 
 /*
