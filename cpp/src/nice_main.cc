@@ -20,48 +20,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "include/svd_solver.h"
-#include <iostream>
-#include "Eigen/Dense"
-#include "Eigen/SVD"
 #include "include/matrix.h"
 #include "include/vector.h"
-
-namespace Nice {
-
-template<typename T>
-SvdSolver<T>::SvdSolver()
-:
-svd_() {}
-
-template<typename T>
-void SvdSolver<T>::Compute(const Matrix<T> &a) {
-  svd_.compute(a, Eigen::ComputeFullU|Eigen::ComputeFullV);
-}
-
-template<typename T>
-Matrix<T> SvdSolver<T>::MatrixU() const {
-  return svd_.matrixU();
-}
-
-template<typename T>
-Matrix<T> SvdSolver<T>::MatrixV() const {
-  return svd_.matrixV();
-}
-
-template<typename T>
-Vector<T> SvdSolver<T>::SingularValues() const {
-  return svd_.singularValues();
-}
-
-template<typename T>
-int SvdSolver<T>::Rank(const Matrix<T> &a) {
-  Compute(a);
-  return svd_.rank();
-}
+#include "include/cpu_operations.h"
+#include "include/gpu_operations.h"
+#include "include/svd_solver.h"
+#include "include/gpu_svd_solver.h"
+#include "include/util.h"
+#include "include/gpu_util.h"
 
 
-template class SvdSolver<float>;
-template class SvdSolver<double>;
-
-}  //  namespace Nice
+// Place holder

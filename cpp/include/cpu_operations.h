@@ -24,6 +24,7 @@
 #define CPP_INCLUDE_CPU_OPERATIONS_H_
 
 #include <string>
+#include <iostream>
 #include "include/matrix.h"
 #include "include/vector.h"
 
