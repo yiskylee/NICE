@@ -31,39 +31,49 @@
 #include "gtest/gtest.h"
 #include "include/cpu_operations.h"
 #include "include/matrix.h"
+#include "include/vector.h"
 
+template<class T>
 class InverseTest : public ::testing::Test {
  public:
-  Nice::Matrix<int> input;
-  Nice::Matrix<int> output;
-  Nice::Matrix<int> correct;
+  Nice::Matrix<T> input;
+  Nice::Matrix<T> output;
+  Nice::Matrix<T> correct;
+
+  void GetInverse() {
+    output = Nice::CpuOperations<T>::Inverse(input);
+  }
 };
 
-TEST_F(InverseTest, InverseFunctionality) {
-  this->input = Nice::Matrix<int>::Zero(3, 3);
-  this->input << 1, 2, 3,
-                 0, 1, 4,
-                 5, 6, 0;
-  output = Nice::CpuOperations<int>::Inverse(input);
-  this->correct = Nice::Matrix<int>::Zero(3, 3);
-  this->correct << -24,  18,  5,
-                    20, -15, -4,
-                    -5,   4,  1;
-  for (int i = 0; i < 3; i++) {
-    for (int j = 0; j < 3; j++) {
-      EXPECT_EQ(output[i][j], correct[i][j]);
-    }
-  }
-}
 
-TEST_F(InverseTest, SingularMatrix) {
-  this->input = Nice::Matrix<int>::Zero(2, 2);
-  this->input << 1, 1,
-                 1, 1;
-  ASSERT_DEATH(Nice::CpuOperations<int>::Inverse(input), ".*");
-}
+typedef ::testing::Types<float, double> MyTypes;
+TYPED_TEST_CASE(InverseTest, MyTypes);
 
-TEST_F(InverseTest, NonSquareMatrix) {
-  this->input = Nice::MAtrix<int>::SetRandom(2, 3);
-  ASSERT_DEATH(Nice::CpuOperations<int>::Inverse(input), ".*");
-}
+//TYPED_TEST(InverseTest, InverseFunctionality) {
+//  this->input.setRandom(3, 3);
+//  this->GetInverse();
+
+//}
+//  this->input << 1, 2, 3,
+//                 0, 1, 4,
+//                 5, 6, 0;
+//  this->correct.setZero(3, 3);
+//  this->correct << -24,  18,  5,
+//                    20, -15, -4,
+//                    -5,   4,  1;
+//  for (int i = 0; i < 3; i++) {
+//    for (int j = 0; j < 3; j++) {
+//      EXPECT_EQ(this->output(i, j), this->correct(i, j));
+//    }
+//  }
+//}
+//
+//TYPED_TEST(InverseTest, SingularMatrix) {
+//  this->input.setConstant(2, 2, 10);
+//  ASSERT_DEATH(this->GetInverse(), ".*");
+//}
+//
+//TYPED_TEST(InverseTest, NonSquareMatrix) {
+//  this->input.setRandom(2, 3);
+//  ASSERT_DEATH(this->GetInverse(), ".*");
+//}
