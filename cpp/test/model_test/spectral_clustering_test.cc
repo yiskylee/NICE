@@ -29,6 +29,7 @@ TEST(SpectralClusteringTest, SimpleTest) {
       "../test/data_for_test/matrix_10_2.txt", 10, 2);
   Nice::SpectralClustering<double> model;
   Nice::Vector<unsigned long> assignments = model.FitPredict(m, 3);
+  std::cout << assignments;
 //  for (int i = 0; i < assignments.rows(); i++)
 //    std::cout << assignments[i] << std::endl;
 }

@@ -28,7 +28,6 @@
 //#include "include/model.h"
 #include <vector>
 #include "dlib/clustering.h"
-#include "include/matrix.h"
 
 namespace Nice {
 
