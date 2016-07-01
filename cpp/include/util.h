@@ -23,13 +23,14 @@
 #ifndef CPP_INCLUDE_UTIL_H_
 #define CPP_INCLUDE_UTIL_H_
 
-#include <string>
-#include "include/matrix.h"
-#include "include/vector.h"
 #include <cstdlib>
+#include <string>
 #include <fstream>
 #include <iostream>
 #include <algorithm>
+
+#include "include/matrix.h"
+#include "include/vector.h"
 
 namespace Nice {
 

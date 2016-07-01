@@ -21,6 +21,8 @@
 // SOFTWARE.
 #ifndef CPP_INCLUDE_GPU_UTIL_H_
 #define CPP_INCLUDE_GPU_UTIL_H_
+
+#ifdef NEED_CUDA
 void gpuAssert(cudaError_t code, const char *file,
                int line, bool abort = true) {
   if (code != cudaSuccess) {
@@ -30,4 +32,6 @@ void gpuAssert(cudaError_t code, const char *file,
     }
 }
 void gpuErrchk(cudaError_t ans) { gpuAssert((ans), __FILE__, __LINE__); }
+#endif  // NEED_CUDA
+
 #endif  // CPP_INCLUDE_GPU_UTIL_H_
