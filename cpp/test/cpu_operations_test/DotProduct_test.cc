@@ -34,34 +34,43 @@
 #include "Eigen/Dense"
 #include "gtest/gtest.h"
 #include "include/cpu_operations.h"
-#include "include/matrix.h"
+#include "include/vector.h"
 
+template<class T>
 class DotProductTest : public ::testing::Test {
  public:
-  Nice::Vector<int> vec1;
-  Nice::Vector<int> vec2;
-  int result;
+  Nice::Vector<T> vec1;
+  Nice::Vector<T> vec2;
+  T result;
+
+  void DotProd() {
+    result = Nice::CpuOperations<T>::DotProduct(this->vec1, this->vec2);
+  }
 };
 
-TEST_F(DotProductTest, DotProductFunctionality) {
+typedef ::testing::Types<int, float, double> MyTypes;
+TYPED_TEST_CASE(DotProductTest, MyTypes);
+
+TYPED_TEST(DotProductTest, DotProductFunctionality) {
   int vec_size = 15;
   this->vec1.setRandom(vec_size);
   this->vec2.setRandom(vec_size);
 
-  result = Nice::CpuOperations<int>::DotProduct(vec1, vec2);
-  int correct = 0;
+  TypeParam correct = 0;
   for (int i = 0; i < vec_size; ++i)
-    correct += (vec1[i]*vec2[i]);
+    correct += (this->vec1[i]*this->vec2[i]);
 
-  EXPECT_EQ(result, correct);
+  this->DotProd();
+
+  EXPECT_EQ(this->result, correct);
 }
 
-TEST_F(DotProductTest, DifferentSizeVectors) {
+TYPED_TEST(DotProductTest, DifferentSizeVectors) {
   this->vec1.setRandom(4);
   this->vec2.setRandom(2);
-  ASSERT_DEATH(Nice::CpuOperations<int>::DotProduct(vec1, vec2), ".*");
+  ASSERT_DEATH(this->DotProd(), ".*");
 }
 
-TEST_F(DotProductTest, EmptyVectors) {
-  ASSERT_DEATH(Nice::CpuOperations<int>::DotProduct(vec1, vec2), ".*");
+TYPED_TEST(DotProductTest, EmptyVectors) {
+  ASSERT_DEATH(this->DotProd(), ".*");
 }
