@@ -20,28 +20,48 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "include/cpu_operations.h"
-#include <unistd.h>
+#include "include/svd_solver.h"
 #include <iostream>
 #include "Eigen/Dense"
+#include "Eigen/SVD"
 #include "include/matrix.h"
 #include "include/vector.h"
 
 namespace Nice {
 
-// This function returns the transpose of a matrix
 template<typename T>
-Matrix<T> CpuOperations<T>::Transpose(const Matrix<T> &a) {
-  return a.transpose();  // Return transpose
+SvdSolver<T>::SvdSolver()
+:
+svd_() {}
+
+template<typename T>
+void SvdSolver<T>::Compute(const Matrix<T> &a) {
+  svd_.compute(a, Eigen::ComputeFullU|Eigen::ComputeFullV);
 }
 
 template<typename T>
-Vector<T> CpuOperations<T>::Transpose(const Vector<T> &a) {
-  return a.transpose();
+Matrix<T> SvdSolver<T>::MatrixU() const {
+  return svd_.matrixU();
 }
 
-template class CpuOperations<int>;
-template class CpuOperations<float>;
-template class CpuOperations<double>;
+template<typename T>
+Matrix<T> SvdSolver<T>::MatrixV() const {
+  return svd_.matrixV();
+}
+
+template<typename T>
+Vector<T> SvdSolver<T>::SingularValues() const {
+  return svd_.singularValues();
+}
+
+template<typename T>
+int SvdSolver<T>::Rank(const Matrix<T> &a) {
+  Compute(a);
+  return svd_.rank();
+}
+
+
+template class SvdSolver<float>;
+template class SvdSolver<double>;
 
 }  //  namespace Nice

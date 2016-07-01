@@ -1,6 +1,6 @@
 file(GLOB_RECURSE ALL_SOURCE_FILES 
     RELATIVE ${CMAKE_SOURCE_DIR}
-    src/*.cc include/*.h)
+    src/*.cc src/*.cu include/*.h test/*.cc)
 
 find_package(PythonInterp)
 if(NOT PYTHONINTERP_FOUND)

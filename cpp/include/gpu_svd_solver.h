@@ -20,16 +20,39 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef CPP_INCLUDE_MATRIX_H_
-#define CPP_INCLUDE_MATRIX_H_
+#ifndef CPP_INCLUDE_GPU_SVD_SOLVER_H_
+#define CPP_INCLUDE_GPU_SVD_SOLVER_H_
 
+
+#include<unistd.h>
+#include<stdio.h>
+#include<stdlib.h>
+#include<cuda_runtime_api.h>
+#include<cuda_runtime.h>
+#include<device_launch_parameters.h>
+#include<cusolverDn.h>
+#include<iostream>
 #include "Eigen/Dense"
+#include "include/matrix.h"
+#include "include/vector.h"
+#include "include/gpu_util.h"
 
 namespace Nice {
 
 template<typename T>
-using Matrix = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>;
-
+class GpuSvdSolver {
+ private:
+  Matrix<T> u_;
+  Matrix<T> v_;
+  Vector<T> s_;
+ public:
+  GpuSvdSolver() {}
+  void      Compute(const Matrix<T> &A);
+  Matrix<T> MatrixU() const              { return u_; }
+  Matrix<T> MatrixV() const              { return v_; }
+  Vector<T> SingularValues() const       { return s_; }
+};
 }  // namespace Nice
 
-#endif  // CPP_INCLUDE_MATRIX_H_
+#endif  // CPP_INCLUDE_GPU_SVD_SOLVER_H_
+

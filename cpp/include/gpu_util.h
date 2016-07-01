@@ -19,17 +19,15 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-
-#ifndef CPP_INCLUDE_MATRIX_H_
-#define CPP_INCLUDE_MATRIX_H_
-
-#include "Eigen/Dense"
-
-namespace Nice {
-
-template<typename T>
-using Matrix = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>;
-
-}  // namespace Nice
-
-#endif  // CPP_INCLUDE_MATRIX_H_
+#ifndef CPP_INCLUDE_GPU_UTIL_H_
+#define CPP_INCLUDE_GPU_UTIL_H_
+void gpuAssert(cudaError_t code, const char *file,
+               int line, bool abort = true) {
+  if (code != cudaSuccess) {
+    fprintf(stderr, "GPUassert: %s %s %d\n",
+            cudaGetErrorString(code), file, line);
+    if (abort) { exit(code); }
+    }
+}
+void gpuErrchk(cudaError_t ans) { gpuAssert((ans), __FILE__, __LINE__); }
+#endif  // CPP_INCLUDE_GPU_UTIL_H_

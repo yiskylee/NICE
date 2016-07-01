@@ -41,6 +41,7 @@ class SvdSolver {
   Matrix<T> MatrixU() const;
   Matrix<T> MatrixV() const;
   Vector<T> SingularValues() const;
+  int Rank(const Matrix<T> &a);
 };
 
 }  // namespace Nice
