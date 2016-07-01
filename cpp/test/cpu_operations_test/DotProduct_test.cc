@@ -44,7 +44,7 @@ class DotProductTest : public ::testing::Test {
   T result;
 
   void DotProd() {
-    result = Nice::CpuOperations<T>::DotProduct(this->vec1, this->vec2);
+    result = Nice::CpuOperations<T>::DotProduct(vec1, vec2);
   }
 };
 
