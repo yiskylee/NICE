@@ -20,39 +20,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef CPP_INCLUDE_GPU_SVD_SOLVER_H_
-#define CPP_INCLUDE_GPU_SVD_SOLVER_H_
 
-
-#include<unistd.h>
-#include<stdio.h>
-#include<stdlib.h>
-#include<cuda_runtime_api.h>
-#include<cuda_runtime.h>
-#include<device_launch_parameters.h>
-#include<cusolverDn.h>
-#include<iostream>
+#include "include/gpu_operations.h"
+// #include <stdio.h>
+// #include <stdlib.h>
+// #include <iostream>
 #include "Eigen/Dense"
-#include "include/matrix.h"
-#include "include/vector.h"
+#include "gtest/gtest.h"
+// #include "include/matrix.h"
+// #include "include/vector.h"
 
-
-namespace Nice {
-
-template<typename T>
-class GpuSvdSolver {
- private:
-  Matrix<T> u_;
-  Matrix<T> v_;
-  Vector<T> s_;
- public:
-  GpuSvdSolver() {}
-  void      Compute(const Matrix<T> &A);
-  Matrix<T> MatrixU() const              { return u_; }
-  Matrix<T> MatrixV() const              { return v_; }
-  Vector<T> SingularValues() const       { return s_; }
-};
-}  // namespace Nice
-
-#endif  // CPP_INCLUDE_GPU_SVD_SOLVER_H_
-
+TEST(GPU_Mutilply, MatrixMatrixMult) {
+  Nice::Matrix<float> a(3, 3);
+  a << 0.0, 1.0, 2.0,
+       3.0, 2.0, 1.0,
+       1.0, 3.0, 0.0;
+  Nice::Matrix<float> b(3, 3);
+  b << 1.0, 0.0, 2.0,
+       2.0, 1.0, 0.0,
+       0.0, 2.0, 1.0;
+  Nice::Matrix<float> correct_ans(3, 3);
+  correct_ans << 2.0, 5.0, 2.0,
+                 7.0, 4.0, 7.0,
+                 7.0, 3.0, 2.0;
+  Nice::Matrix<float> calc_ans = Nice::GpuOperations<float>::Multiply(a, b);
+    for (int i = 0; i < 3; ++i)
+      for (int j = 0; j < 3; ++j)
+        EXPECT_EQ(correct_ans(i, j), calc_ans(i, j));
+}

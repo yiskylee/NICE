@@ -40,13 +40,15 @@ if (CUDA_FOUND)
 
   # Find cusolver library
   find_library(CUDA_SOLVER_LIBRARY cusolver HINTS ${CUDA_TOOLKIT_ROOT_DIR}/lib64)
+  find_library(CUDA_BLAS_LIBRARY   cublas   HINTS ${CUDA_TOOLKIT_ROOT_DIR}/lib64)
 
   # Add NICE library together with CUDA
   cuda_include_directories(${CUDA_INCLUDE_DIR})
   cuda_add_library(${PROJECT_NAME} SHARED ${SOURCES})
   add_dependencies(${PROJECT_NAME} ${CUDA_SOLVER_LIBRARY})
+  add_dependencies(${PROJECT_NAME} ${CUDA_BLAS_LIBRARY})
   add_dependencies(${PROJECT_NAME} ${CUDA_LIBRARIES})
-  target_link_libraries(${PROJECT_NAME} ${CUDA_SOLVER_LIBRARY} ${CUDA_LIBRARIES})
+  target_link_libraries(${PROJECT_NAME} ${CUDA_SOLVER_LIBRARY} ${CUDA_BLAS_LIBRARY} ${CUDA_LIBRARIES})
 
 else()
 
@@ -79,7 +81,9 @@ if (enable-test)
          test/cpu_operations_test/*.cc
          test/util_test/*.cc
          test/cpu_solver_test/*.cc
-         test/gpu_solver_test/*.cc)
+         test/gpu_operations_test/*.cc
+         test/gpu_solver_test/*.cc
+         )
   else()
     file(GLOB_RECURSE TEST_SRC_FILES RELATIVE 
          ${PROJECT_SOURCE_DIR} 
@@ -98,9 +102,11 @@ if (enable-test)
   # Add dependencies and link libraries according to machine setup
   if (CUDA_FOUND)
     add_dependencies(${PROJECT_TEST_NAME} ${CUDA_SOLVER_LIBRARY})
+    add_dependencies(${PROJECT_TEST_NAME} ${CUDA_BLAS_LIBRARY})
     add_dependencies(${PROJECT_TEST_NAME} ${CUDA_LIBRARIES})
     target_link_libraries(${PROJECT_TEST_NAME}
-        ${CUDA_SOLVER_LIBRARY}
+#        ${CUDA_SOLVER_LIBRARY}
+        ${CUDA_BLAS_LIBRARY}
         ${CUDA_LIBRARIES}
         ${GTEST_LIBS_DIR}/libgtest.a
         ${GTEST_LIBS_DIR}/libgtest_main.a

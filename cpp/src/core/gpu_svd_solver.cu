@@ -21,9 +21,7 @@
 // SOFTWARE.
 
 #include "include/gpu_svd_solver.h"
-#include <type_traits>
-#include <typeinfo>
-
+#include "include/gpu_util.h"
 
 namespace Nice {
 cusolverStatus_t doSvd(cusolverDnHandle_t solver_handle,
