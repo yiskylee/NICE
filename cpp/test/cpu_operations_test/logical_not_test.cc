@@ -63,9 +63,9 @@ TEST_F(LogicalNotTest, LogicalNotVector) {
 }
 // Test to see if LogicalNot for Matrices will throw an exception
 TEST_F(LogicalNotTest, MatrixNoValue) {
-  ASSERT_ANY_THROW(Nice::CpuOperations<bool>::LogicalNot(ma));
+  ASSERT_DEATH(Nice::CpuOperations<bool>::LogicalNot(ma), ".*");
 }
 // Test to see if LogicalNot for Vectors will throw an exception
 TEST_F(LogicalNotTest, VectorNoValue) {
-  ASSERT_ANY_THROW(Nice::CpuOperations<bool>::LogicalNot(va));
+  ASSERT_DEATH(Nice::CpuOperations<bool>::LogicalNot(va), ".*");
 }
