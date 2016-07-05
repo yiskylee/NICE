@@ -21,6 +21,10 @@ set(COMMON_INCLUDES ${PROJECT_SOURCE_DIR})
 include_directories(${EIGEN_INCLUDE_DIRS})
 include_directories(${COMMON_INCLUDES}) 
 
+# Set source files
+file(GLOB_RECURSE SOURCES RELATIVE ${CMAKE_SOURCE_DIR} src/*.cc)
+message(STATUS "Source files: " ${SOURCES})
+
 # Locate CUDA package 
 find_package(CUDA)
 if (CUDA_FOUND)
@@ -28,15 +32,14 @@ if (CUDA_FOUND)
   # Print messge to indicate that CUDA exists
   message(STATUS "CUDA exists")
 
+  # Add defination
+  add_definitions(-DNEED_CUDA)
+
   #include the built-in findCUDA cmake scripts
   include(FindCUDA)
   
   # Set NVCC flags  
   set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -std=c++11 -O3 -gencode arch=compute_50,code=sm_50)
-
-  # Set source files
-  file(GLOB_RECURSE SOURCES RELATIVE ${CMAKE_SOURCE_DIR} src/*.cc src/*.cu)
-  message(STATUS "Source files: " ${SOURCES})
 
   # Find cusolver library
   find_library(CUDA_SOLVER_LIBRARY cusolver HINTS ${CUDA_TOOLKIT_ROOT_DIR}/lib64)
@@ -53,10 +56,6 @@ if (CUDA_FOUND)
 else()
 
   message(STATUS "CUDA not exists")
-
-  # Set source files
-  file(GLOB_RECURSE SOURCES RELATIVE ${CMAKE_SOURCE_DIR} src/*.cc)
-  message(STATUS "Source files: " ${SOURCES})
 
   # Add NICE library
   add_library(${PROJECT_NAME} SHARED ${SOURCES})
