@@ -19,18 +19,28 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-#ifdef NEED_CUDA
-#include "include/gpu_util.h"
-namespace Nice {
-void gpuAssert(cudaError_t code, const char *file,
-               int line, bool abort = true) {
-  if (code != cudaSuccess) {
-    fprintf(stderr, "GPUassert: %s %s %d\n",
-            cudaGetErrorString(code), file, line);
-    if (abort) { exit(code); }
-    }
-}
-void gpuErrchk(cudaError_t ans) { gpuAssert((ans), __FILE__, __LINE__); }
 
-}  // namespace Nice
-#endif  // Need Cuda
+
+#include "include/gpu_operations.h"
+// #include <stdio.h>
+// #include <stdlib.h>
+// #include <iostream>
+#include "Eigen/Dense"
+#include "gtest/gtest.h"
+// #include "include/matrix.h"
+// #include "include/vector.h"
+
+
+TEST(GPU_Vector_Vector_Dot_Product, Test_1) {
+  Nice::Vector<float> a(9);
+  a << 0.0, 1.0, 2.0,
+       3.0, 2.0, 1.0,
+       1.0, 3.0, 0.0;
+  Nice::Vector<float> b(9);
+  b << 1.0, 0.0, 2.0,
+       2.0, 1.0, 0.0,
+       0.0, 2.0, 1.0;
+  float correct_ans = 18;
+  float calc_ans = Nice::GpuOperations<float>::DotProduct(a, b);
+  EXPECT_EQ(correct_ans, calc_ans);
+}

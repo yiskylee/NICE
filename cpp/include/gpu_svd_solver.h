@@ -99,20 +99,30 @@ class GpuSvdSolver {
     T *d_U;         gpuErrchk(cudaMalloc(&d_U,      M * M * sizeof(T)));
     T *d_V;         gpuErrchk(cudaMalloc(&d_V,      N * N * sizeof(T)));
     T *d_S;         gpuErrchk(cudaMalloc(&d_S,      N *     sizeof(T)));
-    cusolverStatus_t stat;
+    cusolverStatus_t status;
 
     // --- CUDA solver initialization
     cusolverDnHandle_t solver_handle;
     cusolverDnCreate(&solver_handle);
-    stat = cusolverDnSgesvd_bufferSize(solver_handle, M, N, &work_size);
-    if (stat != CUSOLVER_STATUS_SUCCESS)
-      std::cout << "Initialization of cuSolver failed. \n";
+    status = cusolverDnSgesvd_bufferSize(solver_handle, M, N, &work_size);
+    if (status != CUSOLVER_STATUS_SUCCESS) {
+      std::cout << "Initialization of cuSolver failed." << std::endl;
+      cudaFree(d_S); cudaFree(d_U); cudaFree(d_V);
+      cusolverDnDestroy(solver_handle);
+      exit(1);
+    }
     T *work;    gpuErrchk(cudaMalloc(&work, work_size * sizeof(T)));
 
     // --- CUDA SVD execution
-    stat = doSvd(solver_handle, M, N,
+    status = doSvd(solver_handle, M, N,
                  d_A, d_S, d_U, d_V,
                  work, work_size, devInfo);
+    if (status != CUSOLVER_STATUS_SUCCESS) {
+      std::cerr << "GPU SVD Solver Internal Failure" << std::endl;
+      cudaFree(d_S); cudaFree(d_U); cudaFree(d_V);
+      cusolverDnDestroy(solver_handle);
+      exit(1);
+    }
     cudaDeviceSynchronize();
 
     int devInfo_h = 0;

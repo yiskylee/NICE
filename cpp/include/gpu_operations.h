@@ -22,6 +22,7 @@
 
 #ifndef CPP_INCLUDE_GPU_OPERATIONS_H_
 #define CPP_INCLUDE_GPU_OPERATIONS_H_
+#ifdef NEED_CUDA
 
 #include<cuda_runtime_api.h>
 #include<cuda_runtime.h>
@@ -43,7 +44,59 @@ template <typename T>
 class GpuOperations {
  public:
   static Matrix<T> Multiply(const Matrix<T> &a, const T &scalar);
-  static Matrix<T> Multiply(const Matrix<T> &a, const Matrix<T> &b);
+  static Matrix<T> Multiply(const Matrix<T> &a, const Matrix<T> &b) {
+    if (a.cols() == b.rows()) {
+      int m = a.rows();
+      int n = b.cols();
+      int k = a.cols();
+      int lda = m;
+      int ldb = k;
+      int ldc = m;
+
+      float alpha = 1.0;
+      float beta =  0.0;
+
+      const T * h_a = &a(0);
+      const T * h_b = &b(0);
+      Matrix<T> h_c(m, n);
+
+      T * d_a;  gpuErrchk(cudaMalloc(&d_a, m * k * sizeof(T)));
+      T * d_b;  gpuErrchk(cudaMalloc(&d_b, k * n * sizeof(T)));
+      T * d_c;  gpuErrchk(cudaMalloc(&d_c, m * n * sizeof(T)));
+
+      gpuErrchk(cudaMemcpy(d_a, h_a, m * k * sizeof(T),
+                           cudaMemcpyHostToDevice));
+      gpuErrchk(cudaMemcpy(d_b, h_b, k * n * sizeof(T),
+                           cudaMemcpyHostToDevice));
+
+      cublasStatus_t stat;
+      cublasHandle_t  handle;
+      cublasCreate(&handle);
+      stat = cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N,
+                         m, n, k,
+                         &alpha,
+                         d_a, lda,
+                         d_b, ldb,
+                         &beta,
+                         d_c, ldc);
+      if (stat != CUBLAS_STATUS_SUCCESS) {
+        std::cerr << "GPU Matrix Matrix Multiply Internal Failure" << std::endl;
+        cudaFree(d_a); cudaFree(d_b); cudaFree(d_c);
+        cublasDestroy(handle);
+        exit(1);
+      }
+      cudaDeviceSynchronize();
+      gpuErrchk(cudaMemcpy(&h_c(0, 0), d_c, m * n * sizeof(T),
+                           cudaMemcpyDeviceToHost));
+      cudaFree(d_a); cudaFree(d_b); cudaFree(d_c);
+      cublasDestroy(handle);
+      return h_c;
+    } else {
+      std::cerr << "Matricies in gpu matrix multiply's sizes aren't compatible"
+                << std::endl;
+      exit(1);
+    }
+  }
   static Matrix<T> Add(const Matrix<T> &a, const T &scalar);
   static Matrix<T> Add(const Matrix<T> &a, const Matrix<T> &b);
   static Matrix<T> Subtract(const Matrix<T> &a, const T &scalar);
@@ -54,57 +107,48 @@ class GpuOperations {
   static T Rank(const Matrix<T> &a);
   static T FrobeniusNorm(const Matrix<T> &a);
   static T Trace(const Matrix<T> &a);
-  static T DotProduct(const Vector<T> &a, const Vector<T> &b);
+  static T DotProduct(const Vector<T> &a, const Vector<T> &b) {
+    if (a.rows() == b.rows()) {
+      int n = a.rows();
+      int incx = 1;
+      int incy = 1;
+
+      const T * h_a = &a(0);
+      const T * h_b = &b(0);
+      T * h_c = reinterpret_cast<T *>(malloc(sizeof(T)));
+
+      T * d_a;  gpuErrchk(cudaMalloc(&d_a, n * sizeof(T)));
+      T * d_b;  gpuErrchk(cudaMalloc(&d_b, n * sizeof(T)));
+
+      gpuErrchk(cudaMemcpy(d_a, h_a, n * sizeof(T), cudaMemcpyHostToDevice));
+      gpuErrchk(cudaMemcpy(d_b, h_b, n * sizeof(T), cudaMemcpyHostToDevice));
+
+      cublasHandle_t  handle;
+      cublasCreate(&handle);
+      cublasStatus_t stat;
+
+      stat = cublasSdot(handle, n, d_a, incx, d_b, incy, h_c);
+
+      if (stat != CUBLAS_STATUS_SUCCESS) {
+        std::cerr << "GPU Vector Vector Dot Product Internal Failure"
+                  << std::endl;
+        cudaFree(d_a); cudaFree(d_b);
+        cublasDestroy(handle);
+        exit(1);
+      }
+      cudaDeviceSynchronize();
+      cudaFree(d_a); cudaFree(d_b);
+      cublasDestroy(handle);
+      return *h_c;
+      } else {
+        std::cerr << "Vector sizes in gpu vector vector dot product don't match"
+                  << std::endl;
+        exit(1);
+      }
+  }
   static Matrix<T> OuterProduct(const Vector<T> &a, const Vector<T> &b);
 };
-
-template <typename T>
-Matrix<T> GpuOperations<T>::Multiply(const Matrix<T> &a, const Matrix<T> &b) {
-  if (a.cols() == b.rows()) {
-  int m = a.rows();
-  int n = b.cols();
-  int k = a.cols();
-  int lda = m;
-  int ldb = k;
-  int ldc = m;
-
-  float alpha = 1.0;
-  float beta =  0.0;
-
-  const T * h_a = &a(0);
-  const T * h_b = &b(0);
-  Matrix<T> h_c(m, n);
-
-  T * d_a;  gpuErrchk(cudaMalloc(&d_a, m * k * sizeof(T)));
-  T * d_b;  gpuErrchk(cudaMalloc(&d_b, k * m * sizeof(T)));
-  T * d_c;  gpuErrchk(cudaMalloc(&d_c, m * n * sizeof(T)));
-
-  gpuErrchk(cudaMemcpy(d_a, h_a, m * k * sizeof(T), cudaMemcpyHostToDevice));
-  gpuErrchk(cudaMemcpy(d_b, h_b, k * n * sizeof(T), cudaMemcpyHostToDevice));
-
-  cublasHandle_t  handle;
-  cublasCreate(&handle);
-  cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N,
-                  m, n, k,
-                  &alpha,
-                  d_a, lda,
-                  d_b, ldb,
-                  &beta,
-                  d_c, ldc);
-  cudaDeviceSynchronize();
-  gpuErrchk(cudaMemcpy(&h_c(0, 0), d_c, m * n * sizeof(T),
-                       cudaMemcpyDeviceToHost));
-  cudaFree(d_a); cudaFree(d_b); cudaFree(d_c);
-  cublasDestroy(handle);
-  return h_c;
-  } else {
-    std::cerr << "Matricies in gpu matrix multiply's sizes aren't compatible"
-             << std::endl;
-    exit(1);
-  }
-}
-template class GpuOperations<float>;
 }  // namespace Nice
-
+#endif  // NEED_CUDA
 #endif  // CPP_INCLUDE_GPU_OPERATIONS_H_
 

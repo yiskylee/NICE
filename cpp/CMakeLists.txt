@@ -27,7 +27,7 @@ find_package(CUDA)
 if (CUDA_FOUND)
 
   # Set source files
-  file(GLOB_RECURSE SOURCES RELATIVE ${CMAKE_SOURCE_DIR} src/*.cc src/core/gpu_util/*.cu)
+  file(GLOB_RECURSE SOURCES RELATIVE ${CMAKE_SOURCE_DIR} src/*.cc src/*.cu)
   message(STATUS "Source files: " ${SOURCES})
 
 
