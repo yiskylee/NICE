@@ -29,7 +29,9 @@
 #include <cublas_v2.h>
 #include <unistd.h>
 #include <stdexcept>
+
 #include <iostream>
+
 #include "include/matrix.h"
 #include "include/vector.h"
 #include "include/gpu_util.h"
@@ -80,7 +82,6 @@ Matrix<T> GpuOperations<T>::Multiply(const Matrix<T> &a, const Matrix<T> &b) {
   gpuErrchk(cudaMemcpy(d_a, h_a, m * k * sizeof(T), cudaMemcpyHostToDevice));
   gpuErrchk(cudaMemcpy(d_b, h_b, k * n * sizeof(T), cudaMemcpyHostToDevice));
 
-
   cublasHandle_t  handle;
   cublasCreate(&handle);
   cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N,
@@ -92,8 +93,7 @@ Matrix<T> GpuOperations<T>::Multiply(const Matrix<T> &a, const Matrix<T> &b) {
                   d_c, ldc);
   cudaDeviceSynchronize();
   gpuErrchk(cudaMemcpy(&h_c(0, 0), d_c, m * n * sizeof(T),
-                       cudaMemcpyHostToDevice));
-
+                       cudaMemcpyDeviceToHost));
   cudaFree(d_a); cudaFree(d_b); cudaFree(d_c);
   cublasDestroy(handle);
   return h_c;

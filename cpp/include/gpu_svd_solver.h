@@ -34,7 +34,7 @@
 #include "Eigen/Dense"
 #include "include/matrix.h"
 #include "include/vector.h"
-
+#include "include/gpu_util.h"
 
 namespace Nice {
 

@@ -23,15 +23,14 @@
 #define CPP_INCLUDE_GPU_UTIL_H_
 
 #ifdef NEED_CUDA
-void gpuAssert(cudaError_t code, const char *file,
-               int line, bool abort = true) {
-  if (code != cudaSuccess) {
-    fprintf(stderr, "GPUassert: %s %s %d\n",
-            cudaGetErrorString(code), file, line);
-    if (abort) { exit(code); }
-    }
-}
-void gpuErrchk(cudaError_t ans) { gpuAssert((ans), __FILE__, __LINE__); }
-#endif  // NEED_CUDA
 
+#include <iostream>
+namespace Nice {
+
+void gpuAssert(cudaError_t, const char *, int, bool);
+void gpuErrchk(cudaError_t);
+
+}  // namespace Nice
+
+#endif  // NEED_CUDA
 #endif  // CPP_INCLUDE_GPU_UTIL_H_
