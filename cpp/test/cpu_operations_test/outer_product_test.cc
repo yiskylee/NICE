@@ -20,51 +20,49 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "include/util.h"
-#include <cstdlib>
-#include <fstream>
+
+
+
+
+#include <unistd.h>
 #include <iostream>
-#include <algorithm>
-#include <string>
+#include "include/cpu_operations.h"
+#include "Eigen/Dense"
+#include "gtest/gtest.h"
 #include "include/matrix.h"
 #include "include/vector.h"
 
-namespace Nice {
+// Typed Tests
+template<class T>
+class OuterProductTest : public ::testing::Test {
+ public :
+  Nice::Vector<T> v1;
+  Nice::Vector<T> v2;
+  Nice::Matrix<T> m1;
+  Nice::Matrix<T> m2;
 
-namespace util {
-
-template<typename T>
-Matrix<T> FromFile(const std::string &input_file_path, int num_rows,
-                   int num_cols) {
-  std::ifstream input_file(input_file_path, std::ifstream::in);
-  Matrix<T> m(num_rows, num_cols);
-  if (input_file) {
-    for (int i = 0; i < num_rows; i++)
-      for (int j = 0; j < num_cols; j++)
-        input_file >> m(i, j);
-    return m;
-  } else {
-    std::cerr << "Cannot open file " + input_file_path + ", exiting...";
-    exit(1);
+  void OuterProducter() {
+    m2 = Nice::CpuOperations<T>::OuterProduct(this->v1, this->v2);
   }
+};
+
+typedef ::testing::Types<int, float, double> MyTypes;
+TYPED_TEST_CASE(OuterProductTest, MyTypes);
+
+// Tests a regular outer product operation
+TYPED_TEST(OuterProductTest, BasicFunctionality) {
+  this->v1.resize(2);
+  this->v2.resize(3);
+  this->m1.resize(2, 3);
+  this->v1 << 1, 2;
+  this->v2 << 3, 4, 5;
+  this->m1 << 3, 4, 5,
+              6, 8, 10;
+  this->OuterProducter();
+  ASSERT_TRUE(this->m1.isApprox(this->m2));
 }
 
-// Template instantiation
-template Matrix<int> FromFile<int>(const std::string &input_file_path,
-                                   int num_rows, int num_cols);
-
-}  // namespace util
-}  // namespace Nice
-
-//}
-//  std::ifstream input_file(input_file_path);
-//  if (input_file) {
-////    for (int i = 0; i < num_rows_; i++)
-////      for (int j = 0; j < num_cols_; j++)
-////        input_file >> (*matrix_)(i, j);
-//    input_file.close();
-//    return true;
-//  } else
-//    return false;
-//  }
-
+// Tests with empty vectors
+TYPED_TEST(OuterProductTest, EmptyVectors) {
+  ASSERT_DEATH(this->OuterProducter(), ".*");
+}

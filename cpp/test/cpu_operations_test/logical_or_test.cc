@@ -49,7 +49,12 @@ TEST_F(LogicalOrTest, LogicalOrMatrixFunctionality) {
 TEST_F(LogicalOrTest, LogicalOrMatrixDiffSize) {
   m1.setRandom(4, 4);
   m2.setRandom(4, 3);
-  ASSERT_ANY_THROW(Nice::CpuOperations<bool>::LogicalOr(m1, m2));
+  ASSERT_DEATH(Nice::CpuOperations<bool>::LogicalOr(m1, m2), ".*");
+}
+
+// Logical Or should quit if the parameters aren't initialized
+TEST_F(LogicalOrTest, MatrixNoValue) {
+  ASSERT_DEATH(Nice::CpuOperations<bool>::LogicalOr(m1, m2), ".*");
 }
 
 // Tests the basic functionality of LogicalOr for Vectors
@@ -65,5 +70,10 @@ TEST_F(LogicalOrTest, LogicalOrVectorFunctionality) {
 TEST_F(LogicalOrTest, LogicalOrVectorDiffSize) {
   v1.setRandom(4);
   v2.setRandom(3);
-  ASSERT_ANY_THROW(Nice::CpuOperations<bool>::LogicalOr(v1, v2));
+  ASSERT_DEATH(Nice::CpuOperations<bool>::LogicalOr(v1, v2), ".*");
+}
+
+// Logical Or should quit if the parameters aren't initialized
+TEST_F(LogicalOrTest, VectorNoValue) {
+  ASSERT_DEATH(Nice::CpuOperations<bool>::LogicalOr(v1, v2), ".*");
 }
