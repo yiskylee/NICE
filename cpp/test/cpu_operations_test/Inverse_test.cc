@@ -23,7 +23,8 @@
 
 // This file tests the cpu_operations.cc Inverse() function by calling it
 // on a square, non-singular matrix (should work), a sqaure, signular matrix
-// (should not work), and a matrix that is not square (should not work).
+// (should not work), a matrix that is not square (should not work), and a
+// matrix that is empty (should not work).
 
 #include <stdio.h>
 #include <iostream>
@@ -46,34 +47,36 @@ class InverseTest : public ::testing::Test {
 };
 
 
-typedef ::testing::Types<float, double> MyTypes;
+typedef ::testing::Types<int, float, double> MyTypes;
 TYPED_TEST_CASE(InverseTest, MyTypes);
 
-//TYPED_TEST(InverseTest, InverseFunctionality) {
-//  this->input.setRandom(3, 3);
-//  this->GetInverse();
+TYPED_TEST(InverseTest, InverseFunctionality) {
+  this->input.setRandom(3, 3);
+  this->input << 1, 2, 3,
+                 0, 1, 4,
+                 5, 6, 0;
+  this->correct.setZero(3, 3);
+  this->correct << -24,  18,   5,
+                    20, -15,  -4,
+                    -5,   4,   1;
+  this->GetInverse();
+  for (int i = 0; i < 3; i++) {
+    for (int j = 0; j < 3; j++) {
+      EXPECT_EQ(this->output(i, j), this->correct(i, j));
+    }
+  }
+}
 
-//}
-//  this->input << 1, 2, 3,
-//                 0, 1, 4,
-//                 5, 6, 0;
-//  this->correct.setZero(3, 3);
-//  this->correct << -24,  18,  5,
-//                    20, -15, -4,
-//                    -5,   4,  1;
-//  for (int i = 0; i < 3; i++) {
-//    for (int j = 0; j < 3; j++) {
-//      EXPECT_EQ(this->output(i, j), this->correct(i, j));
-//    }
-//  }
-//}
-//
-//TYPED_TEST(InverseTest, SingularMatrix) {
-//  this->input.setConstant(2, 2, 10);
-//  ASSERT_DEATH(this->GetInverse(), ".*");
-//}
-//
-//TYPED_TEST(InverseTest, NonSquareMatrix) {
-//  this->input.setRandom(2, 3);
-//  ASSERT_DEATH(this->GetInverse(), ".*");
-//}
+TYPED_TEST(InverseTest, SingularMatrix) {
+  this->input.setConstant(2, 2, 10);
+  ASSERT_DEATH(this->GetInverse(), ".*");
+}
+
+TYPED_TEST(InverseTest, NonSquareMatrix) {
+  this->input.setRandom(2, 3);
+  ASSERT_DEATH(this->GetInverse(), ".*");
+}
+
+TYPED_TEST(InverseTest, EmptyMatrix) {
+  ASSERT_DEATH(this->GetInverse(), ".*");
+}
