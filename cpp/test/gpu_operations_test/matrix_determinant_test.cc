@@ -19,20 +19,18 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-#ifndef CPP_INCLUDE_GPU_UTIL_H_
-#define CPP_INCLUDE_GPU_UTIL_H_
 
-#ifdef NEED_CUDA
-#include<cuda_runtime_api.h>
-#include<cuda_runtime.h>
-#include<device_launch_parameters.h>
-#include <iostream>
-namespace Nice {
 
-void gpuAssert(cudaError_t, const char *, int, bool);
-void gpuErrchk(cudaError_t);
+#include "include/gpu_operations.h"
+#include "Eigen/Dense"
+#include "gtest/gtest.h"
 
-}  // namespace Nice
-
-#endif  // NEED_CUDA
-#endif  // CPP_INCLUDE_GPU_UTIL_H_
+TEST(GPU_Matrix_Determinant, Basic_Test) {
+  Nice::Matrix<float> a(3, 3);
+  a << 0.0, 1.0, 2.0,
+       3.0, 2.0, 1.0,
+       1.0, 3.0, 0.0;
+  float correct_ans = 15;
+  float calc_ans = Nice::GpuOperations<float>::Determinant(a);
+  EXPECT_EQ(correct_ans, calc_ans);
+}

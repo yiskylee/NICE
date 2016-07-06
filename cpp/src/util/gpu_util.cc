@@ -19,20 +19,18 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-#ifndef CPP_INCLUDE_GPU_UTIL_H_
-#define CPP_INCLUDE_GPU_UTIL_H_
-
 #ifdef NEED_CUDA
-#include<cuda_runtime_api.h>
-#include<cuda_runtime.h>
-#include<device_launch_parameters.h>
-#include <iostream>
+#include "include/gpu_util.h"
 namespace Nice {
-
-void gpuAssert(cudaError_t, const char *, int, bool);
-void gpuErrchk(cudaError_t);
+void gpuAssert(cudaError_t code, const char *file,
+               int line, bool abort = true) {
+  if (code != cudaSuccess) {
+    fprintf(stderr, "GPUassert: %s %s %d\n",
+            cudaGetErrorString(code), file, line);
+    if (abort) { exit(code); }
+    }
+}
+void gpuErrchk(cudaError_t ans) { gpuAssert((ans), __FILE__, __LINE__); }
 
 }  // namespace Nice
-
-#endif  // NEED_CUDA
-#endif  // CPP_INCLUDE_GPU_UTIL_H_
+#endif  // Need Cuda
