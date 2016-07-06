@@ -31,14 +31,11 @@
 
 
 #include <stdio.h>
-#include <iostream>
 
 #include <iostream>
 #include <cmath>
 
-
 #include "Eigen/Dense"
-#include "include/svd_solver.h"
 #include "gtest/gtest.h"
 #include "include/svd_solver.h"
 #include "include/matrix.h"
@@ -47,10 +44,6 @@
 // This is a template test fixture class containing test matrices
 template<class T>  // Template
 class CpuSvdSolverTest : public ::testing::Test {
-
-  // Inherits from testing::Test
-
-
  public:  // Members must be public to be accessed by tests
   Nice::Matrix<T> matrix_;
   Nice::Matrix<T> u_;
