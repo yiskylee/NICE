@@ -22,25 +22,25 @@
 
 
 #include "include/gpu_operations.h"
-// #include <stdio.h>
-// #include <stdlib.h>
-// #include <iostream>
 #include "Eigen/Dense"
 #include "gtest/gtest.h"
-// #include "include/matrix.h"
-// #include "include/vector.h"
 
+TEST(GPU_OuterProduct, Basic_Test) {
+  Nice::Vector<float> a(6);
+  a << 0.0, 1.0, 2.0, 3.0, 2.0, 1.0;
 
-TEST(GPU_Vector_Vector_Dot_Product, Test_1) {
-  Nice::Vector<float> a(9);
-  a << 0.0, 1.0, 2.0,
-       3.0, 2.0, 1.0,
-       1.0, 3.0, 0.0;
-  Nice::Vector<float> b(9);
-  b << 1.0, 0.0, 2.0,
-       2.0, 1.0, 0.0,
-       0.0, 2.0, 1.0;
-  float correct_ans = 18;
-  float calc_ans = Nice::GpuOperations<float>::DotProduct(a, b);
-  EXPECT_EQ(correct_ans, calc_ans);
+  Nice::Vector<float> b(6);
+  b << 1.0, 0.0, 2.0, 2.0, 1.0, 0.0;
+
+  Nice::Matrix<float> correct_ans(6, 6);
+  correct_ans << 0,     0,     0,     0,     0,     0,
+                 1,     0,     2,     2,     1,     0,
+                 2,     0,     4,     4,     2,     0,
+                 3,     0,     6,     6,     3,     0,
+                 2,     0,     4,     4,     2,     0,
+                 1,     0,     2,     2,     1,     0;
+  Nice::Matrix<float> calc_ans = Nice::GpuOperations<float>::OuterProduct(a, b);
+     for (int i = 0; i < 3; ++i)
+      for (int j = 0; j < 3; ++j)
+        EXPECT_EQ(correct_ans(i, j), calc_ans(i, j));
 }

@@ -31,21 +31,16 @@
 // #include "include/vector.h"
 
 
-TEST(GPU_Mutilply, MatrixMatrixMult) {
-  Nice::Matrix<float> a(3, 3);
+TEST(GPU_Vector_Vector_Dot_Product, Basic_Test) {
+  Nice::Vector<float> a(9);
   a << 0.0, 1.0, 2.0,
        3.0, 2.0, 1.0,
        1.0, 3.0, 0.0;
-  Nice::Matrix<float> b(3, 3);
+  Nice::Vector<float> b(9);
   b << 1.0, 0.0, 2.0,
        2.0, 1.0, 0.0,
        0.0, 2.0, 1.0;
-  Nice::Matrix<float> correct_ans(3, 3);
-  correct_ans << 2.0, 5.0, 2.0,
-                 7.0, 4.0, 7.0,
-                 7.0, 3.0, 2.0;
-  Nice::Matrix<float> calc_ans = Nice::GpuOperations<float>::Multiply(a, b);
-    for (int i = 0; i < 3; ++i)
-      for (int j = 0; j < 3; ++j)
-        EXPECT_EQ(correct_ans(i, j), calc_ans(i, j));
+  float correct_ans = 18;
+  float calc_ans = Nice::GpuOperations<float>::DotProduct(a, b);
+  EXPECT_EQ(correct_ans, calc_ans);
 }
