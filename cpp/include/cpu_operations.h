@@ -97,7 +97,15 @@ class CpuOperations {
   static Matrix<T> Norm(const int &p = 2, const int &axis = 0);
   static T Determinant(const Matrix<T> &a);
   static T Rank(const Matrix<T> &a);
-  static T FrobeniusNorm(const Matrix<T> &a);
+  static T FrobeniusNorm(const Matrix<T> &a) {
+    if (a.rows() == 0 || a.cols() == 0) {
+      std::cerr << std::endl << "ERROR: EMPTY MATRIX AS ARGUMENT!"
+      << std::endl << std::endl;
+      exit(-1);  // Exits the program
+    } else {
+      return a.norm();
+    }
+  }
   static T Trace(const Matrix<T> &a) {
     // Trace of a matrix
     return a.trace();
