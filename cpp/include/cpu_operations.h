@@ -97,12 +97,39 @@ class CpuOperations {
   static Matrix<T> Norm(const int &p = 2, const int &axis = 0);
   static T Determinant(const Matrix<T> &a);
   static T Rank(const Matrix<T> &a);
-  static T FrobeniusNorm(const Matrix<T> &a);
+  static T FrobeniusNorm(const Matrix<T> &a) {
+    if (a.rows() == 0 || a.cols() == 0) {
+      std::cerr << std::endl << "ERROR: EMPTY MATRIX AS ARGUMENT!"
+      << std::endl << std::endl;
+      exit(-1);  // Exits the program
+    } else {
+      return a.norm();
+    }
+  }
   static T Trace(const Matrix<T> &a) {
     // Trace of a matrix
     return a.trace();
   }
-  static T DotProduct(const Vector<T> &a, const Vector<T> &b);
+  static T DotProduct(const Vector<T> &a, const Vector<T> &b) {
+      // Checks to see if the size of the two vectors are not the same
+      if (a.size() != b.size()) {
+        std::cerr << "VECTORS ARE NOT THE SAME SIZE!";
+        exit(1);
+
+      // Checks to see if both vectors contain at least one element
+      // Only one vector is checked because it is known that both
+      // vectors are the same size
+    } else if (a.size() == 0) {
+      std::cerr << "VECTORS ARE EMPTY!";
+      exit(1);
+
+      // If this point is reached then calculating the dot product
+      // of the two vectors is valid
+    } else {
+        return (a.dot(b));
+    }
+  }
+
 
   static Matrix<T> OuterProduct(const Vector<T> &a, const Vector<T> &b) {
     // This function returns the outer product of he two passed in vectors
