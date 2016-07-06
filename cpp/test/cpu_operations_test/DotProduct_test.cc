@@ -62,7 +62,7 @@ TYPED_TEST(DotProductTest, DotProductFunctionality) {
 
   this->DotProd();
 
-  EXPECT_EQ(this->result, correct);
+  ASSERT_NEAR(this->result, correct, 0.00001);
 }
 
 TYPED_TEST(DotProductTest, DifferentSizeVectors) {
