@@ -47,7 +47,7 @@ class InverseTest : public ::testing::Test {
 };
 
 
-typedef ::testing::Types</*int,*/float, double> MyTypes;
+typedef ::testing::Types<float, double> MyTypes;
 TYPED_TEST_CASE(InverseTest, MyTypes);
 
 TYPED_TEST(InverseTest, InverseFunctionality) {
