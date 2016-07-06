@@ -21,15 +21,13 @@ set(COMMON_INCLUDES ${PROJECT_SOURCE_DIR})
 include_directories(${EIGEN_INCLUDE_DIRS})
 include_directories(${COMMON_INCLUDES}) 
 
+# Set source files
+file(GLOB_RECURSE SOURCES RELATIVE ${CMAKE_SOURCE_DIR} src/*.cc)
+message(STATUS "Source files: " ${SOURCES})
 
 # Locate CUDA package 
 find_package(CUDA)
 if (CUDA_FOUND)
-
-  # Set source files
-  file(GLOB_RECURSE SOURCES RELATIVE ${CMAKE_SOURCE_DIR} src/*.cc src/*.cu)
-  message(STATUS "Source files: " ${SOURCES})
-
 
   # Print messge to indicate that CUDA exists
   message(STATUS "CUDA exists")
@@ -59,11 +57,6 @@ else()
 
   message(STATUS "CUDA not exists")
   
-  # Set source files
-  file(GLOB_RECURSE SOURCES RELATIVE ${CMAKE_SOURCE_DIR} src/*.cc)
-  message(STATUS "Source files: " ${SOURCES})
-
-
   # Add NICE library
   add_library(${PROJECT_NAME} SHARED ${SOURCES})
 
