@@ -19,43 +19,28 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-
-#ifndef CPP_INCLUDE_UTIL_H_
-#define CPP_INCLUDE_UTIL_H_
-
-#include <string>
-#include "include/matrix.h"
-#include "include/vector.h"
-#include <cstdlib>
-#include <fstream>
 #include <iostream>
-#include <algorithm>
+#include "include/util.h"
+#include "gtest/gtest.h"
+#include "include/alternative_spectral_clustering.h"
 
-namespace Nice {
 
-namespace util {
-template<typename T>
-Matrix<T> FromFile(const std::string &input_file_path,
-                   int num_rows, int num_cols) {
-  std::ifstream input_file(input_file_path, std::ifstream::in);
-  Matrix<T> m(num_rows, num_cols);
-  if (input_file) {
-    for (int i = 0; i < num_rows; i++)
-      for (int j = 0; j < num_cols; j++)
-        input_file >> m(i, j);
-    return m;
-  } else {
-    std::cerr << "Cannot open file " + input_file_path + ", exiting...";
-    exit(1);
+template <typename T>
+class AltSpectralClusteringTest : public ::testing::Test {
+ protected:
+  Nice::Matrix<T> m;
+  virtual void SetUp() {
+    m = Nice::util::FromFile<T>(
+        "../test/data_for_test/matrix_10_2.txt", 10, 2);
   }
+};
+
+typedef ::testing::Types<float> AllTypes;
+TYPED_TEST_CASE(AltSpectralClusteringTest, AllTypes);
+
+TYPED_TEST(AltSpectralClusteringTest, SimpleTest) {
+  int k = 2;
+  Nice::AlternativeSpectralClustering<TypeParam> asc(this->m, k);
+  Nice::Vector<unsigned long> assignments = asc.FitPredict();
+
 }
-template<typename T>
-static T reciprocal(T x) {
-  return T(1) / x;
-}
-
-}  // namespace util
-
-}  // namespace Nice
-
-#endif  // CPP_INCLUDE_UTIL_H_

@@ -20,97 +20,133 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-
 #ifndef CPP_INCLUDE_ALTERNATIVE_SPECTRAL_CLUSTERING_H_
 #define CPP_INCLUDE_ALTERNATIVE_SPECTRAL_CLUSTERING_H_
 
 #include "include/matrix.h"
 #include "include/vector.h"
+#include "include/svd_solver.h"
+#include "Eigen/Core"
+#include "include/util.h"
+#include <functional>
 #include "include/kernel_types.h"
 #include <vector>
+#include <cmath>
 
 namespace Nice {
 
 template<typename T>
 class AlternativeSpectralClustering {
- private:
-  int num_features_;
-  int num_samples_;
-  int num_clusters_;
-  float sigma_;
-  float polynomial_order_;
-  int alternative_dimension_;
-  float lambda_;
-  float alpha_;
-  Matrix<T> data_matrix_;
-  Matrix<T> kernel_matrix_;
-  Matrix<T> h_matrix_;
-  Matrix<bool> y_matrix_;
-  int pre_num_clusters_;
-  KernelType kernel_type_;
-
-  // output matrices
-  Matrix<T> d_matrix_;
-  Matrix<T> u_matrix_;
-  Matrix<T> w_matrix_;
-
-  // output
-  Vector<int> assignments_;
-  Matrix<bool> binary_allocation_;
 
  public:
 //  AlternativeSpectralClustering();
   AlternativeSpectralClustering(const Matrix<T> &data_matrix,
-                                int num_clusters = 2,
-                                KernelType kernel_type = kGaussianKernel,
-                                float sigma = 1,
-                                float lambda = 1,
-                                float alpha = 1,
-                                float polynomial_order = 2,
-                                int alternative_dimension = 1);
-  void optimize_gaussian_kernel(void);
-  Vector<unsigned long> FitPredict(void);
-  Matrix<T> MatrixU();
-  Matrix<T> MatrixV();
-  Matrix<T> MatrixW();
-};
-
-template<typename T>
-AlternativeSpectralClustering<T>::AlternativeSpectralClustering(
-    const Matrix<T> &data_matrix,
-    int num_clusters = 2,
-    KernelType kernel_type = kGaussianKernel,
-    float sigma = 1,
-    float lambda = 1,
-    float alpha = 1,
-    float polynomial_order = 2,
-    int alternative_dimension = 1) {
-  data_matrix_ = data_matrix;
-  num_samples_ = data_matrix_.rows();
-  num_features_ = data_matrix_.cols();
-  num_clusters_ = num_clusters;
-  kernel_type_ = kernel_type;
-  sigma_ = sigma;
-  lambda_ = lambda;
-  alpha_ = alpha;
-  polynomial_order_ = polynomial_order;
-  alternative_dimension_ = alternative_dimension;
-}
-
-template<typename T>
-void AlternativeSpectralClustering<T>::optimize_gaussian_kernel(void) {
-  h_matrix_ = Matrix<T>::Identity(num_samples_, num_samples_);
-
-
-}
-
-
-template<typename T>
-Vector<unsigned long> AlternativeSpectralClustering<T>::FitPredict(void) {
-  if(kernel_type_ == kGaussianKernel) {
-    optimize_gaussian_kernel();
+                                int num_clusters) {
+    data_matrix_ = data_matrix;
+    num_samples_ = data_matrix_.rows();
+    num_features_ = data_matrix_.cols();
+    alternative_dimension_ = num_features_ - 1;
+    num_clusters_ = num_clusters;
+    kernel_type_ = kGaussianKernel;
+    sigma_ = 1;
+    lambda_ = 1;
+    alpha_ = 1;
+    polynomial_order_ = 2;
+    kernel_matrix_ = Matrix<T>::Zero(num_samples_, num_samples_);
   }
-}
+  void initialize_h_matrix(void) {
+    h_matrix_ = Matrix<T>::Identity(num_samples_, num_samples_)
+        - Matrix<T>::Constant(num_samples_, num_samples_, 1)
+            / float(num_samples_);
+  }
+  void initialize_w_matrix(void) {
+    if (w_matrix_.rows() == 0 or w_matrix_.cols() == 0)
+      w_matrix_ = Matrix<T>::Identity(num_features_, num_features_);
+    else
+      w_matrix_ = w_matrix_.block(0, 0, num_samples_,
+                                  alternative_dimension_ - 1);
+  }
+  void u_optimize(void) {
+    Matrix<T> l = d_matrix_ * kernel_matrix_ * d_matrix_;
+    SvdSolver<T> solver;
+    solver.Compute(l);
+    Matrix<T> u_matrix_ = solver.MatrixU().leftCols(num_clusters_);
+
+  }
+  void optimize_gaussian_kernel(void) {
+    initialize_h_matrix();
+    initialize_w_matrix();
+    calc_gaussian_kernel();
+    u_optimize();
+//    bool w_u_converge = false;
+//    while (!w_u_converge) {
+//      calc_gaussian_kernel();
+//      u_optimize();
+//      w_optimize_gaussian();
+//      return;
+//    }
+
+  }
+  void w_optimize_gaussian(void) {
+  }
+
+  void calc_gaussian_kernel(void) {
+    // This for loop generates the kernel matrix using gaussian kernel
+    for (unsigned long i = 0; i < num_samples_; i++) {
+      for (unsigned long j = 0; j < num_samples_; j++) {
+        // Calculate vector[i] - vector[j] for all (i,j) pairs
+        Vector<T> i_j_diff = data_matrix_.row(i) - data_matrix_.row(j);
+        // Variable entry is used to store the v[i] * w * wT * v[j]T
+        T entry = i_j_diff.transpose() * w_matrix_ * w_matrix_.transpose()
+            * i_j_diff;
+        // Then the entry in the kernel matrix is replaced by
+        // esp(-entry / (2*sigma^2)), The reason that the entry is
+        // not directly calculated is to avoid some weird Eigen errors
+        // that do not allow doing dividing operations on a chain of matrix
+        // operations
+        kernel_matrix_(i, j) = exp(-entry / (2 * sigma_ * sigma_));
+      }
+    }
+    Vector<T> dia = kernel_matrix_.rowwise().sum().array().sqrt().unaryExpr(
+        std::ptr_fun(util::reciprocal<T>));
+    d_matrix_ = dia.asDiagonal();
+  }
+
+  Vector<unsigned long> FitPredict(void) {
+    if (kernel_type_ == kGaussianKernel)
+      optimize_gaussian_kernel();
+    Vector<unsigned long> v;
+    return v;
+  }
+
+ private:
+  int num_features_;  // input data dimensions: d
+  int num_samples_;
+  int num_clusters_;
+  float sigma_;  // Sigma value for the gaussian kernel
+  int polynomial_order_;  // Order for the polynomial kernel
+  int alternative_dimension_;  // q
+  float lambda_;  // Alternative cluster tuning parameter
+  float alpha_;
+  Matrix<T> data_matrix_;
+  Matrix<T> kernel_matrix_;  // num_samples_ * num_samples_
+  Matrix<T> h_matrix_;  // centering matrix: num_samples_ * num_samples_
+  Matrix<bool> y_matrix_;  // all previous allocations size = num_samples *
+                           // (num_clusters * pre_num_clusters)
+  int pre_num_clusters_;  // the number of previous clusters
+  KernelType kernel_type_;  // Gaussian, polynomial or linear
+
+  // output matrices
+  Matrix<T> d_matrix_;  // Degree matrix: num_samples_ * num_samples_
+  Matrix<T> u_matrix_;  // Columns as eigenvectors,
+                        // size: num_samples_ * num_clusters_
+  Matrix<T> w_matrix_;  // size: num_features * alternative_dimension_
+                        // initially: num_features * num_features
+  // output
+  Vector<int> assignments_;
+  Matrix<bool> binary_allocation_;
+
+};
 
 }
 #endif  // CPP_INCLUDE_ALTERNATIVE_SPECTRAL_CLUSTERING_H_

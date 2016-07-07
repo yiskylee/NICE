@@ -69,12 +69,16 @@ if (enable-test)
 
   # Add source files according to machine setup
   if (CUDA_FOUND)
-    file(GLOB_RECURSE TEST_SRC_FILES RELATIVE 
-         ${PROJECT_SOURCE_DIR} 
-         test/cpu_operations_test/*.cc
-         test/util_test/*.cc
-         test/cpu_solver_test/*.cc
-         test/gpu_solver_test/*.cc)
+    #    file(GLOB_RECURSE TEST_SRC_FILES RELATIVE 
+    #         ${PROJECT_SOURCE_DIR} 
+    #         test/cpu_operations_test/*.cc
+    #         test/util_test/*.cc
+    #         test/cpu_solver_test/*.cc
+    #         test/gpu_solver_test/*.cc)
+    file(GLOB_RECURSE TEST_SRC_FILES RELATIVE
+        ${PROJECT_SOURCE_DIR}
+        test/model_test/alternative_spectral_clustering_test.cc)
+        
   else()
     file(GLOB_RECURSE TEST_SRC_FILES RELATIVE 
          ${PROJECT_SOURCE_DIR} 

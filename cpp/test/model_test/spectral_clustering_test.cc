@@ -33,12 +33,3 @@ TEST(SpectralClusteringTest, SimpleTest) {
 //  for (int i = 0; i < assignments.rows(); i++)
 //    std::cout << assignments[i] << std::endl;
 }
-
-//TEST(SpectralClusteringTest, PrintRowTest) {
-//  Eigen::MatrixXf m (4,4);
-//  m << 1,2,3,4,
-//      5,6,7,8,
-//      9,10,11,12,
-//      13,14,15,16;
-//  std::cout << "First Row?" << m[1];
-//}
