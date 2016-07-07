@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 #include <iostream>
+#include <memory>
 #include "include/util.h"
 #include "gtest/gtest.h"
 #include "include/alternative_spectral_clustering.h"
@@ -28,19 +29,54 @@
 template <typename T>
 class AltSpectralClusteringTest : public ::testing::Test {
  protected:
-  Nice::Matrix<T> m;
+  Nice::Matrix<T> data_matrix_;
+  Nice::Matrix<T> h_matrix_ref_;
+  std::shared_ptr<Nice::AlternativeSpectralClustering<T>> asc;
+  int k_;
   virtual void SetUp() {
-    m = Nice::util::FromFile<T>(
-        "../test/data_for_test/matrix_10_2.txt", 10, 2);
+    data_matrix_ = Nice::util::FromFile<T>(
+        "../test/data_for_test/alt_spec_data_40_2.txt", 40, 2);
+    k_ = 2;
+    asc = std::make_shared<Nice::AlternativeSpectralClustering<T>>
+        (data_matrix_, k_);
   }
+
 };
 
-typedef ::testing::Types<float> AllTypes;
-TYPED_TEST_CASE(AltSpectralClusteringTest, AllTypes);
+typedef ::testing::Types<float, int, long, double> AllTypes;
+typedef ::testing::Types<int, long> IntTypes;
+typedef ::testing::Types<float, double> FloatTypes;
+TYPED_TEST_CASE(AltSpectralClusteringTest, FloatTypes);
 
-TYPED_TEST(AltSpectralClusteringTest, SimpleTest) {
-  int k = 2;
-  Nice::AlternativeSpectralClustering<TypeParam> asc(this->m, k);
-  Nice::Vector<unsigned long> assignments = asc.FitPredict();
+//TYPED_TEST(AltSpectralClusteringTest, SimpleTest) {
+//  int k = 2;
+//  Nice::AlternativeSpectralClustering<TypeParam> asc(this->m, k);
+//  Nice::Vector<unsigned long> assignments = asc.FitPredict();
+//}
 
+TYPED_TEST(AltSpectralClusteringTest, InitHMatrix) {
+  this->asc->initialize_h_matrix();
+  Nice::Matrix<TypeParam> h_matrix = this->asc->h_matrix_;
+  Nice::Matrix<TypeParam> h_matrix_ref = Nice::util::FromFile<TypeParam>(
+      "../test/data_for_test/h_matrix_ref_40_40.txt", 40, 40);
+  EXPECT_EQ(h_matrix.rows(), h_matrix_ref.rows());
+  EXPECT_EQ(h_matrix.cols(), h_matrix_ref.cols());
+  for (int i = 0; i < h_matrix.rows(); i++)
+    for (int j = 0; j < h_matrix.cols(); j++)
+      EXPECT_EQ(h_matrix(i, j), h_matrix_ref(i, j));
 }
+
+TYPED_TEST(AltSpectralClusteringTest, InitWMatrix) {
+  this->asc->initialize_w_matrix();
+  Nice::Matrix<TypeParam> w_matrix = this->asc->w_matrix_;
+  Nice::Matrix<TypeParam> w_matrix_ref = Nice::util::FromFile<TypeParam>(
+      "../test/data_for_test/w_matrix_ref_2_2.txt", 2, 2);
+  EXPECT_EQ(w_matrix.rows(), w_matrix_ref.rows());
+  EXPECT_EQ(w_matrix.cols(), w_matrix_ref.cols());
+  for (int i = 0; i < w_matrix.rows(); i++)
+    for (int j = 0; j < w_matrix.cols(); j++)
+      EXPECT_EQ(w_matrix(i, j), w_matrix_ref(i, j));
+}
+
+
+

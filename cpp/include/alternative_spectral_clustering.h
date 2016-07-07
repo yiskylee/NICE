@@ -37,9 +37,9 @@ namespace Nice {
 
 template<typename T>
 class AlternativeSpectralClustering {
-
  public:
-//  AlternativeSpectralClustering();
+  AlternativeSpectralClustering(){
+  }
   AlternativeSpectralClustering(const Matrix<T> &data_matrix,
                                 int num_clusters) {
     data_matrix_ = data_matrix;
@@ -53,6 +53,7 @@ class AlternativeSpectralClustering {
     alpha_ = 1;
     polynomial_order_ = 2;
     kernel_matrix_ = Matrix<T>::Zero(num_samples_, num_samples_);
+    pre_num_clusters_ = 0;
   }
   void initialize_h_matrix(void) {
     h_matrix_ = Matrix<T>::Identity(num_samples_, num_samples_)
@@ -71,23 +72,47 @@ class AlternativeSpectralClustering {
     SvdSolver<T> solver;
     solver.Compute(l);
     Matrix<T> u_matrix_ = solver.MatrixU().leftCols(num_clusters_);
-
   }
   void optimize_gaussian_kernel(void) {
-    initialize_h_matrix();
-    initialize_w_matrix();
-    calc_gaussian_kernel();
-    u_optimize();
-//    bool w_u_converge = false;
-//    while (!w_u_converge) {
-//      calc_gaussian_kernel();
-//      u_optimize();
-//      w_optimize_gaussian();
-//      return;
-//    }
-
+    bool w_u_converge = false;
+    while (!w_u_converge) {
+      initialize_h_matrix();
+      initialize_w_matrix();
+      calc_gaussian_kernel();
+      u_optimize();
+      if (pre_num_clusters_ == 0)
+        return;
+      w_optimize_gaussian();
+    }
+  }
+  Matrix<T> create_y_tilde(void) {
+    Matrix<T> kernel_y = y_matrix_ * y_matrix_.transpose();
+    Matrix<T> inner_p = h_matrix_ * kernel_y * h_matrix_;
+    return d_matrix_ * inner_p * d_matrix_;
   }
   void w_optimize_gaussian(void) {
+    Matrix<T> y_tilde = create_y_tilde();
+    Matrix<T> previous_gw = Matrix<T>::Constant(num_samples_, num_samples_,
+                                                1);
+    bool w_converge = false;
+    float last_w = 0;
+
+    for (int m = 0; m < alternative_dimension_; m++) {
+
+      while (!w_converge) {
+//        Matrix<T> w_l = w_matrix_.col(m)
+      }
+     }
+
+  }
+
+  Vector<T> get_orthogonal_vector(int m, Vector<T> input_vector) {
+    int count_down = m;
+    while (count_down != 0) {
+      count_down --;
+
+
+    }
   }
 
   void calc_gaussian_kernel(void) {
@@ -119,7 +144,6 @@ class AlternativeSpectralClustering {
     return v;
   }
 
- private:
   int num_features_;  // input data dimensions: d
   int num_samples_;
   int num_clusters_;
