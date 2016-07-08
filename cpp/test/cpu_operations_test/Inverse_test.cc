@@ -62,7 +62,7 @@ TYPED_TEST(InverseTest, InverseFunctionality) {
   this->GetInverse();
   for (int i = 0; i < 3; i++) {
     for (int j = 0; j < 3; j++) {
-      ASSERT_NEAR(this->output(i, j), this->correct(i, j), 0.0001);
+      EXPECT_NEAR(this->output(i, j), this->correct(i, j), 0.0001);
     }
   }
 }
