@@ -44,9 +44,55 @@ namespace Nice {
 template <typename T>
 class GpuOperations {
  public:
+  static cublasStatus_t do_multiply(cublasHandle_t handle, int n,
+                                  const float &scalar, float *a) {
+    return cublasSscal(handle, n, &scalar, a, 1);
+  }
+  static cublasStatus_t do_multiply(cublasHandle_t handle, int n,
+                                  const double &scalar, double *a) {
+    return cublasDscal(handle, n, &scalar, a, 1);
+  }
+  static cublasStatus_t do_multiply(cublasHandle_t handle, int m, int n, int k,
+                                  float *a, float *b, float *c) {
+    const float alpha = 1.0; const float beta = 0.0;
+    return cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N,
+                         m, n, k, &alpha, a, m, b, k, &beta, c, m);
+  }
+  static cublasStatus_t do_multiply(cublasHandle_t handle, int m, int n, int k,
+                                  double *a, double *b, double *c) {
+    const double alpha = 1.0; const double beta = 0.0;
+    return cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N,
+                         m, n, k, &alpha, a, m, b, k, &beta, c, m);
+  }
+  static cublasStatus_t do_dot(cublasHandle_t handle, int n,
+                             float *a, float *b, float *c) {
+    return cublasSdot(handle, n, a, 1.0, b, 1.0, c);
+  }
+  static cublasStatus_t do_dot(cublasHandle_t handle, int n,
+                             double *a,  double *b, double *c) {
+    return cublasDdot(handle, n, a, 1.0, b, 1.0, c);
+  }
+  static cusolverStatus_t do_get_det_buffer(cusolverDnHandle_t handle, int m,
+                                          int n, float *a, int *worksize) {
+    return cusolverDnSgetrf_bufferSize(handle, m, n, a, m, &(*worksize));
+  }
+  static cusolverStatus_t do_get_det_buffer(cusolverDnHandle_t handle, int m,
+                                          int n, double *a, int *worksize) {
+    return cusolverDnDgetrf_bufferSize(handle, m, n, a, m, &(*worksize));
+  }
+  static cusolverStatus_t do_det(cusolverDnHandle_t handle, int m, int n,
+                               float *a, float *workspace, int *devIpiv,
+                               int *devInfo) {
+    return cusolverDnSgetrf(handle, m, n, a, m, workspace, devIpiv, devInfo);
+  }
+  static cusolverStatus_t do_det(cusolverDnHandle_t handle, int m, int n,
+                               double *a, double *workspace, int *devIpiv,
+                               int *devInfo) {
+    return cusolverDnDgetrf(handle, m, n, a, m, workspace, devIpiv, devInfo);
+  }
+
   static Matrix<T> Multiply(const Matrix<T> &a, const T &scalar) {
       int n = a.cols() * a.rows();
-      int incx = 1;
       const T * h_a = &a(0);
       Matrix<T> h_c(a.rows(), a.cols());
 
@@ -57,7 +103,7 @@ class GpuOperations {
       cublasStatus_t stat;
       cublasHandle_t  handle;
       cublasCreate(&handle);
-      stat = cublasSscal(handle, n, &scalar, d_a, incx);
+      stat = do_multiply(handle, n, scalar, d_a);
 
       if (stat != CUBLAS_STATUS_SUCCESS) {
         std::cerr << "GPU Matrix Scalar Multiply Internal Failure" << std::endl;
@@ -77,12 +123,6 @@ class GpuOperations {
       int m = a.rows();
       int n = b.cols();
       int k = a.cols();
-      int lda = m;
-      int ldb = k;
-      int ldc = m;
-
-      float alpha = 1.0;
-      float beta =  0.0;
 
       const T * h_a = &a(0);
       const T * h_b = &b(0);
@@ -100,13 +140,9 @@ class GpuOperations {
       cublasStatus_t stat;
       cublasHandle_t  handle;
       cublasCreate(&handle);
-      stat = cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N,
-                         m, n, k,
-                         &alpha,
-                         d_a, lda,
-                         d_b, ldb,
-                         &beta,
-                         d_c, ldc);
+
+      stat = do_multiply(handle, m, n, k, d_a, d_b, d_c);
+
       if (stat != CUBLAS_STATUS_SUCCESS) {
         std::cerr << "GPU Matrix Matrix Multiply Internal Failure" << std::endl;
         cudaFree(d_a); cudaFree(d_b); cudaFree(d_c);
@@ -134,7 +170,6 @@ class GpuOperations {
   static T Determinant(const Matrix<T> &a) {
     int m = a.rows();
     int n = a.cols();
-    int lda = m;
     const T *h_a = &a(0);
     T det;
     // --- Setting the device matrix and moving the host matrix to the device
@@ -152,19 +187,19 @@ class GpuOperations {
     // --- CUDA solver initialization
     cusolverDnHandle_t handle;
     cusolverDnCreate(&handle);
-    stat = cusolverDnSgetrf_bufferSize(handle, m, n, d_a, lda, &work_size);
+
+    stat = do_get_det_buffer(handle, m, n, d_a, &work_size);
     if (stat != CUSOLVER_STATUS_SUCCESS) {
       std::cout << "Initialization of determinant buffer failed." << std::endl;
       cudaFree(d_a);
       cusolverDnDestroy(handle);
       exit(1);
     }
+
     T *workspace;    gpuErrchk(cudaMalloc(&workspace, work_size * sizeof(T)));
 
     // --- CUDA SVD execution
-    stat = cusolverDnSgetrf(handle, m, n,
-                            d_a, lda, workspace,
-                            devIpiv, devInfo);
+    stat = do_det(handle, m, n, d_a, workspace, devIpiv, devInfo);
 
     if (stat != CUSOLVER_STATUS_SUCCESS) {
       std::cerr << "GPU Determinant Internal Failure" << std::endl;
@@ -181,6 +216,7 @@ class GpuOperations {
     // --- Moving the results from device to host
     gpuErrchk(cudaMemcpy(h_c, d_a, m * n * sizeof(T),
               cudaMemcpyDeviceToHost));
+
     det = *(h_c);
     for (int i = 1; i < m; ++i) {
       det = det * *(h_c + (i * n) + i);
@@ -195,8 +231,6 @@ class GpuOperations {
   static T DotProduct(const Vector<T> &a, const Vector<T> &b) {
     if (a.rows() == b.rows()) {
       int n = a.rows();
-      int incx = 1;
-      int incy = 1;
 
       const T * h_a = &a(0);
       const T * h_b = &b(0);
@@ -212,8 +246,7 @@ class GpuOperations {
       cublasCreate(&handle);
       cublasStatus_t stat;
 
-      stat = cublasSdot(handle, n, d_a, incx, d_b, incy, h_c);
-
+      stat = do_dot(handle, n, d_a, d_b, h_c);
       if (stat != CUBLAS_STATUS_SUCCESS) {
         std::cerr << "GPU Vector Vector Dot Product Internal Failure"
                   << std::endl;
@@ -236,12 +269,6 @@ class GpuOperations {
       int m = a.rows();
       int n = b.rows();
       int k = 1;
-      int lda = m;
-      int ldb = k;
-      int ldc = m;
-
-      float alpha = 1.0;
-      float beta =  0.0;
 
       const T * h_a = &a(0);
       const T * h_b = &b(0);
@@ -259,13 +286,8 @@ class GpuOperations {
       cublasStatus_t stat;
       cublasHandle_t  handle;
       cublasCreate(&handle);
-      stat = cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N,
-                         m, n, k,
-                         &alpha,
-                         d_a, lda,
-                         d_b, ldb,
-                         &beta,
-                         d_c, ldc);
+      stat = do_multiply(handle, m, n, k, d_a, d_b, d_c);
+
       if (stat != CUBLAS_STATUS_SUCCESS) {
         std::cerr << "GPU Outer Product Internal Failure" << std::endl;
         cudaFree(d_a); cudaFree(d_b); cudaFree(d_c);
