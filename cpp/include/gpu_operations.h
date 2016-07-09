@@ -197,9 +197,72 @@ class GpuOperations {
     // Get the diagonal vector
     Vector<T> diagonal_vector = a.diagonal();
 
+    // Get the number of elements in diagonal vector
+    int m = diagonal_vector.rows();
+
+    // Create host memory
+    diagonal_vector[0] = 1.0;
+    diagonal_vector[1] = 1.0;
+    diagonal_vector[2] = 1.0;
+    diagonal_vector[3] = 1.0;
+    diagonal_vector[4] = 1.0;
+    const T *h_a = &diagonal_vector(0);
+    T h_result;
+
+    // Create device memory from host memory
+    T *d_a;
+    T *multiplier;
+    T *d_result;
+    gpuErrchk(cudaMalloc(&d_a, m * sizeof(T)));
+    gpuErrchk(cudaMalloc(&multiplier, m * sizeof(T)));
+    gpuErrchk(cudaMemset(multiplier, 1.0, m * sizeof(T)));
+    gpuErrchk(cudaMalloc(&d_result, sizeof(T)));
+
+    // Copy host memory over to device
+    gpuErrchk(cudaMemcpy(d_a, h_a, m * sizeof(T),
+                         cudaMemcpyHostToDevice));
+
+    // Create parameters for cublas wraper function
+    cublasStatus_t stat;
+    cublasHandle_t handle;
+    cublasCreate(&handle);
+    cublasOperation_t trans = CUBLAS_OP_T;
+    int n = 1;
+    T alpha = 1.0;
+    T beta = 0.0;
+    int lda = m;
+    int incx = 1;
+    int incy = 1;
+
+    // Do vector summation to obtain trace
+    stat = GpuMatrixVectorMul(handle, trans, m, n, &alpha,
+                       d_a, lda, multiplier, incx, &beta, d_result, incy);
+
+    // Error check
+    if (stat != CUBLAS_STATUS_SUCCESS) {
+      std::cerr << "GPU Trace Internal Failure" << std::endl;
+      cudaFree(d_a);
+      cudaFree(multiplier);
+      cudaFree(d_result);
+      cublasDestroy(handle);
+      exit(1);
+    }
+
+    // Copy device result over to host
+    gpuErrchk(cudaMemcpy(&h_result, d_result, sizeof(T),
+                         cudaMemcpyDeviceToHost));
+
     
-    
+    // Synchonize and clean up
+    cudaDeviceSynchronize();
+    cudaFree(d_a);
+    cudaFree(multiplier);
+    cudaFree(d_result);
+
+    // Return the result
+    return h_result;
   }
+
   static T DotProduct(const Vector<T> &a, const Vector<T> &b) {
     if (a.rows() == b.rows()) {
       int n = a.rows();

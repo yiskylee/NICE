@@ -33,10 +33,16 @@
 
 namespace Nice {
 
+//
+// Helper functions
+//
 void gpuAssert(cudaError_t, const char *, int, bool);
 void gpuErrchk(cudaError_t);
 
-cusolverStatus_t doSvd(cusolverDnHandle_t solver_handle,
+//
+// Cusolver wraper functions
+//
+cusolverStatus_t GpuSvd(cusolverDnHandle_t solver_handle,
            int M,
            int N,
            float * d_A,
@@ -47,7 +53,7 @@ cusolverStatus_t doSvd(cusolverDnHandle_t solver_handle,
            int work_size,
            int * devInfo);
 
-cusolverStatus_t doSvd(cusolverDnHandle_t solver_handle,
+cusolverStatus_t GpuSvd(cusolverDnHandle_t solver_handle,
            int M,
            int N,
            double * d_A,
@@ -57,6 +63,27 @@ cusolverStatus_t doSvd(cusolverDnHandle_t solver_handle,
            double * work,
            int work_size,
            int * devInfo); 
+
+//
+// Cublas wraper functions
+//
+cublasStatus_t GpuMatrixVectorMul(cublasHandle_t handle,
+                                  cublasOperation_t trans,
+                                  int m, int n,
+                                  const float *alpha,
+                                  const float *A, int lda,
+                                  const float *x, int incx,
+                                  const float *beta,
+                                  float *y, int incy);
+
+cublasStatus_t GpuMatrixVectorMul(cublasHandle_t handle,
+                                  cublasOperation_t trans,
+                                  int m, int n,
+                                  const double *alpha,
+                                  const double *A, int lda,
+                                  const double *x, int incx,
+                                  const double *beta,
+                                  double *y, int incy);
 
 }  // namespace Nice
 

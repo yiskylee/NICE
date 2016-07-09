@@ -82,7 +82,7 @@ class GpuSvdSolver {
     T *work;    gpuErrchk(cudaMalloc(&work, work_size * sizeof(T)));
 
     // --- CUDA SVD execution
-    stat = doSvd(solver_handle, M, N,
+    stat = GpuSvd(solver_handle, M, N,
                  d_A, d_S, d_U, d_V,
                  work, work_size, devInfo);
     if (stat != CUSOLVER_STATUS_SUCCESS) {

@@ -26,6 +26,9 @@
 
 namespace Nice {
 
+//
+// Helper functions
+//
 void gpuAssert(cudaError_t code, const char *file,
                int line, bool abort = true) {
   if (code != cudaSuccess) {
@@ -37,7 +40,10 @@ void gpuAssert(cudaError_t code, const char *file,
 
 void gpuErrchk(cudaError_t ans) { gpuAssert((ans), __FILE__, __LINE__); }
 
-cusolverStatus_t doSvd(cusolverDnHandle_t solver_handle,
+//
+// Cusolver wraper functions
+//
+cusolverStatus_t GpuSvd(cusolverDnHandle_t solver_handle,
            int M,
            int N,
            float * d_A,
@@ -53,7 +59,7 @@ cusolverStatus_t doSvd(cusolverDnHandle_t solver_handle,
                           NULL, devInfo);
 }
 
-cusolverStatus_t doSvd(cusolverDnHandle_t solver_handle,
+cusolverStatus_t GpuSvd(cusolverDnHandle_t solver_handle,
            int M,
            int N,
            double * d_A,
@@ -67,6 +73,33 @@ cusolverStatus_t doSvd(cusolverDnHandle_t solver_handle,
                          'A', 'A', M, N, d_A, M, d_S,
                           d_U, M, d_V, N, work, work_size,
                           NULL, devInfo);
+}
+
+//
+// Cublas wraper functions
+//
+cublasStatus_t GpuMatrixVectorMul(cublasHandle_t handle,
+                                  cublasOperation_t trans,
+                                  int m, int n,
+                                  const float *alpha,
+                                  const float *A, int lda,
+                                  const float *x, int incx,
+                                  const float *beta,
+                                  float *y, int incy) {
+  return cublasSgemv(handle, trans, m, n, alpha,
+                     A, lda, x, incx, beta, y, incy);
+}
+
+cublasStatus_t GpuMatrixVectorMul(cublasHandle_t handle,
+                                  cublasOperation_t trans,
+                                  int m, int n,
+                                  const double *alpha,
+                                  const double *A, int lda,
+                                  const double *x, int incx,
+                                  const double *beta,
+                                  double *y, int incy) {
+  return cublasDgemv(handle, trans, m, n, alpha,
+                     A, lda, x, incx, beta, y, incy);
 }
 
 }  // namespace Nice
