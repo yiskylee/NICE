@@ -129,7 +129,9 @@ class GpuOperations {
   static Matrix<T> Add(const Matrix<T> &a, const Matrix<T> &b);
   static Matrix<T> Subtract(const Matrix<T> &a, const T &scalar);
   static Matrix<T> Subtract(const Matrix<T> &a, const Matrix<T> &b);
-  static Matrix<T> Inverse(const Matrix<T> &a);
+  static Matrix<T> Inverse(const Matrix<T> &a) {
+    
+  }
   static Matrix<T> Norm(const int &p = 2, const int &axis = 0);
   static T Determinant(const Matrix<T> &a) {
     int m = a.rows();
@@ -191,7 +193,13 @@ class GpuOperations {
   }
   static T Rank(const Matrix<T> &a);
   static T FrobeniusNorm(const Matrix<T> &a);
-  static T Trace(const Matrix<T> &a);
+  static T Trace(const Matrix<T> &a) {
+    // Get the diagonal vector
+    Vector<T> diagonal_vector = a.diagonal();
+
+    
+    
+  }
   static T DotProduct(const Vector<T> &a, const Vector<T> &b) {
     if (a.rows() == b.rows()) {
       int n = a.rows();

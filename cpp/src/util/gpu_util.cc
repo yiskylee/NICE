@@ -19,9 +19,13 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
+
 #ifdef NEED_CUDA
+
 #include "include/gpu_util.h"
+
 namespace Nice {
+
 void gpuAssert(cudaError_t code, const char *file,
                int line, bool abort = true) {
   if (code != cudaSuccess) {
@@ -30,7 +34,40 @@ void gpuAssert(cudaError_t code, const char *file,
     if (abort) { exit(code); }
     }
 }
+
 void gpuErrchk(cudaError_t ans) { gpuAssert((ans), __FILE__, __LINE__); }
+
+cusolverStatus_t doSvd(cusolverDnHandle_t solver_handle,
+           int M,
+           int N,
+           float * d_A,
+           float * d_S,
+           float * d_U,
+           float * d_V,
+           float * work,
+           int work_size,
+           int * devInfo) {
+  return cusolverDnSgesvd(solver_handle,
+                          'A', 'A', M, N, d_A, M, d_S,
+                          d_U, M, d_V, N, work, work_size,
+                          NULL, devInfo);
+}
+
+cusolverStatus_t doSvd(cusolverDnHandle_t solver_handle,
+           int M,
+           int N,
+           double * d_A,
+           double * d_S,
+           double * d_U,
+           double * d_V,
+           double * work,
+           int work_size,
+           int * devInfo) {
+  return cusolverDnDgesvd(solver_handle,
+                         'A', 'A', M, N, d_A, M, d_S,
+                          d_U, M, d_V, N, work, work_size,
+                          NULL, devInfo);
+}
 
 }  // namespace Nice
 #endif  // Need Cuda
