@@ -75,7 +75,6 @@ TYPED_TEST_CASE(GpuTraceTest, dataTypes);
 TYPED_TEST(GpuTraceTest, FuncionalityTest) {
   // Create test data
   this->CreateTestData();
-  std::cout << this->matrix_ << std::endl;
 
   // Test trace in Nice
   this->gpu_result = Nice::GpuOperations<TypeParam>::Trace(this->matrix_);

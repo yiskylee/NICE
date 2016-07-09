@@ -201,12 +201,10 @@ class GpuOperations {
     int m = diagonal_vector.rows();
 
     // Create host memory
-    diagonal_vector[0] = 1.0;
-    diagonal_vector[1] = 1.0;
-    diagonal_vector[2] = 1.0;
-    diagonal_vector[3] = 1.0;
-    diagonal_vector[4] = 1.0;
     const T *h_a = &diagonal_vector(0);
+    T *h_multiplier = new T[m];
+    for (int i = 0; i < m; i++)
+      h_multiplier[i] = 1.0;
     T h_result;
 
     // Create device memory from host memory
@@ -215,11 +213,12 @@ class GpuOperations {
     T *d_result;
     gpuErrchk(cudaMalloc(&d_a, m * sizeof(T)));
     gpuErrchk(cudaMalloc(&multiplier, m * sizeof(T)));
-    gpuErrchk(cudaMemset(multiplier, 1.0, m * sizeof(T)));
     gpuErrchk(cudaMalloc(&d_result, sizeof(T)));
 
     // Copy host memory over to device
     gpuErrchk(cudaMemcpy(d_a, h_a, m * sizeof(T),
+                         cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMemcpy(multiplier, h_multiplier, m * sizeof(T),
                          cudaMemcpyHostToDevice));
 
     // Create parameters for cublas wraper function
@@ -258,6 +257,7 @@ class GpuOperations {
     cudaFree(d_a);
     cudaFree(multiplier);
     cudaFree(d_result);
+    delete []h_multiplier;
 
     // Return the result
     return h_result;
