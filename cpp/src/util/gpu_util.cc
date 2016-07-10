@@ -75,6 +75,73 @@ cusolverStatus_t GpuSvd(cusolverDnHandle_t solver_handle,
                           NULL, devInfo);
 }
 
+cusolverStatus_t GpuGetLUDecompWorkspace(cusolverDnHandle_t handle,
+                                    int m,
+                                    int n,
+                                    float *A,
+                                    int lda,
+                                    int *Lwork) {
+  return cusolverDnSgetrf_bufferSize(handle, m, n, A, lda, Lwork);
+}
+
+cusolverStatus_t GpuGetLUDecompWorkspace(cusolverDnHandle_t handle,
+                                    int m,
+                                    int n,
+                                    double *A,
+                                    int lda,
+                                    int *Lwork) {
+  return cusolverDnDgetrf_bufferSize(handle, m, n, A, lda, Lwork);
+}
+
+cusolverStatus_t GpuLUDecomposition(cusolverDnHandle_t handle,
+                                    int m,
+                                    int n,
+                                    float *A,
+                                    int lda,
+                                    float *Workspace,
+                                    int *devIpiv, int *devInfo) {
+  return cusolverDnSgetrf(handle, m, n, A, lda, Workspace, devIpiv, devInfo);
+}
+
+cusolverStatus_t GpuLUDecomposition(cusolverDnHandle_t handle,
+                                    int m,
+                                    int n,
+                                    double *A,
+                                    int lda,
+                                    double *Workspace,
+                                    int *devIpiv, int *devInfo) {
+  return cusolverDnDgetrf(handle, m, n, A, lda, Workspace, devIpiv, devInfo);
+}
+
+cusolverStatus_t GpuLinearSolver(cusolverDnHandle_t handle,
+                                 cublasOperation_t trans,
+                                 int n,
+                                 int nrhs,
+                                 const float *A,
+                                 int lda,
+                                 const int *devIpiv,
+                                 float *B,
+                                 int ldb,
+                                 int *devInfo) {
+  return cusolverDnSgetrs(handle, trans, n, nrhs, A, lda,
+                          devIpiv, B, ldb, devInfo);
+}
+
+cusolverStatus_t GpuLinearSolver(cusolverDnHandle_t handle,
+                                 cublasOperation_t trans,
+                                 int n,
+                                 int nrhs,
+                                 const double *A,
+                                 int lda,
+                                 const int *devIpiv,
+                                 double *B,
+                                 int ldb,
+                                 int *devInfo) {
+  return cusolverDnDgetrs(handle, trans, n, nrhs, A, lda,
+                          devIpiv, B, ldb, devInfo);
+}
+
+
 //
 // Cublas wraper functions
 //

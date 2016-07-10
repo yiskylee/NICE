@@ -64,6 +64,59 @@ cusolverStatus_t GpuSvd(cusolverDnHandle_t solver_handle,
            int work_size,
            int * devInfo);
 
+cusolverStatus_t GpuGetLUDecompWorkspace(cusolverDnHandle_t handle,
+                                    int m,
+                                    int n,
+                                    float *A,
+                                    int lda,
+                                    int *Lwork);
+
+cusolverStatus_t GpuGetLUDecompWorkspace(cusolverDnHandle_t handle,
+                                    int m,
+                                    int n,
+                                    double *A,
+                                    int lda,
+                                    int *Lwork);
+
+cusolverStatus_t GpuLUDecomposition(cusolverDnHandle_t handle,
+                                    int m,
+                                    int n,
+                                    float *A,
+                                    int lda,
+                                    float *Workspace,
+                                    int *devIpiv, int *devInfo);
+
+cusolverStatus_t GpuLUDecomposition(cusolverDnHandle_t handle,
+                                    int m,
+                                    int n,
+                                    double *A,
+                                    int lda,
+                                    double *Workspace,
+                                    int *devIpiv, int *devInfo);
+
+cusolverStatus_t GpuLinearSolver(cusolverDnHandle_t handle,
+                                 cublasOperation_t trans,
+                                 int n,
+                                 int nrhs,
+                                 const float *A,
+                                 int lda,
+                                 const int *devIpiv,
+                                 float *B,
+                                 int ldb,
+                                 int *devInfo);
+
+cusolverStatus_t GpuLinearSolver(cusolverDnHandle_t handle,
+                                 cublasOperation_t trans,
+                                 int n,
+                                 int nrhs,
+                                 const double *A,
+                                 int lda,
+                                 const int *devIpiv,
+                                 double *B,
+                                 int ldb,
+                                 int *devInfo);
+
+
 //
 // Cublas wraper functions
 //
