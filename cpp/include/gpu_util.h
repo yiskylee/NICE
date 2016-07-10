@@ -62,7 +62,7 @@ cusolverStatus_t GpuSvd(cusolverDnHandle_t solver_handle,
            double * d_V,
            double * work,
            int work_size,
-           int * devInfo); 
+           int * devInfo);
 
 //
 // Cublas wraper functions

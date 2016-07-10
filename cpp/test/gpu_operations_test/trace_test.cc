@@ -29,11 +29,10 @@
 // All tests are made using a templated test fixture which attempts
 // Integer, float, and double data types
 
-#include "include/gpu_operations.h"
-
 #include <iostream>
 #include <cmath>
 
+#include "include/gpu_operations.h"
 #include "Eigen/Dense"
 #include "gtest/gtest.h"
 #include "include/matrix.h"

@@ -37,6 +37,7 @@
 #include "include/matrix.h"
 #include "include/vector.h"
 #include "include/gpu_util.h"
+#include "include/gpu_svd_solver.h"
 
 namespace Nice {
 
@@ -130,7 +131,6 @@ class GpuOperations {
   static Matrix<T> Subtract(const Matrix<T> &a, const T &scalar);
   static Matrix<T> Subtract(const Matrix<T> &a, const Matrix<T> &b);
   static Matrix<T> Inverse(const Matrix<T> &a) {
-    
   }
   static Matrix<T> Norm(const int &p = 2, const int &axis = 0);
   static T Determinant(const Matrix<T> &a) {
@@ -191,7 +191,23 @@ class GpuOperations {
     cusolverDnDestroy(handle);
     return det;
   }
-  static T Rank(const Matrix<T> &a);
+  static int Rank(const Matrix<T> &a) {
+    // Obtain row echelon form through SVD
+    GpuSvdSolver<T> svd;
+    svd.Compute(a);
+
+    // Obtain computed sigular vector
+    Vector<T> sigular_vector = svd.SingularValues();
+
+    // Count non zero elements of sigular vector
+    int rank = 0;
+    for (int i = 0; i < sigular_vector.rows(); i++) {
+      if (sigular_vector[i] != 0)
+        rank++;
+    }
+
+    return rank;
+  }
   static T FrobeniusNorm(const Matrix<T> &a);
   static T Trace(const Matrix<T> &a) {
     // Get the diagonal vector
@@ -209,16 +225,16 @@ class GpuOperations {
 
     // Create device memory from host memory
     T *d_a;
-    T *multiplier;
+    T *d_multiplier;
     T *d_result;
     gpuErrchk(cudaMalloc(&d_a, m * sizeof(T)));
-    gpuErrchk(cudaMalloc(&multiplier, m * sizeof(T)));
+    gpuErrchk(cudaMalloc(&d_multiplier, m * sizeof(T)));
     gpuErrchk(cudaMalloc(&d_result, sizeof(T)));
 
     // Copy host memory over to device
     gpuErrchk(cudaMemcpy(d_a, h_a, m * sizeof(T),
                          cudaMemcpyHostToDevice));
-    gpuErrchk(cudaMemcpy(multiplier, h_multiplier, m * sizeof(T),
+    gpuErrchk(cudaMemcpy(d_multiplier, h_multiplier, m * sizeof(T),
                          cudaMemcpyHostToDevice));
 
     // Create parameters for cublas wraper function
@@ -235,13 +251,13 @@ class GpuOperations {
 
     // Do vector summation to obtain trace
     stat = GpuMatrixVectorMul(handle, trans, m, n, &alpha,
-                       d_a, lda, multiplier, incx, &beta, d_result, incy);
+                       d_a, lda, d_multiplier, incx, &beta, d_result, incy);
 
     // Error check
     if (stat != CUBLAS_STATUS_SUCCESS) {
       std::cerr << "GPU Trace Internal Failure" << std::endl;
       cudaFree(d_a);
-      cudaFree(multiplier);
+      cudaFree(d_multiplier);
       cudaFree(d_result);
       cublasDestroy(handle);
       exit(1);
@@ -251,11 +267,10 @@ class GpuOperations {
     gpuErrchk(cudaMemcpy(&h_result, d_result, sizeof(T),
                          cudaMemcpyDeviceToHost));
 
-    
     // Synchonize and clean up
     cudaDeviceSynchronize();
     cudaFree(d_a);
-    cudaFree(multiplier);
+    cudaFree(d_multiplier);
     cudaFree(d_result);
     delete []h_multiplier;
 
