@@ -20,51 +20,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef CPP_INCLUDE_SVD_SOLVER_H_
-#define CPP_INCLUDE_SVD_SOLVER_H_
 
-#include "include/matrix.h"
-#include "include/vector.h"
+#include "include/gpu_operations.h"
+#include "Eigen/Dense"
+#include "gtest/gtest.h"
 
-#include "Eigen/SVD"
+TEST(GPU_Matrix_Scalar_Multiply, Basic_Test) {
+  Nice::Matrix<float> a(3, 3);
+  a << 0.0, 1.0, 2.0,
+       3.0, 2.0, 1.0,
+       1.0, 3.0, 0.0;
 
+  float b = 2.0;
 
-namespace Nice {
-
-// Abstract class of svd solver
-template<typename T>
-class SvdSolver {
- private:
-  Eigen::JacobiSVD<Matrix<T>> svd_;
-
- public:
-  SvdSolver()
-  :
-  svd_() {}
-
-  void Compute(const Matrix<T> &a) {
-    svd_.compute(a, Eigen::ComputeFullU|Eigen::ComputeFullV);
-  }
-
-  Matrix<T> MatrixU() const {
-    return svd_.matrixU();
-  }
-
-  Matrix<T> MatrixV() const {
-    return svd_.matrixV();
-  }
-
-  Vector<T> SingularValues() const {
-    return svd_.singularValues();
-  }
-
-  int Rank(const Matrix<T> &a) {
-    Compute(a);
-    return svd_.rank();
-  }
-};
-
-}  // namespace Nice
-
-#endif  // CPP_INCLUDE_SVD_SOLVER_H_
-
+  Nice::Matrix<float> correct_ans(3, 3);
+  correct_ans << 0.0, 2.0, 4.0,
+                 6.0, 4.0, 2.0,
+                 2.0, 6.0, 0.0;
+  Nice::Matrix<float> calc_ans = Nice::GpuOperations<float>::Multiply(a, b);
+    for (int i = 0; i < 3; ++i)
+      for (int j = 0; j < 3; ++j)
+        EXPECT_EQ(correct_ans(i, j), calc_ans(i, j));
+}

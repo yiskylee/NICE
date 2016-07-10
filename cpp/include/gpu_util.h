@@ -21,13 +21,18 @@
 // SOFTWARE.
 #ifndef CPP_INCLUDE_GPU_UTIL_H_
 #define CPP_INCLUDE_GPU_UTIL_H_
-void gpuAssert(cudaError_t code, const char *file,
-               int line, bool abort = true) {
-  if (code != cudaSuccess) {
-    fprintf(stderr, "GPUassert: %s %s %d\n",
-            cudaGetErrorString(code), file, line);
-    if (abort) { exit(code); }
-    }
-}
-void gpuErrchk(cudaError_t ans) { gpuAssert((ans), __FILE__, __LINE__); }
+
+#ifdef NEED_CUDA
+#include<cuda_runtime_api.h>
+#include<cuda_runtime.h>
+#include<device_launch_parameters.h>
+#include <iostream>
+namespace Nice {
+
+void gpuAssert(cudaError_t, const char *, int, bool);
+void gpuErrchk(cudaError_t);
+
+}  // namespace Nice
+
+#endif  // NEED_CUDA
 #endif  // CPP_INCLUDE_GPU_UTIL_H_

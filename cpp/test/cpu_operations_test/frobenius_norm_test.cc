@@ -20,48 +20,42 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "include/svd_solver.h"
+// This file tests CpuOperations::LogicalNot() to see if it will correctly
+// handle basic boolean Matrices and Vectors and to see if it will throw
+// an error if an uninitialized variable gets passed into its parameters
+
+#include <stdio.h>
 #include <iostream>
 #include "Eigen/Dense"
-#include "Eigen/SVD"
+#include "gtest/gtest.h"
+#include "include/cpu_operations.h"
 #include "include/matrix.h"
-#include "include/vector.h"
+#include "cmath"
 
-namespace Nice {
+template<class T>
+class FrobeniusNormTest : public ::testing::Test {
+ public:
+  Nice::Matrix<T> m1;
 
-template<typename T>
-SvdSolver<T>::SvdSolver()
-:
-svd_() {}
+  int FrobeniusNormer() {
+    return Nice::CpuOperations<T>::FrobeniusNorm(m1);
+  }
+};
 
-template<typename T>
-void SvdSolver<T>::Compute(const Matrix<T> &a) {
-  svd_.compute(a, Eigen::ComputeFullU|Eigen::ComputeFullV);
+
+typedef ::testing::Types<int, float, double> MyTypes;
+TYPED_TEST_CASE(FrobeniusNormTest, MyTypes);
+
+// Tests the basic functionality of FrobeniusNorm
+TYPED_TEST(FrobeniusNormTest, BasicFuntionality) {
+  this->m1.resize(3, 3);
+  this->m1 << 1, -1, 1,
+              1, 1, 1,
+              1, 1, -1;
+  EXPECT_EQ(3, this->FrobeniusNormer());
 }
 
-template<typename T>
-Matrix<T> SvdSolver<T>::MatrixU() const {
-  return svd_.matrixU();
+// Passes in an empty matrix to FrobeniusNorm and expects an exit
+TYPED_TEST(FrobeniusNormTest, MatrixNoValue) {
+  ASSERT_DEATH(this->FrobeniusNormer(), ".*");
 }
-
-template<typename T>
-Matrix<T> SvdSolver<T>::MatrixV() const {
-  return svd_.matrixV();
-}
-
-template<typename T>
-Vector<T> SvdSolver<T>::SingularValues() const {
-  return svd_.singularValues();
-}
-
-template<typename T>
-int SvdSolver<T>::Rank(const Matrix<T> &a) {
-  Compute(a);
-  return svd_.rank();
-}
-
-
-template class SvdSolver<float>;
-template class SvdSolver<double>;
-
-}  //  namespace Nice

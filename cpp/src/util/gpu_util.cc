@@ -19,52 +19,18 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-
-#ifndef CPP_INCLUDE_SVD_SOLVER_H_
-#define CPP_INCLUDE_SVD_SOLVER_H_
-
-#include "include/matrix.h"
-#include "include/vector.h"
-
-#include "Eigen/SVD"
-
-
+#ifdef NEED_CUDA
+#include "include/gpu_util.h"
 namespace Nice {
-
-// Abstract class of svd solver
-template<typename T>
-class SvdSolver {
- private:
-  Eigen::JacobiSVD<Matrix<T>> svd_;
-
- public:
-  SvdSolver()
-  :
-  svd_() {}
-
-  void Compute(const Matrix<T> &a) {
-    svd_.compute(a, Eigen::ComputeFullU|Eigen::ComputeFullV);
-  }
-
-  Matrix<T> MatrixU() const {
-    return svd_.matrixU();
-  }
-
-  Matrix<T> MatrixV() const {
-    return svd_.matrixV();
-  }
-
-  Vector<T> SingularValues() const {
-    return svd_.singularValues();
-  }
-
-  int Rank(const Matrix<T> &a) {
-    Compute(a);
-    return svd_.rank();
-  }
-};
+void gpuAssert(cudaError_t code, const char *file,
+               int line, bool abort = true) {
+  if (code != cudaSuccess) {
+    fprintf(stderr, "GPUassert: %s %s %d\n",
+            cudaGetErrorString(code), file, line);
+    if (abort) { exit(code); }
+    }
+}
+void gpuErrchk(cudaError_t ans) { gpuAssert((ans), __FILE__, __LINE__); }
 
 }  // namespace Nice
-
-#endif  // CPP_INCLUDE_SVD_SOLVER_H_
-
+#endif  // Need Cuda

@@ -29,6 +29,9 @@
 // All tests are made using a templated test fixture which attempts
 // Integer, float, and double data types
 
+
+#include <stdio.h>
+
 #include <iostream>
 #include <cmath>
 

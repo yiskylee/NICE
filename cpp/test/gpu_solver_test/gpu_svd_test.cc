@@ -38,6 +38,7 @@
 #include "gtest/gtest.h"
 #include "include/matrix.h"
 #include "include/vector.h"
+#include "include/gpu_util.h"
 
 // This is a template test fixture class containing test matrices
 template<class T>  // Template
