@@ -129,7 +129,19 @@ class GpuOperations {
   static Matrix<T> Add(const Matrix<T> &a, const T &scalar);
   static Matrix<T> Add(const Matrix<T> &a, const Matrix<T> &b);
   static Matrix<T> Subtract(const Matrix<T> &a, const T &scalar);
-  static Matrix<T> Subtract(const Matrix<T> &a, const Matrix<T> &b);
+  static Matrix<T> Subtract(const Matrix<T> &a, const Matrix<T> &b) {
+      // If the matricies aren't identical sizes then we cannot subtract them.
+      if (a.rows() != b.rows() || a.cols() != b.cols()) {
+        std::cerr << "Matricies are not the same size" << std::endl;
+
+      // If the matricies are empty this function should not run.
+    } else if (a.rows() == 0) {
+        std::cerr << "Matricies are empty" << std::endl;
+
+      // Otherwise, everything should run fine.
+    } else {
+        
+  }
   static Matrix<T> Inverse(const Matrix<T> &a) {
     // Sanity Check
     if (a.rows() != a.cols()) {
