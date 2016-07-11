@@ -174,11 +174,13 @@ class GpuOperations {
       cudaFree(d_info);
       exit(1);
     }
+
     T *workspace;
     gpuErrchk(cudaMalloc(&workspace, workspace_size * sizeof(T)));
 
     // Do LU docomposition
-    stat = GpuLUDecomposition(handle, n, n, d_a, workspace, d_ipiv, d_info);
+    stat = GpuLUDecomposition(handle, n, n, d_a, lda,
+                              workspace, d_ipiv, d_info);
     if (stat != CUSOLVER_STATUS_SUCCESS) {
       std::cerr << "LU decomposition: decomposition failed"
                 << std::endl;
@@ -227,6 +229,9 @@ class GpuOperations {
     cudaFree(d_ipiv);
     cudaFree(d_info);
     cudaFree(d_b);
+
+    // Destroy the handle
+    cusolverDnDestroy(handle);
 
     // Return the result
     return b;
@@ -372,6 +377,9 @@ class GpuOperations {
     cudaFree(d_multiplier);
     cudaFree(d_result);
     delete []h_multiplier;
+
+    // Destroy the handle
+    cublasDestroy(handle);
 
     // Return the result
     return h_result;
