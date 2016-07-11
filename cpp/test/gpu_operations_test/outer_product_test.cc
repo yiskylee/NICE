@@ -20,16 +20,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef CPP_INCLUDE_MATRIX_H_
-#define CPP_INCLUDE_MATRIX_H_
 
+#include "include/gpu_operations.h"
 #include "Eigen/Dense"
+#include "gtest/gtest.h"
 
-namespace Nice {
+TEST(GPU_OuterProduct, Basic_Test) {
+  Nice::Vector<float> a(6);
+  a << 0.0, 1.0, 2.0, 3.0, 2.0, 1.0;
 
-template<typename T>
-using Matrix = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>;
+  Nice::Vector<float> b(6);
+  b << 1.0, 0.0, 2.0, 2.0, 1.0, 0.0;
 
-}  // namespace Nice
-
-#endif  // CPP_INCLUDE_MATRIX_H_
+  Nice::Matrix<float> correct_ans(6, 6);
+  correct_ans << 0,     0,     0,     0,     0,     0,
+                 1,     0,     2,     2,     1,     0,
+                 2,     0,     4,     4,     2,     0,
+                 3,     0,     6,     6,     3,     0,
+                 2,     0,     4,     4,     2,     0,
+                 1,     0,     2,     2,     1,     0;
+  Nice::Matrix<float> calc_ans = Nice::GpuOperations<float>::OuterProduct(a, b);
+     for (int i = 0; i < 3; ++i)
+      for (int j = 0; j < 3; ++j)
+        EXPECT_EQ(correct_ans(i, j), calc_ans(i, j));
+}

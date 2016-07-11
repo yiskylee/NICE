@@ -20,51 +20,42 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "include/util.h"
-#include <cstdlib>
-#include <fstream>
+// This file tests CpuOperations::LogicalNot() to see if it will correctly
+// handle basic boolean Matrices and Vectors and to see if it will throw
+// an error if an uninitialized variable gets passed into its parameters
+
+#include <stdio.h>
 #include <iostream>
-#include <algorithm>
-#include <string>
+#include "Eigen/Dense"
+#include "gtest/gtest.h"
+#include "include/cpu_operations.h"
 #include "include/matrix.h"
-#include "include/vector.h"
+#include "cmath"
 
-namespace Nice {
+template<class T>
+class FrobeniusNormTest : public ::testing::Test {
+ public:
+  Nice::Matrix<T> m1;
 
-namespace util {
-
-template<typename T>
-Matrix<T> FromFile(const std::string &input_file_path, int num_rows,
-                   int num_cols) {
-  std::ifstream input_file(input_file_path, std::ifstream::in);
-  Matrix<T> m(num_rows, num_cols);
-  if (input_file) {
-    for (int i = 0; i < num_rows; i++)
-      for (int j = 0; j < num_cols; j++)
-        input_file >> m(i, j);
-    return m;
-  } else {
-    std::cerr << "Cannot open file " + input_file_path + ", exiting...";
-    exit(1);
+  int FrobeniusNormer() {
+    return Nice::CpuOperations<T>::FrobeniusNorm(m1);
   }
+};
+
+
+typedef ::testing::Types<int, float, double> MyTypes;
+TYPED_TEST_CASE(FrobeniusNormTest, MyTypes);
+
+// Tests the basic functionality of FrobeniusNorm
+TYPED_TEST(FrobeniusNormTest, BasicFuntionality) {
+  this->m1.resize(3, 3);
+  this->m1 << 1, -1, 1,
+              1, 1, 1,
+              1, 1, -1;
+  EXPECT_EQ(3, this->FrobeniusNormer());
 }
 
-// Template instantiation
-template Matrix<int> FromFile<int>(const std::string &input_file_path,
-                                   int num_rows, int num_cols);
-
-}  // namespace util
-}  // namespace Nice
-
-//}
-//  std::ifstream input_file(input_file_path);
-//  if (input_file) {
-////    for (int i = 0; i < num_rows_; i++)
-////      for (int j = 0; j < num_cols_; j++)
-////        input_file >> (*matrix_)(i, j);
-//    input_file.close();
-//    return true;
-//  } else
-//    return false;
-//  }
-
+// Passes in an empty matrix to FrobeniusNorm and expects an exit
+TYPED_TEST(FrobeniusNormTest, MatrixNoValue) {
+  ASSERT_DEATH(this->FrobeniusNormer(), ".*");
+}

@@ -20,34 +20,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "include/cpu_operations.h"
-#include <unistd.h>
-#include <iostream>
+
+#include "include/gpu_operations.h"
+// #include <stdio.h>
+// #include <stdlib.h>
+// #include <iostream>
 #include "Eigen/Dense"
-#include "include/matrix.h"
-#include "include/vector.h"
+#include "gtest/gtest.h"
+// #include "include/matrix.h"
+// #include "include/vector.h"
 
-namespace Nice {
 
-// This function returns the transpose of a matrix
-template<typename T>
-Matrix<T> CpuOperations<T>::Transpose(const Matrix<T> &a) {
-  return a.transpose();  // Return transpose
+TEST(GPU_Vector_Vector_Dot_Product, Basic_Test) {
+  Nice::Vector<float> a(9);
+  a << 0.0, 1.0, 2.0,
+       3.0, 2.0, 1.0,
+       1.0, 3.0, 0.0;
+  Nice::Vector<float> b(9);
+  b << 1.0, 0.0, 2.0,
+       2.0, 1.0, 0.0,
+       0.0, 2.0, 1.0;
+  float correct_ans = 18;
+  float calc_ans = Nice::GpuOperations<float>::DotProduct(a, b);
+  EXPECT_EQ(correct_ans, calc_ans);
 }
-
-template<typename T>
-Vector<T> CpuOperations<T>::Transpose(const Vector<T> &a) {
-  return a.transpose();
-}
-
-template<typename T>
-Matrix<T> CpuOperations<T>::Add(const Matrix<T> &a, const Matrix<T> &b) {
-  Matrix<T> sum = a + b;
-  return sum;
-}
-
-template class CpuOperations<int>;
-template class CpuOperations<float>;
-template class CpuOperations<double>;
-
-}  //  namespace Nice

@@ -21,11 +21,9 @@
 // SOFTWARE.
 
 // This file tests the CpuOperations::Add() function by checking to
-// See if two matrixes passed are added in the test IsAdded
-// A summed Nice matrix is compared to a summed Eigen Matrix in
-// Add Eigen
-// All tests are made using a templated test fixture which attempts
-// Integer, float, and double data types
+// see if two matrices passed are added, and to see if a matrix and
+// scalar is added correctly. This also checks that the test fails if there is
+// an empty matrix or if the matricies are not the same size.
 
 #include <stdio.h>
 #include <iostream>
@@ -34,38 +32,72 @@
 #include "include/cpu_operations.h"
 #include "include/matrix.h"
 
-// This is a template test fixture class containing Eigen and NICE matrices
-template<class T>  // Template
-class MyTest : public ::testing::Test {  // Inherits from testing::Test
- public:  // Members must be public to be accessed by tests
-  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> matrix_a_;
-  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> matrix_b_;
-  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> added_eigen_;
-  Nice::Matrix<T> added_nice_;
+template<class T>
+class AddTest : public ::testing::Test {
+ public:
+  Nice::Matrix<T> matrix_a;
+  Nice::Matrix<T> matrix_b;
+  T scalar;
+  Nice::Matrix<T> result_matrix;
+  Nice::Matrix<T> result_scalar;
+  Nice::Matrix<T> correct;
 
-  // Add the Eigen and Nice matrices
-  void Adder() {
-    added_eigen_ = matrix_a_ + matrix_b_;  // Add Eigen
-    // Add  matrixNice
-    added_nice_ = Nice::CpuOperations<T>::Add(matrix_a_, matrix_b_);
+  void Add_Matrix() {
+    result_matrix = Nice::CpuOperations<T>::Add(matrix_a, matrix_b);
+  }
+  void Add_Scalar() {
+    result_scalar = Nice::CpuOperations<T>::Add(matrix_a, scalar);
   }
 };
 
-// Establishes a test case with the given types, Char and short types will
-// Throw compiler errors
 typedef ::testing::Types<int, float, double> MyTypes;
-TYPED_TEST_CASE(MyTest, MyTypes);
+TYPED_TEST_CASE(AddTest, MyTypes);
 
-// Checks to see if each element is transposed using the Transpose() function
-TYPED_TEST(MyTest, IsAdded) {
-  // this-> refers to the test fixture object
-  this->matrix_a_.setRandom(3, 3);  // Assign random values
-  this->matrix_b_.setRandom(3, 3);  // Assign random values
-  this->Adder();
+TYPED_TEST(AddTest, AddFunctionality) {
+  // Matrix + Matrix
+  this->matrix_a.setRandom(3, 3);
+  this->matrix_b.setRandom(3, 3);
+  this->Add_Matrix();
+
+  this->correct.setZero(3, 3);
   for (int i = 0; i < 3; ++i) {
     for (int j = 0; j < 3; ++j) {
-      // Check equality for each element
-      EXPECT_EQ(this->added_eigen_(i, j), this->added_nice_(i, j));
+      this->correct(i, j) = (this->matrix_a(i, j) + this->matrix_b(i, j));
     }
   }
+
+  for (int i = 0; i < 3; ++i) {
+    for (int j = 0; j < 3; ++j) {
+      EXPECT_NEAR(this->result_matrix(i, j), this->correct(i, j), 0.0001);
+    }
+  }
+
+  // Matrix + Scalar
+  this->matrix_a.setRandom(3, 3);
+  this->scalar = 12;
+  this->Add_Scalar();
+
+  this->correct.setZero(3, 3);
+  for (int i = 0; i < 3; ++i) {
+    for (int j = 0; j < 3; ++j) {
+      this->correct(i, j) = (this->matrix_a(i, j) + this->scalar);
+    }
+  }
+
+  for (int i = 0; i < 3; ++i) {
+    for (int j = 0; j < 3; ++j) {
+      EXPECT_NEAR(this->result_scalar(i, j), this->correct(i, j), 0.0001);
+    }
+  }
+}
+
+TYPED_TEST(AddTest, DifferentSizes) {
+  this->matrix_a.setRandom(2, 4);
+  this->matrix_b.setRandom(3, 1);
+  ASSERT_DEATH(this->Add_Matrix(), ".*");
+}
+
+TYPED_TEST(AddTest, EmptyMatrix) {
+  ASSERT_DEATH(this->Add_Matrix(), ".*");
+  ASSERT_DEATH(this->Add_Scalar(), ".*");
 }
