@@ -50,7 +50,12 @@ class CpuOperations {
   }
   static Matrix<T> Add(const Matrix<T> &a, const T &scalar);
   static Matrix<T> Add(const Matrix<T> &a, const Matrix<T> &b);
-  static Matrix<T> Subtract(const Matrix<T> &a, const T &scalar);
+  static Matrix<T> Subtract(const Matrix<T> &a, const T &scalar) {
+    // Matrix-scalar subtraction
+    if (a.rows() == 0 || a.cols() == 0) {
+      std::cerr << "EMPTY MATRIX AS ARGUEMENT!";}
+    return (a.array() - scalar);
+  }
   static Matrix<T> Subtract(const Matrix<T> &a, const Matrix<T> &b) {
     // Matrix-matrix subtraction
     if ((a.rows() != b.rows()) || (a.cols() != b.cols())) {
