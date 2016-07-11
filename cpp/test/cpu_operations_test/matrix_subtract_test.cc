@@ -30,6 +30,7 @@
 template<class T>
 class MatrixSubtractTest : public ::testing::Test {
  public:
+  Nice::T scalar;
   Nice::Matrix<T> m1;
   Nice::Matrix<T> m2;
   Nice::Matrix<T> result;
@@ -38,6 +39,9 @@ class MatrixSubtractTest : public ::testing::Test {
   void MatrixSubtract() {
     result = Nice::CpuOperations<T>::Subtract(m1, m2);
   }
+  void MatrixScalarSubtract() {
+    result = Nice::CpuOperations<T>::Subtract(m1, scalar); 
+}
 };
 
 typedef ::testing::Types<int, double, float> MyTypes;
@@ -57,6 +61,18 @@ TYPED_TEST(MatrixSubtractTest, MatrixSubtractFunctionality) {
   ASSERT_TRUE(this->result.isApprox(this->testMatrix));
 }
 
+TYPED_TEST(MatrixScalarSubtractTest, MatrixScalarSubtractFunctionality) {
+  this->m1.resize(2, 2);
+  this->scalar == 2;
+  this->testMatrix.resize(2, 2);
+  this->m1 << 4, 5,
+              3, 6;
+  this->MatrixScalarSubtract();
+  this->testMatrix << 2, 3,
+                      1, 4;
+  ASSERT_TRUE(this->result.isApprox(this->testMatrix));
+}
+
 TYPED_TEST(MatrixSubtractTest, DifferentSizeMatrix) {
   this->m1.resize(2, 2);
   this->m2.resize(3, 2);
@@ -67,4 +83,8 @@ TYPED_TEST(MatrixSubtractTest, DifferentSizeMatrix) {
 
 TYPED_TEST(MatrixSubtractTest, EmptyMatrix) {
   ASSERT_DEATH(this->MatrixSubtract(), ".*");
+}
+
+TYPED_TEST(MatrixScalarSubtractTest, EmptyMatrix) {
+  ASSERT_DEATH(this->MatrixScalarSubtract(), ".");
 }
