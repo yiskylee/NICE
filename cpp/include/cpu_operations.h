@@ -56,9 +56,7 @@ class CpuOperations {
 
       // Otherwise, code will run fine.
     } else {
-        Matrix<T> b;
-        b.setConstant(a.rows(), a.cols(), scalar);
-        return a + b;
+        return (a.array() + scalar);
     }
   }
   static Matrix<T> Add(const Matrix<T> &a, const Matrix<T> &b) {
