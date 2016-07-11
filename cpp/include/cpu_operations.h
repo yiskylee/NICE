@@ -90,7 +90,26 @@ class CpuOperations {
     return (a.array() && b.array());
     // Will return a matrix due to implicit conversion
   }
-  static Matrix<T> Inverse(const Matrix<T> &a);
+  static Matrix<T> Inverse(const Matrix<T> &a) {
+      // If the matrix is empty, it should not check for inverse.
+      if (a.cols() == 0) {
+        std::cerr << "MATRIX IS EMPTY";
+        exit(1);
+      // If the matrix is not sqaure it will not produce an inverse.
+    } else if (a.cols() != a.rows()) {
+        std::cerr << "MATRIX IS NOT A SQUARE MATRIX!";
+        exit(1);
+
+      // If the determinant of a matrix is 0, it does not have an inverse.
+    } else if (a.determinant() == 0) {
+        std::cerr << "MATRIX DOES NOT HAVE AN INVERSE (DETERMINANT IS ZERO)!";
+        exit(1);
+
+      // If this point is reached then an inverse of the matrix exists.
+    } else {
+      return a.inverse();
+    }
+  }
   static Matrix<T> Norm(const int &p = 2, const int &axis = 0);
   static T Determinant(const Matrix<T> &a);
   static T Rank(const Matrix<T> &a);
