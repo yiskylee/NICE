@@ -53,7 +53,9 @@ class CpuOperations {
   static Matrix<T> Subtract(const Matrix<T> &a, const T &scalar) {
     // Matrix-scalar subtraction
     if (a.rows() == 0 || a.cols() == 0) {
-      std::cerr << "EMPTY MATRIX AS ARGUEMENT!";}
+      std::cerr << "EMPTY MATRIX AS ARGUEMENT!";
+      exit(1);
+    }
     return (a.array() - scalar);
   }
   static Matrix<T> Subtract(const Matrix<T> &a, const Matrix<T> &b) {
@@ -65,7 +67,8 @@ class CpuOperations {
         || a.cols() == 0) {
       std::cerr << "EMPTY MATRIX AS ARGUMENT!";
       exit(1);  // Exits the program
-  }  return a -b;
+    }
+    return a - b;
   }
   static Matrix<bool> LogicalOr(const Matrix<bool> &a, const Matrix<bool> &b) {
     // Returns the resulting matrix that is created by running a logical or
