@@ -96,11 +96,10 @@ class AlternativeSpectralClustering {
                                                 1);
     bool w_converge = false;
     float last_w = 0;
-
     for (int m = 0; m < alternative_dimension_; m++) {
-
+      w_matrix_.col(m) = get_orthogonal_vector(m, w_matrix_.col(m));
       while (!w_converge) {
-//        Matrix<T> w_l = w_matrix_.col(m)
+        Matrix<T> w_l = w_matrix_.col(m);
       }
      }
 
@@ -110,9 +109,13 @@ class AlternativeSpectralClustering {
     int count_down = m;
     while (count_down != 0) {
       count_down --;
-
-
+      Vector<T> w_prev = w_matrix_.col(count_down);
+      Vector<T> projected_direction =
+          (w_prev.dot(input_vector) / w_prev.dot(w_prev)) * w_prev;
+      input_vector = input_vector - projected_direction;
     }
+    input_vector = input_vector / input_vector.norm();
+    return input_vector;
   }
 
   void calc_gaussian_kernel(void) {
