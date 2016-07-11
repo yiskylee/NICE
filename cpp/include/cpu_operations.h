@@ -99,8 +99,8 @@ class CpuOperations {
     } else if (a.cols() != a.rows()) {
         std::cerr << "MATRIX IS NOT A SQUARE MATRIX!";
         exit(1);
-  
-      // If the determinant of a matrix is 0, the matrix does not have an inverse.
+
+      // If the determinant of a matrix is 0, it does not have an inverse.
     } else if (a.determinant() == 0) {
         std::cerr << "MATRIX DOES NOT HAVE AN INVERSE (DETERMINANT IS ZERO)!";
         exit(1);
