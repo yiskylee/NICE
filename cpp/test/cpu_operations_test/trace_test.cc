@@ -28,13 +28,25 @@
 #include "include/cpu_operations.h"
 #include "include/matrix.h"
 
-TEST(Trace, TraceMatrix) {
-Eigen::MatrixXi a(4, 4);
-a << 8, 5, 3, 4,
-     2, 4, 8, 9,
-     7, 6, 1, 0,
-     9, 2, 5, 7;
-int correct_ans = 20;
-int calc_ans = Nice::CpuOperations<int>::Trace(a);
-EXPECT_EQ(correct_ans, calc_ans);
+template<class T>
+class TraceTest : public ::testing::Test {
+  public:
+  Nice::Matrix<T> m1;
+
+  int Tracer() {
+    return Nice::CpuOperations<T>::Trace(m1);
+  }
+};
+
+typedef ::testing::Types<int, float, double> MyTypes;
+TYPED_TEST_CASE(TraceTest, MyTypes);
+
+TYPED_TEST(TraceTest, BasicTest) {
+  this->m1.resize(4, 4);
+  this->m1 << 8, 5, 3, 4,
+              2, 4, 8, 9,
+              7, 6, 1, 0,
+              9, 2, 5, 7;
+  int correct_ans = 20;
+  EXPECT_EQ(correct_ans, this->Tracer());
 }
