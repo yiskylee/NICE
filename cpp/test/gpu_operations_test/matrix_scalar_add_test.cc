@@ -31,7 +31,6 @@ TEST(GPU_MATRIX_SCALAR_ADD, Basic_Test) {
        1, 2, 3, 4,
        1, 2, 3, 4;
   Nice::Matrix<float> b = Nice::GpuOperations<float>::Add(a, 1);
-  std::cout << "output:\n" << b << std::endl;
   Nice::Matrix<float> answer(3, 4);
   answer << 2, 3, 4, 5,
             2, 3, 4, 5,
