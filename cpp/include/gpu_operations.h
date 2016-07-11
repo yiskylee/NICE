@@ -220,7 +220,7 @@ class GpuOperations {
     }
 
     // Copy device result over to host
-    gpuErrchk(cudaMemcpy(h_b, d_b, sizeof(T),
+    gpuErrchk(cudaMemcpy(h_b, d_b, n * n * sizeof(T),
                          cudaMemcpyDeviceToHost));
 
     // Synchonize and clean up
