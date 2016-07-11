@@ -40,7 +40,6 @@ class AltSpectralClusteringTest : public ::testing::Test {
     asc = std::make_shared<Nice::AlternativeSpectralClustering<T>>
         (data_matrix_, k_);
   }
-
 };
 
 typedef ::testing::Types<float, int, long, double> AllTypes;
@@ -48,11 +47,9 @@ typedef ::testing::Types<int, long> IntTypes;
 typedef ::testing::Types<float, double> FloatTypes;
 TYPED_TEST_CASE(AltSpectralClusteringTest, FloatTypes);
 
-//TYPED_TEST(AltSpectralClusteringTest, SimpleTest) {
-//  int k = 2;
-//  Nice::AlternativeSpectralClustering<TypeParam> asc(this->m, k);
-//  Nice::Vector<unsigned long> assignments = asc.FitPredict();
-//}
+TYPED_TEST(AltSpectralClusteringTest, SimpleTest) {
+  Nice::Vector<unsigned long> assignments = this->asc->FitPredict();
+}
 
 TYPED_TEST(AltSpectralClusteringTest, InitHMatrix) {
   this->asc->initialize_h_matrix();
@@ -77,6 +74,8 @@ TYPED_TEST(AltSpectralClusteringTest, InitWMatrix) {
     for (int j = 0; j < w_matrix.cols(); j++)
       EXPECT_EQ(w_matrix(i, j), w_matrix_ref(i, j));
 }
+
+
 
 
 

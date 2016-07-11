@@ -86,9 +86,15 @@ class AlternativeSpectralClustering {
     }
   }
   Matrix<T> create_y_tilde(void) {
-    Matrix<T> kernel_y = y_matrix_ * y_matrix_.transpose();
-    Matrix<T> inner_p = h_matrix_ * kernel_y * h_matrix_;
-    return d_matrix_ * inner_p * d_matrix_;
+    if (y_matrix_.rows() != 0 && y_matrix_.cols() != 0) {
+      Matrix<T> kernel_y = y_matrix_ * y_matrix_.transpose();
+      Matrix<T> inner_p = h_matrix_ * kernel_y * h_matrix_;
+      return d_matrix_ * inner_p * d_matrix_;
+    }
+    else {
+      T inner_p = 0;
+      return d_matrix_ * inner_p * d_matrix_;
+    }
   }
   void w_optimize_gaussian(void) {
     Matrix<T> y_tilde = create_y_tilde();
@@ -96,6 +102,7 @@ class AlternativeSpectralClustering {
                                                 1);
     bool w_converge = false;
     float last_w = 0;
+
     for (int m = 0; m < alternative_dimension_; m++) {
       w_matrix_.col(m) = get_orthogonal_vector(m, w_matrix_.col(m));
       while (!w_converge) {
