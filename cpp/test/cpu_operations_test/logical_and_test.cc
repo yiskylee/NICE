@@ -35,42 +35,42 @@
 #include "include/matrix.h"
 
 // This is a test fixture class containing NICE matrices
-class MyTest : public ::testing::Test {  // Inherits from testing::Test
+class LogicalAndTest : public ::testing::Test {  // Inherits from testing::Test
  public:
-  Nice::Matrix<bool> _matrix_nice_1;  // First boolean Matrix
-  Nice::Matrix<bool> _matrix_nice_2;  // Second boolean Matrix
-  Nice::Matrix<bool> _logical_and;  // Resulting Matrix
+  Nice::Matrix<bool> matrix_nice_1_;  // First boolean Matrix
+  Nice::Matrix<bool> matrix_nice_2_;  // Second boolean Matrix
+  Nice::Matrix<bool> logical_and_;  // Resulting Matrix
 
   // Calls the LogicalAnd function on the Matrices
   void LogicalAnd() {
     // Apply logic to matrixNice
-    _logical_and = Nice::CpuOperations<bool>::LogicalAnd(_matrix_nice_1,
-                                                         _matrix_nice_2);
+    logical_and_ = Nice::CpuOperations<bool>::LogicalAnd(matrix_nice_1_,
+                                                         matrix_nice_2_);
   }
 };
 
 // This test checks the functionality of LogicalAnd by creating two matrices
 // And comparing the result of the function with the and of each element
-TEST_F(MyTest, LogicalAndFunctionality) {
-  this->_matrix_nice_1.setRandom(3, 3);  // Random bool values
-  this->_matrix_nice_2.setRandom(3, 3);
-  this->_logical_and.setZero(3, 3);  // Set the _logical_and to zero
+TEST_F(LogicalAndTest, LogicalAndFunctionality) {
+  this->matrix_nice_1_.setRandom(3, 3);  // Random bool values
+  this->matrix_nice_2_.setRandom(3, 3);
+  this->logical_and_.setZero(3, 3);  // Set the _logical_and to zero
   this->LogicalAnd();
   for (int i = 0; i < 3; ++i) {
     for (int j = 0; j < 3; ++j) {
       // Check equality for the and of each element
-      EXPECT_EQ(((this->_matrix_nice_1(i, j)) && (this->_matrix_nice_2(i, j))),
-                (this->_logical_and(i, j)));
+      EXPECT_EQ(((this->matrix_nice_1_(i, j)) && (this->matrix_nice_2_(i, j))),
+                (this->logical_and_(i, j)));
     }
   }
 }
 
 // This test checks the functionality of LogicalAnd by creating two matrices
 // Of different size and asserting a death when the function is called
-TEST_F(MyTest, LogicalAndTestWrongSize) {
-  this->_matrix_nice_1.setRandom(3, 4);  // Random bool values
-  this->_matrix_nice_2.setRandom(2, 3);
-  this->_logical_and.setZero(3, 3);
+TEST_F(LogicalAndTest, LogicalAndTestWrongSize) {
+  this->matrix_nice_1_.setRandom(3, 4);  // Random bool values
+  this->matrix_nice_2_.setRandom(2, 3);
+  this->logical_and_.setZero(3, 3);
   ASSERT_DEATH({this->LogicalAnd();}, ".*");  // Expect failure
   // ".*" denotes any failure message
 }
