@@ -95,6 +95,7 @@ class GpuSvdSolver {
 
     // --- device side SVD workspace and matrices
     int work_size = 0;
+    int devInfo_h = 0;
     int *devInfo;   gpuErrchk(cudaMalloc(&devInfo,          sizeof(int)));
     T *d_U;         gpuErrchk(cudaMalloc(&d_U,      M * M * sizeof(T)));
     T *d_V;         gpuErrchk(cudaMalloc(&d_V,      N * N * sizeof(T)));
@@ -117,19 +118,19 @@ class GpuSvdSolver {
     stat = doSvd(solver_handle, M, N,
                  d_A, d_S, d_U, d_V,
                  work, work_size, devInfo);
-    if (stat != CUSOLVER_STATUS_SUCCESS) {
+
+    // Error Check
+    gpuErrchk(cudaMemcpy(&devInfo_h, devInfo,
+              sizeof(int), cudaMemcpyDeviceToHost));
+    if (stat != CUSOLVER_STATUS_SUCCESS || devInfo_h != 0) {
       std::cerr << "GPU SVD Solver Internal Failure" << std::endl;
-      cudaFree(d_S); cudaFree(d_U); cudaFree(d_V);
+      cudaFree(d_S); cudaFree(d_U); cudaFree(d_V); cudaFree(work);
       cusolverDnDestroy(solver_handle);
       exit(1);
     }
     cudaDeviceSynchronize();
 
-    int devInfo_h = 0;
-    gpuErrchk(cudaMemcpy(&devInfo_h, devInfo,
-              sizeof(int), cudaMemcpyDeviceToHost));
-
-    // --- Moving the results from device to host
+        // --- Moving the results from device to host
     gpuErrchk(cudaMemcpy(&s_(0, 0), d_S, N*sizeof(T),
               cudaMemcpyDeviceToHost));
     gpuErrchk(cudaMemcpy(&u_(0, 0), d_U, M*M*sizeof(T),
@@ -137,7 +138,7 @@ class GpuSvdSolver {
     gpuErrchk(cudaMemcpy(&v_(0, 0), d_V, N*N*sizeof(T),
               cudaMemcpyDeviceToHost));
 
-    cudaFree(d_S); cudaFree(d_U); cudaFree(d_V);
+    cudaFree(d_S); cudaFree(d_U); cudaFree(d_V); cudaFree(work);
     cusolverDnDestroy(solver_handle);
   }
 

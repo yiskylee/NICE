@@ -44,10 +44,10 @@
 
 // This is a template test fixture class containing test matrices
 template<class T>  // Template
-class GpuDeterminantTest : public ::testing::Test {  // Inherits testing::Test
+class GpuFrobeniusNormTest : public ::testing::Test {  // Inherits testing::Test
  public:  // Members must be public to be accessed by tests
   Nice::Matrix<T> a_;
-  T det_;
+  T norm_;
 
   int row_;
   int col_;
@@ -65,28 +65,28 @@ class GpuDeterminantTest : public ::testing::Test {  // Inherits testing::Test
     // Create matrix
     a_ = Nice::Matrix<T>::Random(row_, col_);
     // CPU SVD
-//    Nice::CpuOperations<T> cpu_op;
+    Nice::CpuOperations<T> cpu_op;
 
     // Solve in CPU
-    det_ = a_.determinant();
+    norm_ = cpu_op.FrobeniusNorm(a_);
   }
 };
 // Establishes a test case with the given types, Char and short types will
 // Throw compiler errors
 typedef ::testing::Types<float, double> dataTypes;
-TYPED_TEST_CASE(GpuDeterminantTest, dataTypes);
+TYPED_TEST_CASE(GpuFrobeniusNormTest, dataTypes);
 
-TYPED_TEST(GpuDeterminantTest, FuncionalityTest) {
+TYPED_TEST(GpuFrobeniusNormTest, FuncionalityTest) {
   // Create test data
   int m = 5;
   int n = 10;
   this->CreateTestData(m, n);
-  TypeParam gpu_det;
+  TypeParam gpu_norm;
   // Test gpu matrix matrix multiply in Nice
   Nice::GpuOperations<TypeParam> gpu_op;
-  gpu_det = gpu_op.Determinant(this->a_);
+  gpu_norm = gpu_op.FrobeniusNorm(this->a_);
 
   // Verify the result
-  EXPECT_NEAR(this->det_, gpu_det, 0.001);
+  EXPECT_NEAR(this->norm_, gpu_norm, 0.001);
 }
 
