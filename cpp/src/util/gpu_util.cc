@@ -19,25 +19,26 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-#ifndef CPP_INCLUDE_GPU_UTIL_H_
-#define CPP_INCLUDE_GPU_UTIL_H_
 
 #ifdef NEED_CUDA
 
-#include <cuda_runtime_api.h>
-#include <cuda_runtime.h>
-#include <device_launch_parameters.h>
-#include <cusolverDn.h>
-
-#include <iostream>
+#include "include/gpu_util.h"
 
 namespace Nice {
 
 //
 // Helper functions
 //
-void gpuAssert(cudaError_t, const char *, int, bool);
-void gpuErrchk(cudaError_t);
+void gpuAssert(cudaError_t code, const char *file,
+               int line, bool abort = true) {
+  if (code != cudaSuccess) {
+    fprintf(stderr, "GPUassert: %s %s %d\n",
+            cudaGetErrorString(code), file, line);
+    if (abort) { exit(code); }
+    }
+}
+
+void gpuErrchk(cudaError_t ans) { gpuAssert((ans), __FILE__, __LINE__); }
 
 //
 // Cusolver wraper functions
@@ -51,7 +52,12 @@ cusolverStatus_t GpuSvd(cusolverDnHandle_t solver_handle,
            float * d_V,
            float * work,
            int work_size,
-           int * devInfo);
+           int * devInfo) {
+  return cusolverDnSgesvd(solver_handle,
+                          'A', 'A', M, N, d_A, M, d_S,
+                          d_U, M, d_V, N, work, work_size,
+                          NULL, devInfo);
+}
 
 cusolverStatus_t GpuSvd(cusolverDnHandle_t solver_handle,
            int M,
@@ -62,21 +68,30 @@ cusolverStatus_t GpuSvd(cusolverDnHandle_t solver_handle,
            double * d_V,
            double * work,
            int work_size,
-           int * devInfo);
+           int * devInfo) {
+  return cusolverDnDgesvd(solver_handle,
+                         'A', 'A', M, N, d_A, M, d_S,
+                          d_U, M, d_V, N, work, work_size,
+                          NULL, devInfo);
+}
 
 cusolverStatus_t GpuGetLUDecompWorkspace(cusolverDnHandle_t handle,
                                     int m,
                                     int n,
                                     float *A,
                                     int lda,
-                                    int *Lwork);
+                                    int *Lwork) {
+  return cusolverDnSgetrf_bufferSize(handle, m, n, A, lda, Lwork);
+}
 
 cusolverStatus_t GpuGetLUDecompWorkspace(cusolverDnHandle_t handle,
                                     int m,
                                     int n,
                                     double *A,
                                     int lda,
-                                    int *Lwork);
+                                    int *Lwork) {
+  return cusolverDnDgetrf_bufferSize(handle, m, n, A, lda, Lwork);
+}
 
 cusolverStatus_t GpuLUDecomposition(cusolverDnHandle_t handle,
                                     int m,
@@ -84,7 +99,9 @@ cusolverStatus_t GpuLUDecomposition(cusolverDnHandle_t handle,
                                     float *A,
                                     int lda,
                                     float *Workspace,
-                                    int *devIpiv, int *devInfo);
+                                    int *devIpiv, int *devInfo) {
+  return cusolverDnSgetrf(handle, m, n, A, lda, Workspace, devIpiv, devInfo);
+}
 
 cusolverStatus_t GpuLUDecomposition(cusolverDnHandle_t handle,
                                     int m,
@@ -92,7 +109,9 @@ cusolverStatus_t GpuLUDecomposition(cusolverDnHandle_t handle,
                                     double *A,
                                     int lda,
                                     double *Workspace,
-                                    int *devIpiv, int *devInfo);
+                                    int *devIpiv, int *devInfo) {
+  return cusolverDnDgetrf(handle, m, n, A, lda, Workspace, devIpiv, devInfo);
+}
 
 cusolverStatus_t GpuLinearSolver(cusolverDnHandle_t handle,
                                  cublasOperation_t trans,
@@ -103,7 +122,10 @@ cusolverStatus_t GpuLinearSolver(cusolverDnHandle_t handle,
                                  const int *devIpiv,
                                  float *B,
                                  int ldb,
-                                 int *devInfo);
+                                 int *devInfo) {
+  return cusolverDnSgetrs(handle, trans, n, nrhs, A, lda,
+                          devIpiv, B, ldb, devInfo);
+}
 
 cusolverStatus_t GpuLinearSolver(cusolverDnHandle_t handle,
                                  cublasOperation_t trans,
@@ -114,7 +136,10 @@ cusolverStatus_t GpuLinearSolver(cusolverDnHandle_t handle,
                                  const int *devIpiv,
                                  double *B,
                                  int ldb,
-                                 int *devInfo);
+                                 int *devInfo) {
+  return cusolverDnDgetrs(handle, trans, n, nrhs, A, lda,
+                          devIpiv, B, ldb, devInfo);
+}
 
 
 //
@@ -127,7 +152,10 @@ cublasStatus_t GpuMatrixVectorMul(cublasHandle_t handle,
                                   const float *A, int lda,
                                   const float *x, int incx,
                                   const float *beta,
-                                  float *y, int incy);
+                                  float *y, int incy) {
+  return cublasSgemv(handle, trans, m, n, alpha,
+                     A, lda, x, incx, beta, y, incy);
+}
 
 cublasStatus_t GpuMatrixVectorMul(cublasHandle_t handle,
                                   cublasOperation_t trans,
@@ -136,9 +164,10 @@ cublasStatus_t GpuMatrixVectorMul(cublasHandle_t handle,
                                   const double *A, int lda,
                                   const double *x, int incx,
                                   const double *beta,
-                                  double *y, int incy);
+                                  double *y, int incy) {
+  return cublasDgemv(handle, trans, m, n, alpha,
+                     A, lda, x, incx, beta, y, incy);
+}
 
 }  // namespace Nice
-
-#endif  // NEED_CUDA
-#endif  // CPP_INCLUDE_GPU_UTIL_H_
+#endif  // Need Cuda

@@ -38,38 +38,6 @@
 
 namespace Nice {
 
-cusolverStatus_t doSvd(cusolverDnHandle_t solver_handle,
-           int M,
-           int N,
-           float * d_A,
-           float * d_S,
-           float * d_U,
-           float * d_V,
-           float * work,
-           int work_size,
-           int * devInfo) {
-  return cusolverDnSgesvd(solver_handle,
-                          'A', 'A', M, N, d_A, M, d_S,
-                          d_U, M, d_V, N, work, work_size,
-                          NULL, devInfo);
-}
-
-cusolverStatus_t doSvd(cusolverDnHandle_t solver_handle,
-           int M,
-           int N,
-           double * d_A,
-           double * d_S,
-           double * d_U,
-           double * d_V,
-           double * work,
-           int work_size,
-           int * devInfo) {
-  return cusolverDnDgesvd(solver_handle,
-                         'A', 'A', M, N, d_A, M, d_S,
-                          d_U, M, d_V, N, work, work_size,
-                          NULL, devInfo);
-}
-
 template<typename T>
 class GpuSvdSolver {
  private:
@@ -105,14 +73,24 @@ class GpuSvdSolver {
     cusolverDnHandle_t solver_handle;
     cusolverDnCreate(&solver_handle);
     stat = cusolverDnSgesvd_bufferSize(solver_handle, M, N, &work_size);
-    if (stat != CUSOLVER_STATUS_SUCCESS)
-      std::cout << "Initialization of cuSolver failed. \n";
+    if (stat != CUSOLVER_STATUS_SUCCESS) {
+      std::cout << "Initialization of cuSolver failed." << std::endl;
+      cudaFree(d_S); cudaFree(d_U); cudaFree(d_V);
+      cusolverDnDestroy(solver_handle);
+      exit(1);
+    }
     T *work;    gpuErrchk(cudaMalloc(&work, work_size * sizeof(T)));
 
     // --- CUDA SVD execution
-    stat = doSvd(solver_handle, M, N,
+    stat = GpuSvd(solver_handle, M, N,
                  d_A, d_S, d_U, d_V,
                  work, work_size, devInfo);
+    if (stat != CUSOLVER_STATUS_SUCCESS) {
+      std::cerr << "GPU SVD Solver Internal Failure" << std::endl;
+      cudaFree(d_S); cudaFree(d_U); cudaFree(d_V);
+      cusolverDnDestroy(solver_handle);
+      exit(1);
+    }
     cudaDeviceSynchronize();
 
     int devInfo_h = 0;

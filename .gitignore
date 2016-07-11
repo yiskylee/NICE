@@ -6,3 +6,4 @@ Debug
 *.m
 cpp/build/
 cpp/dlib/
+python
