@@ -130,14 +130,16 @@ class GpuOperations {
     int m = a.rows();
     int n = a.cols();
     int lda = m;
-    int ldb = n;
+    int ldb = m;
     int ldc = m;
 
     float alpha = 1.0;
     float beta = 1.0;
 
     const T * h_a = &a(0);
-    const Matrix<T> h_b = Constant(m, n, scalar);
+    Matrix<T> b(m, n);
+    b = Matrix<T>::Constant(m, n, scalar);
+    const T * h_b = &b(0);
     Matrix<T> h_c(m, n);
 
     T * d_a;  gpuErrchk(cudaMalloc(&d_a, m * n * sizeof(T)));
@@ -145,9 +147,9 @@ class GpuOperations {
     T * d_c;  gpuErrchk(cudaMalloc(&d_c, m * n * sizeof(T)));
 
     gpuErrchk(cudaMemcpy(d_a, h_a, m * n * sizeof(T),
-                           cudaMemcpyHostToDevice));
+                         cudaMemcpyHostToDevice));
     gpuErrchk(cudaMemcpy(d_b, h_b, m * n * sizeof(T),
-                           cudaMemcpyHostToDevice));
+                         cudaMemcpyHostToDevice));
 
     cublasStatus_t stat;
     cublasHandle_t handle;

@@ -45,8 +45,3 @@ TEST(GPU_MATRIX_MATRIX_ADD, Basic_Test) {
   ASSERT_TRUE(correct_ans.isApprox(calc_ans));
 }
 
-TEST(GPU_MATRIX_MATRIX_ADD, Different_Sized_Matrices) {
-  Nice::Matrix<float> a(4, 4);
-  Nice::Matrix<float> b(3, 3);
-  ASSERT_DEATH(Nice::GpuOperations<float>::Add(a, b), ".*");
-}
