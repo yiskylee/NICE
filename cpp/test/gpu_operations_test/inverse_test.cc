@@ -33,63 +33,65 @@
 #include <cmath>
 
 #include "include/gpu_operations.h"
-#include "include/cpu_operations.h"
-
 #include "Eigen/Dense"
 #include "gtest/gtest.h"
 #include "include/matrix.h"
 #include "include/vector.h"
 #include "include/gpu_util.h"
-
+#include "include/cpu_operations.h"
 
 // This is a template test fixture class containing test matrices
 template<class T>  // Template
-class GpuOuterProductTest : public ::testing::Test {  // Inherits testing::Test
+class GpuInverseTest : public ::testing::Test {  // Inherits testing::Test
  public:  // Members must be public to be accessed by tests
-  Nice::Matrix<T> a_;
-  Nice::Matrix<T> b_;
-  Nice::Matrix<T> c_;
-
+  Nice::Matrix<T> matrix_;
   int row_;
-
+  int col_;
+  Nice::Matrix<T> ref_result_;
+  Nice::Matrix<T> gpu_result_;
 
   // Constructor
-  void CreateTestData(int m) {
+  void CreateTestData() {
     // Check matrix
-    if (a_.rows() != 0)
+    if (matrix_.rows() != 0 && matrix_.cols() != 0)
       return;
 
     // Set up dimension
-    row_ = m;
+    row_ = 5;
+    col_ = row_;
 
     // Create matrix
-    a_ = Nice::Vector<T>::Random(row_);
-    b_ = Nice::Vector<T>::Random(row_);
-    // CPU SVD
-    Nice::CpuOperations<T> cpu_op;
+    matrix_.resize(row_, col_);
+    matrix_ << 0.940058,   0.010484,   0.684214,   0.068308,   0.775155,
+               0.362836,   0.536293,   0.570479,   0.291084,   0.890316,
+               0.038190,   0.858041,   0.881434,   0.435262,   0.762851,
+               0.498995,   0.500425,   0.762412,   0.644035,   0.332466,
+               0.734139,   0.897120,   0.856919,   0.729722,   0.363101;
 
-    // Solve in CPU
-    c_ = cpu_op.OuterProduct(a_, b_);
+    // Create reference results
+    ref_result_.resize(row_, col_);
+    ref_result_ << 0.516486,   0.197357,  -0.946819,  -1.058853,   1.372200,
+                   -0.251945,  -0.071648,   0.502355,  -2.855800,   2.272983,
+                   1.387686,  -3.107333,   2.349968,   0.351579,  -0.602387,
+                   -1.633532,   2.397464,  -2.050379,   3.827388,  -1.588003,
+                   -0.413823,   2.293140,  -0.752141,   0.675126,  -1.023207;
   }
 };
 // Establishes a test case with the given types, Char and short types will
 // Throw compiler errors
 typedef ::testing::Types<float, double> dataTypes;
-TYPED_TEST_CASE(GpuOuterProductTest, dataTypes);
+TYPED_TEST_CASE(GpuInverseTest, dataTypes);
 
-TYPED_TEST(GpuOuterProductTest, FuncionalityTest) {
+TYPED_TEST(GpuInverseTest, FuncionalityTest) {
   // Create test data
-  int m = 10;
-  srand(time(NULL));
-  this->CreateTestData(m);
-  Nice::Matrix<TypeParam> gpu_c(m, m);
-  // Test gpu matrix matrix multiply in Nice
-  Nice::GpuOperations<TypeParam> gpu_op;
-  gpu_c = gpu_op.OuterProduct(this->a_, this->b_);
+  this->CreateTestData();
 
-  // Verify the result
-  for (int i = 0; i < m; i++)
-    for (int j = 0; j < m; j++)
-      EXPECT_NEAR(this->c_(i, j), gpu_c(i, j), 0.001);
+  // Test inverse in Nice
+  this->gpu_result_ = Nice::GpuOperations<TypeParam>::Inverse(this->matrix_);
+
+  // Verify
+  for (int i = 0; i < this->row_; i++)
+    for (int j = 0; j < this->col_; j++)
+      EXPECT_NEAR(this->ref_result_(i, j), this->gpu_result_(i, j), 0.001);
 }
 

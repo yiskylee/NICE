@@ -77,6 +77,7 @@ TYPED_TEST_CASE(GpuVectorVectorDotTest, dataTypes);
 TYPED_TEST(GpuVectorVectorDotTest, FuncionalityTest) {
   // Create test data
   int m = 10;
+  srand(time(NULL));
   this->CreateTestData(m);
   TypeParam gpu_c;
   // Test gpu matrix matrix multiply in Nice

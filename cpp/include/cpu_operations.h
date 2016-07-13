@@ -56,13 +56,11 @@ class CpuOperations {
     // Returns the resulting matrix that is created by running a logical or
     // operation on the two input matrices
     if ((a.rows() != b.rows()) || (a.cols() != b.cols())) {
-      std::cerr << std::endl << "ERROR: MATRICES ARE NOT THE SAME SIZE!"
-                << std::endl << std::endl;
+      std::cerr << "MATRICES ARE NOT THE SAME SIZE!";
       exit(1);  // Exits the program
     } else if (b.rows() == 0 || b.cols() == 0 || a.rows() == 0
         || a.cols() == 0) {
-      std::cerr << std::endl << "ERROR: EMPTY MATRIX AS ARGUMENT!" << std::endl
-                << std::endl;
+      std::cerr << "EMPTY MATRIX AS ARGUMENT!";
       exit(1);  // Exits the program
     }
     return (a.array() || b.array());
@@ -77,8 +75,7 @@ class CpuOperations {
       }
     }
     if (b.rows() == 0 || b.cols() == 0) {
-      std::cerr << std::endl << "ERROR: EMPTY MATRIX AS ARGUMENT!" << std::endl
-                << std::endl;
+      std::cerr << "EMPTY MATRIX AS ARGUMENT!";
       exit(1);  // Exits the program
     }
     return b;
@@ -87,20 +84,38 @@ class CpuOperations {
     // This function returns the logical AND of two boolean matrices
     // Checks to see that the number of rows and columns are the same
     if ((a.rows() != b.rows()) || (a.cols() != b.cols())) {
-      std::cerr << "/nERROR: MATRICES ARE NOT THE SAME SIZE!/n/n";
+      std::cerr << "MATRICES ARE NOT THE SAME SIZE!";
       exit(1);  // Exits the program
     }
     return (a.array() && b.array());
     // Will return a matrix due to implicit conversion
   }
-  static Matrix<T> Inverse(const Matrix<T> &a);
+  static Matrix<T> Inverse(const Matrix<T> &a) {
+      // If the matrix is empty, it should not check for inverse.
+      if (a.cols() == 0) {
+        std::cerr << "MATRIX IS EMPTY";
+        exit(1);
+      // If the matrix is not sqaure it will not produce an inverse.
+    } else if (a.cols() != a.rows()) {
+        std::cerr << "MATRIX IS NOT A SQUARE MATRIX!";
+        exit(1);
+
+      // If the determinant of a matrix is 0, it does not have an inverse.
+    } else if (a.determinant() == 0) {
+        std::cerr << "MATRIX DOES NOT HAVE AN INVERSE (DETERMINANT IS ZERO)!";
+        exit(1);
+
+      // If this point is reached then an inverse of the matrix exists.
+    } else {
+      return a.inverse();
+    }
+  }
   static Matrix<T> Norm(const int &p = 2, const int &axis = 0);
   static T Determinant(const Matrix<T> &a);
   static T Rank(const Matrix<T> &a);
   static T FrobeniusNorm(const Matrix<T> &a) {
     if (a.rows() == 0 || a.cols() == 0) {
-      std::cerr << std::endl << "ERROR: EMPTY MATRIX AS ARGUMENT!"
-      << std::endl << std::endl;
+      std::cerr << "EMPTY MATRIX AS ARGUMENT!";
       exit(-1);  // Exits the program
     } else {
       return a.norm();
@@ -134,8 +149,7 @@ class CpuOperations {
   static Matrix<T> OuterProduct(const Vector<T> &a, const Vector<T> &b) {
     // This function returns the outer product of he two passed in vectors
     if (a.size() == 0 || b.size() == 0) {
-      std::cerr << std::endl << "ERROR: EMPTY VECTOR AS ARGUMENT!" << std::endl
-                << std::endl;
+      std::cerr << "EMPTY VECTOR AS ARGUMENT!";
       exit(1);
     }
     return a * b.transpose();
@@ -145,12 +159,10 @@ class CpuOperations {
     // Returns the resulting vector that is created by running a logical or
     // operation on the two input vectors
     if (a.size() != b.size()) {
-      std::cerr << std::endl << "ERROR: VECTORS ARE NOT THE SAME SIZE!"
-                << std::endl << std::endl;
+      std::cerr << "VECTORS ARE NOT THE SAME SIZE!";
       exit(1);  // Exits the program
     } else if (a.size() == 0 || b.size() == 0) {
-      std::cerr << std::endl << "ERROR: EMPTY VECTOR AS ARGUMENT!" << std::endl
-                << std::endl;
+      std::cerr << "EMPTY VECTOR AS ARGUMENT!";
       exit(1);  // Exits the program
     }
     return (a.array() || b.array());
@@ -163,8 +175,7 @@ class CpuOperations {
       b(i) = !b(i);
     }
     if (a.size() == 0) {
-      std::cerr << std::endl << "ERROR: EMPTY VECTOR AS ARGUMENT!" << std::endl
-                << std::endl;
+      std::cerr << "EMPTY VECTOR AS ARGUMENT!";
       exit(1);  // Exits the program
     }
     return b;

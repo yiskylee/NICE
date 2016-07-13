@@ -41,7 +41,6 @@
 #include "include/vector.h"
 #include "include/gpu_util.h"
 
-
 // This is a template test fixture class containing test matrices
 template<class T>  // Template
 class GpuDeterminantTest : public ::testing::Test {  // Inherits testing::Test
@@ -80,6 +79,7 @@ TYPED_TEST(GpuDeterminantTest, FuncionalityTest) {
   // Create test data
   int m = 5;
   int n = 10;
+  srand(time(NULL));
   this->CreateTestData(m, n);
   TypeParam gpu_det;
   // Test gpu matrix matrix multiply in Nice

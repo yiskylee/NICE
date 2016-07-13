@@ -23,15 +23,193 @@
 #define CPP_INCLUDE_GPU_UTIL_H_
 
 #ifdef NEED_CUDA
-#include<cuda_runtime_api.h>
-#include<cuda_runtime.h>
-#include<device_launch_parameters.h>
+
+#include <cuda_runtime_api.h>
+#include <cuda_runtime.h>
+#include <device_launch_parameters.h>
+#include <cusolverDn.h>
+
 #include <iostream>
+
 namespace Nice {
 
+//
+// Helper functions
+//
 void gpuAssert(cudaError_t, const char *, int, bool);
 void gpuErrchk(cudaError_t);
 
+//
+// Cusolver wraper functions
+//
+cusolverStatus_t GpuSvd(cusolverDnHandle_t solver_handle,
+           int M,
+           int N,
+           float * d_A,
+           float * d_S,
+           float * d_U,
+           float * d_V,
+           float * work,
+           int work_size,
+           int * devInfo);
+
+cusolverStatus_t GpuSvd(cusolverDnHandle_t solver_handle,
+           int M,
+           int N,
+           double * d_A,
+           double * d_S,
+           double * d_U,
+           double * d_V,
+           double * work,
+           int work_size,
+           int * devInfo);
+
+cusolverStatus_t GpuGetLUDecompWorkspace(cusolverDnHandle_t handle,
+                                    int m,
+                                    int n,
+                                    float *A,
+                                    int lda,
+                                    int *Lwork);
+
+cusolverStatus_t GpuGetLUDecompWorkspace(cusolverDnHandle_t handle,
+                                    int m,
+                                    int n,
+                                    double *A,
+                                    int lda,
+                                    int *Lwork);
+
+cusolverStatus_t GpuLUDecomposition(cusolverDnHandle_t handle,
+                                    int m,
+                                    int n,
+                                    float *A,
+                                    int lda,
+                                    float *Workspace,
+                                    int *devIpiv, int *devInfo);
+
+cusolverStatus_t GpuLUDecomposition(cusolverDnHandle_t handle,
+                                    int m,
+                                    int n,
+                                    double *A,
+                                    int lda,
+                                    double *Workspace,
+                                    int *devIpiv, int *devInfo);
+
+cusolverStatus_t GpuLinearSolver(cusolverDnHandle_t handle,
+                                 cublasOperation_t trans,
+                                 int n,
+                                 int nrhs,
+                                 const float *A,
+                                 int lda,
+                                 const int *devIpiv,
+                                 float *B,
+                                 int ldb,
+                                 int *devInfo);
+
+cusolverStatus_t GpuLinearSolver(cusolverDnHandle_t handle,
+                                 cublasOperation_t trans,
+                                 int n,
+                                 int nrhs,
+                                 const double *A,
+                                 int lda,
+                                 const int *devIpiv,
+                                 double *B,
+                                 int ldb,
+                                 int *devInfo);
+
+cusolverStatus_t do_get_det_buffer(cusolverDnHandle_t handle,
+                                   int m,
+                                   int n,
+                                   float *a,
+                                   int *worksize);
+
+cusolverStatus_t do_get_det_buffer(cusolverDnHandle_t handle,
+                                   int m,
+                                   int n,
+                                   double *a,
+                                   int *worksize);
+
+cusolverStatus_t do_det(cusolverDnHandle_t handle,
+                        int m,
+                        int n,
+                        float *a,
+                        float *workspace,
+                        int *devIpiv,
+                        int *devInfo);
+
+cusolverStatus_t do_det(cusolverDnHandle_t handle,
+                        int m,
+                        int n,
+                        double *a,
+                        double *workspace,
+                        int *devIpiv,
+                        int *devInfo);
+
+//
+// Cublas wraper functions
+//
+cublasStatus_t GpuMatrixVectorMul(cublasHandle_t handle,
+                                  cublasOperation_t trans,
+                                  int m, int n,
+                                  const float *alpha,
+                                  const float *A, int lda,
+                                  const float *x, int incx,
+                                  const float *beta,
+                                  float *y, int incy);
+
+cublasStatus_t GpuMatrixVectorMul(cublasHandle_t handle,
+                                  cublasOperation_t trans,
+                                  int m, int n,
+                                  const double *alpha,
+                                  const double *A, int lda,
+                                  const double *x, int incx,
+                                  const double *beta,
+                                  double *y, int incy);
+cublasStatus_t do_multiply(cublasHandle_t handle,
+                           int n,
+                           const float &scalar,
+                           float *a);
+
+cublasStatus_t do_multiply(cublasHandle_t handle,
+                           int n,
+                           const double &scalar,
+                           double *a);
+
+cublasStatus_t do_multiply(cublasHandle_t handle,
+                           int m,
+                           int n,
+                           int k,
+                           float *a,
+                           float *b,
+                           float *c);
+
+cublasStatus_t do_multiply(cublasHandle_t handle,
+                           int m,
+                           int n,
+                           int k,
+                           double *a,
+                           double *b,
+                           double *c);
+
+cublasStatus_t do_dot(cublasHandle_t handle,
+                      int n,
+                      float *a,
+                      float *b,
+                      float *c);
+cublasStatus_t do_dot(cublasHandle_t handle,
+                     int n,
+                     double *a,
+                     double *b,
+                     double *c);
+
+cublasStatus_t do_Frobenius_Norm(cublasHandle_t handle,
+                                 int n,
+                                 const float * a,
+                                 float * c);
+
+cublasStatus_t do_Frobenius_Norm(cublasHandle_t handle,
+                                 int n,
+                                 const double * a,
+                                 double * c);
 }  // namespace Nice
 
 #endif  // NEED_CUDA

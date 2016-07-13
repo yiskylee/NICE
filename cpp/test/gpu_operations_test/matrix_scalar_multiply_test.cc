@@ -83,6 +83,7 @@ TYPED_TEST(GpuMatrixScalarMultiplyTest, FuncionalityTest) {
   int m = 5;
   int n = 10;
   int scalar = 3;
+  srand(time(NULL));
   this->CreateTestData(m, n, scalar);
   Nice::Matrix<TypeParam> gpu_c(m, n);
   // Test gpu matrix matrix multiply in Nice

@@ -80,6 +80,7 @@ TYPED_TEST(GpuFrobeniusNormTest, FuncionalityTest) {
   // Create test data
   int m = 5;
   int n = 10;
+  srand(time(NULL));
   this->CreateTestData(m, n);
   TypeParam gpu_norm;
   // Test gpu matrix matrix multiply in Nice

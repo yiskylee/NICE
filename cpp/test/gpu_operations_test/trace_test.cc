@@ -33,63 +33,53 @@
 #include <cmath>
 
 #include "include/gpu_operations.h"
-#include "include/cpu_operations.h"
-
 #include "Eigen/Dense"
 #include "gtest/gtest.h"
 #include "include/matrix.h"
 #include "include/vector.h"
 #include "include/gpu_util.h"
 
-
 // This is a template test fixture class containing test matrices
 template<class T>  // Template
-class GpuOuterProductTest : public ::testing::Test {  // Inherits testing::Test
+class GpuTraceTest : public ::testing::Test {  // Inherits testing::Test
  public:  // Members must be public to be accessed by tests
-  Nice::Matrix<T> a_;
-  Nice::Matrix<T> b_;
-  Nice::Matrix<T> c_;
-
+  Nice::Matrix<T> matrix_;
   int row_;
-
+  int col_;
+  T cpu_result;
+  T gpu_result;
 
   // Constructor
-  void CreateTestData(int m) {
+  void CreateTestData() {
     // Check matrix
-    if (a_.rows() != 0)
+    if (matrix_.rows() != 0 && matrix_.cols() != 0)
       return;
 
     // Set up dimension
-    row_ = m;
+    row_ = 5;
+    col_ = row_;
 
     // Create matrix
-    a_ = Nice::Vector<T>::Random(row_);
-    b_ = Nice::Vector<T>::Random(row_);
-    // CPU SVD
-    Nice::CpuOperations<T> cpu_op;
+    matrix_ = Nice::Matrix<T>::Random(row_, col_);
 
-    // Solve in CPU
-    c_ = cpu_op.OuterProduct(a_, b_);
+    // Do CPU trace computation
+    cpu_result = matrix_.trace();
   }
 };
 // Establishes a test case with the given types, Char and short types will
 // Throw compiler errors
 typedef ::testing::Types<float, double> dataTypes;
-TYPED_TEST_CASE(GpuOuterProductTest, dataTypes);
+TYPED_TEST_CASE(GpuTraceTest, dataTypes);
 
-TYPED_TEST(GpuOuterProductTest, FuncionalityTest) {
+TYPED_TEST(GpuTraceTest, FuncionalityTest) {
   // Create test data
-  int m = 10;
   srand(time(NULL));
-  this->CreateTestData(m);
-  Nice::Matrix<TypeParam> gpu_c(m, m);
-  // Test gpu matrix matrix multiply in Nice
-  Nice::GpuOperations<TypeParam> gpu_op;
-  gpu_c = gpu_op.OuterProduct(this->a_, this->b_);
+  this->CreateTestData();
 
-  // Verify the result
-  for (int i = 0; i < m; i++)
-    for (int j = 0; j < m; j++)
-      EXPECT_NEAR(this->c_(i, j), gpu_c(i, j), 0.001);
+  // Test trace in Nice
+  this->gpu_result = Nice::GpuOperations<TypeParam>::Trace(this->matrix_);
+
+  // Verify
+  EXPECT_EQ(this->gpu_result, this->cpu_result);
 }
 
