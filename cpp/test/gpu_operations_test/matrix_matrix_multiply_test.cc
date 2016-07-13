@@ -66,9 +66,8 @@ class GpuMatrixMatrixMultiplyTest : public ::testing::Test {
     // Create matrix
     a_ = Nice::Matrix<T>::Random(row_, col_);
     b_ = Nice::Matrix<T>::Random(col_, row_);
-    // CPU SVD
-    Nice::CpuOperations<T> cpu_op;
 
+    Nice::CpuOperations<T> cpu_op;
     // Solve in CPU
     c_ = cpu_op.Multiply(a_, b_);
   }

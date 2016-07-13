@@ -66,7 +66,7 @@ class GpuMatrixScalarMultiplyTest : public ::testing::Test {
     // Create matrix
     a_ = Nice::Matrix<T>::Random(row_, col_);
     b_ = scalar;
-    // CPU SVD
+
     Nice::CpuOperations<T> cpu_op;
 
     // Solve in CPU

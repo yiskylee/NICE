@@ -61,7 +61,7 @@ class GpuOperations {
       cublasStatus_t stat;
       cublasHandle_t  handle;
       cublasCreate(&handle);
-      stat = do_multiply(handle, n, scalar, d_a);
+      stat = GpuMatrixScalarMul(handle, n, scalar, d_a);
 
       // Error check
       if (stat != CUBLAS_STATUS_SUCCESS) {
@@ -103,7 +103,7 @@ class GpuOperations {
       cublasStatus_t stat;
       cublasHandle_t  handle;
       cublasCreate(&handle);
-      stat = do_multiply(handle, m, n, k, d_a, d_b, d_c);
+      stat = GpuMatrixMatrixMul(handle, m, n, k, d_a, d_b, d_c);
 
       // Error check
       if (stat != CUBLAS_STATUS_SUCCESS) {
@@ -257,7 +257,7 @@ class GpuOperations {
     cusolverStatus_t stat;
     cusolverDnHandle_t handle;
     cusolverDnCreate(&handle);
-    stat = do_get_det_buffer(handle, m, n, d_a, &work_size);
+    stat = GpuLuWorkspace(handle, m, n, d_a, &work_size);
 
     // Error check
     if (stat != CUSOLVER_STATUS_SUCCESS) {
@@ -270,7 +270,7 @@ class GpuOperations {
 
     // Allocate LU decomposition workspace memory and do LU decomposistion
     T *workspace;    gpuErrchk(cudaMalloc(&workspace, work_size * sizeof(T)));
-    stat = do_det(handle, m, n, d_a, workspace, devIpiv_d, devInfo_d);
+    stat = GpuDeterminant(handle, m, n, d_a, workspace, devIpiv_d, devInfo_d);
 
     // Error check
     gpuErrchk(cudaMemcpy(&devInfo_h, devInfo_d, sizeof(int),
@@ -341,7 +341,7 @@ class GpuOperations {
     cublasHandle_t  handle;
     cublasCreate(&handle);
     cublasStatus_t stat;
-    stat = do_Frobenius_Norm(handle, n * m, d_a, h_c);
+    stat = GpuFrobeniusNorm(handle, n * m, d_a, h_c);
 
     // Error Check
     if (stat != CUBLAS_STATUS_SUCCESS) {
@@ -447,7 +447,7 @@ class GpuOperations {
     cublasHandle_t  handle;
     cublasCreate(&handle);
     cublasStatus_t stat;
-    stat = do_dot(handle, n, d_a, d_b, h_c);
+    stat = GpuVectorVectorDot(handle, n, d_a, d_b, h_c);
 
     // Error Check
     if (stat != CUBLAS_STATUS_SUCCESS) {
@@ -487,7 +487,7 @@ class GpuOperations {
       cublasStatus_t stat;
       cublasHandle_t  handle;
       cublasCreate(&handle);
-      stat = do_multiply(handle, m, n, k, d_a, d_b, d_c);
+      stat = GpuMatrixMatrixMul(handle, m, n, k, d_a, d_b, d_c);
 
       // Error check
       if (stat != CUBLAS_STATUS_SUCCESS) {

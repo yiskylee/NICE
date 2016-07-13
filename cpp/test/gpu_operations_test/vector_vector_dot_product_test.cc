@@ -63,7 +63,7 @@ class GpuVectorVectorDotTest : public ::testing::Test {
     // Create matrix
     a_ = Nice::Vector<T>::Random(row_);
     b_ = Nice::Vector<T>::Random(row_);
-    // CPU ops
+
     Nice::CpuOperations<T> cpu_op;
     // Solve in CPU
     c_ = cpu_op.DotProduct(a_, b_);

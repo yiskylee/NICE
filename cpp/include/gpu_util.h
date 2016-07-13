@@ -116,33 +116,33 @@ cusolverStatus_t GpuLinearSolver(cusolverDnHandle_t handle,
                                  int ldb,
                                  int *devInfo);
 
-cusolverStatus_t do_get_det_buffer(cusolverDnHandle_t handle,
-                                   int m,
-                                   int n,
-                                   float *a,
-                                   int *worksize);
+cusolverStatus_t GpuLuWorkspace(cusolverDnHandle_t handle,
+                                int m,
+                                int n,
+                                float *a,
+                                int *worksize);
 
-cusolverStatus_t do_get_det_buffer(cusolverDnHandle_t handle,
-                                   int m,
-                                   int n,
-                                   double *a,
-                                   int *worksize);
+cusolverStatus_t GpuLuWorkspace(cusolverDnHandle_t handle,
+                                int m,
+                                int n,
+                                double *a,
+                                int *worksize);
 
-cusolverStatus_t do_det(cusolverDnHandle_t handle,
-                        int m,
-                        int n,
-                        float *a,
-                        float *workspace,
-                        int *devIpiv,
-                        int *devInfo);
+cusolverStatus_t GpuDeterminant(cusolverDnHandle_t handle,
+                                int m,
+                                int n,
+                                float *a,
+                                float *workspace,
+                                int *devIpiv,
+                                int *devInfo);
 
-cusolverStatus_t do_det(cusolverDnHandle_t handle,
-                        int m,
-                        int n,
-                        double *a,
-                        double *workspace,
-                        int *devIpiv,
-                        int *devInfo);
+cusolverStatus_t GpuDeterminant(cusolverDnHandle_t handle,
+                                int m,
+                                int n,
+                                double *a,
+                                double *workspace,
+                                int *devIpiv,
+                                int *devInfo);
 
 //
 // Cublas wraper functions
@@ -164,52 +164,52 @@ cublasStatus_t GpuMatrixVectorMul(cublasHandle_t handle,
                                   const double *x, int incx,
                                   const double *beta,
                                   double *y, int incy);
-cublasStatus_t do_multiply(cublasHandle_t handle,
-                           int n,
-                           const float &scalar,
-                           float *a);
+cublasStatus_t GpuMatrixScalarMul(cublasHandle_t handle,
+                                  int n,
+                                  const float &scalar,
+                                  float *a);
 
-cublasStatus_t do_multiply(cublasHandle_t handle,
-                           int n,
-                           const double &scalar,
-                           double *a);
+cublasStatus_t GpuMatrixScalarMul(cublasHandle_t handle,
+                                  int n,
+                                  const double &scalar,
+                                  double *a);
 
-cublasStatus_t do_multiply(cublasHandle_t handle,
-                           int m,
-                           int n,
-                           int k,
-                           float *a,
-                           float *b,
-                           float *c);
+cublasStatus_t GpuMatrixMatrixMul(cublasHandle_t handle,
+                                  int m,
+                                  int n,
+                                  int k,
+                                  float *a,
+                                  float *b,
+                                  float *c);
 
-cublasStatus_t do_multiply(cublasHandle_t handle,
-                           int m,
-                           int n,
-                           int k,
-                           double *a,
-                           double *b,
-                           double *c);
+cublasStatus_t GpuMatrixMatrixMul(cublasHandle_t handle,
+                                  int m,
+                                  int n,
+                                  int k,
+                                  double *a,
+                                  double *b,
+                                  double *c);
 
-cublasStatus_t do_dot(cublasHandle_t handle,
-                      int n,
-                      float *a,
-                      float *b,
-                      float *c);
-cublasStatus_t do_dot(cublasHandle_t handle,
-                     int n,
-                     double *a,
-                     double *b,
-                     double *c);
+cublasStatus_t GpuVectorVectorDot(cublasHandle_t handle,
+                                  int n,
+                                  float *a,
+                                  float *b,
+                                  float *c);
+cublasStatus_t GpuVectorVectorDot(cublasHandle_t handle,
+                                  int n,
+                                  double *a,
+                                  double *b,
+                                  double *c);
 
-cublasStatus_t do_Frobenius_Norm(cublasHandle_t handle,
-                                 int n,
-                                 const float * a,
-                                 float * c);
+cublasStatus_t GpuFrobeniusNorm(cublasHandle_t handle,
+                                int n,
+                                const float * a,
+                                float * c);
 
-cublasStatus_t do_Frobenius_Norm(cublasHandle_t handle,
-                                 int n,
-                                 const double * a,
-                                 double * c);
+cublasStatus_t GpuFrobeniusNorm(cublasHandle_t handle,
+                                int n,
+                                const double * a,
+                                double * c);
 }  // namespace Nice
 
 #endif  // NEED_CUDA

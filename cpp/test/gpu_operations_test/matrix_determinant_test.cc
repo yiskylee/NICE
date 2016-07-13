@@ -63,8 +63,6 @@ class GpuDeterminantTest : public ::testing::Test {  // Inherits testing::Test
 
     // Create matrix
     a_ = Nice::Matrix<T>::Random(row_, col_);
-    // CPU SVD
-//    Nice::CpuOperations<T> cpu_op;
 
     // Solve in CPU
     det_ = a_.determinant();
