@@ -28,7 +28,7 @@ TEST(FromFileTest, IfFileNotExist) {
   ASSERT_DEATH(
       {
         Nice::Matrix<int> m = Nice::util::FromFile<int>(
-            "../test/data_for_test/matrix_not_exist.txt", 2, 2);
+            "../test/data_for_test/from_file/matrix_not_exist.txt", 2, 2);
       }
       , "Cannot open file .*, exiting...");
 }

@@ -43,6 +43,7 @@ class AlternativeSpectralClustering {
   AlternativeSpectralClustering(const Matrix<T> &data_matrix,
                                 int num_clusters) {
     data_matrix_ = data_matrix;
+    CenterData(data_matrix_);
     num_samples_ = data_matrix_.rows();
     num_features_ = data_matrix_.cols();
     alternative_dimension_ = num_features_ - 1;
@@ -50,42 +51,50 @@ class AlternativeSpectralClustering {
     kernel_type_ = kGaussianKernel;
     sigma_ = 1;
     lambda_ = 1;
-    alpha_ = 1;
+    alpha_ = 0.01;
     polynomial_order_ = 2;
     kernel_matrix_ = Matrix<T>::Zero(num_samples_, num_samples_);
     pre_num_clusters_ = 0;
   }
-  void initialize_h_matrix(void) {
+  void CenterData(Matrix<T> &data_matrix) {
+    Matrix<T> centering_matrix =
+        (Matrix<T>::Identity(data_matrix.rows(), data_matrix.rows()) -
+        (1.0 / float(data_matrix.rows())) *
+        Matrix<T>::Constant(data_matrix.rows(), data_matrix.rows(), 1));
+    data_matrix = centering_matrix * data_matrix;
+  }
+  void InitHMatrix(void) {
     h_matrix_ = Matrix<T>::Identity(num_samples_, num_samples_)
         - Matrix<T>::Constant(num_samples_, num_samples_, 1)
             / float(num_samples_);
   }
-  void initialize_w_matrix(void) {
+  void InitWMatrix(void) {
     if (w_matrix_.rows() == 0 or w_matrix_.cols() == 0)
       w_matrix_ = Matrix<T>::Identity(num_features_, num_features_);
     else
       w_matrix_ = w_matrix_.block(0, 0, num_samples_,
                                   alternative_dimension_ - 1);
   }
-  void u_optimize(void) {
-    Matrix<T> l = d_matrix_ * kernel_matrix_ * d_matrix_;
+  void UOptimize(void) {
+    l_matrix_ = d_matrix_ * kernel_matrix_ * d_matrix_;
+    l_matrix_ = h_matrix_ * l_matrix_ * h_matrix_;
     SvdSolver<T> solver;
-    solver.Compute(l);
-    Matrix<T> u_matrix_ = solver.MatrixU().leftCols(num_clusters_);
+    solver.Compute(l_matrix_);
+    u_matrix_ = solver.MatrixU().leftCols(num_clusters_);
   }
-  void optimize_gaussian_kernel(void) {
+  void OptimizaGaussianKernel(void) {
     bool w_u_converge = false;
     while (!w_u_converge) {
-      initialize_h_matrix();
-      initialize_w_matrix();
-      calc_gaussian_kernel();
-      u_optimize();
+      InitHMatrix();
+      InitWMatrix();
+      CalcGaussianKernel();
+      UOptimize();
       if (pre_num_clusters_ == 0)
         return;
-      w_optimize_gaussian();
+      WOptimizeGaussian();
     }
   }
-  Matrix<T> create_y_tilde(void) {
+  Matrix<T> CreateYTilde(void) {
     if (y_matrix_.rows() != 0 && y_matrix_.cols() != 0) {
       Matrix<T> kernel_y = y_matrix_ * y_matrix_.transpose();
       Matrix<T> inner_p = h_matrix_ * kernel_y * h_matrix_;
@@ -96,23 +105,22 @@ class AlternativeSpectralClustering {
       return d_matrix_ * inner_p * d_matrix_;
     }
   }
-  void w_optimize_gaussian(void) {
-    Matrix<T> y_tilde = create_y_tilde();
+  void WOptimizeGaussian(void) {
+    Matrix<T> y_tilde = CreateYTilde();
     Matrix<T> previous_gw = Matrix<T>::Constant(num_samples_, num_samples_,
                                                 1);
     bool w_converge = false;
     float last_w = 0;
 
     for (int m = 0; m < alternative_dimension_; m++) {
-      w_matrix_.col(m) = get_orthogonal_vector(m, w_matrix_.col(m));
+      w_matrix_.col(m) = GetOrthogonalVector(m, w_matrix_.col(m));
       while (!w_converge) {
         Matrix<T> w_l = w_matrix_.col(m);
       }
      }
-
   }
 
-  Vector<T> get_orthogonal_vector(int m, Vector<T> input_vector) {
+  Vector<T> GetOrthogonalVector(int m, Vector<T> input_vector) {
     int count_down = m;
     while (count_down != 0) {
       count_down --;
@@ -125,7 +133,7 @@ class AlternativeSpectralClustering {
     return input_vector;
   }
 
-  void calc_gaussian_kernel(void) {
+  void CalcGaussianKernel(void) {
     // This for loop generates the kernel matrix using gaussian kernel
     for (unsigned long i = 0; i < num_samples_; i++) {
       for (unsigned long j = 0; j < num_samples_; j++) {
@@ -149,7 +157,7 @@ class AlternativeSpectralClustering {
 
   Vector<unsigned long> FitPredict(void) {
     if (kernel_type_ == kGaussianKernel)
-      optimize_gaussian_kernel();
+      OptimizaGaussianKernel();
     Vector<unsigned long> v;
     return v;
   }
@@ -165,7 +173,7 @@ class AlternativeSpectralClustering {
   Matrix<T> data_matrix_;
   Matrix<T> kernel_matrix_;  // num_samples_ * num_samples_
   Matrix<T> h_matrix_;  // centering matrix: num_samples_ * num_samples_
-  Matrix<bool> y_matrix_;  // all previous allocations size = num_samples *
+  Matrix<T> y_matrix_;  // all previous allocations size = num_samples *
                            // (num_clusters * pre_num_clusters)
   int pre_num_clusters_;  // the number of previous clusters
   KernelType kernel_type_;  // Gaussian, polynomial or linear
@@ -178,8 +186,10 @@ class AlternativeSpectralClustering {
                         // initially: num_features * num_features
   // output
   Vector<int> assignments_;
-  Matrix<bool> binary_allocation_;
+  Matrix<int> binary_allocation_;
 
+  // temporary
+  Matrix<T> l_matrix_; // For testing if l_matrix is calculated correctly
 };
 
 }
