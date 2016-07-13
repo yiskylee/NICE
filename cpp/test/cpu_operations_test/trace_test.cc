@@ -30,10 +30,10 @@
 
 template<class T>
 class TraceTest : public ::testing::Test {
-  public:
+ public:
   Nice::Matrix<T> m1;
-
-  int Tracer() {
+  T correct_ans;
+  T Tracer() {
     return Nice::CpuOperations<T>::Trace(m1);
   }
 };
@@ -47,6 +47,6 @@ TYPED_TEST(TraceTest, BasicTest) {
               2, 4, 8, 9,
               7, 6, 1, 0,
               9, 2, 5, 7;
-  int correct_ans = 20;
-  EXPECT_EQ(correct_ans, this->Tracer());
+  this->correct_ans = 20;
+  EXPECT_EQ(this-> correct_ans, this->Tracer());
 }
