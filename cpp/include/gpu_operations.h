@@ -133,10 +133,12 @@ class GpuOperations {
       // If the matricies aren't identical sizes then we cannot subtract them.
       if (a.rows() != b.rows() || a.cols() != b.cols()) {
         std::cerr << "Matricies are not the same size" << std::endl;
+        exit(1);
 
       // If the matricies are empty this function should not run.
     } else if (a.rows() == 0) {
         std::cerr << "Matricies are empty" << std::endl;
+        exit(1);
 
       // Otherwise, everything should run fine.
     } else {
