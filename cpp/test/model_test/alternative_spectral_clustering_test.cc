@@ -33,20 +33,60 @@ class AltSpectralClusteringTest : public ::testing::Test {
   Nice::Matrix<T> data_matrix_;
   Nice::Matrix<T> h_matrix_ref_;
   std::shared_ptr<Nice::AlternativeSpectralClustering<T>> asc;
+  std::string base_dir;
   int k_;
   virtual void SetUp() {
     data_matrix_ = Nice::util::FromFile<T>(
         "../test/data_for_test/alternative_spectral_clustering/"
-        "alt_spec_data_40_2.txt", 40, 2);
+        "CenterData/data_ref_40_2.txt", 40, 2);
     k_ = 2;
     asc = std::make_shared<Nice::AlternativeSpectralClustering<T>>
         (data_matrix_, k_);
+    base_dir = "../test/data_for_test/alternative_spectral_clustering";
   }
+  Nice::Matrix<T> ReadTestData(std::string matrix_name, std::string func_name,
+                   std::string test_data_type, int num_rows, int num_cols) {
+    // test_data_type is either "ref" or "input"
+    std::string dir = base_dir + "/" + func_name;
+    std::string file_name = matrix_name + "_"
+        + test_data_type + "_"
+        + std::to_string(num_rows) + "_"
+        + std::to_string(num_cols) + ".txt";
+    std::string file_path = dir + "/" + file_name;
+    return Nice::util::FromFile<T>(file_path, num_rows, num_cols);
+    }
+
+  Nice::Vector<T> ReadTestData(std::string matrix_name, std::string func_name,
+                   std::string test_data_type, int num_elements) {
+    // test_data_type is either "ref" or "input"
+    std::string dir = base_dir + "/" + func_name;
+    std::string file_name = matrix_name + "_"
+        + test_data_type + "_"
+        + std::to_string(num_elements) + "_"
+        + std::to_string(1) + ".txt";
+    std::string file_path = dir + "/" + file_name;
+    return Nice::util::FromFile<T>(file_path, num_elements);
+    }
+  Nice::Vector<int> ReadTestDataInt(std::string matrix_name,
+                                    std::string func_name,
+                                    std::string test_data_type,
+                                    int num_elements) {
+    // test_data_type is either "ref" or "input"
+    std::string dir = base_dir + "/" + func_name;
+    std::string file_name = matrix_name + "_"
+        + test_data_type + "_"
+        + std::to_string(num_elements) + "_"
+        + std::to_string(1) + ".txt";
+    std::string file_path = dir + "/" + file_name;
+    return Nice::util::FromFile<int>(file_path, num_elements);
+    }
 };
 
 typedef ::testing::Types<float, int, long, double> AllTypes;
 typedef ::testing::Types<int, long> IntTypes;
 typedef ::testing::Types<float, double> FloatTypes;
+
+
 TYPED_TEST_CASE(AltSpectralClusteringTest, FloatTypes);
 
 #define EXPECT_MATRIX_EQ(a, ref)\
@@ -70,18 +110,16 @@ TYPED_TEST_CASE(AltSpectralClusteringTest, FloatTypes);
 
 TYPED_TEST(AltSpectralClusteringTest, CenterData) {
   Nice::Matrix<TypeParam> data_matrix = this->asc->data_matrix_;
-  Nice::Matrix<TypeParam> data_matrix_ref = Nice::util::FromFile<TypeParam>(
-      "../test/data_for_test/alternative_spectral_clustering/"
-      "CenterData/data_ref_40_2.txt", 40, 2);
+  Nice::Matrix<TypeParam> data_matrix_ref =
+      this->ReadTestData("data_matrix", "CenterData", "ref", 40, 2);
   EXPECT_MATRIX_EQ(data_matrix, data_matrix_ref);
 }
 
 TYPED_TEST(AltSpectralClusteringTest, InitHMatrix) {
   this->asc->InitHMatrix();
   Nice::Matrix<TypeParam> h_matrix = this->asc->h_matrix_;
-  Nice::Matrix<TypeParam> h_matrix_ref = Nice::util::FromFile<TypeParam>(
-      "../test/data_for_test/alternative_spectral_clustering/"
-      "InitHMatrix/h_matrix_ref_40_40.txt", 40, 40);
+  Nice::Matrix<TypeParam> h_matrix_ref =
+      this->ReadTestData("h_matrix", "InitHMatrix", "ref", 40, 40);
   EXPECT_MATRIX_EQ(h_matrix, h_matrix_ref);
 }
 
@@ -89,73 +127,79 @@ TYPED_TEST(AltSpectralClusteringTest, InitWMatrix) {
   // no input, directly calls the function
   this->asc->InitWMatrix();
   Nice::Matrix<TypeParam> w_matrix = this->asc->w_matrix_;
-  Nice::Matrix<TypeParam> w_matrix_ref = Nice::util::FromFile<TypeParam>(
-      "../test/data_for_test/alternative_spectral_clustering/"
-      "InitWMatrix/w_matrix_ref_2_2.txt", 2, 2);
+  Nice::Matrix<TypeParam> w_matrix_ref =
+      this->ReadTestData("w_matrix", "InitWMatrix", "ref", 2, 2);
   EXPECT_MATRIX_EQ(w_matrix, w_matrix_ref);
 }
 
 TYPED_TEST(AltSpectralClusteringTest, CalcGaussianKernel) {
   // input w_matrix
-  this->asc->w_matrix_ = Nice::util::FromFile<TypeParam>(
-      "../test/data_for_test/alternative_spectral_clustering/"
-      "CalcGaussianKernel/w_matrix_input_2_2.txt", 2, 2);
+  this->asc->w_matrix_ =
+      this->ReadTestData("w_matrix", "CalcGaussianKernel", "input", 2, 2);
   // calls the function
   this->asc->CalcGaussianKernel();
   // output matrices
   Nice::Matrix<TypeParam> kernel_matrix = this->asc->kernel_matrix_;
-  Nice::Matrix<TypeParam> kernel_matrix_ref = Nice::util::FromFile<TypeParam>(
-      "../test/data_for_test/alternative_spectral_clustering/"
-      "CalcGaussianKernel/kernel_matrix_ref_40_40.txt", 40, 40);
+  Nice::Matrix<TypeParam> kernel_matrix_ref =
+      this->ReadTestData("kernel_matrix", "CalcGaussianKernel", "ref", 40, 40);
   EXPECT_MATRIX_EQ(kernel_matrix, kernel_matrix_ref);
   Nice::Matrix<TypeParam> d_matrix = this->asc->d_matrix_;
-  Nice::Matrix<TypeParam> d_matrix_ref = Nice::util::FromFile<TypeParam>(
-      "../test/data_for_test/alternative_spectral_clustering/"
-      "CalcGaussianKernel/d_matrix_ref_40_40.txt", 40, 40);
+  Nice::Matrix<TypeParam> d_matrix_ref =
+      this->ReadTestData("d_matrix", "CalcGaussianKernel", "ref", 40, 40);
   EXPECT_MATRIX_EQ(d_matrix, d_matrix_ref);
 }
 
 TYPED_TEST(AltSpectralClusteringTest, UOptimize) {
-  this->asc->h_matrix_ = Nice::util::FromFile<TypeParam>(
-      "../test/data_for_test/alternative_spectral_clustering/"
-      "/UOptimize/h_matrix_input_40_40.txt", 40, 40);
-  this->asc->d_matrix_ = Nice::util::FromFile<TypeParam>(
-      "../test/data_for_test/alternative_spectral_clustering/"
-      "/UOptimize/d_matrix_input_40_40.txt", 40, 40);
-  this->asc->kernel_matrix_ = Nice::util::FromFile<TypeParam>(
-      "../test/data_for_test/alternative_spectral_clustering/"
-      "/UOptimize/kernel_matrix_input_40_40.txt", 40, 40);
-  this->asc->w_matrix_ = Nice::util::FromFile<TypeParam>(
-      "../test/data_for_test/alternative_spectral_clustering/"
-      "/UOptimize/w_matrix_input_2_2.txt", 2, 2);
-
+  // input h_matrix, d_matrix, kernel_matrix, w_matrix
+  this->asc->h_matrix_ =
+      this->ReadTestData("h_matrix", "UOptimize", "input", 40, 40);
+  this->asc->d_matrix_ =
+      this->ReadTestData("d_matrix", "UOptimize", "input", 40, 40);
+  this->asc->kernel_matrix_ =
+      this->ReadTestData("kernel_matrix", "UOptimize", "input", 40, 40);
+  this->asc->w_matrix_ =
+      this->ReadTestData("w_matrix", "UOptimize", "input", 2, 2);
+  // call function
   this->asc->UOptimize();
-//  Nice::Matrix<TypeParam> l_matrix = this->asc->l_matrix_;
-//  Nice::Matrix<TypeParam> l_matrix_ref = Nice::util::FromFile<TypeParam>(
-//      "../test/data_for_test/alternative_spectral_clustering/"
-//      "/UOptimize/l_matrix_ref_40_40.txt", 40, 40);
-//  EXPECT_MATRIX_EQ(l_matrix, l_matrix_ref);
+  // output u_matrix
   Nice::Matrix<TypeParam> u_matrix = this->asc->u_matrix_;
-  Nice::Matrix<TypeParam> u_matrix_ref = Nice::util::FromFile<TypeParam>(
-      "../test/data_for_test/alternative_spectral_clustering/"
-      "/UOptimize/u_matrix_ref_40_2.txt", 40, 2);
+  Nice::Matrix<TypeParam> u_matrix_ref =
+      this->ReadTestData("u_matrix", "UOptimize", "ref", 40, 2);
   EXPECT_MATRIX_ABS_EQ(u_matrix, u_matrix_ref, 0.1);
 }
 
 TYPED_TEST(AltSpectralClusteringTest, CreateYTilde) {
-  this->asc->h_matrix_ = Nice::util::FromFile<TypeParam>(
-      "../test/data_for_test/alternative_spectral_clustering/"
-      "CreateYTilde/h_matrix_input_40_40.txt", 40, 40);
-  this->asc->kernel_matrix_ = Nice::util::FromFile<TypeParam>(
-      "../test/data_for_test/alternative_spectral_clustering/"
-      "CreateYTilde/kernel_matrix_input_40_40.txt", 40, 40);
-  this->asc->d_matrix_ = Nice::util::FromFile<TypeParam>(
-      "../test/data_for_test/alternative_spectral_clustering/"
-      "CreateYTilde/d_matrix_input_40_40.txt", 40, 40);
-
+  this->asc->h_matrix_ =
+      this->ReadTestData("h_matrix", "CreateYTilde", "input", 40, 40);
+  this->asc->kernel_matrix_ =
+      this->ReadTestData("kernel_matrix", "CreateYTilde", "input", 40, 40);
+  this->asc->d_matrix_ =
+      this->ReadTestData("d_matrix", "CreateYTilde", "input", 40, 40);
   Nice::Matrix<TypeParam> y_tilde = this->asc->CreateYTilde();
-  Nice::Matrix<TypeParam> y_tilde_ref = Nice::util::FromFile<TypeParam>(
-      "../test/data_for_test/alternative_spectral_clustering/"
-      "CreateYTilde/y_tilde_ref_40_40.txt", 40, 40);
+  Nice::Matrix<TypeParam> y_tilde_ref =
+      this->ReadTestData("y_tilde", "CreateYTilde", "ref", 40, 40);
   EXPECT_MATRIX_EQ(y_tilde, y_tilde_ref);
 }
+
+TYPED_TEST(AltSpectralClusteringTest, NormalizeEachURow) {
+  this->asc->u_matrix_ =
+      this->ReadTestData("u_matrix", "NormalizeEachURow", "input", 40, 2);
+  this->asc->NormalizeEachURow();
+  Nice::Matrix<TypeParam> normalized_u_matrix =
+      this->asc->normalized_u_matrix_;
+  Nice::Matrix<TypeParam> normalized_u_matrix_ref =
+      this->ReadTestData("normalized_u_matrix", "NormalizeEachURow",
+                         "ref", 40, 2);
+  EXPECT_MATRIX_EQ(normalized_u_matrix, normalized_u_matrix_ref);
+}
+
+//TYPED_TEST(AltSpectralClusteringTest, RunKMeans) {
+//  this->asc->normalized_u_matrix_ =
+//      this->ReadTestData("normalized_u_matrix", "RunKMeans", "input", 40, 2);
+//  this->asc->RunKMeans();
+//  Nice::Vector<int> allocation =
+//      this->asc->allocation_;
+//  Nice::Vector<int> allocation_ref =
+//      this->ReadTestDataInt("allocation", "RunKMeans", "ref", 40);
+////  EXPECT_MATRIX_EQ(allocation, allocation_ref);
+//}

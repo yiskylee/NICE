@@ -23,15 +23,18 @@
 #ifndef CPP_INCLUDE_ALTERNATIVE_SPECTRAL_CLUSTERING_H_
 #define CPP_INCLUDE_ALTERNATIVE_SPECTRAL_CLUSTERING_H_
 
+#include <functional>
+#include <vector>
+#include <cmath>
 #include "include/matrix.h"
 #include "include/vector.h"
 #include "include/svd_solver.h"
+#include "include/kmeans.h"
+#include "include/spectral_clustering.h"
 #include "Eigen/Core"
 #include "include/util.h"
-#include <functional>
 #include "include/kernel_types.h"
-#include <vector>
-#include <cmath>
+
 
 namespace Nice {
 
@@ -54,6 +57,7 @@ class AlternativeSpectralClustering {
     alpha_ = 0.01;
     polynomial_order_ = 2;
     kernel_matrix_ = Matrix<T>::Zero(num_samples_, num_samples_);
+    normalized_u_matrix_ = Matrix<T>::Zero(num_samples_, num_clusters_);
     pre_num_clusters_ = 0;
   }
   void CenterData(Matrix<T> &data_matrix) {
@@ -155,10 +159,22 @@ class AlternativeSpectralClustering {
     d_matrix_ = dia.asDiagonal();
   }
 
-  Vector<unsigned long> FitPredict(void) {
+  void NormalizeEachURow() {
+    normalized_u_matrix_ = u_matrix_.array().colwise() /
+        u_matrix_.rowwise().norm().array();
+  }
+
+  void RunKMeans() {
+    KMeans<T> km;
+    allocation_ = km.FitPredict(normalized_u_matrix_, num_clusters_);
+  }
+
+  Vector<int> FitPredict(void) {
     if (kernel_type_ == kGaussianKernel)
       OptimizaGaussianKernel();
-    Vector<unsigned long> v;
+    NormalizeEachURow();
+    RunKMeans();
+    Vector<int> v;
     return v;
   }
 
@@ -182,10 +198,13 @@ class AlternativeSpectralClustering {
   Matrix<T> d_matrix_;  // Degree matrix: num_samples_ * num_samples_
   Matrix<T> u_matrix_;  // Columns as eigenvectors,
                         // size: num_samples_ * num_clusters_
+  Matrix<T> normalized_u_matrix_;
+                        // normalized u matrix by L2 norm
+                        // size: num_samples_ * num_clusters_
   Matrix<T> w_matrix_;  // size: num_features * alternative_dimension_
                         // initially: num_features * num_features
   // output
-  Vector<int> assignments_;
+  Vector<int> allocation_;
   Matrix<int> binary_allocation_;
 
   // temporary

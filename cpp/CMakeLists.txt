@@ -77,7 +77,8 @@ if (enable-test)
     #         test/gpu_solver_test/*.cc)
     file(GLOB_RECURSE TEST_SRC_FILES RELATIVE
         ${PROJECT_SOURCE_DIR}
-        test/model_test/alternative_spectral_clustering_test.cc)
+        test/model_test/alternative_spectral_clustering_test.cc
+        test/model_test/spectral_clustering_test.cc)
         
   else()
     file(GLOB_RECURSE TEST_SRC_FILES RELATIVE 
