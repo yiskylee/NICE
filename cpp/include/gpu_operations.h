@@ -235,7 +235,46 @@ class GpuOperations {
     // Return the result
     return b;
   }
-  static Matrix<T> Norm(const int &p = 2, const int &axis = 0);
+  static Vector<T> Norm(const Matrix<T> a, const int &p = 2,
+                        const int &axis = 0) {
+    int m = a.rows();
+    int n = a.cols();
+    int incx = 1;
+    Vector<T> c(n);
+    const T * h_a = &a(0);
+
+    // Allocate and transfer memories
+    T * h_c = reinterpret_cast<T *>(malloc(sizeof(T)));
+    T * d_a;  gpuErrchk(cudaMalloc(&d_a, m * n * sizeof(T)));
+    T * d_t;  gpuErrchk(cudaMalloc(&d_t, m *     sizeof(T)));
+    gpuErrchk(cudaMemcpy(d_a, h_a, m * n * sizeof(T), cudaMemcpyHostToDevice));
+
+    // Setup and do Frobenious Norm
+    cublasHandle_t  handle;
+    cublasCreate(&handle);
+    cublasStatus_t stat;
+    int iter = 0;
+    for (int i = 0; i < n; ++i) {
+      gpuErrchk(cudaMemcpy(d_t, d_a + i * m, m * sizeof(T),
+                           cudaMemcpyDeviceToDevice));
+      stat = GpuFrobeniusNorm(handle, m, incx, d_t, h_c);
+      // Error Check
+      if (stat != CUBLAS_STATUS_SUCCESS) {
+        std::cerr << "GPU Matrix Norm Internal Failure"
+                  << std::endl;
+        cudaFree(d_a); free(h_c);
+        cublasDestroy(handle);
+        exit(1);
+      }
+      cudaDeviceSynchronize();
+      c(iter) = *h_c;
+      iter++;
+    }
+    // Free memories and return answer
+    cudaFree(d_a); free(h_c);
+    cublasDestroy(handle);
+    return c;
+  }
   static T Determinant(const Matrix<T> &a) {
     int m = a.rows();
     int n = a.cols();
@@ -330,6 +369,7 @@ class GpuOperations {
   static T FrobeniusNorm(const Matrix<T> &a) {
     int m = a.rows();
     int n = a.cols();
+    int incx = 1;
     const T * h_a = &a(0);
 
     // Allocate and transfer memories
@@ -341,7 +381,7 @@ class GpuOperations {
     cublasHandle_t  handle;
     cublasCreate(&handle);
     cublasStatus_t stat;
-    stat = GpuFrobeniusNorm(handle, n * m, d_a, h_c);
+    stat = GpuFrobeniusNorm(handle, n * m, incx, d_a, h_c);
 
     // Error Check
     if (stat != CUBLAS_STATUS_SUCCESS) {

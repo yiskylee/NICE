@@ -256,16 +256,18 @@ cublasStatus_t GpuVectorVectorDot(cublasHandle_t handle,
 
 cublasStatus_t GpuFrobeniusNorm(cublasHandle_t handle,
                                 int n,
-                                const float *a,
+                                int incx,
+                                float *a,
                                 float *c) {
-  return cublasSnrm2(handle, n, a, 1.0, c);
+  return cublasSnrm2(handle, n, a, incx, c);
 }
 
 cublasStatus_t GpuFrobeniusNorm(cublasHandle_t handle,
                                 int n,
-                                const double *a,
+                                int incx,
+                                double *a,
                                 double *c) {
-  return cublasDnrm2(handle, n, a, 1.0, c);
+  return cublasDnrm2(handle, n, a, incx, c);
 }
 }  // namespace Nice
 #endif  // Need Cuda

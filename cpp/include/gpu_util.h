@@ -203,12 +203,14 @@ cublasStatus_t GpuVectorVectorDot(cublasHandle_t handle,
 
 cublasStatus_t GpuFrobeniusNorm(cublasHandle_t handle,
                                 int n,
-                                const float * a,
+                                int incx,
+                                float * a,
                                 float * c);
 
 cublasStatus_t GpuFrobeniusNorm(cublasHandle_t handle,
                                 int n,
-                                const double * a,
+                                int incx,
+                                double * a,
                                 double * c);
 }  // namespace Nice
 
