@@ -29,8 +29,4 @@ TYPED_TEST(RankTest, RankMatrix){
   this->calculated_ans_ = Nice::CpuOperations<TypeParam>::Rank(this->mat_);
   EXPECT_EQ(correct_ans, this->calculated_ans_);
 }
-/*
-TYPED_TEST(RankTest, DeathT){
-  ASSERT_DEATH(this->RankT(), ".*");
-}
-*/
+
