@@ -6,17 +6,31 @@
 #include "include/cpu_operations.h"
 #include "include/matrix.h"
 
-TEST(Rank, RankMatrix){
 
-Eigen::MatrixXi a(4,4);
-a << 1, 3, 5, 2
-     0, 1, 0, 3,
-     0, 0, 0, 1,
-     0, 0, 0, 0;
+template<class T>
+class RankTest : public ::testing::Test {
+  public:
+   Nice::Matrix<T> mat_;
+   int calculated_ans_;
+};
 
-int correct_ans = 3;
+typedef ::testing::Types<float, double> MyTypes;
+TYPED_TEST_CASE(RankTest, MyTypes);
 
-int calculated_ans = Nice::CpuOperations<int>::Rank(a);
-EXPECT_EQ(correct_ans, calculated_ans);
+TYPED_TEST(RankTest, RankMatrix){
+  this->mat_.resize(4, 4);
+	this->mat_ <<  1.0, 3.0, 5.0, 2.0,
+	     	       0.0, 1.0, 0.0, 3.0,
+	     	       0.0, 0.0, 0.0, 1.0,
+	     	       0.0, 0.0, 0.0, 0.0;
 
+  int correct_ans = 3;
+
+  this->calculated_ans_ = Nice::CpuOperations<TypeParam>::Rank(this->mat_);
+  EXPECT_EQ(correct_ans, this->calculated_ans_);
 }
+/*
+TYPED_TEST(RankTest, DeathT){
+  ASSERT_DEATH(this->RankT(), ".*");
+}
+*/
