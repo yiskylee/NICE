@@ -20,16 +20,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef CPP_INCLUDE_MATRIX_H_
-#define CPP_INCLUDE_MATRIX_H_
-
+#include <stdio.h>
+#include <stdlib.h>
+#include <iostream>
 #include "Eigen/Dense"
+#include "gtest/gtest.h"
+#include "include/cpu_operations.h"
+#include "include/matrix.h"
 
-namespace Nice {
+template<class T>
+class TraceTest : public ::testing::Test {
+ public:
+  Nice::Matrix<T> m1;
+  T correct_ans;
+  T Tracer() {
+    return Nice::CpuOperations<T>::Trace(m1);
+  }
+};
 
-template<typename T>
-using Matrix = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>;
+typedef ::testing::Types<int, float, double> MyTypes;
+TYPED_TEST_CASE(TraceTest, MyTypes);
 
-}  // namespace Nice
-
-#endif  // CPP_INCLUDE_MATRIX_H_
+TYPED_TEST(TraceTest, BasicTest) {
+  this->m1.resize(4, 4);
+  this->m1 << 8, 5, 3, 4,
+              2, 4, 8, 9,
+              7, 6, 1, 0,
+              9, 2, 5, 7;
+  this->correct_ans = 20;
+  EXPECT_EQ(this-> correct_ans, this->Tracer());
+}

@@ -20,16 +20,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef CPP_INCLUDE_MATRIX_H_
-#define CPP_INCLUDE_MATRIX_H_
+#include "include/matrix.h"
+#include "include/vector.h"
+#include "include/cpu_operations.h"
+#include "include/gpu_operations.h"
+#include "include/svd_solver.h"
+#include "include/gpu_svd_solver.h"
+#include "include/util.h"
+#include "include/gpu_util.h"
 
-#include "Eigen/Dense"
 
-namespace Nice {
-
-template<typename T>
-using Matrix = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>;
-
-}  // namespace Nice
-
-#endif  // CPP_INCLUDE_MATRIX_H_
+// Place holder
