@@ -28,6 +28,7 @@
 #include <fstream>
 #include <iostream>
 #include <algorithm>
+#include <sstream>
 
 #include "include/matrix.h"
 #include "include/vector.h"
@@ -36,14 +37,43 @@ namespace Nice {
 
 namespace util {
 template<typename T>
-Matrix<T> FromFile(const std::string &input_file_path,
-                   int num_rows, int num_cols) {
+Matrix<T> FromFile(const std::string &input_file_path) {
   std::ifstream input_file(input_file_path, std::ifstream::in);
-  Matrix<T> m(num_rows, num_cols);
+  Matrix<T> m;
+  std::string line;
+  std::vector<T> vector;
+  T coef;
+  int cols = 0;
+  int rows = 0;
+  int colsinrow;
+
   if (input_file) {
-    for (int i = 0; i < num_rows; i++)
-      for (int j = 0; j < num_cols; j++)
-        input_file >> m(i, j);
+    while(!input_file.eof()) {
+      getline(input_file, line);
+      if(line.find_first_not_of(' ') == std::string::npos) {
+        continue;
+      }
+      std::stringstream stream(line);
+      colsinrow = 0;
+      while(stream >> coef) {
+        vector.push_back(coef);
+        ++colsinrow;
+      }
+      if(cols == 0) {
+        cols = colsinrow;
+      } else if(cols != colsinrow) {
+        std::cerr << "Problem with Matrix in: " + input_file_path + ", exiting...";
+        exit(1);
+      }
+      ++rows;
+    }
+
+    m.resize(rows, cols);
+    for (int i = 0; i < rows; ++i) {
+      for(int j = 0; j < cols; ++j) {
+        m(i, j) = vector.at(i * rows + j);
+      }
+    }
     return m;
   } else {
     std::cerr << "Cannot open file " + input_file_path + ", exiting...";
