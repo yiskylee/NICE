@@ -38,7 +38,7 @@ class FromFileTest : public ::testing::Test {
   }
 };
 
-typedef ::testing::Types<int> MyTypes;
+typedef ::testing::Types<int, float, double> MyTypes;
 TYPED_TEST_CASE(FromFileTest, MyTypes);
 
 TYPED_TEST(FromFileTest, IfFileNotExist) {
