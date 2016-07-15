@@ -25,15 +25,32 @@
 #include "Eigen/Dense"
 #include "gtest/gtest.h"
 
-TEST(GPU_MATRIX_SCALAR_ADD, Basic_Test) {
-  Nice::Matrix<float> a(3,4);
-  a << 1, 2, 3, 4,
-       1, 2, 3, 4,
-       1, 2, 3, 4;
-  Nice::Matrix<float> b = Nice::GpuOperations<float>::Add(a, 1);
-  Nice::Matrix<float> answer(3, 4);
-  answer << 2, 3, 4, 5,
-            2, 3, 4, 5,
-            2, 3, 4, 5;
-  ASSERT_TRUE(answer.isApprox(b));
+template<class T>
+class GPU_MATRIX_SCALAR_ADD : public ::testing::Test {
+ public:
+  Nice::Matrix<T> a;
+  Nice::Matrix<T> correct_ans;
+  Nice::Matrix<T> calc_ans;
+  T scalar;
+
+  void Add() {
+    calc_ans = Nice::GpuOperations<T>::Add(a, scalar);
+  }
+};
+
+typedef ::testing::Types<float, double> dataTypes;
+TYPED_TEST_CASE(GPU_MATRIX_SCALAR_ADD, dataTypes);
+
+TYPED_TEST(GPU_MATRIX_SCALAR_ADD, Basic_Test) {
+  this->a.resize(3,4);
+  this->a << 1, 2, 3, 4,
+             1, 2, 3, 4,
+             1, 2, 3, 4;
+  this->scalar = 1;
+  this->Add();
+  this->correct_ans.resize(3, 4);
+  this->correct_ans << 2, 3, 4, 5,
+                       2, 3, 4, 5,
+                       2, 3, 4, 5;
+  ASSERT_TRUE(this->correct_ans.isApprox(this->calc_ans));
 }
