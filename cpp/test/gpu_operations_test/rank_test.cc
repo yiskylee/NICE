@@ -75,6 +75,7 @@ TYPED_TEST_CASE(GpuRankTest, dataTypes);
 
 TYPED_TEST(GpuRankTest, FuncionalityTest) {
   // Create test data
+  srand(time(NULL));
   this->CreateTestData();
 
   // Test trace in Nice

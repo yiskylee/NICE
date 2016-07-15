@@ -20,17 +20,71 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+// This file tests the CpuOperations::Transpose() function by checking to
+// See if a matrix passed is transposed in the test IsTransposed
+// A transposed Nice matrix is compared to a transposed Eigen Matrix in
+// Transpose Eigen
+// Behavior with oddly shaped matrices is also tested with test DifferentShapes
+// And TransposeZeroRows
+// All tests are made using a templated test fixture which attempts
+// Integer, float, and double data types
+
+#include <iostream>
+#include <cmath>
 
 #include "include/gpu_operations.h"
+#include "include/cpu_operations.h"
+
 #include "Eigen/Dense"
 #include "gtest/gtest.h"
+#include "include/matrix.h"
+#include "include/vector.h"
+#include "include/gpu_util.h"
 
-TEST(GPU_Matrix_Determinant, Basic_Test) {
-  Nice::Matrix<float> a(3, 3);
-  a << 0.0, 1.0, 2.0,
-       3.0, 2.0, 1.0,
-       1.0, 3.0, 0.0;
-  float correct_ans = 15;
-  float calc_ans = Nice::GpuOperations<float>::Determinant(a);
-  EXPECT_EQ(correct_ans, calc_ans);
+// This is a template test fixture class containing test matrices
+template<class T>  // Template
+class GpuDeterminantTest : public ::testing::Test {  // Inherits testing::Test
+ public:  // Members must be public to be accessed by tests
+  Nice::Matrix<T> a_;
+  T det_;
+
+  int row_;
+  int col_;
+
+  // Constructor
+  void CreateTestData(int m, int n) {
+    // Check matrix
+    if (a_.rows() != 0 && a_.cols() != 0)
+      return;
+
+    // Set up dimension
+    row_ = m;
+    col_ = n;
+
+    // Create matrix
+    a_ = Nice::Matrix<T>::Random(row_, col_);
+
+    // Solve in CPU
+    det_ = a_.determinant();
+  }
+};
+// Establishes a test case with the given types, Char and short types will
+// Throw compiler errors
+typedef ::testing::Types<float, double> dataTypes;
+TYPED_TEST_CASE(GpuDeterminantTest, dataTypes);
+
+TYPED_TEST(GpuDeterminantTest, FuncionalityTest) {
+  // Create test data
+  int m = 5;
+  int n = 10;
+  srand(time(NULL));
+  this->CreateTestData(m, n);
+  TypeParam gpu_det;
+  // Test gpu matrix matrix multiply in Nice
+  Nice::GpuOperations<TypeParam> gpu_op;
+  gpu_det = gpu_op.Determinant(this->a_);
+
+  // Verify the result
+  EXPECT_NEAR(this->det_, gpu_det, 0.001);
 }
+
