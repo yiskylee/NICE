@@ -154,7 +154,7 @@ class GpuOperations {
     cublasStatus_t stat;
     cublasHandle_t handle;
     cublasCreate(&handle);
-    stat = cublasSgeam(handle, CUBLAS_OP_N, CUBLAS_OP_N,
+    stat = GpuMatrixAdd(handle,
                        m, n,
                        &alpha,
                        d_a, lda,
@@ -201,7 +201,7 @@ class GpuOperations {
       cublasStatus_t stat;
       cublasHandle_t handle;
       cublasCreate(&handle);
-      stat = cublasSgeam(handle, CUBLAS_OP_N, CUBLAS_OP_N,
+      stat = GpuMatrixAdd(handle,
                          m, n,
                          &alpha,
                          d_a, lda,
