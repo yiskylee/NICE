@@ -44,8 +44,8 @@ Matrix<T> FromFile(const std::string &input_file_path) {
   std::string line;
   std::vector<T> vector;
   T coef;
-  int cols = 0;
-  int rows = 0;
+  int num_cols = 0;
+  int num_rows = 0;
   int viter = 0;
   int colsinrow;
 
@@ -61,18 +61,18 @@ Matrix<T> FromFile(const std::string &input_file_path) {
         vector.push_back(coef);
         ++colsinrow;
       }
-      if (cols == 0) {
-        cols = colsinrow;
-      } else if (cols != colsinrow) {
+      if (num_cols == 0) {
+        num_cols = colsinrow;
+      } else if (num_cols != colsinrow) {
         std::cerr << "Problem with Matrix in: " + input_file_path +
                      ", exiting...";
         exit(1);
       }
-      ++rows;
+      ++num_rows;
     }
-    m.resize(rows, cols);
-    for (int i = 0; i < rows; ++i) {
-      for (int j = 0; j < cols; ++j) {
+    m.resize(num_rows, num_cols);
+    for (int i = 0; i < num_rows; ++i) {
+      for (int j = 0; j < num_cols; ++j) {
         m(i, j) = vector.at(viter);
         ++viter;
       }

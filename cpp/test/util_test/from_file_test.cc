@@ -66,3 +66,4 @@ TYPED_TEST(FromFileTest, MatrixWrongSize) {
   ASSERT_DEATH(this->Filer("../test/data_for_test/matrix_wrong_size.txt"),
                             ".*");
 }
+
