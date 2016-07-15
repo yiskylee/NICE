@@ -27,6 +27,8 @@
 #include <iostream>
 #include "include/matrix.h"
 #include "include/vector.h"
+#include "Eigen/SVD"
+#include "include/svd_solver.h"
 
 namespace Nice {
 
@@ -155,7 +157,11 @@ class CpuOperations {
   }
   static Matrix<T> Norm(const int &p = 2, const int &axis = 0);
   static T Determinant(const Matrix<T> &a);
-  static T Rank(const Matrix<T> &a);
+  static int Rank(const Matrix<T> &a){
+    // Rank of a matrix
+    SvdSolver<T> svd;
+    return svd.Rank(a);
+  }
   static T FrobeniusNorm(const Matrix<T> &a) {
     if (a.rows() == 0 || a.cols() == 0) {
       std::cerr << "EMPTY MATRIX AS ARGUMENT!";
