@@ -42,11 +42,11 @@ Matrix<T> FromFile(const std::string &input_file_path) {
   std::ifstream input_file(input_file_path, std::ifstream::in);
   Matrix<T> m;
   std::string line;
-  std::vector<T> vector;
+  std::vector<T> temp_buffer;
   T coef;
   int num_cols = 0;
   int num_rows = 0;
-  int viter = 0;
+  int bufiter = 0;
   int colsinrow;
 
   if (input_file) {
@@ -58,7 +58,7 @@ Matrix<T> FromFile(const std::string &input_file_path) {
       std::stringstream stream(line);
       colsinrow = 0;
       while (stream >> coef) {
-        vector.push_back(coef);
+        temp_buffer.push_back(coef);
         ++colsinrow;
       }
       if (num_cols == 0) {
@@ -73,8 +73,8 @@ Matrix<T> FromFile(const std::string &input_file_path) {
     m.resize(num_rows, num_cols);
     for (int i = 0; i < num_rows; ++i) {
       for (int j = 0; j < num_cols; ++j) {
-        m(i, j) = vector.at(viter);
-        ++viter;
+        m(i, j) = temp_buffer.at(bufiter);
+        ++bufiter;
       }
     }
     return m;
