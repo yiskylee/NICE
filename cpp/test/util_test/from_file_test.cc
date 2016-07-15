@@ -42,7 +42,7 @@ typedef ::testing::Types<int> MyTypes;
 TYPED_TEST_CASE(FromFileTest, MyTypes);
 
 TYPED_TEST(FromFileTest, IfFileNotExist) {
-  ASSERT_DEATH( this->Filer("../test/data_for_test/matrix_not_exist.txt"),
+  ASSERT_DEATH(this->Filer("../test/data_for_test/matrix_not_exist.txt"),
                            "Cannot open file .*, exiting...");
 }
 
@@ -56,12 +56,13 @@ TYPED_TEST(FromFileTest, IfFileExists) {
 
 TYPED_TEST(FromFileTest, NonSquareMatrix) {
   this->Filer("../test/data_for_test/matrix_2_3.txt");
-  this->expected.resize(2,3);
+  this->expected.resize(2, 3);
   this->expected << 1, 2, 3,
                     4, 5, 6;
   ASSERT_TRUE(this->expected.isApprox(this->result));
 }
 
 TYPED_TEST(FromFileTest, MatrixWrongSize) {
-  ASSERT_DEATH( this->Filer("../test/data_for_test/matrix_wrong_size.txt"), ".*");
+  ASSERT_DEATH(this->Filer("../test/data_for_test/matrix_wrong_size.txt"),
+                            ".*");
 }

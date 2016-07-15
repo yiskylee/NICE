@@ -29,6 +29,7 @@
 #include <iostream>
 #include <algorithm>
 #include <sstream>
+#include <vector>
 
 #include "include/matrix.h"
 #include "include/vector.h"
@@ -49,28 +50,29 @@ Matrix<T> FromFile(const std::string &input_file_path) {
   int colsinrow;
 
   if (input_file) {
-    while(!input_file.eof()) {
+    while (!input_file.eof()) {
       getline(input_file, line);
-      if(line.find_first_not_of(' ') == std::string::npos) {
+      if (line.find_first_not_of(' ') == std::string::npos) {
         continue;
       }
       std::stringstream stream(line);
       colsinrow = 0;
-      while(stream >> coef) {
+      while (stream >> coef) {
         vector.push_back(coef);
         ++colsinrow;
       }
-      if(cols == 0) {
+      if (cols == 0) {
         cols = colsinrow;
-      } else if(cols != colsinrow) {
-        std::cerr << "Problem with Matrix in: " + input_file_path + ", exiting...";
+      } else if (cols != colsinrow) {
+        std::cerr << "Problem with Matrix in: " + input_file_path +
+                     ", exiting...";
         exit(1);
       }
       ++rows;
     }
     m.resize(rows, cols);
     for (int i = 0; i < rows; ++i) {
-      for(int j = 0; j < cols; ++j) {
+      for (int j = 0; j < cols; ++j) {
         m(i, j) = vector.at(viter);
         ++viter;
       }
