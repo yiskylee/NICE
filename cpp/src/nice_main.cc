@@ -29,5 +29,4 @@
 #include "include/util.h"
 #include "include/gpu_util.h"
 
-
 // Place holder
