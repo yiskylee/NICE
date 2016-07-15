@@ -39,3 +39,7 @@ We use CMake tool to automatically build and test the framework. After you downl
 ## Coding Style:
 We are following [Google c++ style guide](https://google.github.io/styleguide/cppguide.html), make sure to use `google_styleguide/cpplint/cpplint.py` to check your code and make sure there are no errors. Additionally, `cpplint.py` has been integrated to Nice together with cmake, so you should be able to check your code through cmake-generated Makefile. After you run `./configure.sh` indicated in previous section, go to build directory and run `make check`.
 For developers preferring IDE like Eclipse, you can also import `eclipse-cpp-google-style.xml`(Can be found from [Google c++ style guide](https://google.github.io/styleguide/cppguide.html)) into Eclipse to auto-format your code before using `cpplint.py` or `make check`.
+
+## Documentation
+We are using Doxygen to automatically generate project documents. To produce the html based documents, you should run `make doc` after you run `./configure.sh`. Make sure Doxygen is intalled on your computer. For Ubuntu users, type command `sudo apt-get install doxygen` to intall it. For more information about Doxygen, check their [official website](www.doxygen.org).
+All documents will be generated under directory doc/html. Double click index.html to browse generated documents from any web browser you like(Chrome, Firefox etc.)

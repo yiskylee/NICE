@@ -27,6 +27,8 @@
 #include <iostream>
 #include "include/matrix.h"
 #include "include/vector.h"
+#include "Eigen/SVD"
+#include "include/svd_solver.h"
 
 namespace Nice {
 
@@ -48,8 +50,33 @@ class CpuOperations {
     // Matrix-matrix multiplication
     return a * b;
   }
-  static Matrix<T> Add(const Matrix<T> &a, const T &scalar);
-  static Matrix<T> Add(const Matrix<T> &a, const Matrix<T> &b);
+  static Matrix<T> Add(const Matrix<T> &a, const T &scalar) {
+      // Does not work if matrix is empty.
+      if (a.rows() == 0) {
+        std::cerr << "MATRICIES ARE EMPTY";
+        exit(1);
+
+      // Otherwise, code will run fine.
+    } else {
+        return (a.array() + scalar);
+    }
+  }
+  static Matrix<T> Add(const Matrix<T> &a, const Matrix<T> &b) {
+      // Does not work if matricies are not the same size.
+      if ((a.rows() != b.rows()) || (a.cols() != b.cols())) {
+        std::cerr << "MATRICIES ARE NOT THE SAME SIZE";
+        exit(1);
+
+      // Does not work if matricies are empty.
+    } else if (a.rows() == 0) {
+        std::cerr << "MATRICIES ARE EMPTY";
+        exit(1);
+
+      // Otherwise, code will run fine.
+    } else {
+        return a + b;
+    }
+  }
   static Matrix<T> Subtract(const Matrix<T> &a, const T &scalar) {
     // Matrix-scalar subtraction
     if (a.rows() == 0 || a.cols() == 0) {
@@ -130,7 +157,11 @@ class CpuOperations {
   }
   static Matrix<T> Norm(const int &p = 2, const int &axis = 0);
   static T Determinant(const Matrix<T> &a);
-  static T Rank(const Matrix<T> &a);
+  static int Rank(const Matrix<T> &a){
+    // Rank of a matrix
+    SvdSolver<T> svd;
+    return svd.Rank(a);
+  }
   static T FrobeniusNorm(const Matrix<T> &a) {
     if (a.rows() == 0 || a.cols() == 0) {
       std::cerr << "EMPTY MATRIX AS ARGUMENT!";
