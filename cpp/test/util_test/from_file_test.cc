@@ -20,27 +20,48 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#include <stdio.h>
+#include <iostream>
+#include "Eigen/Dense"
 #include "include/util.h"
 #include "include/matrix.h"
 #include "gtest/gtest.h"
 
-TEST(FromFileTest, IfFileNotExist) {
-  ASSERT_DEATH(
-      {
-        Nice::Matrix<int> m = Nice::util::FromFile<int>(
-            "../test/data_for_test/matrix_not_exist.txt");
-      }
-      , "Cannot open file .*, exiting...");
+template<class T>
+class FromFileTest : public ::testing::Test {
+ public:
+  Nice::Matrix<T> expected;
+  Nice::Matrix<T> result;
+
+  void Filer(std::string input_file_path) {
+    result = Nice::util::FromFile<T>(input_file_path);
+  }
+};
+
+typedef ::testing::Types<int> MyTypes;
+TYPED_TEST_CASE(FromFileTest, MyTypes);
+
+TYPED_TEST(FromFileTest, IfFileNotExist) {
+  ASSERT_DEATH( this->Filer("../test/data_for_test/matrix_not_exist.txt"),
+                           "Cannot open file .*, exiting...");
 }
 
-TEST(FromFileTest, IfFileExists) {
-//  ::testing::internal::CaptureStdout();
-  Nice::Matrix<int> m = Nice::util::FromFile<int>(
-      "../test/data_for_test/matrix_2_2.txt");
-  std::cout << m << std::endl;
+TYPED_TEST(FromFileTest, IfFileExists) {
+  this->Filer("../test/data_for_test/matrix_2_2.txt");
+  this->expected.resize(2, 2);
+  this->expected << 1, 2,
+                    3, 99;
+  ASSERT_TRUE(this->expected.isApprox(this->result));
+}
 
+TYPED_TEST(FromFileTest, NonSquareMatrix) {
+  this->Filer("../test/data_for_test/matrix_2_3.txt");
+  this->expected.resize(2,3);
+  this->expected << 1, 2, 3,
+                    4, 5, 6;
+  ASSERT_TRUE(this->expected.isApprox(this->result));
+}
 
-
-//  std::string output = ::testing::internal::GetCapturedStdout();
-//  EXPECT_STREQ(output.c_str(), "File Open");
+TYPED_TEST(FromFileTest, MatrixWrongSize) {
+  ASSERT_DEATH( this->Filer("../test/data_for_test/matrix_wrong_size.txt"), ".*");
 }

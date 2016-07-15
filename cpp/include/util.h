@@ -45,6 +45,7 @@ Matrix<T> FromFile(const std::string &input_file_path) {
   T coef;
   int cols = 0;
   int rows = 0;
+  int viter = 0;
   int colsinrow;
 
   if (input_file) {
@@ -67,11 +68,11 @@ Matrix<T> FromFile(const std::string &input_file_path) {
       }
       ++rows;
     }
-
     m.resize(rows, cols);
     for (int i = 0; i < rows; ++i) {
       for(int j = 0; j < cols; ++j) {
-        m(i, j) = vector.at(i * rows + j);
+        m(i, j) = vector.at(viter);
+        ++viter;
       }
     }
     return m;
