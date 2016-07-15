@@ -133,8 +133,8 @@ class GpuOperations {
     int ldb = m;
     int ldc = m;
 
-    float alpha = 1.0;
-    float beta = 1.0;
+    T alpha = 1.0;
+    T beta = 1.0;
 
     const T * h_a = &a(0);
     Matrix<T> b(m, n);
@@ -182,8 +182,8 @@ class GpuOperations {
       int ldb = n;
       int ldc = m;
 
-      float alpha = 1.0;
-      float beta = 1.0;
+      T alpha = 1.0;
+      T beta = 1.0;
 
       const T * h_a = &a(0);
       const T * h_b = &b(0);
