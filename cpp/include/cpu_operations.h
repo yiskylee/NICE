@@ -25,6 +25,7 @@
 
 #include <string>
 #include <iostream>
+#include <cmath>
 #include "include/matrix.h"
 #include "include/vector.h"
 #include "Eigen/SVD"
@@ -155,7 +156,20 @@ class CpuOperations {
       return a.inverse();
     }
   }
-  static Matrix<T> Norm(const int &p = 2, const int &axis = 0);
+  static Vector<T> Norm(const Matrix<T> a, const int &p = 2, const int &axis = 0) {
+    int num_rows = a.rows();
+    int num_cols = a.cols();
+    float nval = 0;
+    Vector<T> norm(num_cols);
+    for(int j = 0; j < num_cols; j++) {
+	    for(int i = 0; i < num_rows; i++)
+        nval += pow(a(i,j), 2);
+      norm(j) = sqrt(nval);
+      nval = 0;
+    }
+    return norm;
+  }
+
   static T Determinant(const Matrix<T> &a);
   static int Rank(const Matrix<T> &a){
     // Rank of a matrix
@@ -174,6 +188,8 @@ class CpuOperations {
     // Trace of a matrix
     return a.trace();
   }
+
+					
   static T DotProduct(const Vector<T> &a, const Vector<T> &b) {
       // Checks to see if the size of the two vectors are not the same
       if (a.size() != b.size()) {
