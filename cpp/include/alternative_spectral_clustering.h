@@ -55,6 +55,7 @@ class AlternativeSpectralClustering {
     sigma_ = 1;
     lambda_ = 1;
     alpha_ = 0.01;
+    sgd_size_ = 10;
     polynomial_order_ = 2;
     kernel_matrix_ = Matrix<T>::Zero(num_samples_, num_samples_);
     normalized_u_matrix_ = Matrix<T>::Zero(num_samples_, num_clusters_);
@@ -120,6 +121,7 @@ class AlternativeSpectralClustering {
       w_matrix_.col(m) = GetOrthogonalVector(m, w_matrix_.col(m));
       while (!w_converge) {
         Matrix<T> w_l = w_matrix_.col(m);
+
       }
      }
   }
@@ -167,6 +169,18 @@ class AlternativeSpectralClustering {
   void RunKMeans() {
     KMeans<T> km;
     allocation_ = km.FitPredict(normalized_u_matrix_, num_clusters_);
+    binary_allocation_ = Matrix<T>::Zero(num_samples_, num_clusters_);
+    for (int i = 0; i < num_samples_; i++)
+      binary_allocation_(allocation_(i)) = 1;
+    if (y_matrix_.rows() == 0 || y_matrix_.cols() == 0)
+      y_matrix_ = binary_allocation_;
+    else {
+      Matrix<T> y_matrix_expand(y_matrix_.rows(),
+                                y_matrix_.cols() + binary_allocation_.cols());
+      y_matrix_expand << y_matrix_, binary_allocation_;
+      y_matrix_ = y_matrix_expand;
+    }
+    allocation_.array() += 1;
   }
 
   Vector<int> FitPredict(void) {
@@ -174,6 +188,7 @@ class AlternativeSpectralClustering {
       OptimizaGaussianKernel();
     NormalizeEachURow();
     RunKMeans();
+    pre_num_clusters_ += 1;
     Vector<int> v;
     return v;
   }
@@ -186,6 +201,7 @@ class AlternativeSpectralClustering {
   int alternative_dimension_;  // q
   float lambda_;  // Alternative cluster tuning parameter
   float alpha_;
+  int sgd_size_;
   Matrix<T> data_matrix_;
   Matrix<T> kernel_matrix_;  // num_samples_ * num_samples_
   Matrix<T> h_matrix_;  // centering matrix: num_samples_ * num_samples_
@@ -204,8 +220,9 @@ class AlternativeSpectralClustering {
   Matrix<T> w_matrix_;  // size: num_features * alternative_dimension_
                         // initially: num_features * num_features
   // output
-  Vector<int> allocation_;
-  Matrix<int> binary_allocation_;
+  // TODO: use Vector<int> and Matrix<int> for these two
+  Vector<T> allocation_;
+  Matrix<T> binary_allocation_;
 
   // temporary
   Matrix<T> l_matrix_; // For testing if l_matrix is calculated correctly

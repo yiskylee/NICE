@@ -20,45 +20,46 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef CPP_INCLUDE_SPECTRAL_CLUSTERING_H_
-#define CPP_INCLUDE_SPECTRAL_CLUSTERING_H_
+#ifndef CPP_INCLUDE_KMEANS_H
+#define CPP_INCLUDE_KMEANS_H
 
 #include "include/matrix.h"
 #include "include/vector.h"
-//#include "include/model.h"
 #include <vector>
 #include "dlib/clustering.h"
+
 
 namespace Nice {
 
 template<typename T>
-class SpectralClustering {
+class KMeans {
  public:
-  Vector<int> FitPredict(const Matrix<T> &input_data, int k) {
+  Vector<T> FitPredict(const Matrix<T> &input_data, int k) {
     int num_features = input_data.cols();
     int num_samples = input_data.rows();
     typedef dlib::matrix<T> sample_type;
     typedef dlib::radial_basis_kernel<sample_type> kernel_type;
     std::vector<sample_type> samples;
+    std::vector<sample_type> initial_centers;
     sample_type m;
     m.set_size(num_features, 1);
     for (long i = 0; i < num_samples; i++) {
-      for (long j = 0; j < num_features; j++) {
+      for (long j = 0; j < num_features; j++)
         m(j) = input_data(i, j);
-      }
       samples.push_back(m);
     }
-    std::vector<unsigned long> results = dlib::spectral_cluster(
-        kernel_type(0.1), samples, k);
-    Vector<int> assignments(num_samples);
+    dlib::kcentroid<kernel_type> kc(kernel_type(0.01), 0.0001, 20);
+    dlib::kkmeans<kernel_type> km(kc);
+    km.set_number_of_centers(k);
+    dlib::pick_initial_centers(k, initial_centers, samples, km.get_kernel());
+    km.train(samples, initial_centers);
+    Vector<T> assignments(num_samples);
     for (long i = 0; i < num_samples; i++) {
-      assignments[i] = int(results[i]);
+//      std::cout << samples[i] << std::endl;
+      assignments[i] = km(samples[i]);
     }
     return assignments;
-
   }
 };
-
 }
-
-#endif  // CPP_INCLUDE_SPECTRAL_CLUSTERING_H_
+#endif  // CPP_INCLUDE_KMEANS_H
