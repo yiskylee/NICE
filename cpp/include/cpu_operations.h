@@ -162,6 +162,8 @@ static Vector<T> Norm(const Matrix<T> &a,
     int num_rows = a.rows();
     int num_cols = a.cols();
     float nval = 0;
+    //const int pvalue = &p;
+    std::cout<<p<<std::endl;
     Vector<T> norm(num_cols);
      for (int j = 0; j < num_cols; j++) {
       for (int i = 0; i < num_rows; i++)
