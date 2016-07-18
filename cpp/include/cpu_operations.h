@@ -162,17 +162,25 @@ static Vector<T> Norm(const Matrix<T> &a,
     int num_rows = a.rows();
     int num_cols = a.cols();
     float nval = 0;
-    //const int pvalue = &p;
-    std::cout<<p<<std::endl;
     Vector<T> norm(num_cols);
+    if (axis == 0) {
      for (int j = 0; j < num_cols; j++) {
       for (int i = 0; i < num_rows; i++)
-         nval += pow(a(i, j), 2);
-       norm(j) = sqrt(nval);
+         nval += pow(a(i, j), p);
+       norm(j) = pow(nval, (1.0/p));
+       nval = 0;
+     }
+     return norm;
+     } else {
+     for (int i = 0; i < num_rows; i++) {
+      for (int j = 0; j < num_cols; j++)
+         nval += pow(a(i, j), p);
+       norm(i) = pow(nval, (1.0/p));
        nval = 0;
      }
      return norm;
      }
+}
   static T Determinant(const Matrix<T> &a);
   static int Rank(const Matrix<T> &a) {
     // Rank of a matrix
