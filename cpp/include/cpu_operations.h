@@ -31,6 +31,7 @@
 namespace Nice {
 
 // Abstract class of common matrix operation interface
+///This is a test - Andrew Tu
 template<typename T>
 class CpuOperations {
  public:
