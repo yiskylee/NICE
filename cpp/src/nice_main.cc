@@ -20,33 +20,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <iostream>
-#include "Eigen/Dense"
-#include "gtest/gtest.h"
-#include "include/cpu_operations.h"
 #include "include/matrix.h"
+#include "include/vector.h"
+#include "include/cpu_operations.h"
+#include "include/gpu_operations.h"
+#include "include/svd_solver.h"
+#include "include/gpu_svd_solver.h"
+#include "include/util.h"
+#include "include/gpu_util.h"
 
-template<class T>
-class TraceTest : public ::testing::Test {
- public:
-  Nice::Matrix<T> m1;
-  T correct_ans;
-  T Tracer() {
-    return Nice::CpuOperations<T>::Trace(m1);
-  }
-};
-
-typedef ::testing::Types<int, float, double> MyTypes;
-TYPED_TEST_CASE(TraceTest, MyTypes);
-
-TYPED_TEST(TraceTest, BasicTest) {
-  this->m1.resize(4, 4);
-  this->m1 << 8, 5, 3, 4,
-              2, 4, 8, 9,
-              7, 6, 1, 0,
-              9, 2, 5, 7;
-  this->correct_ans = 20;
-  EXPECT_EQ(this-> correct_ans, this->Tracer());
-}
+// Place holder

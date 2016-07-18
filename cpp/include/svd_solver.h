@@ -35,13 +35,32 @@ template<typename T>
 class SvdSolver {
  private:
   Eigen::JacobiSVD<Matrix<T>> svd_;
+
  public:
-  SvdSolver();
-  void Compute(const Matrix<T> &a);
-  Matrix<T> MatrixU() const;
-  Matrix<T> MatrixV() const;
-  Vector<T> SingularValues() const;
-  int Rank(const Matrix<T> &a);
+  SvdSolver()
+  :
+  svd_() {}
+
+  void Compute(const Matrix<T> &a) {
+    svd_.compute(a, Eigen::ComputeFullU|Eigen::ComputeFullV);
+  }
+
+  Matrix<T> MatrixU() const {
+    return svd_.matrixU();
+  }
+
+  Matrix<T> MatrixV() const {
+    return svd_.matrixV();
+  }
+
+  Vector<T> SingularValues() const {
+    return svd_.singularValues();
+  }
+
+  int Rank(const Matrix<T> &a) {
+    Compute(a);
+    return svd_.rank();
+  }
 };
 
 }  // namespace Nice

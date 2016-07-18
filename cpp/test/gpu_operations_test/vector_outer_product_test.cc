@@ -29,10 +29,11 @@
 // All tests are made using a templated test fixture which attempts
 // Integer, float, and double data types
 
-#include "include/gpu_svd_solver.h"
-
 #include <iostream>
 #include <cmath>
+
+#include "include/gpu_operations.h"
+#include "include/cpu_operations.h"
 
 #include "Eigen/Dense"
 #include "gtest/gtest.h"
@@ -40,69 +41,55 @@
 #include "include/vector.h"
 #include "include/gpu_util.h"
 
+
 // This is a template test fixture class containing test matrices
 template<class T>  // Template
-class GpuSvdSolverTest : public ::testing::Test {  // Inherits testing::Test
+class GpuOuterProductTest : public ::testing::Test {  // Inherits testing::Test
  public:  // Members must be public to be accessed by tests
-  Nice::Matrix<T> matrix_;
-  Nice::Matrix<T> u_;
-  Nice::Matrix<T> v_;
-  Nice::Vector<T> s_;
+  Nice::Matrix<T> a_;
+  Nice::Matrix<T> b_;
+  Nice::Matrix<T> c_;
+
   int row_;
-  int col_;
+
 
   // Constructor
-  void CreateTestData() {
+  void CreateTestData(int m) {
     // Check matrix
-    if (matrix_.rows() != 0 && matrix_.cols() != 0)
+    if (a_.rows() != 0)
       return;
 
     // Set up dimension
-    row_ = 5;
-    col_ = row_;
+    row_ = m;
 
     // Create matrix
-    matrix_ = Nice::Matrix<T>::Random(row_, col_);
-    // CPU SVD
-    Eigen::JacobiSVD< Nice::Matrix<T> > cpu_svd;
+    a_ = Nice::Vector<T>::Random(row_);
+    b_ = Nice::Vector<T>::Random(row_);
+
+    Nice::CpuOperations<T> cpu_op;
 
     // Solve in CPU
-    cpu_svd.compute(matrix_, Eigen::ComputeFullU|Eigen::ComputeFullV);
-
-    // Get GPU SVD results
-    s_ = cpu_svd.singularValues();
-    u_ = cpu_svd.matrixU();
-    v_ = cpu_svd.matrixV();
+    c_ = cpu_op.OuterProduct(a_, b_);
   }
 };
 // Establishes a test case with the given types, Char and short types will
 // Throw compiler errors
 typedef ::testing::Types<float, double> dataTypes;
-TYPED_TEST_CASE(GpuSvdSolverTest, dataTypes);
+TYPED_TEST_CASE(GpuOuterProductTest, dataTypes);
 
-TYPED_TEST(GpuSvdSolverTest, FuncionalityTest) {
+TYPED_TEST(GpuOuterProductTest, FuncionalityTest) {
   // Create test data
-  this->CreateTestData();
+  int m = 10;
+  srand(time(NULL));
+  this->CreateTestData(m);
+  Nice::Matrix<TypeParam> gpu_c(m, m);
+  // Test gpu matrix matrix multiply in Nice
+  Nice::GpuOperations<TypeParam> gpu_op;
+  gpu_c = gpu_op.OuterProduct(this->a_, this->b_);
 
-  // Test svd solver in Nice
-  Nice::GpuSvdSolver<TypeParam> gpu_svd;
-  gpu_svd.Compute(this->matrix_);
-  Nice::Vector<TypeParam> gpu_s = gpu_svd.SingularValues();
-  Nice::Matrix<TypeParam> gpu_u = gpu_svd.MatrixU();
-  Nice::Matrix<TypeParam> gpu_v = gpu_svd.MatrixV();
-
-  // Verify the result U
-  for (int i = 0; i < this->row_; i++)
-    for (int i = 0; i < this->col_; i++)
-      EXPECT_NEAR(abs(this->u_(i)), abs(gpu_u(i)), 0.001);
-
-  // Verify the result V
-  // for (int i = 0; i < this->row_; i++)
-  //  for (int i = 0; i < this->col_; i++)
-  //    EXPECT_NEAR(abs(this->v_(i)), abs(gpu_v(i)), 0.001);
-
-  // Verify the result S
-  for (int i = 0; i < this->row_; i++)
-    EXPECT_NEAR(this->s_(i), gpu_s(i), 0.1);
+  // Verify the result
+  for (int i = 0; i < m; i++)
+    for (int j = 0; j < m; j++)
+      EXPECT_NEAR(this->c_(i, j), gpu_c(i, j), 0.001);
 }
 

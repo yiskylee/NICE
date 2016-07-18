@@ -20,33 +20,57 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+
+// This file tests the cpu_operations.cc DotProduct() function. First, it tests
+// the functionality to ensure the dot product works properly by manually
+// calculating the dot product and comparing it to the result of the function
+// which calculated dot product with the Eigen built-in functionality. Then
+// the two cases where incorrect function uses will result in fatal error are
+// tested. This involves trying to calculate the dot product of two vectors of
+// different size or trying to calculate the dot product of empty vectors.
+
 #include <stdio.h>
-#include <stdlib.h>
 #include <iostream>
 #include "Eigen/Dense"
 #include "gtest/gtest.h"
 #include "include/cpu_operations.h"
-#include "include/matrix.h"
+#include "include/vector.h"
 
 template<class T>
-class TraceTest : public ::testing::Test {
+class DotProductTest : public ::testing::Test {
  public:
-  Nice::Matrix<T> m1;
-  T correct_ans;
-  T Tracer() {
-    return Nice::CpuOperations<T>::Trace(m1);
+  Nice::Vector<T> vec1;
+  Nice::Vector<T> vec2;
+  T result;
+
+  void DotProd() {
+    result = Nice::CpuOperations<T>::DotProduct(vec1, vec2);
   }
 };
 
 typedef ::testing::Types<int, float, double> MyTypes;
-TYPED_TEST_CASE(TraceTest, MyTypes);
+TYPED_TEST_CASE(DotProductTest, MyTypes);
 
-TYPED_TEST(TraceTest, BasicTest) {
-  this->m1.resize(4, 4);
-  this->m1 << 8, 5, 3, 4,
-              2, 4, 8, 9,
-              7, 6, 1, 0,
-              9, 2, 5, 7;
-  this->correct_ans = 20;
-  EXPECT_EQ(this-> correct_ans, this->Tracer());
+TYPED_TEST(DotProductTest, DotProductFunctionality) {
+  int vec_size = 15;
+  this->vec1.setRandom(vec_size);
+  this->vec2.setRandom(vec_size);
+
+  TypeParam correct = 0;
+  for (int i = 0; i < vec_size; ++i)
+    correct += (this->vec1[i]*this->vec2[i]);
+
+  this->DotProd();
+
+  ASSERT_NEAR(this->result, correct, 0.00001);
+}
+
+TYPED_TEST(DotProductTest, DifferentSizeVectors) {
+  this->vec1.setRandom(4);
+  this->vec2.setRandom(2);
+  ASSERT_DEATH(this->DotProd(), ".*");
+}
+
+TYPED_TEST(DotProductTest, EmptyVectors) {
+  ASSERT_DEATH(this->DotProd(), ".*");
 }

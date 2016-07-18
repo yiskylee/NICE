@@ -24,8 +24,12 @@
 #define CPP_INCLUDE_CPU_OPERATIONS_H_
 
 #include <string>
+#include <iostream>
+#include <cmath>
 #include "include/matrix.h"
 #include "include/vector.h"
+#include "Eigen/SVD"
+#include "include/svd_solver.h"
 
 namespace Nice {
 
@@ -47,21 +51,62 @@ class CpuOperations {
     // Matrix-matrix multiplication
     return a * b;
   }
-  static Matrix<T> Add(const Matrix<T> &a, const T &scalar);
-  static Matrix<T> Add(const Matrix<T> &a, const Matrix<T> &b);
-  static Matrix<T> Subtract(const Matrix<T> &a, const T &scalar);
-  static Matrix<T> Subtract(const Matrix<T> &a, const Matrix<T> &b);
+  static Matrix<T> Add(const Matrix<T> &a, const T &scalar) {
+      // Does not work if matrix is empty.
+      if (a.rows() == 0) {
+        std::cerr << "MATRICIES ARE EMPTY";
+        exit(1);
+
+      // Otherwise, code will run fine.
+    } else {
+        return (a.array() + scalar);
+    }
+  }
+  static Matrix<T> Add(const Matrix<T> &a, const Matrix<T> &b) {
+      // Does not work if matricies are not the same size.
+      if ((a.rows() != b.rows()) || (a.cols() != b.cols())) {
+        std::cerr << "MATRICIES ARE NOT THE SAME SIZE";
+        exit(1);
+
+      // Does not work if matricies are empty.
+    } else if (a.rows() == 0) {
+        std::cerr << "MATRICIES ARE EMPTY";
+        exit(1);
+
+      // Otherwise, code will run fine.
+    } else {
+        return a + b;
+    }
+  }
+  static Matrix<T> Subtract(const Matrix<T> &a, const T &scalar) {
+    // Matrix-scalar subtraction
+    if (a.rows() == 0 || a.cols() == 0) {
+      std::cerr << "EMPTY MATRIX AS ARGUEMENT!";
+      exit(1);
+    }
+    return (a.array() - scalar);
+  }
+  static Matrix<T> Subtract(const Matrix<T> &a, const Matrix<T> &b) {
+    // Matrix-matrix subtraction
+    if ((a.rows() != b.rows()) || (a.cols() != b.cols())) {
+      std::cerr << "MATRICES ARE NOT THE SAME SIZE!";
+      exit(1);  // Exits the program
+    } else if (b.rows() == 0 || b.cols() == 0 || a.rows() == 0
+        || a.cols() == 0) {
+      std::cerr << "EMPTY MATRIX AS ARGUMENT!";
+      exit(1);  // Exits the program
+    }
+    return a - b;
+  }
   static Matrix<bool> LogicalOr(const Matrix<bool> &a, const Matrix<bool> &b) {
     // Returns the resulting matrix that is created by running a logical or
     // operation on the two input matrices
     if ((a.rows() != b.rows()) || (a.cols() != b.cols())) {
-      std::cerr << std::endl << "ERROR: MATRICES ARE NOT THE SAME SIZE!"
-                << std::endl << std::endl;
+      std::cerr << "MATRICES ARE NOT THE SAME SIZE!";
       exit(1);  // Exits the program
     } else if (b.rows() == 0 || b.cols() == 0 || a.rows() == 0
         || a.cols() == 0) {
-      std::cerr << std::endl << "ERROR: EMPTY MATRIX AS ARGUMENT!" << std::endl
-                << std::endl;
+      std::cerr << "EMPTY MATRIX AS ARGUMENT!";
       exit(1);  // Exits the program
     }
     return (a.array() || b.array());
@@ -76,8 +121,7 @@ class CpuOperations {
       }
     }
     if (b.rows() == 0 || b.cols() == 0) {
-      std::cerr << std::endl << "ERROR: EMPTY MATRIX AS ARGUMENT!" << std::endl
-                << std::endl;
+      std::cerr << "EMPTY MATRIX AS ARGUMENT!";
       exit(1);  // Exits the program
     }
     return b;
@@ -86,28 +130,100 @@ class CpuOperations {
     // This function returns the logical AND of two boolean matrices
     // Checks to see that the number of rows and columns are the same
     if ((a.rows() != b.rows()) || (a.cols() != b.cols())) {
-      std::cerr << "/nERROR: MATRICES ARE NOT THE SAME SIZE!/n/n";
+      std::cerr << "MATRICES ARE NOT THE SAME SIZE!";
       exit(1);  // Exits the program
     }
     return (a.array() && b.array());
     // Will return a matrix due to implicit conversion
   }
-  static Matrix<T> Inverse(const Matrix<T> &a);
-  static Matrix<T> Norm(const int &p = 2, const int &axis = 0);
+  static Matrix<T> Inverse(const Matrix<T> &a) {
+      // If the matrix is empty, it should not check for inverse.
+      if (a.cols() == 0) {
+        std::cerr << "MATRIX IS EMPTY";
+        exit(1);
+      // If the matrix is not sqaure it will not produce an inverse.
+    } else if (a.cols() != a.rows()) {
+        std::cerr << "MATRIX IS NOT A SQUARE MATRIX!";
+        exit(1);
+
+      // If the determinant of a matrix is 0, it does not have an inverse.
+    } else if (a.determinant() == 0) {
+        std::cerr << "MATRIX DOES NOT HAVE AN INVERSE (DETERMINANT IS ZERO)!";
+        exit(1);
+
+      // If this point is reached then an inverse of the matrix exists.
+    } else {
+      return a.inverse();
+    }
+  }
+static Vector<T> Norm(const Matrix<T> &a,
+                      const int &p = 2,
+                      const int &axis = 0) {
+    int num_rows = a.rows();
+    int num_cols = a.cols();
+    float nval = 0;
+    Vector<T> norm(num_cols);
+    if (axis == 0) {
+     for (int j = 0; j < num_cols; j++) {
+      for (int i = 0; i < num_rows; i++)
+         nval += pow(a(i, j), p);
+       norm(j) = pow(nval, (1.0/p));
+       nval = 0;
+     }
+     return norm;
+     } else {
+     for (int i = 0; i < num_rows; i++) {
+      for (int j = 0; j < num_cols; j++)
+         nval += pow(a(i, j), p);
+       norm(i) = pow(nval, (1.0/p));
+       nval = 0;
+     }
+     return norm;
+     }
+}
   static T Determinant(const Matrix<T> &a);
-  static T Rank(const Matrix<T> &a);
-  static T FrobeniusNorm(const Matrix<T> &a);
+  static int Rank(const Matrix<T> &a) {
+    // Rank of a matrix
+    SvdSolver<T> svd;
+    return svd.Rank(a);
+  }
+  static T FrobeniusNorm(const Matrix<T> &a) {
+    if (a.rows() == 0 || a.cols() == 0) {
+      std::cerr << "EMPTY MATRIX AS ARGUMENT!";
+      exit(-1);  // Exits the program
+    } else {
+      return a.norm();
+    }
+  }
   static T Trace(const Matrix<T> &a) {
     // Trace of a matrix
     return a.trace();
   }
-  static T DotProduct(const Vector<T> &a, const Vector<T> &b);
+  static T DotProduct(const Vector<T> &a, const Vector<T> &b) {
+      // Checks to see if the size of the two vectors are not the same
+      if (a.size() != b.size()) {
+        std::cerr << "VECTORS ARE NOT THE SAME SIZE!";
+        exit(1);
+
+      // Checks to see if both vectors contain at least one element
+      // Only one vector is checked because it is known that both
+      // vectors are the same size
+    } else if (a.size() == 0) {
+      std::cerr << "VECTORS ARE EMPTY!";
+      exit(1);
+
+      // If this point is reached then calculating the dot product
+      // of the two vectors is valid
+    } else {
+        return (a.dot(b));
+    }
+  }
+
 
   static Matrix<T> OuterProduct(const Vector<T> &a, const Vector<T> &b) {
     // This function returns the outer product of he two passed in vectors
     if (a.size() == 0 || b.size() == 0) {
-      std::cerr << std::endl << "ERROR: EMPTY VECTOR AS ARGUMENT!" << std::endl
-                << std::endl;
+      std::cerr << "EMPTY VECTOR AS ARGUMENT!";
       exit(1);
     }
     return a * b.transpose();
@@ -117,12 +233,10 @@ class CpuOperations {
     // Returns the resulting vector that is created by running a logical or
     // operation on the two input vectors
     if (a.size() != b.size()) {
-      std::cerr << std::endl << "ERROR: VECTORS ARE NOT THE SAME SIZE!"
-                << std::endl << std::endl;
+      std::cerr << "VECTORS ARE NOT THE SAME SIZE!";
       exit(1);  // Exits the program
     } else if (a.size() == 0 || b.size() == 0) {
-      std::cerr << std::endl << "ERROR: EMPTY VECTOR AS ARGUMENT!" << std::endl
-                << std::endl;
+      std::cerr << "EMPTY VECTOR AS ARGUMENT!";
       exit(1);  // Exits the program
     }
     return (a.array() || b.array());
@@ -135,8 +249,7 @@ class CpuOperations {
       b(i) = !b(i);
     }
     if (a.size() == 0) {
-      std::cerr << std::endl << "ERROR: EMPTY VECTOR AS ARGUMENT!" << std::endl
-                << std::endl;
+      std::cerr << "EMPTY VECTOR AS ARGUMENT!";
       exit(1);  // Exits the program
     }
     return b;

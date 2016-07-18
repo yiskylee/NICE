@@ -29,27 +29,26 @@
 // All tests are made using a templated test fixture which attempts
 // Integer, float, and double data types
 
-#include "include/gpu_svd_solver.h"
-
 #include <iostream>
 #include <cmath>
 
+#include "include/gpu_operations.h"
 #include "Eigen/Dense"
 #include "gtest/gtest.h"
 #include "include/matrix.h"
 #include "include/vector.h"
 #include "include/gpu_util.h"
+#include "include/cpu_operations.h"
 
 // This is a template test fixture class containing test matrices
 template<class T>  // Template
-class GpuSvdSolverTest : public ::testing::Test {  // Inherits testing::Test
+class GpuInverseTest : public ::testing::Test {  // Inherits testing::Test
  public:  // Members must be public to be accessed by tests
   Nice::Matrix<T> matrix_;
-  Nice::Matrix<T> u_;
-  Nice::Matrix<T> v_;
-  Nice::Vector<T> s_;
   int row_;
   int col_;
+  Nice::Matrix<T> ref_result_;
+  Nice::Matrix<T> gpu_result_;
 
   // Constructor
   void CreateTestData() {
@@ -62,47 +61,37 @@ class GpuSvdSolverTest : public ::testing::Test {  // Inherits testing::Test
     col_ = row_;
 
     // Create matrix
-    matrix_ = Nice::Matrix<T>::Random(row_, col_);
-    // CPU SVD
-    Eigen::JacobiSVD< Nice::Matrix<T> > cpu_svd;
+    matrix_.resize(row_, col_);
+    matrix_ << 0.940058,   0.010484,   0.684214,   0.068308,   0.775155,
+               0.362836,   0.536293,   0.570479,   0.291084,   0.890316,
+               0.038190,   0.858041,   0.881434,   0.435262,   0.762851,
+               0.498995,   0.500425,   0.762412,   0.644035,   0.332466,
+               0.734139,   0.897120,   0.856919,   0.729722,   0.363101;
 
-    // Solve in CPU
-    cpu_svd.compute(matrix_, Eigen::ComputeFullU|Eigen::ComputeFullV);
-
-    // Get GPU SVD results
-    s_ = cpu_svd.singularValues();
-    u_ = cpu_svd.matrixU();
-    v_ = cpu_svd.matrixV();
+    // Create reference results
+    ref_result_.resize(row_, col_);
+    ref_result_ << 0.516486,   0.197357,  -0.946819,  -1.058853,   1.372200,
+                   -0.251945,  -0.071648,   0.502355,  -2.855800,   2.272983,
+                   1.387686,  -3.107333,   2.349968,   0.351579,  -0.602387,
+                   -1.633532,   2.397464,  -2.050379,   3.827388,  -1.588003,
+                   -0.413823,   2.293140,  -0.752141,   0.675126,  -1.023207;
   }
 };
 // Establishes a test case with the given types, Char and short types will
 // Throw compiler errors
 typedef ::testing::Types<float, double> dataTypes;
-TYPED_TEST_CASE(GpuSvdSolverTest, dataTypes);
+TYPED_TEST_CASE(GpuInverseTest, dataTypes);
 
-TYPED_TEST(GpuSvdSolverTest, FuncionalityTest) {
+TYPED_TEST(GpuInverseTest, FuncionalityTest) {
   // Create test data
   this->CreateTestData();
 
-  // Test svd solver in Nice
-  Nice::GpuSvdSolver<TypeParam> gpu_svd;
-  gpu_svd.Compute(this->matrix_);
-  Nice::Vector<TypeParam> gpu_s = gpu_svd.SingularValues();
-  Nice::Matrix<TypeParam> gpu_u = gpu_svd.MatrixU();
-  Nice::Matrix<TypeParam> gpu_v = gpu_svd.MatrixV();
+  // Test inverse in Nice
+  this->gpu_result_ = Nice::GpuOperations<TypeParam>::Inverse(this->matrix_);
 
-  // Verify the result U
+  // Verify
   for (int i = 0; i < this->row_; i++)
-    for (int i = 0; i < this->col_; i++)
-      EXPECT_NEAR(abs(this->u_(i)), abs(gpu_u(i)), 0.001);
-
-  // Verify the result V
-  // for (int i = 0; i < this->row_; i++)
-  //  for (int i = 0; i < this->col_; i++)
-  //    EXPECT_NEAR(abs(this->v_(i)), abs(gpu_v(i)), 0.001);
-
-  // Verify the result S
-  for (int i = 0; i < this->row_; i++)
-    EXPECT_NEAR(this->s_(i), gpu_s(i), 0.1);
+    for (int j = 0; j < this->col_; j++)
+      EXPECT_NEAR(this->ref_result_(i, j), this->gpu_result_(i, j), 0.001);
 }
 

@@ -23,15 +23,14 @@
 #ifndef CPP_INCLUDE_GPU_SVD_SOLVER_H_
 #define CPP_INCLUDE_GPU_SVD_SOLVER_H_
 
-
-#include<unistd.h>
-#include<stdio.h>
-#include<stdlib.h>
+#ifdef NEED_CUDA
 #include<cuda_runtime_api.h>
 #include<cuda_runtime.h>
 #include<device_launch_parameters.h>
 #include<cusolverDn.h>
+
 #include<iostream>
+
 #include "Eigen/Dense"
 #include "include/matrix.h"
 #include "include/vector.h"
@@ -45,14 +44,81 @@ class GpuSvdSolver {
   Matrix<T> u_;
   Matrix<T> v_;
   Vector<T> s_;
+
  public:
   GpuSvdSolver() {}
-  void      Compute(const Matrix<T> &A);
+
+  void Compute(const Matrix<T> &A) {
+    int M = A.rows();
+    int N = A.cols();
+    const T *h_A = &A(0);
+    // --- Setting the device matrix and moving the host matrix to the device
+    T *d_A;   gpuErrchk(cudaMalloc(&d_A,      M * N * sizeof(T)));
+    gpuErrchk(cudaMemcpy(d_A, h_A, M * N * sizeof(T), cudaMemcpyHostToDevice));
+
+    //--- host side SVD results space
+    s_.resize(M, 1);
+    u_.resize(M, M);
+    v_.resize(N, N);
+
+    // --- device side SVD workspace and matrices
+    int work_size = 0;
+    int devInfo_h = 0;
+    int *devInfo;   gpuErrchk(cudaMalloc(&devInfo,          sizeof(int)));
+    T *d_U;         gpuErrchk(cudaMalloc(&d_U,      M * M * sizeof(T)));
+    T *d_V;         gpuErrchk(cudaMalloc(&d_V,      N * N * sizeof(T)));
+    T *d_S;         gpuErrchk(cudaMalloc(&d_S,      N *     sizeof(T)));
+    cusolverStatus_t stat;
+
+    // --- CUDA solver initialization
+    cusolverDnHandle_t solver_handle;
+    cusolverDnCreate(&solver_handle);
+    stat = cusolverDnSgesvd_bufferSize(solver_handle, M, N, &work_size);
+    if (stat != CUSOLVER_STATUS_SUCCESS) {
+      std::cout << "Initialization of cuSolver failed." << std::endl;
+      cudaFree(d_S); cudaFree(d_U); cudaFree(d_V);
+      cusolverDnDestroy(solver_handle);
+      exit(1);
+    }
+    T *work;    gpuErrchk(cudaMalloc(&work, work_size * sizeof(T)));
+
+    // --- CUDA SVD execution
+    stat = GpuSvd(solver_handle, M, N,
+                 d_A, d_S, d_U, d_V,
+                 work, work_size, devInfo);
+
+    // Error Check
+    gpuErrchk(cudaMemcpy(&devInfo_h, devInfo,
+              sizeof(int), cudaMemcpyDeviceToHost));
+    if (stat != CUSOLVER_STATUS_SUCCESS || devInfo_h != 0) {
+      std::cerr << "GPU SVD Solver Internal Failure" << std::endl;
+      cudaFree(d_S); cudaFree(d_U); cudaFree(d_V); cudaFree(work);
+      cusolverDnDestroy(solver_handle);
+      exit(1);
+    }
+    cudaDeviceSynchronize();
+
+        // --- Moving the results from device to host
+    gpuErrchk(cudaMemcpy(&s_(0, 0), d_S, N*sizeof(T),
+              cudaMemcpyDeviceToHost));
+    gpuErrchk(cudaMemcpy(&u_(0, 0), d_U, M*M*sizeof(T),
+              cudaMemcpyDeviceToHost));
+    gpuErrchk(cudaMemcpy(&v_(0, 0), d_V, N*N*sizeof(T),
+              cudaMemcpyDeviceToHost));
+
+    cudaFree(d_S); cudaFree(d_U); cudaFree(d_V); cudaFree(work);
+    cusolverDnDestroy(solver_handle);
+  }
+
   Matrix<T> MatrixU() const              { return u_; }
+
   Matrix<T> MatrixV() const              { return v_; }
+
   Vector<T> SingularValues() const       { return s_; }
 };
 }  // namespace Nice
+
+#endif  // NEED_CUDA
 
 #endif  // CPP_INCLUDE_GPU_SVD_SOLVER_H_
 

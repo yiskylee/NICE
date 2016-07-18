@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
@@ -29,24 +30,24 @@
 #include "include/matrix.h"
 
 template<class T>
-class TraceTest : public ::testing::Test {
+class RankTest : public ::testing::Test {
  public:
-  Nice::Matrix<T> m1;
-  T correct_ans;
-  T Tracer() {
-    return Nice::CpuOperations<T>::Trace(m1);
-  }
+  Nice::Matrix<T> mat_;
+  int calculated_ans_;
 };
 
-typedef ::testing::Types<int, float, double> MyTypes;
-TYPED_TEST_CASE(TraceTest, MyTypes);
+typedef ::testing::Types<float, double> MyTypes;
+TYPED_TEST_CASE(RankTest, MyTypes);
+TYPED_TEST(RankTest, RankMatrix) {
+  this->mat_.resize(4, 4);
+  this->mat_ <<1.0, 3.0, 5.0, 2.0,
+               0.0, 1.0, 0.0, 3.0,
+               0.0, 0.0, 0.0, 1.0,
+               0.0, 0.0, 0.0, 0.0;
 
-TYPED_TEST(TraceTest, BasicTest) {
-  this->m1.resize(4, 4);
-  this->m1 << 8, 5, 3, 4,
-              2, 4, 8, 9,
-              7, 6, 1, 0,
-              9, 2, 5, 7;
-  this->correct_ans = 20;
-  EXPECT_EQ(this-> correct_ans, this->Tracer());
+  int correct_ans = 3;
+
+  this->calculated_ans_ = Nice::CpuOperations<TypeParam>::Rank(this->mat_);
+  EXPECT_EQ(correct_ans, this->calculated_ans_);
 }
+

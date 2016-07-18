@@ -4,6 +4,7 @@ project(Nice)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
 include(eigen)
 include(check)
+include(doc)
 include(dlib/cmake)
 find_package(Threads REQUIRED)
 
@@ -12,9 +13,10 @@ set(CMAKE_MACOSX_RPATH 1)
 if(CMAKE_COMPILER_IS_GNUCXX)
     add_definitions(-Wall -ansi -Wno-deprecated -pthread -std=c++11)
 endif()
+
 set(COMMON_INCLUDES ${PROJECT_SOURCE_DIR})
-include_directories(${COMMON_INCLUDES})
 include_directories(${EIGEN_INCLUDE_DIRS})
+include_directories(${COMMON_INCLUDES}) 
 
 # Locate CUDA package 
 find_package(CUDA)
@@ -90,6 +92,7 @@ if (enable-test)
   message(STATUS "Test case source files: " ${TEST_SRC_FILES})
 
   add_executable(${PROJECT_TEST_NAME} ${TEST_SRC_FILES})
+
   add_dependencies(${PROJECT_TEST_NAME} googletest)
   add_dependencies(${PROJECT_TEST_NAME} eigen)
   add_dependencies(${PROJECT_TEST_NAME} ${PROJECT_NAME})
