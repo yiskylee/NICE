@@ -37,6 +37,18 @@
 namespace Nice {
 
 namespace util {
+
+/// This function reads and creates a matrix from a file
+///
+/// \param &input_file_path
+/// Input string to file location
+/// \param num_rows
+/// The number of rows in the read-in matrix
+/// \param num_cols
+/// The number of columns in the read-in matrix
+///
+/// \return
+/// This function returns a matrix of type T, that was created from a file
 template<typename T>
 Matrix<T> FromFile(const std::string &input_file_path,
                    int num_rows, int num_cols) {
@@ -53,6 +65,13 @@ Matrix<T> FromFile(const std::string &input_file_path,
   }
 }
 
+/// This function reads and creates a matrix from a file
+///
+/// \param &input_file_path
+/// Input string to file location
+///
+/// \return
+/// This function returns a matrix of type T, that was created from a file
 template<typename T>
 Matrix<T> FromFile(const std::string &input_file_path) {
   std::ifstream input_file(input_file_path, std::ifstream::in);

@@ -36,6 +36,9 @@ class FromFileTest : public ::testing::Test {
   void Filer(std::string input_file_path) {
     result = Nice::util::FromFile<T>(input_file_path);
   }
+  void Filer(std::string input_file_path, int rows, int cols) {
+    result = Nice::util::FromFile<T>(input_file_path, rows, cols);
+  }
 };
 
 typedef ::testing::Types<int, float, double> MyTypes;
@@ -51,7 +54,11 @@ TYPED_TEST(FromFileTest, IfFileExists) {
   this->expected.resize(2, 2);
   this->expected << 1, 2,
                     3, 99;
-  ASSERT_TRUE(this->expected.isApprox(this->result));
+  for(int i = 0; i < this->expected.rows(); ++i) {
+    for(int j = 0; j < this->expected.cols(); ++j) {
+      EXPECT_NEAR(this->expected(i,j), this->result(i,j), 0.0001);
+    }
+  }
 }
 
 TYPED_TEST(FromFileTest, NonSquareMatrix) {
@@ -59,7 +66,11 @@ TYPED_TEST(FromFileTest, NonSquareMatrix) {
   this->expected.resize(2, 3);
   this->expected << 1, 2, 3,
                     4, 5, 6;
-  ASSERT_TRUE(this->expected.isApprox(this->result));
+  for(int i = 0; i < this->expected.rows(); ++i) {
+    for(int j = 0; j < this->expected.cols(); ++j) {
+      EXPECT_NEAR(this->expected(i,j), this->result(i,j), 0.0001);
+    }
+  }
 }
 
 TYPED_TEST(FromFileTest, MatrixWrongSize) {
@@ -67,3 +78,23 @@ TYPED_TEST(FromFileTest, MatrixWrongSize) {
                             ".*");
 }
 
+TYPED_TEST(FromFileTest, IfFileNotExistsRowsAndColsMethod) {
+  ASSERT_DEATH(
+      {
+        this->Filer(
+            "../test/data_for_test/matrix_not_exist.txt", 2, 2);
+      }
+      , "Cannot open file .*, exiting...");
+}
+
+TYPED_TEST(FromFileTest, IfFileExistsRowsAndColsMethod) {
+  this->Filer("../test/data_for_test/matrix_2_2.txt", 2, 2);
+  this->expected.resize(2, 2);
+  this->expected << 1, 2,
+                    3, 99;
+  for(int i = 0; i < this->expected.rows(); ++i) {
+    for(int j = 0; j < this->expected.cols(); ++j) {
+      EXPECT_NEAR(this->expected(i,j), this->result(i,j), 0.0001);
+    }
+  }
+}
