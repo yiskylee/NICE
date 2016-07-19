@@ -255,7 +255,7 @@ class GpuOperations {
       T * d_b; gpuErrchk(cudaMalloc(&d_b, m * n * sizeof(T)));
       T * d_c; gpuErrchk(cudaMalloc(&d_C, m * n * sizeof(T)));
 
-      gpuErrchk(cudaMemcpy(d_a, h_a, m * n * sizeof(T), 
+      gpuErrchk(cudaMemcpy(d_a, h_a, m * n * sizeof(T),
                            cudaMemcpyHostToDevice));
       gpuErrchk(cudaMemcpy(d_b, h_b, m * n * sizeof(T),
                            cudaMemcpyHostToDevice));

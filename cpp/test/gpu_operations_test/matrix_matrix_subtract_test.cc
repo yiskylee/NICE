@@ -57,8 +57,8 @@ TYPED_TEST(GpuMatrixMatrixSubTest, SubtractFunctionality) {
 }
 
 TYPED_TEST(GpuMatrixMatrixSubTest, DifferentSizeMatricies) {
-  this->a.setRandom(2,3);
-  this->b.setRandom(3,4);
+  this->a.setRandom(2, 3);
+  this->b.setRandom(3, 4);
   ASSERT_DEATH(this->Subtract(), ".*");
 }
 
