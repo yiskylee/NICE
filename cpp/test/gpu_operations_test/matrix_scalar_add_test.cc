@@ -42,7 +42,7 @@ typedef ::testing::Types<float, double> dataTypes;
 TYPED_TEST_CASE(GPU_MATRIX_SCALAR_ADD, dataTypes);
 
 TYPED_TEST(GPU_MATRIX_SCALAR_ADD, Basic_Test) {
-  this->a.resize(3,4);
+  this->a.resize(3, 4);
   this->a << 1, 2, 3, 4,
              1, 2, 3, 4,
              1, 2, 3, 4;

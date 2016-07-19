@@ -157,7 +157,7 @@ class CpuOperations {
   }
   static Matrix<T> Norm(const int &p = 2, const int &axis = 0);
   static T Determinant(const Matrix<T> &a);
-  static int Rank(const Matrix<T> &a){
+  static int Rank(const Matrix<T> &a) {
     // Rank of a matrix
     SvdSolver<T> svd;
     return svd.Rank(a);
