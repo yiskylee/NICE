@@ -254,6 +254,28 @@ static Vector<T> Norm(const Matrix<T> &a,
     }
     return b;
   }
+  static Matrix<T> Normalize(const Matrix <T> &a, const int axis = 0) {
+    int num_rows = a.rows();
+    int num_cols = a.cols();
+    Matrix<T> b(num_rows, num_cols);
+    if (axis == 0) {
+     for (int j = 0; j < num_cols; j++) {
+      for (int i = 0; i < num_rows; i++) {
+       float norm = a.col(j).norm();
+       b(i, j) = a(i, j)/norm;
+       }
+     }
+    return b;
+     } else {
+      for (int i = 0; i < num_rows; i++) {
+       for (int j = 0; j < num_cols; j++) {
+        float norm = a.row(i).norm();
+        b(i, j) = a(i, j)/norm;
+       }
+     }
+     return b;
+     }
+}
 };
 }  // namespace Nice
 #endif  // CPP_INCLUDE_CPU_OPERATIONS_H_
