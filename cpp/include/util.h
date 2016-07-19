@@ -51,13 +51,25 @@ namespace util {
 /// This function returns a matrix of type T, that was created from a file
 template<typename T>
 Matrix<T> FromFile(const std::string &input_file_path,
-                   int num_rows, int num_cols) {
+                   int num_rows, int num_cols,
+                   const char delimiter = ' ') {
   std::ifstream input_file(input_file_path, std::ifstream::in);
   Matrix<T> m(num_rows, num_cols);
+  T coef;
   if (input_file) {
-    for (int i = 0; i < num_rows; i++)
-      for (int j = 0; j < num_cols; j++)
-        input_file >> m(i, j);
+    int i = 0;
+    while ( !input_file.eof() ) {
+      std::string line;
+      getline(input_file, line);
+      std::replace(line.begin(), line.end(), delimiter, ' ');
+      std::stringstream stream(line);
+      int j = 0;
+      while (stream >> coef) {
+        m(i, j) = coef;
+        ++j;
+      }
+      ++i;
+    }
     return m;
   } else {
     std::cerr << "Cannot open file " + input_file_path + ", exiting...";
@@ -73,7 +85,8 @@ Matrix<T> FromFile(const std::string &input_file_path,
 /// \return
 /// This function returns a matrix of type T, that was created from a file
 template<typename T>
-Matrix<T> FromFile(const std::string &input_file_path) {
+Matrix<T> FromFile(const std::string &input_file_path,
+                   const char delimiter = ' ') {
   std::ifstream input_file(input_file_path, std::ifstream::in);
   Matrix<T> m;
   std::string line;
@@ -82,16 +95,16 @@ Matrix<T> FromFile(const std::string &input_file_path) {
   int num_cols = 0;
   int num_rows = 0;
   int colsinrow;
-
   if (input_file) {
     while (!input_file.eof()) {
       getline(input_file, line);
       if (line.find_first_not_of(' ') == std::string::npos) {
         continue;
       }
+      std::replace(line.begin(), line.end(), delimiter, ' ');
       std::stringstream stream(line);
       colsinrow = 0;
-      while (stream >> coef) {
+      while ( stream >> coef ) {
         temp_buffer.push_back(coef);
         ++colsinrow;
       }
