@@ -25,8 +25,11 @@
 
 #include <string>
 #include <iostream>
+#include <cmath>
 #include "include/matrix.h"
 #include "include/vector.h"
+#include "Eigen/SVD"
+#include "include/svd_solver.h"
 
 namespace Nice {
 
@@ -48,10 +51,53 @@ class CpuOperations {
     // Matrix-matrix multiplication
     return a * b;
   }
-  static Matrix<T> Add(const Matrix<T> &a, const T &scalar);
-  static Matrix<T> Add(const Matrix<T> &a, const Matrix<T> &b);
-  static Matrix<T> Subtract(const Matrix<T> &a, const T &scalar);
-  static Matrix<T> Subtract(const Matrix<T> &a, const Matrix<T> &b);
+  static Matrix<T> Add(const Matrix<T> &a, const T &scalar) {
+      // Does not work if matrix is empty.
+      if (a.rows() == 0) {
+        std::cerr << "MATRICIES ARE EMPTY";
+        exit(1);
+
+      // Otherwise, code will run fine.
+    } else {
+        return (a.array() + scalar);
+    }
+  }
+  static Matrix<T> Add(const Matrix<T> &a, const Matrix<T> &b) {
+      // Does not work if matricies are not the same size.
+      if ((a.rows() != b.rows()) || (a.cols() != b.cols())) {
+        std::cerr << "MATRICIES ARE NOT THE SAME SIZE";
+        exit(1);
+
+      // Does not work if matricies are empty.
+    } else if (a.rows() == 0) {
+        std::cerr << "MATRICIES ARE EMPTY";
+        exit(1);
+
+      // Otherwise, code will run fine.
+    } else {
+        return a + b;
+    }
+  }
+  static Matrix<T> Subtract(const Matrix<T> &a, const T &scalar) {
+    // Matrix-scalar subtraction
+    if (a.rows() == 0 || a.cols() == 0) {
+      std::cerr << "EMPTY MATRIX AS ARGUEMENT!";
+      exit(1);
+    }
+    return (a.array() - scalar);
+  }
+  static Matrix<T> Subtract(const Matrix<T> &a, const Matrix<T> &b) {
+    // Matrix-matrix subtraction
+    if ((a.rows() != b.rows()) || (a.cols() != b.cols())) {
+      std::cerr << "MATRICES ARE NOT THE SAME SIZE!";
+      exit(1);  // Exits the program
+    } else if (b.rows() == 0 || b.cols() == 0 || a.rows() == 0
+        || a.cols() == 0) {
+      std::cerr << "EMPTY MATRIX AS ARGUMENT!";
+      exit(1);  // Exits the program
+    }
+    return a - b;
+  }
   static Matrix<bool> LogicalOr(const Matrix<bool> &a, const Matrix<bool> &b) {
     // Returns the resulting matrix that is created by running a logical or
     // operation on the two input matrices
@@ -110,9 +156,37 @@ class CpuOperations {
       return a.inverse();
     }
   }
-  static Matrix<T> Norm(const int &p = 2, const int &axis = 0);
+static Vector<T> Norm(const Matrix<T> &a,
+                      const int &p = 2,
+                      const int &axis = 0) {
+    int num_rows = a.rows();
+    int num_cols = a.cols();
+    float nval = 0;
+    Vector<T> norm(num_cols);
+    if (axis == 0) {
+     for (int j = 0; j < num_cols; j++) {
+      for (int i = 0; i < num_rows; i++)
+         nval += pow(a(i, j), p);
+       norm(j) = pow(nval, (1.0/p));
+       nval = 0;
+     }
+     return norm;
+     } else {
+     for (int i = 0; i < num_rows; i++) {
+      for (int j = 0; j < num_cols; j++)
+         nval += pow(a(i, j), p);
+       norm(i) = pow(nval, (1.0/p));
+       nval = 0;
+     }
+     return norm;
+     }
+}
   static T Determinant(const Matrix<T> &a);
-  static T Rank(const Matrix<T> &a);
+  static int Rank(const Matrix<T> &a) {
+    // Rank of a matrix
+    SvdSolver<T> svd;
+    return svd.Rank(a);
+  }
   static T FrobeniusNorm(const Matrix<T> &a) {
     if (a.rows() == 0 || a.cols() == 0) {
       std::cerr << "EMPTY MATRIX AS ARGUMENT!";

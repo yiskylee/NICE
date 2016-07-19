@@ -20,27 +20,71 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+// This file tests the CpuOperations::Transpose() function by checking to
+// See if a matrix passed is transposed in the test IsTransposed
+// A transposed Nice matrix is compared to a transposed Eigen Matrix in
+// Transpose Eigen
+// Behavior with oddly shaped matrices is also tested with test DifferentShapes
+// And TransposeZeroRows
+// All tests are made using a templated test fixture which attempts
+// Integer, float, and double data types
+
+#include <iostream>
+#include <cmath>
 
 #include "include/gpu_operations.h"
-// #include <stdio.h>
-// #include <stdlib.h>
-// #include <iostream>
+#include "include/cpu_operations.h"
+
 #include "Eigen/Dense"
 #include "gtest/gtest.h"
-// #include "include/matrix.h"
-// #include "include/vector.h"
+#include "include/matrix.h"
+#include "include/vector.h"
+#include "include/gpu_util.h"
 
+// This is a template test fixture class containing test matrices
+template<class T>  // Template
+class GpuVectorVectorDotTest : public ::testing::Test {
+ public:  // Members must be public to be accessed by tests
+  Nice::Vector<T> a_;
+  Nice::Vector<T> b_;
+  T c_;
 
-TEST(GPU_Vector_Vector_Dot_Product, Basic_Test) {
-  Nice::Vector<float> a(9);
-  a << 0.0, 1.0, 2.0,
-       3.0, 2.0, 1.0,
-       1.0, 3.0, 0.0;
-  Nice::Vector<float> b(9);
-  b << 1.0, 0.0, 2.0,
-       2.0, 1.0, 0.0,
-       0.0, 2.0, 1.0;
-  float correct_ans = 18;
-  float calc_ans = Nice::GpuOperations<float>::DotProduct(a, b);
-  EXPECT_EQ(correct_ans, calc_ans);
+  int row_;
+
+  // Constructor
+  void CreateTestData(int m) {
+    // Check matrix
+    if (a_.rows() != 0)
+      return;
+
+    // Set up dimension
+    row_ = m;
+
+    // Create matrix
+    a_ = Nice::Vector<T>::Random(row_);
+    b_ = Nice::Vector<T>::Random(row_);
+
+    Nice::CpuOperations<T> cpu_op;
+    // Solve in CPU
+    c_ = cpu_op.DotProduct(a_, b_);
+  }
+};
+// Establishes a test case with the given types, Char and short types will
+// Throw compiler errors
+typedef ::testing::Types<float, double> dataTypes;
+TYPED_TEST_CASE(GpuVectorVectorDotTest, dataTypes);
+
+TYPED_TEST(GpuVectorVectorDotTest, FuncionalityTest) {
+  // Create test data
+  int m = 10;
+  srand(time(NULL));
+  this->CreateTestData(m);
+  TypeParam gpu_c;
+  // Test gpu matrix matrix multiply in Nice
+  Nice::GpuOperations<TypeParam> gpu_op;
+  gpu_c = gpu_op.DotProduct(this->a_, this->b_);
+
+  // Verify the result
+  EXPECT_NEAR(this->c_, gpu_c, 0.001);
 }
+

@@ -33,53 +33,68 @@
 #include <cmath>
 
 #include "include/gpu_operations.h"
+#include "include/cpu_operations.h"
+
 #include "Eigen/Dense"
 #include "gtest/gtest.h"
 #include "include/matrix.h"
 #include "include/vector.h"
 #include "include/gpu_util.h"
 
+
 // This is a template test fixture class containing test matrices
 template<class T>  // Template
-class GpuTraceTest : public ::testing::Test {  // Inherits testing::Test
+class GpuNormTest : public ::testing::Test {  // Inherits testing::Test
  public:  // Members must be public to be accessed by tests
-  Nice::Matrix<T> matrix_;
+  Nice::Matrix<T> a_;
+  Nice::Vector<T> norm_;
+  Nice::Vector<T> a_col;
   int row_;
   int col_;
-  T cpu_result;
-  T gpu_result;
 
   // Constructor
-  void CreateTestData() {
+  void CreateTestData(int m, int n) {
     // Check matrix
-    if (matrix_.rows() != 0 && matrix_.cols() != 0)
+    if (a_.rows() != 0 && a_.cols() != 0)
       return;
 
     // Set up dimension
-    row_ = 5;
-    col_ = row_;
+    row_ = m;
+    col_ = n;
 
     // Create matrix
-    matrix_ = Nice::Matrix<T>::Random(row_, col_);
+    a_ = Nice::Matrix<T>::Random(row_, col_);
+    norm_.resize(n);
+    a_col.resize(m);
+    Nice::CpuOperations<T> cpu_op;
 
-    // Do CPU trace computation
-    cpu_result = matrix_.trace();
+    // Solve in CPU
+    for (int i = 0; i < n; ++i) {
+      for (int j = 0; j < m; ++j) {
+        a_col(j) = a_(j, i);
+      }
+      norm_(i) = cpu_op.FrobeniusNorm(a_col);
+    }
   }
 };
 // Establishes a test case with the given types, Char and short types will
 // Throw compiler errors
 typedef ::testing::Types<float, double> dataTypes;
-TYPED_TEST_CASE(GpuTraceTest, dataTypes);
+TYPED_TEST_CASE(GpuNormTest, dataTypes);
 
-TYPED_TEST(GpuTraceTest, FuncionalityTest) {
+TYPED_TEST(GpuNormTest, FuncionalityTest) {
   // Create test data
+  int m = 5;
+  int n = 10;
   srand(time(NULL));
-  this->CreateTestData();
+  this->CreateTestData(m, n);
+  Nice::Vector<TypeParam> gpu_norm(n);
+  // Test gpu matrix matrix multiply in Nice
+  Nice::GpuOperations<TypeParam> gpu_op;
+  gpu_norm = gpu_op.Norm(this->a_);
 
-  // Test trace in Nice
-  this->gpu_result = Nice::GpuOperations<TypeParam>::Trace(this->matrix_);
-
-  // Verify
-  EXPECT_EQ(this->gpu_result, this->cpu_result);
+  // Verify the result
+  for (int i = 0; i < n; ++i)
+  EXPECT_NEAR(this->norm_(i), gpu_norm(i), 0.001);
 }
 
