@@ -169,5 +169,21 @@ cublasStatus_t GpuMatrixVectorMul(cublasHandle_t handle,
                      A, lda, x, incx, beta, y, incy);
 }
 
+cublasStatus_t GpuMatrixMatrixSub(cublasHandle_t handle, int m, int n,
+                                  float *a, int lda, float *b, int ldb,
+                                  float *c, int ldc ) {
+  const float alpha = 1.0; const float beta = -1.0;
+  return cublasSgeam(handle, CUBLAS_OP_N, CUBLAS_OP_N, m, n, alpha, a, lda,
+                     beta, b, ldb, c, ldc);
+}
+
+cublasStatus_t GpuMatrixMatrixSub(cublasHandle_t handle, int m, int n,
+                                  double *a, int lda, double *b, int ldb,
+                                  double *c, int ldc ) {
+  const double alpha = 1.0; const double beta = -1.0;
+  return cublasDgeam(handle, CUBLAS_OP_N, CUBLAS_OP_N, m, n, alpha, a, lda,
+                     beta, b, ldb, c, ldc);
+}
+
 }  // namespace Nice
 #endif  // Need Cuda
