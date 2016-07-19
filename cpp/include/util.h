@@ -46,6 +46,8 @@ namespace util {
 /// The number of rows in the read-in matrix
 /// \param num_cols
 /// The number of columns in the read-in matrix
+/// \param delimiter
+/// Char that stands in-between coefficients
 ///
 /// \return
 /// This function returns a matrix of type T, that was created from a file
@@ -53,17 +55,23 @@ template<typename T>
 Matrix<T> FromFile(const std::string &input_file_path,
                    int num_rows, int num_cols,
                    const char delimiter = ' ') {
+  // Reads in the file from "input_file_path"
   std::ifstream input_file(input_file_path, std::ifstream::in);
   Matrix<T> m(num_rows, num_cols);
   T coef;
   if (input_file) {
     int i = 0;
+    // Iterates over every line in the input file
     while ( !input_file.eof() ) {
       std::string line;
       getline(input_file, line);
+      // Replaces every instance of the "delimiter" with whitespace
       std::replace(line.begin(), line.end(), delimiter, ' ');
+      // Creates a stringstream out of every line in the file
       std::stringstream stream(line);
       int j = 0;
+      // Reads in every coefficient in the string stream and puts it into
+      //  the matrix
       while (stream >> coef) {
         m(i, j) = coef;
         ++j;
@@ -72,6 +80,7 @@ Matrix<T> FromFile(const std::string &input_file_path,
     }
     return m;
   } else {
+    // Error for when the file doesn't exist
     std::cerr << "Cannot open file " + input_file_path + ", exiting...";
     exit(1);
   }
@@ -81,12 +90,15 @@ Matrix<T> FromFile(const std::string &input_file_path,
 ///
 /// \param &input_file_path
 /// Input string to file location
+/// \param delimiter
+/// Char that stands in-between coefficients
 ///
 /// \return
 /// This function returns a matrix of type T, that was created from a file
 template<typename T>
 Matrix<T> FromFile(const std::string &input_file_path,
                    const char delimiter = ' ') {
+  // Reads in the file from "input_file_path"
   std::ifstream input_file(input_file_path, std::ifstream::in);
   Matrix<T> m;
   std::string line;
@@ -96,20 +108,27 @@ Matrix<T> FromFile(const std::string &input_file_path,
   int num_rows = 0;
   int colsinrow;
   if (input_file) {
+    // Iterates over every line in the input file
     while (!input_file.eof()) {
       getline(input_file, line);
       if (line.find_first_not_of(' ') == std::string::npos) {
         continue;
       }
+      // Replaces every instance of the "delimiter" with whitespace
       std::replace(line.begin(), line.end(), delimiter, ' ');
+      // Creates a stringstream out of every line in the file
       std::stringstream stream(line);
       colsinrow = 0;
+      // Reads every coefficient in the stringstream into the temporary buffer
       while ( stream >> coef ) {
         temp_buffer.push_back(coef);
         ++colsinrow;
       }
+      // If the number of columns in the matrix hasn't been set, make it the
+      // current number of columns in the row
       if (num_cols == 0) {
         num_cols = colsinrow;
+      // If the matrix in the file is shaped incorrectly, throw an error
       } else if (num_cols != colsinrow) {
         std::cerr << "Problem with Matrix in: " + input_file_path +
                      ", exiting...";
@@ -117,6 +136,8 @@ Matrix<T> FromFile(const std::string &input_file_path,
       }
       ++num_rows;
     }
+    // Instantiate the matrix's size and feed it the coefficients in the
+    // temporary buffer
     m.resize(num_rows, num_cols);
     for (int i = 0; i < num_rows; ++i) {
       for (int j = 0; j < num_cols; ++j) {
@@ -125,6 +146,7 @@ Matrix<T> FromFile(const std::string &input_file_path,
     }
     return m;
   } else {
+    // Error for when the file doesn't exist
     std::cerr << "Cannot open file " + input_file_path + ", exiting...";
     exit(1);
   }
