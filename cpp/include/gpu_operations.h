@@ -279,7 +279,7 @@ class GpuOperations {
       }
       cudaDeviceSynchronize();
       // Transfer memory back and clear it
-      gpuERrchk(cudaMemcpy(&h_c(0, 0), d_c, m * n * sizeof(T),
+      gpuErrchk(cudaMemcpy(&h_c(0, 0), d_c, m * n * sizeof(T),
                            cudaMemcpyDeviceToHost));
       cudaFree(d_a); cudaFree(d_b); cudaFree(d_c);
       cublasDestroy(handle);
