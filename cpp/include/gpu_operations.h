@@ -256,7 +256,7 @@ class GpuOperations {
 
       T * d_a; gpuErrchk(cudaMalloc(&d_a, m * n * sizeof(T)));
       T * d_b; gpuErrchk(cudaMalloc(&d_b, m * n * sizeof(T)));
-      T * d_c; gpuErrchk(cudaMalloc(&d_C, m * n * sizeof(T)));
+      T * d_c; gpuErrchk(cudaMalloc(&d_c, m * n * sizeof(T)));
 
       gpuErrchk(cudaMemcpy(d_a, h_a, m * n * sizeof(T),
                            cudaMemcpyHostToDevice));
@@ -286,6 +286,7 @@ class GpuOperations {
       // Return result
       return h_c;
   }
+}
   static Matrix<T> Inverse(const Matrix<T> &a) {
     // Sanity Check
     if (a.rows() != a.cols()) {
