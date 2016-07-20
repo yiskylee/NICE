@@ -54,7 +54,7 @@ namespace util {
 template<typename T>
 Matrix<T> FromFile(const std::string &input_file_path,
                    int num_rows, int num_cols,
-                   const char delimiter = ' ') {
+                   const std::string delimiter = " ") {
   // Reads in the file from "input_file_path"
   std::ifstream input_file(input_file_path, std::ifstream::in);
   Matrix<T> m(num_rows, num_cols);
@@ -65,8 +65,21 @@ Matrix<T> FromFile(const std::string &input_file_path,
     while ( !input_file.eof() ) {
       std::string line;
       getline(input_file, line);
-      // Replaces every instance of the "delimiter" with whitespace
-      std::replace(line.begin(), line.end(), delimiter, ' ');
+      if (delimiter == " " && line.find(",") != std::string::npos) {
+        std::cerr << "File uses different delimiter than parameter! Use ','!";
+        exit(1);
+      } else if (delimiter == ",") {
+        if (line.find(",") == std::string::npos) {
+          std::cerr << "File uses different delimiter than parameter! Use ' '!";
+          exit(1);
+        }
+        // Replaces every instance of the "delimiter" with whitespace for comma
+        std::replace(line.begin(), line.end(), ',', ' ');
+      } else if (delimiter != " ") {
+        // If the function is called with an invalid delimiter, create an error
+        std::cerr << "'" + delimiter + "' isn't an accepted delimiter";
+        exit(1);
+      }
       // Creates a stringstream out of every line in the file
       std::stringstream stream(line);
       int j = 0;
@@ -97,7 +110,7 @@ Matrix<T> FromFile(const std::string &input_file_path,
 /// This function returns a matrix of type T, that was created from a file
 template<typename T>
 Matrix<T> FromFile(const std::string &input_file_path,
-                   const char delimiter = ' ') {
+                   const std::string delimiter = " ") {
   // Reads in the file from "input_file_path"
   std::ifstream input_file(input_file_path, std::ifstream::in);
   Matrix<T> m;
@@ -114,8 +127,21 @@ Matrix<T> FromFile(const std::string &input_file_path,
       if (line.find_first_not_of(' ') == std::string::npos) {
         continue;
       }
-      // Replaces every instance of the "delimiter" with whitespace
-      std::replace(line.begin(), line.end(), delimiter, ' ');
+      if (delimiter == " " && line.find(",") != std::string::npos) {
+        std::cerr << "File uses different delimiter than parameter! Use ','!";
+        exit(1);
+      } else if (delimiter == ",") {
+        if (line.find(",") == std::string::npos) {
+          std::cerr << "File uses different delimiter than parameter! Use ' '!";
+          exit(1);
+        }
+        // Replaces every instance of the "delimiter" with whitespace for comma
+        std::replace(line.begin(), line.end(), ',', ' ');
+      } else if (delimiter != " ") {
+        // If the function is called with an invalid delimiter, create an error
+        std::cerr << "'" + delimiter + "' isn't an accepted delimiter";
+        exit(1);
+      }
       // Creates a stringstream out of every line in the file
       std::stringstream stream(line);
       colsinrow = 0;
