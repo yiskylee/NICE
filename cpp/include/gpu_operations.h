@@ -246,6 +246,9 @@ class GpuOperations {
       int lda = m;
       int ldb = n;
       int ldc = m;
+    
+      T alpha = 1.0;
+      T beta = -1.0;
 
       const T * h_a = &a(0);
       const T * h_b = &b(0);
@@ -264,7 +267,8 @@ class GpuOperations {
       cublasStatus_t stat;
       cublasHandle_t handle;
       cublasCreate(&handle);
-      stat = GpuMatrixMatrixSub(handle, m, n, d_a, lda, d_b, ldb, d_c, ldc);
+      stat = GpuMatrixMatrixSub(handle, m, n, &alpha, d_a, lda,
+                                &beta, d_b, ldb, d_c, ldc);
 
       // Error Check
       if (stat != CUBLAS_STATUS_SUCCESS) {
