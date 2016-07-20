@@ -25,7 +25,7 @@
 #include "gtest/gtest.h"
 
 template<class T>
-class MatrixMatrixSubTest : public ::testing::Test {
+class GpuMatrixMatrixSubTest : public ::testing::Test {
  public:
   Nice::Matrix<T> a;
   Nice::Matrix<T> b;
