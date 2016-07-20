@@ -162,8 +162,8 @@ static Vector<T> Norm(const Matrix<T> &a,
     int num_rows = a.rows();
     int num_cols = a.cols();
     float nval = 0;
-    Vector<T> norm(num_cols);
     if (axis == 0) {
+    Vector<T> norm(num_cols);
      for (int j = 0; j < num_cols; j++) {
       for (int i = 0; i < num_rows; i++)
          nval += pow(a(i, j), p);
@@ -171,7 +171,8 @@ static Vector<T> Norm(const Matrix<T> &a,
        nval = 0;
      }
      return norm;
-     } else {
+    } else if (axis == 1) {
+     Vector<T> norm(num_rows);
      for (int i = 0; i < num_rows; i++) {
       for (int j = 0; j < num_cols; j++)
          nval += pow(a(i, j), p);
@@ -179,7 +180,10 @@ static Vector<T> Norm(const Matrix<T> &a,
        nval = 0;
      }
      return norm;
-     }
+    } else {
+      std::cerr << "Axis must be zero or one!";
+        exit(1);
+    }
 }
   static T Determinant(const Matrix<T> &a);
   static int Rank(const Matrix<T> &a) {
@@ -254,27 +258,21 @@ static Vector<T> Norm(const Matrix<T> &a,
     }
     return b;
   }
-  static Matrix<T> Normalize(const Matrix <T> &a, const int axis = 0) {
+  static Matrix<T> Normalize(const Matrix <T> &a, const int &p = 2,
+                                                  const int &axis = 0) {
     int num_rows = a.rows();
     int num_cols = a.cols();
     Matrix<T> b(num_rows, num_cols);
     if (axis == 0) {
-     for (int j = 0; j < num_cols; j++) {
-      for (int i = 0; i < num_rows; i++) {
-       float norm = a.col(j).norm();
-       b(i, j) = a(i, j)/norm;
-       }
-     }
-    return b;
+     b = a.transpose().array().colwise() / Norm(a, p, axis).array();
+     return b.transpose();
+     } else if (axis == 1) {
+        b = a.array().colwise() / Norm(a, p, axis).array();
+        return b;
      } else {
-      for (int i = 0; i < num_rows; i++) {
-       for (int j = 0; j < num_cols; j++) {
-        float norm = a.row(i).norm();
-        b(i, j) = a(i, j)/norm;
-       }
-     }
-     return b;
-     }
+        std::cerr << "Axis must be zero or one!";
+        exit(1);
+        }
 }
 };
 }  // namespace Nice

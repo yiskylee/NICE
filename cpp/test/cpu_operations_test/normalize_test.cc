@@ -42,6 +42,7 @@ TYPED_TEST_CASE(NormalizeTest, MyTypes);
 
 TYPED_TEST(NormalizeTest, WhenAxisis0) {
   int axis = 0;
+  int p = 2;
   this->matrix_.resize(2, 3);
   this->matrix_ << 1.0, 2.0, 3.0,
                    4.0, 5.0, 6.0;
@@ -50,6 +51,7 @@ TYPED_TEST(NormalizeTest, WhenAxisis0) {
                              4.0/sqrt(17), 5.0/sqrt(29), 6.0/sqrt(45);
   this->normalized_matrix_ = Nice::CpuOperations<TypeParam>::Normalize(
                                                           this->matrix_,
+                                                          p,
                                                           axis);
   for (int i = 0; i < 2; i++) {
     for (int j = 0; j < 3; j++) {
@@ -61,6 +63,7 @@ TYPED_TEST(NormalizeTest, WhenAxisis0) {
 
 TYPED_TEST(NormalizeTest, WhenAxisis1) {
   int axis = 1;
+  int p = 2;
   this->matrix_.resize(2, 3);
   this->matrix_ << 1.0, 2.0, 3.0,
                    4.0, 5.0, 6.0;
@@ -69,6 +72,7 @@ TYPED_TEST(NormalizeTest, WhenAxisis1) {
                           4.0/sqrt(77), 5.0/sqrt(77), 6.0/sqrt(77);
   this->normalized_matrix_ = Nice::CpuOperations<TypeParam>::Normalize(
                                                           this->matrix_,
+                                                          p,
                                                           axis);
   for (int i = 0; i < 2; i++) {
     for (int j = 0; j < 3; j++) {
