@@ -22,9 +22,10 @@
 #include <iostream>
 #include <memory>
 #include <cmath>
+
+#include "../../include/alternative_spectral_clustering_old.h"
 #include "include/util.h"
 #include "gtest/gtest.h"
-#include "include/alternative_spectral_clustering.h"
 
 
 template <typename T>
