@@ -47,13 +47,17 @@ TYPED_TEST(GpuMatrixMatrixSubTest, SubtractFunctionality) {
   this->correct.setZero(3, 3);
   for (int i = 0; i < 3; ++i) {
     for (int j = 0; j < 3; ++j) {
-      correct(i, j) = a(i, j) - b(i, j);
+      this->correct(i, j) = this->a(i, j) - this->b(i, j);
     }
   }
 
   this->Subtract();
 
-  ASSERT_NEAR(this->result, this->correct, 0.0001);
+  for (int i = 0; i < 3; ++i) {
+    for (int j = 0; j < 3; ++j) {
+      ASSERT_NEAR(this->result(i, j), this->correct(i, j), 0.0001);
+    }
+  }
 }
 
 TYPED_TEST(GpuMatrixMatrixSubTest, DifferentSizeMatricies) {
