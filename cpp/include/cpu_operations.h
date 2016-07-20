@@ -161,31 +161,38 @@ static Vector<T> Norm(const Matrix<T> &a,
                       const int &axis = 0) {
     int num_rows = a.rows();
     int num_cols = a.cols();
-    float nval = 0;
+    float norm_value = 0;
     if (axis == 0) {
     Vector<T> norm(num_cols);
      for (int j = 0; j < num_cols; j++) {
       for (int i = 0; i < num_rows; i++)
-         nval += pow(a(i, j), p);
-       norm(j) = pow(nval, (1.0/p));
-       nval = 0;
+         norm_value += pow(a(i, j), p);
+       norm(j) = pow(norm_value, (1.0/p));
+       norm_value = 0;
      }
      return norm;
     } else if (axis == 1) {
      Vector<T> norm(num_rows);
      for (int i = 0; i < num_rows; i++) {
       for (int j = 0; j < num_cols; j++)
-         nval += pow(a(i, j), p);
-       norm(i) = pow(nval, (1.0/p));
-       nval = 0;
+         norm_value += pow(a(i, j), p);
+       norm(i) = pow(norm_value, (1.0/p));
+       norm_value = 0;
      }
      return norm;
     } else {
       std::cerr << "Axis must be zero or one!";
-        exit(1);
+      exit(1);
     }
 }
   static T Determinant(const Matrix<T> &a);
+/// static int Rank(const Matrix <T> &a) is a function that returns
+///                                      the rank of the input matrix
+/// \param a
+/// Matrix<T> &a
+/// 
+/// \return 
+/// This function returns an int value of the matrix's rank. 
   static int Rank(const Matrix<T> &a) {
     // Rank of a matrix
     SvdSolver<T> svd;
@@ -266,13 +273,13 @@ static Vector<T> Norm(const Matrix<T> &a,
     if (axis == 0) {
      b = a.transpose().array().colwise() / Norm(a, p, axis).array();
      return b.transpose();
-     } else if (axis == 1) {
-        b = a.array().colwise() / Norm(a, p, axis).array();
-        return b;
-     } else {
-        std::cerr << "Axis must be zero or one!";
-        exit(1);
-        }
+    } else if (axis == 1) {
+     b = a.array().colwise() / Norm(a, p, axis).array();
+     return b;
+    } else {
+     std::cerr << "Axis must be zero or one!";
+     exit(1);
+      }
 }
 };
 }  // namespace Nice
