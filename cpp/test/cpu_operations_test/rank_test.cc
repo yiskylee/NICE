@@ -20,27 +20,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-
-#include "include/gpu_operations.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <iostream>
 #include "Eigen/Dense"
 #include "gtest/gtest.h"
+#include "include/cpu_operations.h"
+#include "include/matrix.h"
 
-TEST(GPU_OuterProduct, Basic_Test) {
-  Nice::Vector<float> a(6);
-  a << 0.0, 1.0, 2.0, 3.0, 2.0, 1.0;
+template<class T>
+class RankTest : public ::testing::Test {
+ public:
+  Nice::Matrix<T> mat_;
+  int calculated_ans_;
+};
 
-  Nice::Vector<float> b(6);
-  b << 1.0, 0.0, 2.0, 2.0, 1.0, 0.0;
+typedef ::testing::Types<float, double> MyTypes;
+TYPED_TEST_CASE(RankTest, MyTypes);
 
-  Nice::Matrix<float> correct_ans(6, 6);
-  correct_ans << 0,     0,     0,     0,     0,     0,
-                 1,     0,     2,     2,     1,     0,
-                 2,     0,     4,     4,     2,     0,
-                 3,     0,     6,     6,     3,     0,
-                 2,     0,     4,     4,     2,     0,
-                 1,     0,     2,     2,     1,     0;
-  Nice::Matrix<float> calc_ans = Nice::GpuOperations<float>::OuterProduct(a, b);
-     for (int i = 0; i < 3; ++i)
-      for (int j = 0; j < 3; ++j)
-        EXPECT_EQ(correct_ans(i, j), calc_ans(i, j));
+TYPED_TEST(RankTest, RankMatrix) {
+  this->mat_.resize(4, 4);
+  this->mat_ <<1.0, 3.0, 5.0, 2.0,
+               0.0, 1.0, 0.0, 3.0,
+               0.0, 0.0, 0.0, 1.0,
+               0.0, 0.0, 0.0, 0.0;
+  int correct_ans = 3;
+
+  this->calculated_ans_ = Nice::CpuOperations<TypeParam>::Rank(this->mat_);
+  EXPECT_EQ(correct_ans, this->calculated_ans_);
 }
+

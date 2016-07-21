@@ -20,16 +20,42 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "include/matrix.h"
-#include "include/vector.h"
-#include "include/cpu_operations.h"
-#include "include/gpu_operations.h"
-#include "include/svd_solver.h"
-#include "include/gpu_svd_solver.h"
-#include "include/util.h"
-#include "include/gpu_util.h"
 
-// Place holder
-//
-/// THIS IS A TEST
-/// DOXYGEN - Andrew Tu
+#include "include/gpu_operations.h"
+#include "Eigen/Dense"
+#include "gtest/gtest.h"
+
+template<class T>
+class GPU_MATRIX_MATRIX_ADD : public ::testing::Test {
+ public:
+  Nice::Matrix<T> a;
+  Nice::Matrix<T> b;
+  Nice::Matrix<T> correct_ans;
+  Nice::Matrix<T> calc_ans;
+
+  void Add() {
+    calc_ans = Nice::GpuOperations<T>::Add(a, b);
+  }
+};
+
+typedef ::testing::Types<float, double> dataTypes;
+TYPED_TEST_CASE(GPU_MATRIX_MATRIX_ADD, dataTypes);
+
+TYPED_TEST(GPU_MATRIX_MATRIX_ADD, BasicTest) {
+  this->a.resize(3, 3);
+  this->b.resize(3, 3);
+  this->correct_ans.resize(3, 3);
+  this->a << 0.0, 1.0, 0.0,
+             1.0, 0.0, 1.0,
+             0.0, 1.0, 0.0;
+
+  this->b << 1.0, 0.0, 1.0,
+             0.0, 1.0, 0.0,
+             1.0, 0.0, 1.0;
+
+  this->correct_ans << 1.0, 1.0, 1.0,
+                       1.0, 1.0, 1.0,
+                       1.0, 1.0, 1.0;
+  this->Add();
+  ASSERT_TRUE(this->correct_ans.isApprox(this->calc_ans));
+}
