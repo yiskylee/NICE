@@ -119,14 +119,13 @@ Matrix<T> FromFile(const std::string &input_file_path,
   T coef;
   int num_cols = 0;
   int num_rows = 0;
-  int colsinrow;
+  int cols_in_row;
   if (input_file) {
     // Iterates over every line in the input file
     while (!input_file.eof()) {
       getline(input_file, line);
-      if (line.find_first_not_of(' ') == std::string::npos) {
+      if (line.find_first_not_of(' ') == std::string::npos)
         continue;
-      }
       if (delimiter == " " && line.find(",") != std::string::npos) {
         std::cerr << "File uses different delimiter than parameter! Use ','!";
         exit(1);
@@ -144,18 +143,18 @@ Matrix<T> FromFile(const std::string &input_file_path,
       }
       // Creates a stringstream out of every line in the file
       std::stringstream stream(line);
-      colsinrow = 0;
+      cols_in_row = 0;
       // Reads every coefficient in the stringstream into the temporary buffer
-      while ( stream >> coef ) {
+      while (stream >> coef) {
         temp_buffer.push_back(coef);
-        ++colsinrow;
+        ++cols_in_row;
       }
       // If the number of columns in the matrix hasn't been set, make it the
       // current number of columns in the row
       if (num_cols == 0) {
-        num_cols = colsinrow;
+        num_cols = cols_in_row;
       // If the matrix in the file is shaped incorrectly, throw an error
-      } else if (num_cols != colsinrow) {
+      } else if (num_cols != cols_in_row) {
         std::cerr << "Problem with Matrix in: " + input_file_path +
                      ", exiting...";
         exit(1);
@@ -165,11 +164,10 @@ Matrix<T> FromFile(const std::string &input_file_path,
     // Instantiate the matrix's size and feed it the coefficients in the
     // temporary buffer
     m.resize(num_rows, num_cols);
-    for (int i = 0; i < num_rows; ++i) {
-      for (int j = 0; j < num_cols; ++j) {
+    for (int i = 0; i < num_rows; ++i)
+      for (int j = 0; j < num_cols; ++j)
         m(i, j) = temp_buffer[i * num_cols + j];
-      }
-    }
+
     return m;
   } else {
     // Error for when the file doesn't exist
