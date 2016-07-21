@@ -228,6 +228,13 @@ static Vector<T> Norm(const Matrix<T> &a,
     SvdSolver<T> svd;
     return svd.Rank(a);
   }
+
+/// This is a function that returns the frobenius norm of Matrix a
+///
+/// \param a
+///
+/// \return
+/// This function returns a value of type T
   static T FrobeniusNorm(const Matrix<T> &a) {
     if (a.rows() == 0 || a.cols() == 0) {
       std::cerr << "EMPTY MATRIX AS ARGUMENT!";
