@@ -126,6 +126,16 @@ class GpuOperations {
       exit(1);
     }
   }
+
+  /// This function calculates the sum of the input Matrix and scalar
+  ///
+  /// \param a
+  /// Input Matrix
+  /// \param scalar
+  /// Input scalar of type T
+  ///
+  /// \return
+  /// This function returns a Matrix of type T
   static Matrix<T> Add(const Matrix<T> &a, const T &scalar) {
     int m = a.rows();
     int n = a.cols();
@@ -174,6 +184,16 @@ class GpuOperations {
     cublasDestroy(handle);
     return h_c;
   }
+
+  /// This function calculates the sum of the input Matricies
+  ///
+  /// \param a
+  /// Input Matrix 1
+  /// \param b
+  /// Input Matrix 2
+  ///
+  /// \return
+  /// This function returns a Matrix of type T
   static Matrix<T> Add(const Matrix<T> &a, const Matrix<T> &b) {
     if (a.rows() == b.rows() && a.cols() == b.cols()) {
       int m = a.rows();
