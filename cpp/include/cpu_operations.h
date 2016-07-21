@@ -43,13 +43,14 @@ class CpuOperations {
   static Vector<T> Transpose(const Vector<T> &a) {
     return a.transpose();
   }
+
 /// This is a function that calculates the product Matrix of the input Matrix
 /// and a scalar
 ///
 /// \param a
 /// Input Matrix
 /// \param scalar
-/// Input calar
+/// Input scalar
 ///
 /// \return
 /// This function returns a Matrix of type T
@@ -57,6 +58,7 @@ class CpuOperations {
     // Scalar-matrix multiplication
     return scalar * a;
   }
+
 /// This is a funtion that calculates the product Matrix of the two input
 /// Matrices
 ///
@@ -118,6 +120,7 @@ class CpuOperations {
     }
     return a - b;
   }
+
 /// This is a function that calculates the "logical or" of the two input
 /// Matrices
 ///
@@ -141,6 +144,7 @@ class CpuOperations {
     }
     return (a.array() || b.array());
   }
+
 /// This is a funtion that returns the "logical not" of the input Matrix
 ///
 /// \param a
@@ -232,6 +236,7 @@ static Vector<T> Norm(const Matrix<T> &a,
       return a.norm();
     }
   }
+
 /// This is a function that returns the sum of the diagonal coefficiants of a
 /// Matrix
 ///
@@ -263,6 +268,7 @@ static Vector<T> Norm(const Matrix<T> &a,
         return (a.dot(b));
     }
   }
+
 /// This is a function that calculates the "Outer Product of the input Vectors
 ///
 /// \param a
@@ -281,6 +287,7 @@ static Vector<T> Norm(const Matrix<T> &a,
     return a * b.transpose();
   }
   static Vector<T> LogicalAnd(const Vector<T> &a, const Vector<T> &b);
+
 /// This is a function that calculates the "logical or" of the two input
 /// Vectors
 ///
@@ -303,6 +310,7 @@ static Vector<T> Norm(const Matrix<T> &a,
     }
     return (a.array() || b.array());
   }
+
 /// This is a funtion that returns the "logical not" of the input Vector
 ///
 /// \param a
