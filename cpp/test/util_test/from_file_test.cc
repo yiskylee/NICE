@@ -45,12 +45,13 @@ typedef ::testing::Types<int, float, double> MyTypes;
 TYPED_TEST_CASE(FromFileTest, MyTypes);
 
 TYPED_TEST(FromFileTest, IfFileNotExist) {
-  ASSERT_DEATH(this->Filer("../test/data_for_test/matrix_not_exist.txt", " "),
-                           "Cannot open file .*, exiting...");
+  ASSERT_DEATH(this->Filer(
+                           "../test/data_for_test/FromFile/matrix_not_exist.txt"
+                           , " "), "Cannot open file .*, exiting...");
 }
 
 TYPED_TEST(FromFileTest, IfFileExists) {
-  this->Filer("../test/data_for_test/matrix_2_2.txt", " ");
+  this->Filer("../test/data_for_test/FromFile/matrix_2_2.txt", " ");
   this->expected.resize(2, 2);
   this->expected << 1, 2,
                     3, 99;
@@ -62,7 +63,7 @@ TYPED_TEST(FromFileTest, IfFileExists) {
 }
 
 TYPED_TEST(FromFileTest, NonSquareMatrix) {
-  this->Filer("../test/data_for_test/matrix_2_3.txt", " ");
+  this->Filer("../test/data_for_test/FromFile/matrix_2_3.txt", " ");
   this->expected.resize(2, 3);
   this->expected << 1, 2, 3,
                     4, 5, 6;
@@ -74,21 +75,22 @@ TYPED_TEST(FromFileTest, NonSquareMatrix) {
 }
 
 TYPED_TEST(FromFileTest, MatrixWrongSize) {
-  ASSERT_DEATH(this->Filer("../test/data_for_test/matrix_wrong_size.txt", " "),
-                            ".*");
+  ASSERT_DEATH(this->Filer(
+                          "../test/data_for_test/FromFile/matrix_wrong_size.txt"
+                          , " "), ".*");
 }
 
 TYPED_TEST(FromFileTest, IfFileNotExistsRowsAndColsMethod) {
   ASSERT_DEATH(
       {
         this->Filer(
-            "../test/data_for_test/matrix_not_exist.txt", 2, 2, " ");
+            "../test/data_for_test/FromFile/matrix_not_exist.txt", 2, 2, " ");
       }
       , "Cannot open file .*, exiting...");
 }
 
 TYPED_TEST(FromFileTest, IfFileExistsRowsAndColsMethod) {
-  this->Filer("../test/data_for_test/matrix_2_2.txt", 2, 2, " ");
+  this->Filer("../test/data_for_test/FromFile/matrix_2_2.txt", 2, 2, " ");
   this->expected.resize(2, 2);
   this->expected << 1, 2,
                     3, 99;
@@ -100,7 +102,7 @@ TYPED_TEST(FromFileTest, IfFileExistsRowsAndColsMethod) {
 }
 
 TYPED_TEST(FromFileTest, CSVTest) {
-  this->Filer("../test/data_for_test/matrix_2_2_csv.txt", ",");
+  this->Filer("../test/data_for_test/FromFile/matrix_2_2.csv", ",");
   this->expected.resize(2, 2);
   this->expected << 1, 2,
                     3, 99;
@@ -112,7 +114,7 @@ TYPED_TEST(FromFileTest, CSVTest) {
 }
 
 TYPED_TEST(FromFileTest, CSVRowsAndColsMethodTest) {
-  this->Filer("../test/data_for_test/matrix_2_2_csv.txt", 2, 2, ",");
+  this->Filer("../test/data_for_test/FromFile/matrix_2_2.csv", 2, 2, ",");
   this->expected.resize(2, 2);
   this->expected << 1, 2,
                     3, 99;
@@ -124,31 +126,32 @@ TYPED_TEST(FromFileTest, CSVRowsAndColsMethodTest) {
 }
 
 TYPED_TEST(FromFileTest, OtherTest) {
-  ASSERT_DEATH(this->Filer("../test/data_for_test/matrix_2_2_csv.txt", "."),
-                           ".*");
+  ASSERT_DEATH(this->Filer("../test/data_for_test/FromFile/matrix_2_2.csv"
+                          , "."), ".*");
 }
 
 TYPED_TEST(FromFileTest, OtherTestRowsAndCols) {
-  ASSERT_DEATH(this->Filer("../test/data_for_test/matrix_2_2_csv.txt", 2, 2, "."),
-                           ".*");
+  ASSERT_DEATH(this->Filer("../test/data_for_test/FromFile/matrix_2_2.csv",
+                           2, 2, "."), ".*");
 }
 
 TYPED_TEST(FromFileTest, WrongDelimiterSpace) {
-  ASSERT_DEATH(this->Filer("../test/data_for_test/matrix_2_2_csv.txt", " "),
-                           ".*");
+  ASSERT_DEATH(this->Filer("../test/data_for_test/FromFile/matrix_2_2.csv",
+                           " "), ".*");
 }
 
 TYPED_TEST(FromFileTest, WrongDelimiterComma) {
-  ASSERT_DEATH(this->Filer("../test/data_for_test/matrix_2_2.txt", ","),
-                           ".*");
+  ASSERT_DEATH(this->Filer("../test/data_for_test/FromFile/matrix_2_2.txt",
+                           ","), ".*");
 }
 
 TYPED_TEST(FromFileTest, WrongDelimiterSpaceRowsAndCols) {
-  ASSERT_DEATH(this->Filer("../test/data_for_test/matrix_2_2_csv.txt", 2, 2, " "),
-                           ".*");
+  ASSERT_DEATH(this->Filer("../test/data_for_test/FromFile/matrix_2_2.csv",
+                           2, 2, " "), ".*");
 }
 
 TYPED_TEST(FromFileTest, WrongDelimiterCommaRowsAndcols) {
-  ASSERT_DEATH(this->Filer("../test/data_for_test/matrix_2_2.txt", 2, 2, ","),
+  ASSERT_DEATH(this->Filer("../test/data_for_test/FromFile/matrix_2_2.txt",
+                           2, 2, ","),
                            ".*");
 }
