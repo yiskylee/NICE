@@ -156,7 +156,28 @@ class CpuOperations {
       return a.inverse();
     }
   }
-static Vector<T> Norm(const Matrix<T> &a,
+/// static Vector <T> Norm( const Matrix <T> &a,
+/// const int &p = 2, const int &axis = 0) calculates the norm of
+/// the values in an m x n dependent of the input p and axis.
+/// The norm is returned in the form of a vector. If the axis is 0, 
+/// the norm will be calulated column wise and the size of the 
+/// output vector will be dependent on n. If the axis is 1, the
+/// norm will be calculated row-wise and the size of the vector
+/// will be dependent on m.  
+///
+/// \param a
+/// const Matrix <T> &a
+/// \param b
+/// \const int &p 
+/// \param c
+/// \const int &axis
+///
+/// \return 
+/// Vector <T>
+/// \sa 
+/// \ref Frobenius Norm : Frobenius Norm is similar to Norm where 
+/// p is assumed to be 2 and the axis is assumed to be 0
+  static Vector<T> Norm(const Matrix<T> &a,
                       const int &p = 2,
                       const int &axis = 0) {
     int num_rows = a.rows();
@@ -187,7 +208,7 @@ static Vector<T> Norm(const Matrix<T> &a,
 }
   static T Determinant(const Matrix<T> &a);
 /// static int Rank(const Matrix <T> &a) is a function that returns
-///                                      the rank of the input matrix
+///                                      the rank of a m x n matrix
 /// \param a
 /// Matrix<T> &a
 /// 
@@ -265,7 +286,21 @@ static Vector<T> Norm(const Matrix<T> &a,
     }
     return b;
   }
-  static Matrix<T> Normalize(const Matrix <T> &a, const int &p = 2,
+/// statix Matrix <T> Normalize(const Matrix <T> &a, const int &p
+/// =2, const int &axis = 0) normalizes a m x n matrix by element.
+///
+/// \param a
+/// const Matrix<T> &a
+/// \param b
+/// const int &p = 2
+/// \param c
+/// const int &axis = 0
+///
+/// \return
+/// Matrix <T>
+/// \sa
+/// \ref Norm
+  static Matrix<T> Normalize(const Matrix<T> &a, const int &p = 2,
                                                   const int &axis = 0) {
     int num_rows = a.rows();
     int num_cols = a.cols();
@@ -279,7 +314,7 @@ static Vector<T> Norm(const Matrix<T> &a,
     } else {
      std::cerr << "Axis must be zero or one!";
      exit(1);
-      }
+    }
 }
 };
 }  // namespace Nice
