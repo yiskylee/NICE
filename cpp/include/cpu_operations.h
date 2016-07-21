@@ -43,10 +43,32 @@ class CpuOperations {
   static Vector<T> Transpose(const Vector<T> &a) {
     return a.transpose();
   }
+
+/// This is a function that calculates the product Matrix of the input Matrix
+/// and a scalar
+///
+/// \param a
+/// Input Matrix
+/// \param scalar
+/// Input scalar
+///
+/// \return
+/// This function returns a Matrix of type T
   static Matrix<T> Multiply(const Matrix<T> &a, const T &scalar) {
     // Scalar-matrix multiplication
     return scalar * a;
   }
+
+/// This is a funtion that calculates the product Matrix of the two input
+/// Matrices
+///
+/// \param a
+/// Input Matrix 1
+/// \param b
+/// Input Matrix 2
+///
+/// \return
+/// This function returns a Matrix of type T
   static Matrix<T> Multiply(const Matrix<T> &a, const Matrix<T> &b) {
     // Matrix-matrix multiplication
     return a * b;
@@ -98,6 +120,17 @@ class CpuOperations {
     }
     return a - b;
   }
+
+/// This is a function that calculates the "logical or" of the two input
+/// Matrices
+///
+/// \param a
+/// Input Matrix 1
+/// \param b
+/// Input Matrix 2
+///
+/// \return
+/// This function returns a Matrix of type bool
   static Matrix<bool> LogicalOr(const Matrix<bool> &a, const Matrix<bool> &b) {
     // Returns the resulting matrix that is created by running a logical or
     // operation on the two input matrices
@@ -111,6 +144,14 @@ class CpuOperations {
     }
     return (a.array() || b.array());
   }
+
+/// This is a funtion that returns the "logical not" of the input Matrix
+///
+/// \param a
+/// Input Matrix 1
+///
+/// \return
+/// This funtion returns a Matrix of type bool
   static Matrix<bool> LogicalNot(const Matrix<bool> &a) {
     Matrix<bool> b = a.replicate(1, 1);
     int r;
@@ -174,9 +215,6 @@ class CpuOperations {
 ///
 /// \return 
 /// Vector <T>
-/// \sa 
-/// \ref Frobenius Norm : Frobenius Norm is similar to Norm where 
-/// p is assumed to be 2 and the axis is assumed to be 0
   static Vector<T> Norm(const Matrix<T> &a,
                       const int &p = 2,
                       const int &axis = 0) {
@@ -219,6 +257,13 @@ class CpuOperations {
     SvdSolver<T> svd;
     return svd.Rank(a);
   }
+
+/// This is a function that returns the frobenius norm of Matrix a
+///
+/// \param a
+///
+/// \return
+/// This function returns a value of type T
   static T FrobeniusNorm(const Matrix<T> &a) {
     if (a.rows() == 0 || a.cols() == 0) {
       std::cerr << "EMPTY MATRIX AS ARGUMENT!";
@@ -227,6 +272,15 @@ class CpuOperations {
       return a.norm();
     }
   }
+
+/// This is a function that returns the sum of the diagonal coefficiants of a
+/// Matrix
+///
+/// \param a
+/// Input Matrix
+///
+/// \return
+/// This function returns a value of type T
   static T Trace(const Matrix<T> &a) {
     // Trace of a matrix
     return a.trace();
@@ -251,7 +305,15 @@ class CpuOperations {
     }
   }
 
-
+/// This is a function that calculates the "Outer Product of the input Vectors
+///
+/// \param a
+/// Input Vector 1
+/// \param b
+/// Input Vector 2
+///
+/// \return
+/// This function returns a Matrix of type T
   static Matrix<T> OuterProduct(const Vector<T> &a, const Vector<T> &b) {
     // This function returns the outer product of he two passed in vectors
     if (a.size() == 0 || b.size() == 0) {
@@ -261,6 +323,17 @@ class CpuOperations {
     return a * b.transpose();
   }
   static Vector<T> LogicalAnd(const Vector<T> &a, const Vector<T> &b);
+
+/// This is a function that calculates the "logical or" of the two input
+/// Vectors
+///
+/// \param a
+/// Input Vector 1
+/// \param b
+/// Input Vector 2
+///
+/// \return
+/// This function returns a Vector of type bool
   static Vector<bool> LogicalOr(const Vector<bool> &a, const Vector<bool> &b) {
     // Returns the resulting vector that is created by running a logical or
     // operation on the two input vectors
@@ -273,6 +346,14 @@ class CpuOperations {
     }
     return (a.array() || b.array());
   }
+
+/// This is a funtion that returns the "logical not" of the input Vector
+///
+/// \param a
+/// Input Vector 1
+///
+/// \return
+/// This funtion returns a Vector of type bool
   static Vector<bool> LogicalNot(const Vector<bool> &a) {
     Vector<bool> b = a.replicate(1, 1);
     int i;
@@ -315,7 +396,7 @@ class CpuOperations {
      std::cerr << "Axis must be zero or one!";
      exit(1);
     }
-}
+  }
 };
 }  // namespace Nice
 #endif  // CPP_INCLUDE_CPU_OPERATIONS_H_
