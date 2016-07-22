@@ -37,9 +37,24 @@ namespace Nice {
 template<typename T>
 class CpuOperations {
  public:
+  /// This is a function that calculates the transpose Matrix of the input Matrix
+  ///
+  /// \param a
+  /// Input Matrix
+  ///
+  /// \return
+  /// This function returns a Matrix of type T
   static Matrix<T> Transpose(const Matrix<T> &a) {
     return a.transpose();  // Return transpose
   }
+
+  /// This is a function that calculates the transpose Vector of the input Vector
+  ///
+  /// \param a
+  /// Input Vector
+  ///
+  /// \return
+  /// This function returns a Vector of type T
   static Vector<T> Transpose(const Vector<T> &a) {
     return a.transpose();
   }
@@ -167,8 +182,18 @@ class CpuOperations {
     }
     return b;
   }
+
+  /// This is a function that calculates the "logical and" of the two input
+  /// Matrices
+  ///
+  /// \param a
+  /// Input Matrix 1
+  /// \param b
+  /// Input Matrix 2
+  ///
+  /// \return
+  /// This function returns a Matrix of type bool
   static Matrix<bool> LogicalAnd(const Matrix<bool> &a, const Matrix<bool> &b) {
-    // This function returns the logical AND of two boolean matrices
     // Checks to see that the number of rows and columns are the same
     if ((a.rows() != b.rows()) || (a.cols() != b.cols())) {
       std::cerr << "MATRICES ARE NOT THE SAME SIZE!";
@@ -177,6 +202,7 @@ class CpuOperations {
     return (a.array() && b.array());
     // Will return a matrix due to implicit conversion
   }
+
   static Matrix<T> Inverse(const Matrix<T> &a) {
       // If the matrix is empty, it should not check for inverse.
       if (a.cols() == 0) {
@@ -197,6 +223,7 @@ class CpuOperations {
       return a.inverse();
     }
   }
+
 /// static Vector <T> Norm( const Matrix <T> &a,
 /// const int &p = 2, const int &axis = 0) calculates the norm of
 /// the values in an m x n dependent of the input p and axis.
@@ -244,6 +271,7 @@ class CpuOperations {
       exit(1);
     }
 }
+
   static T Determinant(const Matrix<T> &a);
 /// static int Rank(const Matrix <T> &a) is a function that returns
 ///                                      the rank of a m x n matrix
@@ -252,6 +280,7 @@ class CpuOperations {
 ///
 /// \return
 /// This function returns an int value of the matrix's rank.
+
   static int Rank(const Matrix<T> &a) {
     // Rank of a matrix
     SvdSolver<T> svd;
@@ -281,10 +310,12 @@ class CpuOperations {
 ///
 /// \return
 /// This function returns a value of type T
+
   static T Trace(const Matrix<T> &a) {
     // Trace of a matrix
     return a.trace();
   }
+
   static T DotProduct(const Vector<T> &a, const Vector<T> &b) {
       // Checks to see if the size of the two vectors are not the same
       if (a.size() != b.size()) {
@@ -322,8 +353,24 @@ class CpuOperations {
     }
     return a * b.transpose();
   }
-  static Vector<T> LogicalAnd(const Vector<T> &a, const Vector<T> &b);
 
+  /// This is a function that calculates the "logical and" of the two input
+  /// Vectors
+  ///
+  /// \param a
+  /// Input Vector 1
+  /// \param b
+  /// Input Vector 2
+  ///
+  /// \return
+  /// This function returns a Vector of type bool
+  static Vector<bool> LogicalAnd(const Vector<T> &a, const Vector<T> &b) {
+  if ((a.rows() != b.rows()) || (a.cols() != b.cols())) {
+        std::cerr << "MATRICES ARE NOT THE SAME SIZE!";
+        exit(1);  // Exits the program
+      }
+      return (a.array() && b.array());
+  }
 /// This is a function that calculates the "logical or" of the two input
 /// Vectors
 ///
