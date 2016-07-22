@@ -200,20 +200,20 @@ class CpuOperations {
 /// static Vector <T> Norm( const Matrix <T> &a,
 /// const int &p = 2, const int &axis = 0) calculates the norm of
 /// the values in an m x n dependent of the input p and axis.
-/// The norm is returned in the form of a vector. If the axis is 0, 
-/// the norm will be calulated column wise and the size of the 
+/// The norm is returned in the form of a vector. If the axis is 0,
+/// the norm will be calulated column wise and the size of the
 /// output vector will be dependent on n. If the axis is 1, the
 /// norm will be calculated row-wise and the size of the vector
-/// will be dependent on m.  
+/// will be dependent on m.
 ///
 /// \param a
 /// const Matrix <T> &a
 /// \param b
-/// \const int &p 
+/// \const int &p
 /// \param c
 /// \const int &axis
 ///
-/// \return 
+/// \return
 /// Vector <T>
   static Vector<T> Norm(const Matrix<T> &a,
                       const int &p = 2,
@@ -249,9 +249,9 @@ class CpuOperations {
 ///                                      the rank of a m x n matrix
 /// \param a
 /// Matrix<T> &a
-/// 
-/// \return 
-/// This function returns an int value of the matrix's rank. 
+///
+/// \return
+/// This function returns an int value of the matrix's rank.
   static int Rank(const Matrix<T> &a) {
     // Rank of a matrix
     SvdSolver<T> svd;
