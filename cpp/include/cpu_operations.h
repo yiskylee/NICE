@@ -78,7 +78,7 @@ class CpuOperations {
   ///
   /// \param a
   /// Input Matrix
-  /// \param b
+  /// \param scalar
   /// Input Scalar
   ///
   /// \return
@@ -86,7 +86,7 @@ class CpuOperations {
   /// input matrix and scalar.
   ///
   /// \sa
-  /// \ref Add
+  /// \ref Add(const Matrix<T> &a, const Matrix<T> &b)
   static Matrix<T> Add(const Matrix<T> &a, const T &scalar) {
       // Does not work if matrix is empty.
       if (a.rows() == 0) {
@@ -111,7 +111,7 @@ class CpuOperations {
   /// input matricies.
   ///
   /// \sa
-  /// \ref Add
+  /// \ref Add(const Matrix<T> &a, const T &scalar)
   static Matrix<T> Add(const Matrix<T> &a, const Matrix<T> &b) {
       // Does not work if matricies are not the same size.
       if ((a.rows() != b.rows()) || (a.cols() != b.cols())) {
