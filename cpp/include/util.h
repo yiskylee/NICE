@@ -128,11 +128,11 @@ Matrix<T> FromFile(const std::string &input_file_path,
       getline(input_file, line);
       if (line.find_first_not_of(' ') == std::string::npos)
         continue;
-      if (delimiter == " " && line.find(",") != std::string::npos) {
+      if (delimiter == " " && line.find_first_of(',') != std::string::npos) {
         std::cerr << "File uses different delimiter than parameter! Use ','!";
         exit(1);
       } else if (delimiter == ",") {
-        if (line.find(",") == std::string::npos) {
+        if (line.find_first_of(',') == std::string::npos) {
           std::cerr << "File uses different delimiter than parameter! Use ' '!";
           exit(1);
         }
