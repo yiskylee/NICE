@@ -197,32 +197,61 @@ class CpuOperations {
       return a.inverse();
     }
   }
-static Vector<T> Norm(const Matrix<T> &a,
+/// static Vector <T> Norm( const Matrix <T> &a,
+/// const int &p = 2, const int &axis = 0) calculates the norm of
+/// the values in an m x n dependent of the input p and axis.
+/// The norm is returned in the form of a vector. If the axis is 0, 
+/// the norm will be calulated column wise and the size of the 
+/// output vector will be dependent on n. If the axis is 1, the
+/// norm will be calculated row-wise and the size of the vector
+/// will be dependent on m.  
+///
+/// \param a
+/// const Matrix <T> &a
+/// \param b
+/// \const int &p 
+/// \param c
+/// \const int &axis
+///
+/// \return 
+/// Vector <T>
+  static Vector<T> Norm(const Matrix<T> &a,
                       const int &p = 2,
                       const int &axis = 0) {
     int num_rows = a.rows();
     int num_cols = a.cols();
-    float nval = 0;
-    Vector<T> norm(num_cols);
+    float norm_value = 0;
     if (axis == 0) {
+    Vector<T> norm(num_cols);
      for (int j = 0; j < num_cols; j++) {
       for (int i = 0; i < num_rows; i++)
-         nval += pow(a(i, j), p);
-       norm(j) = pow(nval, (1.0/p));
-       nval = 0;
+         norm_value += pow(a(i, j), p);
+       norm(j) = pow(norm_value, (1.0/p));
+       norm_value = 0;
      }
      return norm;
-     } else {
+    } else if (axis == 1) {
+     Vector<T> norm(num_rows);
      for (int i = 0; i < num_rows; i++) {
       for (int j = 0; j < num_cols; j++)
-         nval += pow(a(i, j), p);
-       norm(i) = pow(nval, (1.0/p));
-       nval = 0;
+         norm_value += pow(a(i, j), p);
+       norm(i) = pow(norm_value, (1.0/p));
+       norm_value = 0;
      }
      return norm;
-     }
+    } else {
+      std::cerr << "Axis must be zero or one!";
+      exit(1);
+    }
 }
   static T Determinant(const Matrix<T> &a);
+/// static int Rank(const Matrix <T> &a) is a function that returns
+///                                      the rank of a m x n matrix
+/// \param a
+/// Matrix<T> &a
+/// 
+/// \return 
+/// This function returns an int value of the matrix's rank. 
   static int Rank(const Matrix<T> &a) {
     // Rank of a matrix
     SvdSolver<T> svd;
@@ -337,6 +366,36 @@ static Vector<T> Norm(const Matrix<T> &a,
       exit(1);  // Exits the program
     }
     return b;
+  }
+/// statix Matrix <T> Normalize(const Matrix <T> &a, const int &p
+/// =2, const int &axis = 0) normalizes a m x n matrix by element.
+///
+/// \param a
+/// const Matrix<T> &a
+/// \param b
+/// const int &p = 2
+/// \param c
+/// const int &axis = 0
+///
+/// \return
+/// Matrix <T>
+/// \sa
+/// \ref Norm
+  static Matrix<T> Normalize(const Matrix<T> &a, const int &p = 2,
+                                                  const int &axis = 0) {
+    int num_rows = a.rows();
+    int num_cols = a.cols();
+    Matrix<T> b(num_rows, num_cols);
+    if (axis == 0) {
+     b = a.transpose().array().colwise() / Norm(a, p, axis).array();
+     return b.transpose();
+    } else if (axis == 1) {
+     b = a.array().colwise() / Norm(a, p, axis).array();
+     return b;
+    } else {
+     std::cerr << "Axis must be zero or one!";
+     exit(1);
+    }
   }
 };
 }  // namespace Nice
