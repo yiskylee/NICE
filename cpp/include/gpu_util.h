@@ -208,23 +208,23 @@ cublasStatus_t GpuMatrixAdd(cublasHandle_t handle,
                             const double *B, int ldb,
                             double *C, int ldc);
 
-cublasStatus_t GpuMatrixMatrixSub(cublasHandle_t handle, 
-                                  int m, 
+cublasStatus_t GpuMatrixMatrixSub(cublasHandle_t handle,
+                                  int m,
                                   int n,
-                                  const float *alpha, 
+                                  const float *alpha,
                                   float *a, int lda,
-                                  const float *beta, 
+                                  const float *beta,
                                   float *b, int ldb,
-                                  float *c, int ldc );
+                                  float *c, int ldc);
 
-cublasStatus_t GpuMatrixMatrixSub(cublasHandle_t handle, 
-                                  int m, 
+cublasStatus_t GpuMatrixMatrixSub(cublasHandle_t handle,
+                                  int m,
                                   int n,
-                                  const double *alpha, 
+                                  const double *alpha,
                                   double *a, int lda,
-                                  const double *beta, 
+                                  const double *beta,
                                   double *b, int ldb,
-                                  double *c, int ldc );
+                                  double *c, int ldc);
 
 cublasStatus_t GpuVectorVectorDot(cublasHandle_t handle,
                                   int n,

@@ -263,7 +263,7 @@ cublasStatus_t GpuMatrixAdd(cublasHandle_t handle,
 }
 
 cublasStatus_t GpuMatrixMatrixSub(cublasHandle_t handle, int m, int n,
-                                  const float *alpha, float *a, int lda, 
+                                  const float *alpha, float *a, int lda,
                                   const float *beta, float *b, int ldb,
                                   float *c, int ldc ) {
   return cublasSgeam(handle, CUBLAS_OP_N, CUBLAS_OP_N, m, n, alpha, a, lda,
@@ -271,7 +271,7 @@ cublasStatus_t GpuMatrixMatrixSub(cublasHandle_t handle, int m, int n,
 }
 
 cublasStatus_t GpuMatrixMatrixSub(cublasHandle_t handle, int m, int n,
-                                  const double *alpha, double *a, int lda, 
+                                  const double *alpha, double *a, int lda,
                                   const double *beta, double *b, int ldb,
                                   double *c, int ldc ) {
   return cublasDgeam(handle, CUBLAS_OP_N, CUBLAS_OP_N, m, n, alpha, a, lda,
