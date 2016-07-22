@@ -65,10 +65,16 @@ Matrix<T> FromFile(const std::string &input_file_path,
     while ( !input_file.eof() ) {
       std::string line;
       getline(input_file, line);
-      if (delimiter == " " && line.find(",") != std::string::npos) {
+      if (line.find_first_not_of(' ') == std::string::npos)
+        continue;
+      if (delimiter == " " && line.find_first_of(',') != std::string::npos) {
         std::cerr << "File uses different delimiter than parameter! Use ','!";
         exit(1);
       } else if (delimiter == ",") {
+        if (line.find_first_of(',') == std::string::npos) {
+          std::cerr << "File uses different delimiter than parameter! Use ' '!";
+          exit(1);
+        }
         // Replaces every instance of the "delimiter" with whitespace for comma
         std::replace(line.begin(), line.end(), ',', ' ');
       } else if (delimiter != " ") {
@@ -126,6 +132,10 @@ Matrix<T> FromFile(const std::string &input_file_path,
         std::cerr << "File uses different delimiter than parameter! Use ','!";
         exit(1);
       } else if (delimiter == ",") {
+        if (line.find(",") == std::string::npos) {
+          std::cerr << "File uses different delimiter than parameter! Use ' '!";
+          exit(1);
+        }
         // Replaces every instance of the "delimiter" with whitespace for comma
         std::replace(line.begin(), line.end(), ',', ' ');
       } else if (delimiter != " ") {
