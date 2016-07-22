@@ -266,7 +266,6 @@ class GpuOperations {
       int lda = m;
       int ldb = n;
       int ldc = m;
-    
       T alpha = 1.0;
       T beta = -1.0;
 
