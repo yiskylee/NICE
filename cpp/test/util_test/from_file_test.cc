@@ -140,9 +140,18 @@ TYPED_TEST(FromFileTest, WrongDelimiterSpace) {
                            " "), ".*");
 }
 
+TYPED_TEST(FromFileTest, WrongDelimiterComma) {
+  ASSERT_DEATH(this->Filer("../test/data_for_test/FromFile/matrix_2_2.txt",
+                           ","), ".*");
+}
 
 TYPED_TEST(FromFileTest, WrongDelimiterSpaceRowsAndCols) {
   ASSERT_DEATH(this->Filer("../test/data_for_test/FromFile/matrix_2_2.csv",
                            2, 2, " "), ".*");
 }
 
+TYPED_TEST(FromFileTest, WrongDelimiterCommaRowsAndcols) {
+  ASSERT_DEATH(this->Filer("../test/data_for_test/FromFile/matrix_2_2.txt",
+                           2, 2, ","),
+                           ".*");
+}
