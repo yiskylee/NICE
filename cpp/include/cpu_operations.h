@@ -73,6 +73,20 @@ class CpuOperations {
     // Matrix-matrix multiplication
     return a * b;
   }
+  /// This is a function that adds each element in the matrix to a scalar and
+  /// returns the resulting matrix.
+  ///
+  /// \param a
+  /// Input Matrix
+  /// \param scalar
+  /// Input Scalar
+  ///
+  /// \return
+  /// This function returns a matrix that is the resulatant of adding the
+  /// input matrix and scalar.
+  ///
+  /// \sa
+  /// \ref Add(const Matrix<T> &a, const Matrix<T> &b)
   static Matrix<T> Add(const Matrix<T> &a, const T &scalar) {
       // Does not work if matrix is empty.
       if (a.rows() == 0) {
@@ -84,6 +98,20 @@ class CpuOperations {
         return (a.array() + scalar);
     }
   }
+  /// This is a function that adds two matricies and returns the resulting
+  /// matrix.
+  ///
+  /// \param a
+  /// Input Matrix 1
+  /// \param b
+  /// Input Matrix 2
+  ///
+  /// \return
+  /// This function returns a matrix that is the resulatant of adding two
+  /// input matricies.
+  ///
+  /// \sa
+  /// \ref Add(const Matrix<T> &a, const T &scalar)
   static Matrix<T> Add(const Matrix<T> &a, const Matrix<T> &b) {
       // Does not work if matricies are not the same size.
       if ((a.rows() != b.rows()) || (a.cols() != b.cols())) {
@@ -177,6 +205,13 @@ class CpuOperations {
     return (a.array() && b.array());
     // Will return a matrix due to implicit conversion
   }
+  /// This is a function that returns the inverse of a matrix.
+  ///
+  /// \param a
+  /// Input Matrix
+  ///
+  /// \return
+  /// This function returns a matrix that is the inverse of the input matrix.
   static Matrix<T> Inverse(const Matrix<T> &a) {
       // If the matrix is empty, it should not check for inverse.
       if (a.cols() == 0) {
@@ -285,6 +320,16 @@ class CpuOperations {
     // Trace of a matrix
     return a.trace();
   }
+  /// This is a function that calculates the dot product of two vectors.
+  ///
+  /// \param a
+  /// Input Vector 1
+  /// \param b
+  /// Input Vector 2
+  ///
+  /// \return
+  /// This function returns a value of type T which is the dot product of
+  /// the two vectors.
   static T DotProduct(const Vector<T> &a, const Vector<T> &b) {
       // Checks to see if the size of the two vectors are not the same
       if (a.size() != b.size()) {
@@ -304,7 +349,6 @@ class CpuOperations {
         return (a.dot(b));
     }
   }
-
 /// This is a function that calculates the "Outer Product of the input Vectors
 ///
 /// \param a
