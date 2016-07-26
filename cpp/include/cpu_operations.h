@@ -441,6 +441,16 @@ class CpuOperations {
      exit(1);
     }
   }
+  /// Generates the kernel matrix from the input data_matrix
+  /// \param data_matrix
+  /// Input matrix whose rows represent samples and columns represnt features
+  /// \return
+  /// An nxn kernel matrix where n is the number of samples in data_matrix
+  static Matrix<T> GenKernelMatrix(const Matrix<T> &data_matrix,
+                                   const ) {
+
+
+  }
 };
 }  // namespace Nice
 #endif  // CPP_INCLUDE_CPU_OPERATIONS_H_
