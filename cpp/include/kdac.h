@@ -70,6 +70,30 @@ class KDAC {
     CheckCQ();
   }
 
+  Matrix<T> GetU(void) {
+    return u_matrix_;
+  }
+
+  Matrix<T> GetUNormalized(void) {
+    return u_matrix_normalized_;
+  }
+
+  Matrix<T> GetL(void) {
+    return l_matrix_;
+  }
+
+  Matrix<T> GetD(void) {
+    return d_matrix_;
+  }
+
+  Matrix<T> GetDToTheMinusHalf(void) {
+    return d_matrix_to_the_minus_half_;
+  }
+
+  Matrix<T> GetK(void) {
+    return k_matrix_;
+  }
+
   /// Set the kernel type: kGaussianKernel, kPolynomialKernel, kLinearKernel
   /// And set the constant associated the kernel
   void SetKernel(KernelType kernel_type, float constant) {
@@ -122,9 +146,11 @@ class KDAC {
   Matrix<T> w_matrix_;  // Transformation matrix W (d by q). Initialized to I
   Matrix<bool> y_matrix_;  // Labeling matrix Y (n by (c0 + c1 + c2 + ..))
   Matrix<T> d_matrix_;  // Diagonal degree matrix D (n by n)
-  Matrix<T> d_to_the_minus_half_matrix_;  // D^(-1/2) matrix
+  Matrix<T> d_matrix_to_the_minus_half_;  // D^(-1/2) matrix
   Matrix<T> k_matrix_;  // Kernel matrix K (n by n)
-  Matrix<T> u_matrix_;  // Soft labeling matrix U (n by c)
+  Matrix<T> u_matrix_;  // Embedding matrix U (n by c)
+  Matrix<T> u_matrix_normalized_;  // Row-wise normalized U
+  Matrix<T> l_matrix_;  // D^(-1/2) * K * D^(-1/2)
   Matrix<T> h_matrix_;  // Centering matrix (n by n)
   Vector<T> clustering_result;  // Current clustering result
 
@@ -176,14 +202,15 @@ class KDAC {
 
     // Generate D and D^(-1/2)
     CpuOperations<T>::GenDegreeMatrix(
-        k_matrix_, d_matrix_, d_to_the_minus_half_matrix_);
-    Matrix<T> l_matrix = d_matrix_ * k_matrix_ * d_matrix_;
+        k_matrix_, d_matrix_, d_matrix_to_the_minus_half_);
+    l_matrix_ = d_matrix_to_the_minus_half_ * k_matrix_ *
+        d_matrix_to_the_minus_half_;
     SvdSolver<T> solver;
-    solver.Compute(l_matrix);
+    solver.Compute(l_matrix_);
     // Generate a u matrix from SVD solver and then use Normalize to normalize
     // its rows
-    u_matrix_ = CpuOperations<T>::Normalize(
-        solver.MatrixU().leftCols(c_), 2, 1);
+    u_matrix_ = solver.MatrixU().leftCols(c_);
+    u_matrix_normalized_ = CpuOperations<T>::Normalize(u_matrix_, 2, 1);
   }
 
 };

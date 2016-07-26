@@ -42,7 +42,7 @@ class AltSpectralClusteringTest : public ::testing::Test {
   virtual void SetUp() {
     data_matrix_ = Nice::util::FromFile<T>(
         "../test/data_for_test/alternative_spectral_clustering/"
-        "CenterData/data_matrix_ref_40_2.txt", 40, 2);
+        "CenterData/data_4_ref_40_2.txt", 40, 2);
     k_ = 2;
     asc = std::make_shared<Nice::AlternativeSpectralClustering<T>>
         (data_matrix_, k_);
@@ -74,7 +74,7 @@ class AltSpectralClusteringTest : public ::testing::Test {
         + std::to_string(1) + ".txt";
     std::string file_path = dir + "/" + file_name;
     return Nice::util::FromFile<T>(file_path, num_elements);
-    }
+  }
 //  Nice::Vector<int> ReadTestDataInt(std::string matrix_name,
 //                                    std::string func_name,
 //                                    std::string test_data_type,

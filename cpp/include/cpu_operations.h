@@ -474,8 +474,9 @@ class CpuOperations {
 /// Matrix <T>
 /// \sa
 /// \ref Norm
-  static Matrix<T> Normalize(const Matrix<T> &a, const int &p = 2,
-                                                  const int &axis = 0) {
+  static Matrix<T> Normalize(const Matrix<T> &a,
+                             const int &p = 2,
+                             const int &axis = 0) {
     int num_rows = a.rows();
     int num_cols = a.cols();
     Matrix<T> b(num_rows, num_cols);
@@ -514,7 +515,8 @@ class CpuOperations {
       for (int i = 0; i < num_samples; i++)
         for (int j = 0; j < num_samples; j++) {
           // Calculate the the norm of (x_i - x_j) for all (i, j) pairs
-          float i_j_dist = (data_matrix.row(i) - data_matrix.row(j)).norm();
+          float i_j_dist =
+              (data_matrix.row(i) - data_matrix.row(j)).squaredNorm();
           kernel_matrix(i, j) = exp(-i_j_dist / (2 * sigma * sigma));
         }
     }
