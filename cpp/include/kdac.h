@@ -63,6 +63,10 @@ class KDAC {
     constant_ = constant;
   }
 
+  void fit(void) {
+
+  }
+
   /// Running Predict() after Fit() returns
   /// the current clustering result as a Vector of T
   /// \return
@@ -136,12 +140,10 @@ class KDAC {
 
     //Generate D and D^(-1/2)
     GenDegreeMatrix(k_matrix_, d_matrix_, d_to_the_minus_half_matrix_);
-
-    Vector<T> d_i = k_matrix_.rowwise().sum();
-    d_matrix_ = d_i.asDiagonal();
-    d_to_the_minus_half_matrix_ = d_i.array().sqrt().unaryExpr(
-        std::ptr_fun(util::reciprocal<T>)).asDiagonal();
-
+    Matrix<T> l_matrix = d_matrix_ * k_matrix_ * d_matrix_;
+    SvdSolver<T> solver;
+    solver.Compute(l_matrix);
+    return solver.MatrixU().leftCols(c_);
   }
 
 };

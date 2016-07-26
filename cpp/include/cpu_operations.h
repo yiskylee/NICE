@@ -31,6 +31,7 @@
 #include "include/kernel_types.h"
 #include "Eigen/SVD"
 #include "include/svd_solver.h"
+#include "include/util.h"
 
 namespace Nice {
 
@@ -489,7 +490,7 @@ class CpuOperations {
      exit(1);
     }
   }
-  /// Generates the kernel matrix from the input data_matrix
+  /// Generates a kernel matrix from an input data_matrix
   /// \param data_matrix
   /// Input matrix whose rows represent samples and columns represent features
   /// \param kernel_type
@@ -518,6 +519,26 @@ class CpuOperations {
         }
     }
     return kernel_matrix;
+  }
+
+  /// Generates a degree matrix D from an input kernel matrix
+  /// It also generates D^(-1/2)
+  /// \param kernel_matrix
+  /// Input matrix: a squared kernel matrix
+  /// \param degree_matrix
+  /// Output degree matrix D
+  /// \param degree_matrix_to_the_minus_half
+  /// Output matrix D^(-1/2)
+  static void GenDegreeMatrix(
+      const Matrix<T> &kernel_matrix,
+      Matrix<T> &degree_matrix,
+      Matrix<T> &degree_matrix_to_the_minus_half) {
+    // Generate the diagonal vector d_i and degree matrix D
+    Vector<T> d_i = kernel_matrix.rowwise().sum();
+    degree_matrix = d_i.asDiagonal();
+    // Generate matrix D^(-1/2)
+    degree_matrix_to_the_minus_half = d_i.array().sqrt().unaryExpr(
+        std::ptr_fun(util::reciprocal<T>)).matrix().asDiagonal();
   }
 };
 }  // namespace Nice
