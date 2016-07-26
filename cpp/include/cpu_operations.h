@@ -28,6 +28,7 @@
 #include <cmath>
 #include "include/matrix.h"
 #include "include/vector.h"
+#include "include/kernel_type.h"
 #include "Eigen/SVD"
 #include "include/svd_solver.h"
 
@@ -447,7 +448,7 @@ class CpuOperations {
   /// \return
   /// An nxn kernel matrix where n is the number of samples in data_matrix
   static Matrix<T> GenKernelMatrix(const Matrix<T> &data_matrix,
-                                   const ) {
+                                   const kernel_type = kGaussianKernel) {
 
 
   }
