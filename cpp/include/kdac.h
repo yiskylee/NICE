@@ -38,104 +38,29 @@ class KDAC {
   /// This is the default constructor for KDAC
   /// Number of clusters c and reduced dimension q will be both set to 2
   KDAC() {
-    SetCQ(2, 2);
-    SetKernel(kGaussianKernel, 1.0);
-  }
-  /// This is the KDAC constructor that takes one parameter c
-  /// \param c
-  /// Number of clusters c, the reducded dimension q will be set to c
-  KDAC(int c) {
-    // reduced dimension q by default equals to k
-    SetCQ(c, c);
-    SetKernel(kGaussianKernel, 1.0);
-  }
-  /// This is the KDAC constructor that takes both number of clusters c and
-  /// reduced dimension q
-  /// \param c
-  /// Number of clusters c
-  /// \param q
-  /// Reduced dimension q
-  KDAC(int c, int q) {
-    SetCQ(c, q);
-    SetKernel(kGaussianKernel, 1.0);
+    c_ = 2;
+    q_ = 2;
+    kernel_type_ = kGaussianKernel;
+    constant_ = 1.0
   }
 
-  /// This is the KDAC constructor that takes number of clusters c,
-  /// reduced dimension q and kernel_type
-  /// \param c
-  /// Number of clusters c
-  /// \param q
-  /// Reduced dimension q
-  /// \param kernel_type
-  /// Can be chosen from kGaussianKernel, kPolynomialKernel and kLinearKernel
-  KDAC(int c, int q, KernelType kernel_type) {
-    SetCQ(c, q);
-    SetKernel(kernel_type, 1.0);
+  /// Set the number of clusters c
+  void SetC(int c) {
+    c_ = c;
+    CheckCQ();
   }
 
-  /// This is the KDAC constructor that takes number of clusters c,
-  /// reduced dimension q, kernel_type and the constant number associated
-  /// with a specific kernel type
-  /// \param c
-  /// Number of clusters c
-  /// \param q
-  /// Reduced dimension q
-  /// \param kernel_type
-  /// Can be chosen from kGaussianKernel, kPolynomialKernel and kLinearKernel
-  /// \param constant
-  /// In Gaussian kernel, this is sigma;
-  /// In Polynomial kernel, this is constant c
-  /// In Linear kernel, this is c as well
-  KDAC(int c, int q, KernelType kernel_type, float constant) {
-    SetCQ(c, q);
-    SetKernel(kernel_type, constant);
+  /// Set the reduced dimension q
+  void SetQ(int q) {
+    q_ = q;
+    CheckCQ();
   }
 
-  /// This function creates the first clustering result
-  /// \param input_matrix
-  /// The input matrix of n samples and d features where each row
-  /// represents a sample
-  /// \return
-  /// It only generates the clustering result but does not returns it
-  /// Users can use Predict() to get the clustering result returned
-  void Fit(const Matrix<T> &input_matrix) {
-    // Following the pseudo code in Algorithm 1 in the paper
-    Init(input_matrix);
-    u_matrix_ = GenU();
-  }
-
-  /// This function creates the alternative clustering result
-  /// Users can change c and q using other Fit() functions
-  /// Must be called after \ref Fit(const Matrix<T> &input_matrix)
-  void Fit(void) {
-
-  }
-
-  /// This function creates the alternative clustering result
-  /// with user-specified number of clusters c
-  /// reduced dimension q would be set to equal to c
-  /// Must be called after \ref Fit(const Matrix<T> &input_matrix)
-  /// \param c
-  /// Number of clusters c
-  /// \sa
-  /// \ref Fit(const int c, const int q)
-  void Fit(const int c) {
-    SetCQ(c, c);
-    Fit();
-  }
-
-  /// This function creates the alternative clustering result
-  /// with user-specified number of clusters c and reduced dimension q
-  /// Must be called after \ref Fit(const Matrix<T> &input_matrix)
-  /// \param c
-  /// Number of clusters c
-  /// \param q
-  /// Reduced dimension q
-  /// \sa
-  /// \ref Fit(int c)
-  void Fit(const int c, const int q) {
-    SetCQ(c, q);
-    Fit();
+  /// Set the kernel type: kGaussianKernel, kPolynomialKernel, kLinearKernel
+  /// And set the constant associated the kernel
+  void SetKernel(KernelType kernel_type, float constant) {
+    kernel_type_ = kernel_type;
+    constant_ = constant;
   }
 
   /// Running Predict() after Fit() returns
@@ -154,7 +79,7 @@ class KDAC {
   int d_;  // input data X dimension d
   KernelType kernel_type_;  // The kernel type of the kernel matrix
   float constant_;  // In Gaussian kernel, this is sigma;
-                    // In Polynomial kernel, this is constant c
+                    // In Polynomial kernel, this is the polynomial order
                     // In Linear kernel, this is c as well
   bool u_converge;  // If matrix U reaches convergence, false by default
   bool v_converge;  // If matrix V reaches convergence, false by default
@@ -162,6 +87,7 @@ class KDAC {
   Matrix<T> w_matrix_;  // Transformation matrix W (d by q). Initialized to I
   Matrix<bool> y_matrix_;  // Labeling matrix Y (n by (c0 + c1 + c2 + ..))
   Matrix<T> d_matrix_;  // Diagonal degree matrix D (n by n)
+  Matrix<T> d_to_the_minus_half_matrix_;  // D^(-1/2) matrix
   Matrix<T> k_matrix_;  // Kernel matrix K (n by n)
   Matrix<T> u_matrix_;  // Soft labeling matrix U (n by c)
   Matrix<T> h_matrix_;  // Centering matrix (n by n)
@@ -173,11 +99,11 @@ class KDAC {
     x_matrix_ = input_matrix;
     n_ = input_matrix.rows();
     d_ = input_matrix.cols();
-    w_matrix_ = Matrix<T>::Identity(d_, q_);
-    y_matrix_ = Matrix<bool>::Constant(n_, c_, 0);
-    d_matrix_ = Matrix<T>::Constant(n_, n_, 0);
-    k_matrix_ = Matrix<T>::Constant(n_, n_, 0);
-    u_matrix_ = Matrix<T>::Constant(n_, c_, 0);
+    w_matrix_ = Matrix<T>::Identity(d_, d_);
+    y_matrix_ = Matrix<bool>::Zero(n_, c_);
+//    d_matrix_ = Matrix<T>::Zero(n_, n_, 0);
+//    k_matrix_ = Matrix<T>::Zero(n_, n_, 0);
+    u_matrix_ = Matrix<T>::Zero(n_, c_, 0);
     h_matrix_ = Matrix<T>::Identity(n_, n_)
         - Matrix<T>::Constant(n_, n_, 1) / float(n_);
     clustering_result = Vector<T>::Zero(n_);
@@ -186,24 +112,36 @@ class KDAC {
   }
 
   // Check if q is not bigger than c
-  void SetCQ(int c, int q) {
-    if (q <= c) {
-      c_ = c;
-      q_ = q;
-    } else {
+  void CheckCQ() {
+    if (q_ > c) {
       std::cerr <<
           "Reduced dimension q cannot exceed cluster number c" << std::endl;
       exit(1);
     }
   }
-  void SetKernel(KernelType kernel_type, float constant) {
-    kernel_type_ = kernel_type;
-    constant_ = constant;
-  }
 
   Matrix<T> GenU(void) {
-//    kernel_matrix_ =
-//    return Matrix<T>::Zero(n_, c_);
+    // Projects X to subspace W (n * d to n * q)
+    // If this is the first round, then projected X equals to X
+    Matrix<T> projected_x_matrix = x_matrix_ * w_matrix_;
+    // Generate the kernel matrix based on kernel type from projected X
+    k_matrix_ = GenKernelMatrix(projected_x_matrix, kernel_type_, constant_);
+    // Generate degree matrix from the kernel matrix
+    // d_i is the diagonal vector of degree matrix D
+
+    // This is a reference to how to directly generate D^(-1/2)
+    // Vector<T> d_i = k_matrix_.rowwise().sum().array().sqrt().unaryExpr(
+    //     std::ptr_fun(util::reciprocal<T>));
+    // d_matrix_ = d_i.asDiagonal();
+
+    //Generate D and D^(-1/2)
+    GenDegreeMatrix(k_matrix_, d_matrix_, d_to_the_minus_half_matrix_);
+
+    Vector<T> d_i = k_matrix_.rowwise().sum();
+    d_matrix_ = d_i.asDiagonal();
+    d_to_the_minus_half_matrix_ = d_i.array().sqrt().unaryExpr(
+        std::ptr_fun(util::reciprocal<T>)).asDiagonal();
+
   }
 
 };
