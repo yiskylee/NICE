@@ -20,15 +20,52 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef CPP_INCLUDE_KERNEL_TYPES_H_
-#define CPP_INCLUDE_KERNEL_TYPES_H_
+#include "include/gpu_operations.h"
+#include "Eigen/Dense"
+#include "gtest/gtest.h"
 
-namespace Nice {
-enum KernelType {
-  kGaussianKernel,
-  kLinearKernel,
-  kPolynomialKernel
+template<class T>
+class GpuMatrixMatrixSubTest : public ::testing::Test {
+ public:
+  Nice::Matrix<T> a;
+  Nice::Matrix<T> b;
+  Nice::Matrix<T> result;
+  Nice::Matrix<T> correct;
+
+  void Subtract() {
+    result = Nice::GpuOperations<T>::Subtract(a, b);
+  }
 };
+
+typedef ::testing::Types<float, double> dataTypes;
+TYPED_TEST_CASE(GpuMatrixMatrixSubTest, dataTypes);
+
+TYPED_TEST(GpuMatrixMatrixSubTest, SubtractFunctionality) {
+  this->a.setRandom(3, 3);
+  this->b.setRandom(3, 3);
+
+  this->correct.setZero(3, 3);
+  for (int i = 0; i < 3; ++i) {
+    for (int j = 0; j < 3; ++j) {
+      this->correct(i, j) = this->a(i, j) - this->b(i, j);
+    }
+  }
+
+  this->Subtract();
+
+  for (int i = 0; i < 3; ++i) {
+    for (int j = 0; j < 3; ++j) {
+      ASSERT_NEAR(this->result(i, j), this->correct(i, j), 0.0001);
+    }
+  }
 }
 
-#endif  //CPP_INCLUDE_KERNEL_TYPES_H_
+TYPED_TEST(GpuMatrixMatrixSubTest, DifferentSizeMatricies) {
+  this->a.setRandom(2, 3);
+  this->b.setRandom(3, 4);
+  ASSERT_DEATH(this->Subtract(), ".*");
+}
+
+TYPED_TEST(GpuMatrixMatrixSubTest, EmptyMatrix) {
+  ASSERT_DEATH(this->Subtract(), ".*");
+}

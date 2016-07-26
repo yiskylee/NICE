@@ -38,8 +38,8 @@ class KDAC {
   /// This is the default constructor for KDAC
   /// Number of clusters c and reduced dimension q will be both set to 2
   KDAC() {
-    c_ = 2;
-    q_ = 2;
+    SetCQ(2, 2);
+    SetKernel(kGaussianKernel, 1.0);
   }
   /// This is the KDAC constructor that takes one parameter c
   /// \param c
@@ -47,6 +47,7 @@ class KDAC {
   KDAC(int c) {
     // reduced dimension q by default equals to k
     SetCQ(c, c);
+    SetKernel(kGaussianKernel, 1.0);
   }
   /// This is the KDAC constructor that takes both number of clusters c and
   /// reduced dimension q
@@ -56,6 +57,38 @@ class KDAC {
   /// Reduced dimension q
   KDAC(int c, int q) {
     SetCQ(c, q);
+    SetKernel(kGaussianKernel, 1.0);
+  }
+
+  /// This is the KDAC constructor that takes number of clusters c,
+  /// reduced dimension q and kernel_type
+  /// \param c
+  /// Number of clusters c
+  /// \param q
+  /// Reduced dimension q
+  /// \param kernel_type
+  /// Can be chosen from kGaussianKernel, kPolynomialKernel and kLinearKernel
+  KDAC(int c, int q, KernelType kernel_type) {
+    SetCQ(c, q);
+    SetKernel(kernel_type, 1.0);
+  }
+
+  /// This is the KDAC constructor that takes number of clusters c,
+  /// reduced dimension q, kernel_type and the constant number associated
+  /// with a specific kernel type
+  /// \param c
+  /// Number of clusters c
+  /// \param q
+  /// Reduced dimension q
+  /// \param kernel_type
+  /// Can be chosen from kGaussianKernel, kPolynomialKernel and kLinearKernel
+  /// \param constant
+  /// In Gaussian kernel, this is sigma;
+  /// In Polynomial kernel, this is constant c
+  /// In Linear kernel, this is c as well
+  KDAC(int c, int q, KernelType kernel_type, float constant) {
+    SetCQ(c, q);
+    SetKernel(kernel_type, constant);
   }
 
   /// This function creates the first clustering result
@@ -119,6 +152,10 @@ class KDAC {
   int q_;  // reduced dimension q
   int n_;  // number of samples in input data X
   int d_;  // input data X dimension d
+  KernelType kernel_type_;  // The kernel type of the kernel matrix
+  float constant_;  // In Gaussian kernel, this is sigma;
+                    // In Polynomial kernel, this is constant c
+                    // In Linear kernel, this is c as well
   bool u_converge;  // If matrix U reaches convergence, false by default
   bool v_converge;  // If matrix V reaches convergence, false by default
   Matrix<T> x_matrix_;  // Input matrix X (n by d)
@@ -159,10 +196,14 @@ class KDAC {
       exit(1);
     }
   }
+  void SetKernel(KernelType kernel_type, float constant) {
+    kernel_type_ = kernel_type;
+    constant_ = constant;
+  }
 
   Matrix<T> GenU(void) {
-
-    return Matrix<T>::Zero(n_, c_);
+//    kernel_matrix_ =
+//    return Matrix<T>::Zero(n_, c_);
   }
 
 };

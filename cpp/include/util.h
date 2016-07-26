@@ -65,11 +65,13 @@ Matrix<T> FromFile(const std::string &input_file_path,
     while ( !input_file.eof() ) {
       std::string line;
       getline(input_file, line);
-      if (delimiter == " " && line.find(",") != std::string::npos) {
+      if (line.find_first_not_of(' ') == std::string::npos)
+        continue;
+      if (delimiter == " " && line.find_first_of(',') != std::string::npos) {
         std::cerr << "File uses different delimiter than parameter! Use ','!";
         exit(1);
       } else if (delimiter == ",") {
-        if (line.find(",") == std::string::npos) {
+        if (line.find_first_of(',') == std::string::npos) {
           std::cerr << "File uses different delimiter than parameter! Use ' '!";
           exit(1);
         }
@@ -126,11 +128,11 @@ Matrix<T> FromFile(const std::string &input_file_path,
       getline(input_file, line);
       if (line.find_first_not_of(' ') == std::string::npos)
         continue;
-      if (delimiter == " " && line.find(",") != std::string::npos) {
+      if (delimiter == " " && line.find_first_of(',') != std::string::npos) {
         std::cerr << "File uses different delimiter than parameter! Use ','!";
         exit(1);
       } else if (delimiter == ",") {
-        if (line.find(",") == std::string::npos) {
+        if (line.find_first_of(',') == std::string::npos) {
           std::cerr << "File uses different delimiter than parameter! Use ' '!";
           exit(1);
         }
@@ -174,6 +176,27 @@ Matrix<T> FromFile(const std::string &input_file_path,
     std::cerr << "Cannot open file " + input_file_path + ", exiting...";
     exit(1);
   }
+}
+
+template<typename T>
+Vector<T> FromFile(const std::string &input_file_path,
+                   int num_elements) {
+  std::ifstream input_file(input_file_path, std::ifstream::in);
+  Vector<T> m(num_elements);
+  if (input_file) {
+    for (int i = 0; i < num_elements; i++)
+        input_file >> m(i);
+    return m;
+  } else {
+    std::cerr << "Cannot open file " + input_file_path + ", exiting..." <<
+        std::endl;
+    exit(1);
+  }
+}
+
+template<typename T>
+static T reciprocal(T x) {
+  return T(1) / x;
 }
 
 }  // namespace util

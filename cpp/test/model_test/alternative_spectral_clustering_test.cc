@@ -233,11 +233,11 @@ TYPED_TEST(AltSpectralClusteringTest, RunKMeans) {
       this->ReadTestData("y_matrix", "RunKMeans", "ref",
                          y_matrix.rows(), y_matrix.cols());
   std::cout << "dlib allocation: " << std::endl;
-  for (int i = 0; i < 20; i++)
+  for (int i = 0; i < 40; i++)
     std::cout << allocation(i) << " ";
   std::cout << std::endl;
   std::cout << "numpy allocation: " << std::endl;
-  for (int i = 0; i < 20; i++)
+  for (int i = 0; i < 40; i++)
     std::cout << allocation_ref(i) << " ";
   std::cout << std::endl;
 //  EXPECT_MATRIX_EQ(allocation, allocation_ref);
