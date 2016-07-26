@@ -257,7 +257,8 @@ static Vector<T> Norm(const Matrix<T> &a,
     }
     return b;
   }
-  ///  This is function calculates and returns the center of a matrix.
+
+///  This is function calculates and returns the center of a matrix.
   ///
   /// \param a
   /// Input matrix
@@ -308,6 +309,57 @@ static Vector<T> Norm(const Matrix<T> &a,
       return Multiply(C,a);
     }
   }
+
+  ///  This is function calculates and returns a standard  matrix.
+  ///
+  /// \param a
+  /// Input matrix
+  /// 
+  /// \param axis
+  /// The axis that you are standardizing along. If 0, standardize along cols. If 1
+  /// standardize along rows. Defaults to column standardization.  
+  ///
+  /// \return Matrix<T>
+  /// This function returns a value of type Matrix<T>
+  ///
+  static Matrix<T> Standardize(const Matrix<T> &a, const int axis = 0) {
+    // Include: axis, default subtract means from columns, if 1, remove means
+    // from rows
+    //
+    // If the matrix is empty, exit with error message
+    if (a.rows() == 0 || a.cols() == 0) {
+      std::cerr << "EMPTY MATRIX AS ARGUMENT!";
+      exit(1);  // Exits the program
+    }
+    // If the axis is not 0 (default) or 1, exit with error message
+    if (axis != 0 || axis != 1){
+      std::cerr << "BAD AXIS. AXIS MUST BE 0 OR 1" << std::endl;
+      exit(1);
+    }
+    // Otherwise,  matrix is an m x n matrix
+    int m = a.rows();
+    int n = a.cols();
+    
+    Vector<T> temp(n);   //Vector holding current row
+    Vector<T> stdDev(n); //Vector holding standard deviation of current row
+
+    if(axis == 0) { //Standardize via columns
+      for(int i = 0; i < m; i++){ //Subtract the standard deviation of each column from their respective column
+        temp = a.cols(i);
+        stdDev = Multiply(temp.norm(), sqrt(1.0/m));
+        a.cols(i) = Subtract(temp, stdDev);
+      }
+    }
+    else if (axis == 1) { //Standardize via rows
+      for(int i = 0; i < n; i++){ //Subtract the standard deviation of each row from their respective rows
+        temp = a.rows(i);
+        stdDev = Multiply(temp.norm(), sqrt(1.0/n));
+        a.rows(i) = Subtract(temp, stdDev);
+      }
+    }
+    return a;
+  }
+
 };
 }  // namespace Nice
 #endif  // CPP_INCLUDE_CPU_OPERATIONS_H_
