@@ -45,7 +45,8 @@ class KDACTest : public ::testing::Test {
     data_matrix_ = Nice::util::FromFile<T>(
         "../test/data_for_test/kdac/data_matrix_40_2.txt");
     c_ = 2;
-    kdac_ = std::make_shared<Nice::KDAC<T>>(c_);
+    kdac_ = std::make_shared<Nice::KDAC<T>>();
+    kdac_->SetC(c_);
   }
 
 };

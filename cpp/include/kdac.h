@@ -31,6 +31,21 @@
 
 #ifndef CPP_INCLUDE_KDAC_H
 #define CPP_INCLUDE_KDAC_H
+
+#include <functional>
+#include <vector>
+#include <cmath>
+#include "include/matrix.h"
+#include "include/vector.h"
+#include "include/cpu_operations.h"
+#include "include/svd_solver.h"
+#include "include/kmeans.h"
+#include "include/spectral_clustering.h"
+#include "Eigen/Core"
+#include "include/util.h"
+#include "include/kernel_types.h"
+
+
 namespace Nice {
 template<typename T>
 class KDAC {
@@ -38,10 +53,9 @@ class KDAC {
   /// This is the default constructor for KDAC
   /// Number of clusters c and reduced dimension q will be both set to 2
   KDAC() {
-    c_ = 2;
-    q_ = 2;
-    kernel_type_ = kGaussianKernel;
-    constant_ = 1.0
+    SetC(2);
+    SetQ(2);
+    SetKernel(kGaussianKernel, 1.0);
   }
 
   /// Set the number of clusters c
@@ -63,7 +77,24 @@ class KDAC {
     constant_ = constant;
   }
 
-  void fit(void) {
+  /// This function creates the first clustering result
+  /// \param input_matrix
+  /// The input matrix of n samples and d features where each row
+  /// represents a sample
+  /// \return
+  /// It only generates the clustering result but does not returns it
+  /// Users can use Predict() to get the clustering result returned
+  void Fit(const Matrix<T> &input_matrix) {
+    // Following the pseudo code in Algorithm 1 in the paper
+    Init(input_matrix);
+    OptimizeU();
+    OptimizeW();
+  }
+
+  /// This function creates an alternative clustering result
+  /// Must be called after \ref Fit(const Matrix<T> &input_matrix)
+  /// when the first clustering result is generated
+  void Fit(void) {
 
   }
 
@@ -104,10 +135,10 @@ class KDAC {
     n_ = input_matrix.rows();
     d_ = input_matrix.cols();
     w_matrix_ = Matrix<T>::Identity(d_, d_);
-    y_matrix_ = Matrix<bool>::Zero(n_, c_);
+//    y_matrix_ = Matrix<bool>::Zero(n_, c_);
 //    d_matrix_ = Matrix<T>::Zero(n_, n_, 0);
 //    k_matrix_ = Matrix<T>::Zero(n_, n_, 0);
-    u_matrix_ = Matrix<T>::Zero(n_, c_, 0);
+//    u_matrix_ = Matrix<T>::Zero(n_, c_, 0);
     h_matrix_ = Matrix<T>::Identity(n_, n_)
         - Matrix<T>::Constant(n_, n_, 1) / float(n_);
     clustering_result = Vector<T>::Zero(n_);
@@ -117,19 +148,24 @@ class KDAC {
 
   // Check if q is not bigger than c
   void CheckCQ() {
-    if (q_ > c) {
+    if (q_ > c_) {
       std::cerr <<
           "Reduced dimension q cannot exceed cluster number c" << std::endl;
       exit(1);
     }
   }
 
-  Matrix<T> GenU(void) {
+  void OptimizeW(void) {
+
+  }
+
+  void OptimizeU(void) {
     // Projects X to subspace W (n * d to n * q)
     // If this is the first round, then projected X equals to X
     Matrix<T> projected_x_matrix = x_matrix_ * w_matrix_;
     // Generate the kernel matrix based on kernel type from projected X
-    k_matrix_ = GenKernelMatrix(projected_x_matrix, kernel_type_, constant_);
+    k_matrix_ = CpuOperations<T>::GenKernelMatrix(
+        projected_x_matrix, kernel_type_, constant_);
     // Generate degree matrix from the kernel matrix
     // d_i is the diagonal vector of degree matrix D
 
@@ -138,12 +174,16 @@ class KDAC {
     //     std::ptr_fun(util::reciprocal<T>));
     // d_matrix_ = d_i.asDiagonal();
 
-    //Generate D and D^(-1/2)
-    GenDegreeMatrix(k_matrix_, d_matrix_, d_to_the_minus_half_matrix_);
+    // Generate D and D^(-1/2)
+    CpuOperations<T>::GenDegreeMatrix(
+        k_matrix_, d_matrix_, d_to_the_minus_half_matrix_);
     Matrix<T> l_matrix = d_matrix_ * k_matrix_ * d_matrix_;
     SvdSolver<T> solver;
     solver.Compute(l_matrix);
-    return solver.MatrixU().leftCols(c_);
+    // Generate a u matrix from SVD solver and then use Normalize to normalize
+    // its rows
+    u_matrix_ = CpuOperations<T>::Normalize(
+        solver.MatrixU().leftCols(c_), 2, 1);
   }
 
 };
