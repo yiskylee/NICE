@@ -178,6 +178,27 @@ Matrix<T> FromFile(const std::string &input_file_path,
   }
 }
 
+template<typename T>
+Vector<T> FromFile(const std::string &input_file_path,
+                   int num_elements) {
+  std::ifstream input_file(input_file_path, std::ifstream::in);
+  Vector<T> m(num_elements);
+  if (input_file) {
+    for (int i = 0; i < num_elements; i++)
+        input_file >> m(i);
+    return m;
+  } else {
+    std::cerr << "Cannot open file " + input_file_path + ", exiting..." <<
+        std::endl;
+    exit(1);
+  }
+}
+
+template<typename T>
+static T reciprocal(T x) {
+  return T(1) / x;
+}
+
 }  // namespace util
 
 }  // namespace Nice

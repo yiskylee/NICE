@@ -28,6 +28,7 @@
 #include <cmath>
 #include "include/matrix.h"
 #include "include/vector.h"
+#include "include/kernel_types.h"
 #include "Eigen/SVD"
 #include "include/svd_solver.h"
 
@@ -440,6 +441,36 @@ class CpuOperations {
      std::cerr << "Axis must be zero or one!";
      exit(1);
     }
+  }
+  /// Generates the kernel matrix from the input data_matrix
+  /// \param data_matrix
+  /// Input matrix whose rows represent samples and columns represent features
+  /// \param kernel_type
+  /// Kernel type could be chosen from Gaussian, Linear and Polynomial
+  /// \param constant
+  /// In Gaussian kernel, this is sigma;
+  /// In Polynomial kernel, this is constant c
+  /// In Linear kernel, this is c as well
+  /// \return
+  /// An nxn kernel matrix where n is the number of samples in data_matrix
+  static Matrix<T> GenKernelMatrix(
+      const Matrix<T> &data_matrix,
+      const KernelType kernel_type = kGaussianKernel,
+      const float constant = 1.0) {
+    int num_samples = data_matrix.rows();
+    // An n x n kernel matrix
+    Matrix<T> kernel_matrix(num_samples, num_samples);
+    if (kernel_type == kGaussianKernel) {
+      float sigma = constant;
+      // This for loop generates the kernel matrix using Gaussian kernel
+      for (int i = 0; i < num_samples; i++)
+        for (int j = 0; j < num_samples; j++) {
+          // Calculate the the norm of (x_i - x_j) for all (i, j) pairs
+          float i_j_dist = (data_matrix.row(i) - data_matrix.row(j)).norm();
+          kernel_matrix(i, j) = exp(-i_j_dist / (2 * sigma * sigma));
+        }
+    }
+    return kernel_matrix;
   }
 };
 }  // namespace Nice
