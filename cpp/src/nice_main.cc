@@ -28,5 +28,6 @@
 #include "include/gpu_svd_solver.h"
 #include "include/util.h"
 #include "include/gpu_util.h"
+#include "include/kdac.h"
 
 // Place holder

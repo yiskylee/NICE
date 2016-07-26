@@ -161,6 +161,7 @@ class KDAC {
   }
 
   Matrix<T> GenU(void) {
+
     return Matrix<T>::Zero(n_, c_);
   }
 

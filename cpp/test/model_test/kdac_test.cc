@@ -23,6 +23,7 @@
 
 #include <stdio.h>
 #include <iostream>
+#include <memory>
 #include "Eigen/Dense"
 #include "gtest/gtest.h"
 #include "include/cpu_operations.h"
@@ -40,9 +41,9 @@ class KDACTest : public ::testing::Test {
   int n_;
   int d_;
 
-  virtual void Setup() {
+  virtual void SetUp() {
     data_matrix_ = Nice::util::FromFile<T>(
-        "../test/data_for_test/kdac/data_matrix_40_2");
+        "../test/data_for_test/kdac/data_matrix_40_2.txt");
     c_ = 2;
     kdac_ = std::make_shared<Nice::KDAC<T>>(c_);
   }
@@ -56,7 +57,6 @@ typedef ::testing::Types<float, double> FloatTypes;
 
 TYPED_TEST_CASE(KDACTest, FloatTypes);
 
-TYPED_TEST(KDACTest, Init) {
+TYPED_TEST(KDACTest, Fit) {
   this->kdac_->Fit(this->data_matrix_);
 }
-
