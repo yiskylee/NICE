@@ -82,7 +82,7 @@ class CpuOperations {
   static Matrix<T> Subtract(const Matrix<T> &a, const T &scalar) {
     // Matrix-scalar subtraction
     if (a.rows() == 0 || a.cols() == 0) {
-      std::cerr << "EMPTY MATRIX AS ARGUEMENT!";
+      std::cerr << "SUBTRACT: EMPTY MATRIX AS ARGUEMENT!";
       exit(1);
     }
     return (a.array() - scalar);
@@ -90,11 +90,13 @@ class CpuOperations {
   static Matrix<T> Subtract(const Matrix<T> &a, const Matrix<T> &b) {
     // Matrix-matrix subtraction
     if ((a.rows() != b.rows()) || (a.cols() != b.cols())) {
-      std::cerr << "MATRICES ARE NOT THE SAME SIZE!";
+      std::cerr << "SUBTRACT: MATRICES ARE NOT THE SAME SIZE!\n";
+      std::cerr << "A.rows: " << a.rows() << " B.rows(): " << b.rows() << "\n";
+      std::cerr << "A.cols: " << a.cols() << " B.cols(): " << b.cols();
       exit(1);  // Exits the program
     } else if (b.rows() == 0 || b.cols() == 0 || a.rows() == 0
         || a.cols() == 0) {
-      std::cerr << "EMPTY MATRIX AS ARGUMENT!";
+      std::cerr << "SUBTRACT: EMPTY MATRIX AS ARGUMENT!";
       exit(1);  // Exits the program
     }
     return a - b;
@@ -254,6 +256,57 @@ static Vector<T> Norm(const Matrix<T> &a,
       exit(1);  // Exits the program
     }
     return b;
+  }
+  ///  This is function calculates and returns the center of a matrix.
+  ///
+  /// \param a
+  /// Input matrix
+  /// 
+  /// \param axis
+  /// The axis that you are centering along. If 0, center along cols. If 1
+  /// centers along rows. Defaults to column centering.  
+  ///
+  /// \return Matrix<T>
+  /// This function returns a value of type Matrix<T>
+  ///
+  static Matrix<T> Center(const Matrix<T> &a, const int axis = 0) {
+    // Include: axis, default subtract means from columns, if 1, remove means
+    // from rows
+    //
+    // If the matrix is empty, exit with error message
+    if (a.rows() == 0 || a.cols() == 0) {
+      std::cerr << "EMPTY MATRIX AS ARGUMENT!";
+      exit(1);  // Exits the program
+    }
+    // If the axis is not 0 (default) or 1, exit with error message
+    if (axis != 0 || axis != 1){
+      std::cerr << "BAD AXIS. AXIS MUST BE 0 OR 1" << std::endl;
+      exit(1);
+    }
+    // Otherwise,  matrix is an m x n matrix
+    int m = a.rows();
+    int n = a.cols();
+    Matrix<T> one; //Matrix of size (m x m) OR (n x n) filled with just ones
+    Matrix<T> C;   //The centering identity that will be multiplied with a to get the cetnered matrix
+    Matrix<T> temp; //Intermediary matrix to hold (1/n)*one
+
+    if (axis == 1) { //Remove means from Rows
+      Matrix<T> i(n, n);
+        i.setIdentity();
+      one.setConstant(n, n, 1);
+      temp = Multiply(one, (1.0/n));
+      C = Subtract(i,temp);
+      return Multiply(a, C);
+    }
+    else if(axis == 0) { //Remove means from columns
+      //Calculate Cm
+      Matrix<T> i(m, m);
+        i.setIdentity();
+      one.setConstant(m, m, 1);
+      temp = Multiply(one, (1.0/m));
+      C = Subtract(i,temp);
+      return Multiply(C,a);
+    }
   }
 };
 }  // namespace Nice
