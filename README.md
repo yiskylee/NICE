@@ -53,31 +53,33 @@ Due to the complexity of working with submodule in git, the documentation mainta
 
 ### Steps for creating and publishing NICE documentation
 We are using submodule tools of git to assoicate documentation repository with NICE repository
+
 1. Clone a documentation repository
-```
+`
 $ git clone <linkToCloneDocRepo>
-```
+`
 2. Create a gh-pages branch (gh-pages is a special branch in github that aims to hosting html-based documentation directly on-line)
-```
+`
 $ git checkout --orphan gh-pages
 $ rm -rf *
 $ git add .
 $ git commit -m "Initialize gh-pages branch as empty directory"
 $ git push origin gh-pages
-```
+`
 3. Go back to NICE repository
 4. Set up a submodule
-```
+`
 $ git submodule add -b gh-pages <linkToCloneDocRepo> cpp/doc
-```
+`
 5. Generate the documentation through doxygen and push it to gh-pages branch
 
 ### Steps for updating NICE documentation
 (Assume that document submodule have been established)
+
 1. Clone a NICE repo
 2. Initialize the submodule
-```
+`
 $ git submodule update --init
-```
+`
 3. Go inside doc directory and checkout gh-pages branch(This step has to be done because the a dettached HEAD will be returned for the submodule)
 4. Generate the documentation through doxygen and push it to gh-pages branch
