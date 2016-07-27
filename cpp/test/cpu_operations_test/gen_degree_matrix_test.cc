@@ -23,30 +23,49 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
+#include <cmath>
 #include "Eigen/Dense"
 #include "gtest/gtest.h"
 #include "include/cpu_operations.h"
 #include "include/matrix.h"
+#include "include/kernel_types.h"
 
 template<class T>
-class RankTest : public ::testing::Test {
+class GenDegreeMatrixTest : public ::testing::Test {
  public:
-  Nice::Matrix<T> mat_;
-  int calculated_ans_;
+  Nice::Matrix<T> kernel_matrix_;
 };
 
-typedef ::testing::Types<float, double> MyTypes;
-TYPED_TEST_CASE(RankTest, MyTypes);
+typedef ::testing::Types<float, double> FloatTypes;
+TYPED_TEST_CASE(GenDegreeMatrixTest, FloatTypes);
 
-TYPED_TEST(RankTest, RankMatrix) {
-  this->mat_.resize(4, 4);
-  this->mat_ <<1.0, 3.0, 5.0, 2.0,
-               0.0, 1.0, 0.0, 3.0,
-               0.0, 0.0, 0.0, 1.0,
-               0.0, 0.0, 0.0, 0.0;
-  int correct_ans = 3;
+#define EXPECT_MATRIX_EQ(a, ref)\
+    EXPECT_EQ(a.rows(), ref.rows());\
+    EXPECT_EQ(a.cols(), ref.cols());\
+    for (int i = 0; i < a.rows(); i++)\
+      for (int j = 0; j < a.cols(); j++)\
+        EXPECT_NEAR(double(a(i, j)), double(ref(i, j)), 0.0001);\
 
-  this->calculated_ans_ = Nice::CpuOperations<TypeParam>::Rank(this->mat_);
-  EXPECT_EQ(correct_ans, this->calculated_ans_);
+TYPED_TEST(GenDegreeMatrixTest, SimpleTest) {
+  this->kernel_matrix_.resize(2, 2);
+  this->kernel_matrix_ << 2.0, 2.0,
+                          2.0, 2.0;
+
+  Nice::Matrix<TypeParam> degree_matrix;
+  Nice::Matrix<TypeParam> degree_matrix_to_the_minus_half;
+
+  Nice::CpuOperations<TypeParam>::GenDegreeMatrix(
+      this->kernel_matrix_,
+      degree_matrix,
+      degree_matrix_to_the_minus_half);
+
+  Nice::Matrix<TypeParam> degree_matrix_ref(2,2);
+  degree_matrix_ref << 4.0, 0.0,
+                       0.0, 4.0;
+  Nice::Matrix<TypeParam> degree_matrix_to_the_minus_half_ref(2,2);
+  degree_matrix_to_the_minus_half_ref << 0.5, 0.0,
+                                         0.0, 0.5;
+  EXPECT_MATRIX_EQ(degree_matrix, degree_matrix_ref);
+  EXPECT_MATRIX_EQ(degree_matrix_to_the_minus_half,
+                   degree_matrix_to_the_minus_half_ref);
 }
-

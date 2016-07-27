@@ -23,30 +23,41 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
+#include <cmath>
 #include "Eigen/Dense"
 #include "gtest/gtest.h"
 #include "include/cpu_operations.h"
 #include "include/matrix.h"
+#include "include/kernel_types.h"
 
 template<class T>
-class RankTest : public ::testing::Test {
+class GenKernelMatrixTest : public ::testing::Test {
  public:
-  Nice::Matrix<T> mat_;
-  int calculated_ans_;
+  Nice::Matrix<T> data_matrix_;
 };
 
-typedef ::testing::Types<float, double> MyTypes;
-TYPED_TEST_CASE(RankTest, MyTypes);
+typedef ::testing::Types<float, double> FloatTypes;
+TYPED_TEST_CASE(GenKernelMatrixTest, FloatTypes);
 
-TYPED_TEST(RankTest, RankMatrix) {
-  this->mat_.resize(4, 4);
-  this->mat_ <<1.0, 3.0, 5.0, 2.0,
-               0.0, 1.0, 0.0, 3.0,
-               0.0, 0.0, 0.0, 1.0,
-               0.0, 0.0, 0.0, 0.0;
-  int correct_ans = 3;
+#define EXPECT_MATRIX_EQ(a, ref)\
+    EXPECT_EQ(a.rows(), ref.rows());\
+    EXPECT_EQ(a.cols(), ref.cols());\
+    for (int i = 0; i < a.rows(); i++)\
+      for (int j = 0; j < a.cols(); j++)\
+        EXPECT_NEAR(double(a(i, j)), double(ref(i, j)), 0.0001);\
 
-  this->calculated_ans_ = Nice::CpuOperations<TypeParam>::Rank(this->mat_);
-  EXPECT_EQ(correct_ans, this->calculated_ans_);
+TYPED_TEST(GenKernelMatrixTest, GaussianKernel) {
+  Nice::KernelType kernel_type = Nice::kGaussianKernel;
+  this->data_matrix_.resize(2, 3);
+  this->data_matrix_ << 1.0, 2.0, 3.0,
+                        4.0, 5.0, 6.0;
+  Nice::Matrix<TypeParam> kernel_matrix =
+      Nice::CpuOperations<TypeParam>::GenKernelMatrix(
+          this->data_matrix_,
+          kernel_type,
+          1.0);
+  Nice::Matrix<TypeParam> kernel_matrix_ref(2,2);
+  kernel_matrix_ref << exp(-0.0), exp(-sqrt(27.0)/2.0),
+                       exp(-sqrt(27.0)/2.0), exp(-0.0);
+  EXPECT_MATRIX_EQ(kernel_matrix, kernel_matrix_ref);
 }
-

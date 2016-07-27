@@ -20,33 +20,42 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <iostream>
+
+#include "include/gpu_operations.h"
 #include "Eigen/Dense"
 #include "gtest/gtest.h"
-#include "include/cpu_operations.h"
-#include "include/matrix.h"
 
 template<class T>
-class RankTest : public ::testing::Test {
+class GPU_MATRIX_MATRIX_ADD : public ::testing::Test {
  public:
-  Nice::Matrix<T> mat_;
-  int calculated_ans_;
+  Nice::Matrix<T> a;
+  Nice::Matrix<T> b;
+  Nice::Matrix<T> correct_ans;
+  Nice::Matrix<T> calc_ans;
+
+  void Add() {
+    calc_ans = Nice::GpuOperations<T>::Add(a, b);
+  }
 };
 
-typedef ::testing::Types<float, double> MyTypes;
-TYPED_TEST_CASE(RankTest, MyTypes);
+typedef ::testing::Types<float, double> dataTypes;
+TYPED_TEST_CASE(GPU_MATRIX_MATRIX_ADD, dataTypes);
 
-TYPED_TEST(RankTest, RankMatrix) {
-  this->mat_.resize(4, 4);
-  this->mat_ <<1.0, 3.0, 5.0, 2.0,
-               0.0, 1.0, 0.0, 3.0,
-               0.0, 0.0, 0.0, 1.0,
-               0.0, 0.0, 0.0, 0.0;
-  int correct_ans = 3;
+TYPED_TEST(GPU_MATRIX_MATRIX_ADD, BasicTest) {
+  this->a.resize(3, 3);
+  this->b.resize(3, 3);
+  this->correct_ans.resize(3, 3);
+  this->a << 0.0, 1.0, 0.0,
+             1.0, 0.0, 1.0,
+             0.0, 1.0, 0.0;
 
-  this->calculated_ans_ = Nice::CpuOperations<TypeParam>::Rank(this->mat_);
-  EXPECT_EQ(correct_ans, this->calculated_ans_);
+  this->b << 1.0, 0.0, 1.0,
+             0.0, 1.0, 0.0,
+             1.0, 0.0, 1.0;
+
+  this->correct_ans << 1.0, 1.0, 1.0,
+                       1.0, 1.0, 1.0,
+                       1.0, 1.0, 1.0;
+  this->Add();
+  ASSERT_TRUE(this->correct_ans.isApprox(this->calc_ans));
 }
-
