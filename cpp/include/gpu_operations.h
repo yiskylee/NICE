@@ -304,8 +304,16 @@ class GpuOperations {
       cublasDestroy(handle);
       // Return result
       return h_c;
+    }
   }
-}
+  /// Return the inversion of a matrix
+  /// Computation all done in GPU
+  ///
+  /// \param a
+  /// An arbitrary matrix
+  ///
+  /// \return
+  /// Inversed matrix
   static Matrix<T> Inverse(const Matrix<T> &a) {
     // Sanity Check
     if (a.rows() != a.cols()) {
@@ -526,6 +534,15 @@ class GpuOperations {
     cusolverDnDestroy(handle);
     return det;
   }
+
+  /// Return the rank of a matrix
+  /// Computation all done in GPU
+  ///
+  /// \param a
+  /// An arbitrary matrix
+  ///
+  /// \return
+  /// Rank of the input matrix
   static int Rank(const Matrix<T> &a) {
     // Obtain row echelon form through SVD
     GpuSvdSolver<T> svd;
@@ -549,7 +566,7 @@ class GpuOperations {
     int incx = 1;
     const T * h_a = &a(0);
 
-    // Allocate and transfer memories
+    //Traceocate and transfer memories
     T * h_c = reinterpret_cast<T *>(malloc(sizeof(T)));
     T * d_a;  gpuErrchk(cudaMalloc(&d_a, m * n * sizeof(T)));
     gpuErrchk(cudaMemcpy(d_a, h_a, m * n * sizeof(T), cudaMemcpyHostToDevice));
@@ -575,6 +592,15 @@ class GpuOperations {
     cublasDestroy(handle);
     return *h_c;
   }
+
+  /// Return the trace of a matrix
+  /// Computation all done in GPU
+  ///
+  /// \param a
+  /// An arbitrary matrix
+  ///
+  /// \return
+  /// Trace of the input matrix
   static T Trace(const Matrix<T> &a) {
     // Get the diagonal vector
     Vector<T> diagonal_vector = a.diagonal();

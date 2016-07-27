@@ -42,22 +42,57 @@ class SvdSolver {
   :
   svd_() {}
 
+  /// Computation function that perform the actual SVD decomposition
+  ///
+  /// \param a
+  /// An arbitrary matrix
+  ///
+  /// \return
+  /// Void
   void Compute(const Matrix<T> &a) {
     svd_.compute(a, Eigen::ComputeFullU|Eigen::ComputeFullV);
   }
 
+  /// Return the matrix U after SVD decomposition
+  ///
+  /// \param
+  /// Void
+  ///
+  /// \return
+  /// Matrix U
   Matrix<T> MatrixU() const {
     return svd_.matrixU();
   }
 
+  /// Return the matrix V after SVD decomposition
+  ///
+  /// \param
+  /// Void
+  ///
+  /// \return
+  /// Matrix V
   Matrix<T> MatrixV() const {
     return svd_.matrixV();
   }
 
+  /// Return the singular values  after SVD decomposition
+  ///
+  /// \param
+  /// Void
+  ///
+  /// \return
+  /// Vector S
   Vector<T> SingularValues() const {
     return svd_.singularValues();
   }
 
+  /// Return the rank of a matrix through SVD decomposition
+  ///
+  /// \param a
+  /// An arbitrary matrix
+  ///
+  /// \return
+  /// Matrix rank
   int Rank(const Matrix<T> &a) {
     Compute(a);
     return svd_.rank();
