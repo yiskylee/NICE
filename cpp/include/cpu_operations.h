@@ -280,7 +280,7 @@ static Vector<T> Norm(const Matrix<T> &a,
     }
     // If the axis is not 0 (default) or 1, exit with error message
     if (axis != 0 || axis != 1){
-      std::cerr << "BAD AXIS. AXIS MUST BE 0 OR 1" << std::endl;
+      std::cerr << "BAD AXIS! AXIS MUST BE 0 OR 1!";
       exit(1);
     }
     // Otherwise,  matrix is an m x n matrix
@@ -298,8 +298,7 @@ static Vector<T> Norm(const Matrix<T> &a,
       temp = Multiply(one, (1.0/m));
       C = Subtract(i,temp);
       return Multiply(C,a);
-    }
-    else if (axis == 1) { //Remove means from Rows
+    } else if (axis == 1) { //Remove means from Rows
       Matrix<T> i(n, n);
         i.setIdentity();
       one.setConstant(n, n, 1);

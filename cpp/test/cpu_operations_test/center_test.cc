@@ -81,5 +81,5 @@ TYPED_TEST(MatrixCenterTest, BadAxis) {
   this->correct_ans << -1, 0, 1,
                        -1, 0, 1,
                        -1, 0, 1;
-  ASSERT_DEATH(this->MatrixCenter(2));
+  ASSERT_DEATH(this->MatrixCenter(2), ".*");
 }
