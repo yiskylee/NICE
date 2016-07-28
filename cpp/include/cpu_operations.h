@@ -280,10 +280,12 @@ static Vector<T> Norm(const Matrix<T> &a,
       exit(1);  // Exits the program
     }
     // If the axis is not 0 (default) or 1, exit with error message
-    if (axis != 0 || axis != 1){
-      std::cerr << "BAD AXIS. AXIS MUST BE 0 OR 1" << std::endl;
+    if (axis != 0 && axis != 1){
+      std::cerr << "BAD AXIS! AXIS MUST BE 0 OR 1!";
+      //std::cout << "BAD AXIS! AXIS MUST BE 0 OR 1! (COUT)";
       exit(1);
     }
+    //std::cout << "Axis is " << axis << std::endl;
     // Otherwise,  matrix is an m x n matrix
     int m = a.rows();
     int n = a.cols();
@@ -291,15 +293,7 @@ static Vector<T> Norm(const Matrix<T> &a,
     Matrix<T> C;   //The centering identity that will be multiplied with a to get the cetnered matrix
     Matrix<T> temp; //Intermediary matrix to hold (1/n)*one
 
-    if (axis == 1) { //Remove means from Rows
-      Matrix<T> i(n, n);
-        i.setIdentity();
-      one.setConstant(n, n, 1);
-      temp = Multiply(one, (1.0/n));
-      C = Subtract(i,temp);
-      return Multiply(a, C);
-    }
-    else if(axis == 0) { //Remove means from columns
+    if(axis == 0) { //Remove means from columns
       //Calculate Cm
       Matrix<T> i(m, m);
         i.setIdentity();
@@ -307,6 +301,13 @@ static Vector<T> Norm(const Matrix<T> &a,
       temp = Multiply(one, (1.0/m));
       C = Subtract(i,temp);
       return Multiply(C,a);
+    } else if (axis == 1) { //Remove means from Rows
+      Matrix<T> i(n, n);
+        i.setIdentity();
+      one.setConstant(n, n, 1);
+      temp = Multiply(one, (1.0/n));
+      C = Subtract(i,temp);
+      return Multiply(a, C);
     }
   }
 
