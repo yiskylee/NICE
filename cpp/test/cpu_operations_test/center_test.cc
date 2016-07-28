@@ -36,7 +36,7 @@ class MatrixCenterTest : public ::testing::Test {
   Nice::Matrix<T> answer;
   float precision = .0001;
 
-  void MatrixCenter(bool row) {
+  void MatrixCenter(int row) {
     answer = Nice::CpuOperations<T>::Center(a, row);
   }
 };
@@ -77,9 +77,5 @@ TYPED_TEST(MatrixCenterTest, BadAxis) {
   this->a << 1, 2, 3,
              4, 5, 6,
              7, 8, 9;
-  this->correct_ans.resize(3, 3);
-  this->correct_ans << -1, 0, 1,
-                       -1, 0, 1,
-                       -1, 0, 1;
   ASSERT_DEATH(this->MatrixCenter(2), ".*");
 }

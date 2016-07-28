@@ -279,10 +279,12 @@ static Vector<T> Norm(const Matrix<T> &a,
       exit(1);  // Exits the program
     }
     // If the axis is not 0 (default) or 1, exit with error message
-    if (axis != 0 || axis != 1){
+    if (axis != 0 && axis != 1){
       std::cerr << "BAD AXIS! AXIS MUST BE 0 OR 1!";
+      //std::cout << "BAD AXIS! AXIS MUST BE 0 OR 1! (COUT)";
       exit(1);
     }
+    //std::cout << "Axis is " << axis << std::endl;
     // Otherwise,  matrix is an m x n matrix
     int m = a.rows();
     int n = a.cols();
