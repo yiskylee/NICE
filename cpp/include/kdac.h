@@ -175,6 +175,7 @@ class KDAC {
   int n_;  // number of samples in input data X
   int d_;  // input data X dimension d
   float lambda_;  // Learning rate lambda
+  float alpha_;  // Alpha in W optimization
   KernelType kernel_type_;  // The kernel type of the kernel matrix
   float constant_;  // In Gaussian kernel, this is sigma;
                     // In Polynomial kernel, this is the polynomial order
@@ -198,6 +199,8 @@ class KDAC {
   Matrix<T> l_matrix_;  // D^(-1/2) * K * D^(-1/2)
   Matrix<T> h_matrix_;  // Centering matrix (n by n)
   Matrix<T> gamma_matrix_;  // The gamma matrix used in gamma_ij in formula 5
+  std::vector<Matrix<T>> a_matrix_list_;  // An n*n list that contains all of
+                                         // the A_ij matrix
   Vector<T> clustering_result_;  // Current clustering result
 
 
@@ -216,6 +219,18 @@ class KDAC {
     y_matrix_temp_ = Matrix<bool>::Zero(n_, c_);
     u_converge_ = false;
     v_converge_ = false;
+    InitAMatrixList();
+  }
+
+  void InitAMatrixList(void) {
+    a_matrix_list_.resize(n_ * n_);
+    for (int i = 0; i < n_; i++) {
+      for (int j = 0; j < n_; j++) {
+        Vector<T> delta_x_ij = x_matrix_.row(i) - x_matrix_.row(j);
+        Matrix<T> A_ij = delta_x_ij.transpose() * delta_x_ij;
+        a_matrix_list_[i * n_ + j] = A_ij;
+      }
+    }
   }
 
   // Check if q is not bigger than c
@@ -228,8 +243,10 @@ class KDAC {
   }
 
   void OptimizeW(void) {
-    // For now, fix the lambda
-    lambda_ = 0.1;
+    // Initialize lambda
+    lambda_ = 1;
+    // For now, fix the alpha in sqrt(1-alpha^2)*w + alpha*gradient
+    alpha_ = 0.2;
     // Generate Y tilde matrix in equation 5
     y_matrix_tilde_ = h_matrix_ * y_matrix_ * h_matrix_;
 
@@ -246,10 +263,9 @@ class KDAC {
         didj_matrix_.array() - lambda_ * y_matrix_tilde_;
 
     // After gamma_matrix is generated, we are optimizing gamma * kij as in 5
-
-
-
-
+    for (int l = 0; l < w_matrix_.cols(); l++) {
+      T gradient_wl = GenWGradient(l);
+    }
   }
 
   void OptimizeU(void) {
@@ -289,6 +305,17 @@ class KDAC {
     d_i_ = d_ii_.array().sqrt().unaryExpr(std::ptr_fun(util::reciprocal<T>));
     d_matrix_to_the_minus_half_ = d_i_.asDiagonal();
   }
+
+//  T GenWGradient(const int l) {
+//    Vector<T> w_l = w_matrix_.col(l);
+//    // This is the matrix consisting of every (i, j) element in
+//    // the term w^T * A_(ij) * w
+//    for (int i = 0; i < d_; i++) {
+//      for (int j = 0; j < d_; j++) {
+//
+//      }
+//    }
+//  }
 };
 }  // namespace NICE
 
