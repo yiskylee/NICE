@@ -111,8 +111,42 @@ class KDAC {
   void Fit(const Matrix<T> &input_matrix) {
     // Following the pseudo code in Algorithm 1 in the paper
     Init(input_matrix);
-    OptimizeU();
-    OptimizeW();
+    while (u_converge_ == false || v_converge_== false) {
+      OptimizeU();
+      // When there is no Y, it is the the first round when the second term
+      // lambda * HSIC is zero, we do not need to optimize W, and we directly
+      // go to kmeans where Y_0 is generated
+      if (y_matrix_.rows() == 0) {
+        u_converge_ = true;
+        v_converge_ = true;
+        y_matrix_ = Matrix<bool>::Zero(n_, c_);
+      } else {
+        // When Y exist, we are generating an alternative view with a
+        // given Y_previous by doing Optimize both W and U until they converge
+        OptimizeW();
+      }
+      RunKMeans();
+    }
+  }
+
+  /// This function runs KMeans on the normalized U
+  void RunKMeans() {
+    KMeans<T> kms;
+    clustering_result_ = kms.FitPredict(u_matrix_normalized_, c_);
+    if (y_matrix_.cols() == c_) {
+      // When this is calculating Y0
+      for (int i = 0; i < n_; i++)
+        y_matrix_(i, clustering_result_(i)) = 1;
+    } else {
+      // When this is to calculate Y_i and append it to Y_[0~i-1]
+      for (int i = 0; i < n_; i++)
+        y_matrix_temp_(i, clustering_result_(i)) = 1;
+      Matrix<bool> y_matrix_new(n_, y_matrix_.cols() + c_);
+      y_matrix_new << y_matrix_, y_matrix_temp_;
+      y_matrix_ = y_matrix_new;
+      // Reset the y_matrix_temp holder to zero
+      y_matrix_temp_.setZero();
+    }
   }
 
   /// This function creates an alternative clustering result
@@ -127,32 +161,44 @@ class KDAC {
   /// \return
   /// A NICE vector of T that specifies the clustering result
   Vector<T> Predict(void) {
-
+    if (clustering_result_.rows() == 0) {
+      std::cerr << "Fit() must be run before Predict(), exiting" << std::endl;
+      exit(1);
+    } else {
+      return clustering_result_;
+    }
   }
-
 
  private:
   int c_;  // cluster number c
   int q_;  // reduced dimension q
   int n_;  // number of samples in input data X
   int d_;  // input data X dimension d
+  float lambda_;  // Learning rate lambda
   KernelType kernel_type_;  // The kernel type of the kernel matrix
   float constant_;  // In Gaussian kernel, this is sigma;
                     // In Polynomial kernel, this is the polynomial order
                     // In Linear kernel, this is c as well
-  bool u_converge;  // If matrix U reaches convergence, false by default
-  bool v_converge;  // If matrix V reaches convergence, false by default
+  bool u_converge_;  // If matrix U reaches convergence, false by default
+  bool v_converge_;  // If matrix V reaches convergence, false by default
   Matrix<T> x_matrix_;  // Input matrix X (n by d)
   Matrix<T> w_matrix_;  // Transformation matrix W (d by q). Initialized to I
   Matrix<bool> y_matrix_;  // Labeling matrix Y (n by (c0 + c1 + c2 + ..))
+  Matrix<bool> y_matrix_temp_;  // The matrix that holds the current Y_i
+  Matrix<T> y_matrix_tilde_;  // The kernel matrix for Y
   Matrix<T> d_matrix_;  // Diagonal degree matrix D (n by n)
   Matrix<T> d_matrix_to_the_minus_half_;  // D^(-1/2) matrix
+  Vector<T> d_ii_;  // The diagonal vector of the matrix D
+  Vector<T> d_i_;  // The diagonal vector of the matrix D^(-1/2)
+  Matrix<T> didj_matrix_;  // The matrix whose element (i, j) equals to
+                           // di * dj - the ith and jth element from vector d_i_
   Matrix<T> k_matrix_;  // Kernel matrix K (n by n)
   Matrix<T> u_matrix_;  // Embedding matrix U (n by c)
   Matrix<T> u_matrix_normalized_;  // Row-wise normalized U
   Matrix<T> l_matrix_;  // D^(-1/2) * K * D^(-1/2)
   Matrix<T> h_matrix_;  // Centering matrix (n by n)
-  Vector<T> clustering_result;  // Current clustering result
+  Matrix<T> gamma_matrix_;  // The gamma matrix used in gamma_ij in formula 5
+  Vector<T> clustering_result_;  // Current clustering result
 
 
   // Initialization
@@ -167,9 +213,9 @@ class KDAC {
 //    u_matrix_ = Matrix<T>::Zero(n_, c_, 0);
     h_matrix_ = Matrix<T>::Identity(n_, n_)
         - Matrix<T>::Constant(n_, n_, 1) / float(n_);
-    clustering_result = Vector<T>::Zero(n_);
-    u_converge = false;
-    v_converge = false;
+    y_matrix_temp_ = Matrix<bool>::Zero(n_, c_);
+    u_converge_ = false;
+    v_converge_ = false;
   }
 
   // Check if q is not bigger than c
@@ -182,6 +228,27 @@ class KDAC {
   }
 
   void OptimizeW(void) {
+    // For now, fix the lambda
+    lambda_ = 0.1;
+    // Generate Y tilde matrix in equation 5
+    y_matrix_tilde_ = h_matrix_ * y_matrix_ * h_matrix_;
+
+    // didj matrix contains the element (i, j) that eqaul to d_i * d_j
+    didj_matrix_ = d_i_.transpose() * d_i_;
+
+    // Generate the Gamma matrix in equation 5, which is a constant since
+    // we have U fixed. Note that instead of generating one element of
+    // gamma_ij on the fly as in the paper, we generate the whole gamma matrix
+    // at one time and then access its entry of (i, j)
+    // This is an element-wise operation
+    // u*ut and didj matrix has the same size
+    gamma_matrix_ = u_matrix_ * u_matrix_.transpose().array() /
+        didj_matrix_.array() - lambda_ * y_matrix_tilde_;
+
+    // After gamma_matrix is generated, we are optimizing gamma * kij as in 5
+
+
+
 
   }
 
@@ -201,8 +268,7 @@ class KDAC {
     // d_matrix_ = d_i.asDiagonal();
 
     // Generate D and D^(-1/2)
-    CpuOperations<T>::GenDegreeMatrix(
-        k_matrix_, d_matrix_, d_matrix_to_the_minus_half_);
+    GenDegreeMatrix();
     l_matrix_ = d_matrix_to_the_minus_half_ * k_matrix_ *
         d_matrix_to_the_minus_half_;
     SvdSolver<T> solver;
@@ -213,6 +279,16 @@ class KDAC {
     u_matrix_normalized_ = CpuOperations<T>::Normalize(u_matrix_, 2, 1);
   }
 
+  /// Generates a degree matrix D from an input kernel matrix
+  /// It also generates D^(-1/2) and two diagonal vectors
+  void GenDegreeMatrix(void) {
+    // Generate the diagonal vector d_i and degree matrix D
+    d_ii_ = k_matrix_.rowwise().sum();
+    d_matrix_ = d_ii_.asDiagonal();
+    // Generate matrix D^(-1/2)
+    d_i_ = d_ii_.array().sqrt().unaryExpr(std::ptr_fun(util::reciprocal<T>));
+    d_matrix_to_the_minus_half_ = d_i_.asDiagonal();
+  }
 };
 }  // namespace NICE
 
