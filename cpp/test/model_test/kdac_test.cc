@@ -128,3 +128,17 @@ TYPED_TEST(KDACTest, FitDMatrix) {
       this->ReadTestData("d_matrix", "Fit", "ref");
   EXPECT_MATRIX_EQ(d_matrix, d_matrix_ref);
 }
+
+TYPED_TEST(KDACTest, FitAMatrixList) {
+  this->kdac_->Fit(this->data_matrix_);
+  int n = this->data_matrix_.rows();
+  std::vector<Nice::Matrix<TypeParam>> a_matrix_list = this->kdac_->GetAList();
+  Nice::Matrix<TypeParam> a_matrix = a_matrix_list[2 * n + 3];
+  Nice::Matrix<TypeParam> a_matrix_ref =
+      this->ReadTestData("a_matrix", "Fit", "ref");
+  EXPECT_MATRIX_EQ(a_matrix, a_matrix_ref);
+//  std::cout << a_matrix_list[10] << std::endl << std::endl;
+//  for (int i = 0; i < n; i++)
+//    for (int j = 0; j < n; j++)
+//      std::cout << a_matrix_list[i * n + j] << std::endl << std::endl;
+}

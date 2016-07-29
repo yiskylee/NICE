@@ -94,6 +94,10 @@ class KDAC {
     return k_matrix_;
   }
 
+  std::vector<Matrix<T>> GetAList(void) {
+    return a_matrix_list_;
+  }
+
   /// Set the kernel type: kGaussianKernel, kPolynomialKernel, kLinearKernel
   /// And set the constant associated the kernel
   void SetKernel(KernelType kernel_type, float constant) {
@@ -119,7 +123,7 @@ class KDAC {
       if (y_matrix_.rows() == 0) {
         u_converge_ = true;
         v_converge_ = true;
-        y_matrix_ = Matrix<bool>::Zero(n_, c_);
+        y_matrix_ = Matrix<T>::Zero(n_, c_);
       } else {
         // When Y exist, we are generating an alternative view with a
         // given Y_previous by doing Optimize both W and U until they converge
@@ -141,7 +145,7 @@ class KDAC {
       // When this is to calculate Y_i and append it to Y_[0~i-1]
       for (int i = 0; i < n_; i++)
         y_matrix_temp_(i, clustering_result_(i)) = 1;
-      Matrix<bool> y_matrix_new(n_, y_matrix_.cols() + c_);
+      Matrix<T> y_matrix_new(n_, y_matrix_.cols() + c_);
       y_matrix_new << y_matrix_, y_matrix_temp_;
       y_matrix_ = y_matrix_new;
       // Reset the y_matrix_temp holder to zero
@@ -184,8 +188,8 @@ class KDAC {
   bool v_converge_;  // If matrix V reaches convergence, false by default
   Matrix<T> x_matrix_;  // Input matrix X (n by d)
   Matrix<T> w_matrix_;  // Transformation matrix W (d by q). Initialized to I
-  Matrix<bool> y_matrix_;  // Labeling matrix Y (n by (c0 + c1 + c2 + ..))
-  Matrix<bool> y_matrix_temp_;  // The matrix that holds the current Y_i
+  Matrix<T> y_matrix_;  // Labeling matrix Y (n by (c0 + c1 + c2 + ..))
+  Matrix<T> y_matrix_temp_;  // The matrix that holds the current Y_i
   Matrix<T> y_matrix_tilde_;  // The kernel matrix for Y
   Matrix<T> d_matrix_;  // Diagonal degree matrix D (n by n)
   Matrix<T> d_matrix_to_the_minus_half_;  // D^(-1/2) matrix
@@ -194,6 +198,7 @@ class KDAC {
   Matrix<T> didj_matrix_;  // The matrix whose element (i, j) equals to
                            // di * dj - the ith and jth element from vector d_i_
   Matrix<T> k_matrix_;  // Kernel matrix K (n by n)
+  Matrix<T> k_matrix_y_;  // Kernel matrix for Y (n by n)
   Matrix<T> u_matrix_;  // Embedding matrix U (n by c)
   Matrix<T> u_matrix_normalized_;  // Row-wise normalized U
   Matrix<T> l_matrix_;  // D^(-1/2) * K * D^(-1/2)
@@ -216,7 +221,7 @@ class KDAC {
 //    u_matrix_ = Matrix<T>::Zero(n_, c_, 0);
     h_matrix_ = Matrix<T>::Identity(n_, n_)
         - Matrix<T>::Constant(n_, n_, 1) / float(n_);
-    y_matrix_temp_ = Matrix<bool>::Zero(n_, c_);
+    y_matrix_temp_ = Matrix<T>::Zero(n_, c_);
     u_converge_ = false;
     v_converge_ = false;
     InitAMatrixList();
@@ -227,7 +232,9 @@ class KDAC {
     for (int i = 0; i < n_; i++) {
       for (int j = 0; j < n_; j++) {
         Vector<T> delta_x_ij = x_matrix_.row(i) - x_matrix_.row(j);
-        Matrix<T> A_ij = delta_x_ij.transpose() * delta_x_ij;
+//        Matrix<T> A_ij = delta_x_ij.transpose() * delta_x_ij;
+        Matrix<T> A_ij = CpuOperations<T>::OuterProduct(delta_x_ij, delta_x_ij);
+//        std::cout << A_ij << std::endl << std::endl;
         a_matrix_list_[i * n_ + j] = A_ij;
       }
     }
@@ -247,8 +254,10 @@ class KDAC {
     lambda_ = 1;
     // For now, fix the alpha in sqrt(1-alpha^2)*w + alpha*gradient
     alpha_ = 0.2;
-    // Generate Y tilde matrix in equation 5
-    y_matrix_tilde_ = h_matrix_ * y_matrix_ * h_matrix_;
+    // Generate K_y
+    k_matrix_y_ = y_matrix_ * y_matrix_.transpose();
+    // Generate Y tilde matrix in equation 5 from kernel matrix of Y
+    y_matrix_tilde_ = h_matrix_ * k_matrix_y_ * h_matrix_;
 
     // didj matrix contains the element (i, j) that eqaul to d_i * d_j
     didj_matrix_ = d_i_.transpose() * d_i_;
@@ -259,13 +268,44 @@ class KDAC {
     // at one time and then access its entry of (i, j)
     // This is an element-wise operation
     // u*ut and didj matrix has the same size
-    gamma_matrix_ = u_matrix_ * u_matrix_.transpose().array() /
-        didj_matrix_.array() - lambda_ * y_matrix_tilde_;
+    gamma_matrix_ = ((u_matrix_ * u_matrix_.transpose()).array() /
+        didj_matrix_.array()).matrix() - lambda_ * y_matrix_tilde_;
 
     // After gamma_matrix is generated, we are optimizing gamma * kij as in 5
+    // g_of_w is g(w_l) that is multiplied by g(w_(l+1)) in each iteration
+    // of changing l. When l = 0, g_of_w is 1, when l = 1, g_of_w is 1 * g(w_1)
+    // when l = 2, g_of_w is 1 * g(w_1) * g(w_2)...
+    T g_of_w = T(1);
     for (int l = 0; l < w_matrix_.cols(); l++) {
-      T gradient_wl = GenWGradient(l);
+
+      // Optimize the column vector in w_matrix w_l
+      Vector<T> w_l = w_matrix_.col(l);
+      // Get orthogonal to make w_l orthogonal to previous w_0 to w_(l-1)
+      // Normalize w_l
+
+      // Make sure every w_l is converged
+      bool w_l_converge = false;
+      while (w_l_converge != true) {
+        // Calculate the w gradient in equation 13
+        Vector<T> w_l_gradient = GenWGradient(g_of_w, w_l);
+        // Now get w_gradient orthogonal to all w: w_0 to w_l
+        // Make w_gradient norm 1
+        w_l = sqrt(1.0 - pow(alpha_, 2)) * w_l + w_l_gradient;
+      }
+      // Need to make g_of_w a matrix
+      g_of_w *= g_of_w * exp(-w_l.transpose() * )
     }
+  }
+  Vector<T> GenWGradient(const T &g_of_w, const Vector<T> &w_l) {
+    Vector<T> w_gradient(d_);
+    for (int i = 0; i < n_; i++) {
+      for (int j = 0; j < n_; j++) {
+        w_gradient += -gamma_matrix_(i, j) * g_of_w *
+            exp(-w_l.transpose() * a_matrix_list_(i, j) * w_l) *
+            a_matrix_list_(i, j) * w_l;
+      }
+    }
+    return w_gradient;
   }
 
   void OptimizeU(void) {
