@@ -41,5 +41,45 @@ We are following [Google c++ style guide](https://google.github.io/styleguide/cp
 For developers preferring IDE like Eclipse, you can also import `eclipse-cpp-google-style.xml`(Can be found from [Google c++ style guide](https://google.github.io/styleguide/cppguide.html)) into Eclipse to auto-format your code before using `cpplint.py` or `make check`.
 
 ## Documentation
-We are using Doxygen to automatically generate project documents. To produce the html based documents, you should run `make doc` after you run `./configure.sh`. Make sure Doxygen is intalled on your computer. For Ubuntu users, type command `sudo apt-get install doxygen` to intall it. For more information about Doxygen, check their [official website](www.doxygen.org).
+We are using Doxygen to automatically generate project documents. To produce the html based documents, you should run `make doc` after you run `./configure.sh`. Make sure Doxygen is intalled on your computer. For Ubuntu users, type command `sudo apt-get install doxygen` to intall it. For more information about Doxygen, check their [official website](http://www.stack.nl/~dimitri/doxygen/).
 All documents will be generated under directory doc/html. Double click index.html to browse generated documents from any web browser you like(Chrome, Firefox etc.)
+
+## Hosting documentation on Github pages
+We will be using Github pages in order to publically host our compiled doxygen files.
+
+Considering that we plan to support program language other than C++ for NICE, we decide to host documentation of different program language in separate repositories. For C++ version, the doxygen-genreated documentation is located in [here](https://yiskylee.github.io/NiceCppDoc/)
+
+Due to the complexity of working with submodule in git, the documentation maintainance and publishing will only be done by contributors using branch. Therefore, contributors using fork should only be responsible of documenting through doxygen comments in source code. Besides, they can generate local documents by following normal procedure described as previous section. 
+
+### Steps for creating and publishing NICE documentation
+We are using submodule tools of git to assoicate documentation repository with NICE repository
+
+1. Clone a documentation repository
+`
+$ git clone <linkToCloneDocRepo>
+`
+2. Create a gh-pages branch (gh-pages is a special branch in github that aims to hosting html-based documentation directly on-line)
+`
+$ git checkout --orphan gh-pages
+$ rm -rf *
+$ git add .
+$ git commit -m "Initialize gh-pages branch as empty directory"
+$ git push origin gh-pages
+`
+3. Go back to NICE repository
+4. Set up a submodule
+`
+$ git submodule add -b gh-pages <linkToCloneDocRepo> cpp/doc
+`
+5. Generate the documentation through doxygen and push it to gh-pages branch
+
+### Steps for updating NICE documentation
+(Assume that document submodule have been established)
+
+1. Clone a NICE repo
+2. Initialize the submodule
+`
+$ git submodule update --init
+`
+3. Go inside doc directory and checkout gh-pages branch(This step has to be done because the a dettached HEAD will be returned for the submodule)
+4. Generate the documentation through doxygen and push it to gh-pages branch
