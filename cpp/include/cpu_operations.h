@@ -333,29 +333,31 @@ static Vector<T> Norm(const Matrix<T> &a,
       exit(1);  // Exits the program
     }
     // If the axis is not 0 (default) or 1, exit with error message
-    if (axis != 0 || axis != 1){
+    if (axis != 0 && axis != 1){
       std::cerr << "BAD AXIS. AXIS MUST BE 0 OR 1" << std::endl;
       exit(1);
     }
     // Otherwise,  matrix is an m x n matrix
     int m = a.rows();
-    int n = a.cols();
-    
-    Vector<T> temp(n);   //Vector holding current row
-    Vector<T> stdDev(n); //Vector holding standard deviation of current row
+    int n = a.cols(); 
 
     if(axis == 0) { //Standardize via columns
+      Vector<T> temp(m);   //Vector holding current row
+      Vector<T> stdDev(m); //Vector holding standard deviation of current row
       for(int i = 0; i < m; i++){ //Subtract the standard deviation of each column from their respective column
-        temp = a.cols(i);
-        stdDev = Multiply(temp.norm(), sqrt(1.0/m));
-        a.cols(i) = Subtract(temp, stdDev);
+        temp = a.col(i); 
+        temp.transposeInPlace();
+        stdDev = Multiply(Norm(temp, 2, 1), sqrt(1.0/m));
+        a.col(i) = Transpose(Subtract(temp, stdDev)); //Turn row back to col
       }
     }
     else if (axis == 1) { //Standardize via rows
+      Vector<T> temp(n);   //Vector holding current row
+      Vector<T> stdDev(n); //Vector holding standard deviation of current row
       for(int i = 0; i < n; i++){ //Subtract the standard deviation of each row from their respective rows
-        temp = a.rows(i);
-        stdDev = Multiply(temp.norm(), sqrt(1.0/n));
-        a.rows(i) = Subtract(temp, stdDev);
+        temp = a.row(i);
+        stdDev = Multiply(Norm(temp), sqrt(1.0/n));
+        a.row(i) = Subtract(temp, stdDev);
       }
     }
     return a;
