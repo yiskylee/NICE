@@ -142,3 +142,20 @@ TYPED_TEST(KDACTest, FitAMatrixList) {
 //    for (int j = 0; j < n; j++)
 //      std::cout << a_matrix_list[i * n + j] << std::endl << std::endl;
 }
+
+TYPED_TEST(KDACTest, FitYMatrixTilde) {
+  this->kdac_->Fit(this->data_matrix_);
+  Nice::Matrix<TypeParam> y_matrix_tilde = this->kdac_->GetYTilde();
+  Nice::Matrix<TypeParam> y_matrix_tilde_ref =
+      this->ReadTestData("y_matrix_tilde", "Fit", "ref");
+  EXPECT_MATRIX_EQ(y_matrix_tilde, y_matrix_tilde_ref);
+}
+
+TYPED_TEST(KDACTest, FitGammaMatrix) {
+  this->kdac_->Fit(this->data_matrix_);
+  Nice::Matrix<TypeParam> gamma_matrix = this->kdac_->GetGamma();
+  Nice::Matrix<TypeParam> gamma_matrix_ref =
+      this->ReadTestData("gamma_matrix", "Fit", "ref");
+//  std::cout << gamma_matrix << std::endl;
+  EXPECT_MATRIX_EQ(gamma_matrix.col(0), gamma_matrix_ref.col(0));
+}
