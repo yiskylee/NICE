@@ -514,6 +514,7 @@ class CpuOperations {
       C = Subtract(i,temp);
       return Multiply(a, C);
     }
+  }
 /// statix Matrix <T> Normalize(const Matrix <T> &a, const int &p
 /// =2, const int &axis = 0) normalizes a m x n matrix by element.
 ///
@@ -528,8 +529,7 @@ class CpuOperations {
 /// Matrix <T>
 /// \sa
 /// \ref Norm
-  static Matrix<T> Normalize(const Matrix<T> &a, const int &p = 2,
-                                                  const int &axis = 0) {
+  static Matrix<T> Normalize(const Matrix<T> &a, const int &p = 2, const int &axis = 0) {
     int num_rows = a.rows();
     int num_cols = a.cols();
     Matrix<T> b(num_rows, num_cols);
