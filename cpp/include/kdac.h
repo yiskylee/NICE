@@ -121,7 +121,6 @@ class KDAC {
   /// It only generates the clustering result but does not returns it
   /// Users can use Predict() to get the clustering result returned
   void Fit(const Matrix<T> &input_matrix) {
-    // Following the pseudo code in Algorithm 1 in the paper
     Init(input_matrix);
     // When there is no Y, it is the the first round when the second term
     // lambda * HSIC is zero, we do not need to optimize W, and we directly
@@ -138,13 +137,18 @@ class KDAC {
     // have an existing clustering result in Y
     // When Y exist, we are generating an alternative view with a
     // given Y_previous by doing Optimize both W and U until they converge
+    // Following the pseudo code in Algorithm 1 in the paper
     Init();
-    while (u_converge_ == false || w_converge_== false) {
+    while (!u_w_converge_) {
       OptimizeU();
       OptimizeW();
+      u_w_converge_ = CheckConverged(u_matrix_, pre_u_matrix_, threshold_) &&
+          CheckConverged(w_matrix_, pre_w_matrix_, threshold_);
     }
     RunKMeans();
   }
+
+
 
   /// Running Predict() after Fit() returns
   /// the current clustering result as a Vector of T
@@ -172,6 +176,7 @@ class KDAC {
                     // In Linear kernel, this is c as well
   bool u_converge_;  // If matrix U reaches convergence, false by default
   bool w_converge_;  // If matrix W reaches convergence, false by default
+  bool u_w_converge_;  // If matrix U and W both converge, false by default
   T threshold_;  // To determine convergence
   Matrix<T> x_matrix_;  // Input matrix X (n by d)
   Matrix<T> w_matrix_;  // Transformation matrix W (d by q). Initialized to I
@@ -220,6 +225,7 @@ class KDAC {
   void Init(void) {
     u_converge_ = false;
     w_converge_ = false;
+    u_w_converge_ = false;
   }
 
   void InitAMatrixList(void) {
@@ -316,11 +322,7 @@ class KDAC {
     // its rows
     u_matrix_ = solver.MatrixU().leftCols(c_);
     u_matrix_normalized_ = CpuOperations<T>::Normalize(u_matrix_, 2, 1);
-    if (pre_u_matrix_.rows() != 0) {
-      T diff = CpuOperations<T>::FrobeniusNorm(u_matrix_ - pre_u_matrix_) /
-          CpuOperations<T>::FrobeniusNorm(u_matrix_) < threshold_;
 
-    }
   }
 
   void OptimizeW(void) {
@@ -333,7 +335,7 @@ class KDAC {
     // Generate Y tilde matrix in equation 5 from kernel matrix of Y
     y_matrix_tilde_ = h_matrix_ * k_matrix_y_ * h_matrix_;
 
-    // didj matrix contains the element (i, j) that eqaul to d_i * d_j
+    // didj matrix contains the element (i, j) that equal to d_i * d_j
     didj_matrix_ = d_i_.transpose() * d_i_;
 
     // Generate the Gamma matrix in equation 5, which is a constant since
@@ -355,29 +357,35 @@ class KDAC {
     // when l = 2, g_of_w is 1 .* g(w_1) .* g(w_2)...
     Matrix<T> g_of_w = Matrix<T>::Constant(n_, n_, 1);
     for (int l = 0; l < w_matrix_.cols(); l++) {
-
       // Optimize the column vector in w_matrix w_l
       Vector<T> w_l = w_matrix_.col(l);
-      // Get orthogonal to make w_l orthogonal to previous w_0 to w_(l-1)
+      // Get orthogonal to make w_l orthogonal to vectors from w_0 to w_(l-1)
+      // when l is not 0
+      if (l != 0)
+        GenOrthogonal(w_matrix_.leftCols(l), w_l);
       // Normalize w_l
+      w_l = w_l.array() / w_l.norm();
 
       // Make sure every w_l is converged
-      bool w_l_converge = false;
-      while (w_l_converge != true) {
+      bool w_l_converged = false;
+      Vector<T> pre_w_l = w_l;
+      while (!w_l_converged) {
         // Calculate the w gradient in equation 13
         Vector<T> w_l_gradient = GenWGradient(g_of_w, w_l);
         // Now get w_gradient orthogonal to all w: w_0 to w_l
+        if (l != 0)
+          GenOrthogonal(w_matrix_.leftCols(l), w_l_gradient);
         // Make w_gradient norm 1
+        w_l_gradient = w_l_gradient.array() / w_l_gradient.norm();
+
         w_l = sqrt(1.0 - pow(alpha_, 2)) * w_l + w_l_gradient;
-
-
-        // NEED TO BE CHANGED
-        w_l_converge = true;
-
-
-
+        w_l_converged = CheckConverged(w_l, pre_w_l, threshold_);
       }
-//      UpdateGOfW(g_of_w, w_l, kernel_type_);
+      // Update col l in matrix w by the new w_l
+      // TODO: Need to learn about if using Vector<T> &w_l = w_matrix_.col(l)
+      // would be better
+      w_matrix_.col(l) = w_l;
+      UpdateGOfW(g_of_w, w_l, kernel_type_);
     }
   }
 
@@ -390,6 +398,48 @@ class KDAC {
     // Generate matrix D^(-1/2)
     d_i_ = d_ii_.array().sqrt().unaryExpr(std::ptr_fun(util::reciprocal<T>));
     d_matrix_to_the_minus_half_ = d_i_.asDiagonal();
+  }
+
+  void GenOrthogonal(const Matrix<T> &a, Vector<T> &b) {
+    int num_cols = a.cols();
+    Vector<T> projection;
+    for (int j = 0; j < num_cols; j++) {
+      float Dotproduct = a.col(j).dot(b);
+      float MagnitudeSquared = pow((a.col(j).norm()), 2);
+      projection = (Dotproduct / MagnitudeSquared) * a.col(j);
+      b -= projection;
+    }
+  }
+
+  bool CheckConverged(const Matrix<T> &matrix, const Matrix<T> &pre_matrix,
+                     const T &threshold) {
+    // If this is the first time the matrix is generated, it is not converged
+    if (matrix.rows() == 0) {
+      pre_matrix = matrix;
+      return false;
+      // else check if the change is less than the threshold
+    } else {
+      bool converged = (CpuOperations<T>::FrobeniusNorm(matrix - pre_matrix)
+          / CpuOperations<T>::FrobeniusNorm(pre_matrix)) < threshold;
+      if (converged == false)
+        pre_matrix = matrix;
+      return converged;
+    }
+  }
+
+  bool CheckConverged(const Vector<T> &vector, const Vector<T> &pre_vector,
+                      const T &threshold) {
+    // If this is the first time the vecotr is generated, it is not converged
+    if (vector.size() == 0) {
+      pre_vector = vector;
+      return false;
+      // else check if the change is less than the threshold
+    } else {
+      bool converged = ((vector - pre_vector).norm() / pre_vector.norm()) < threshold;
+      if (converged == false)
+        pre_vector = vector;
+      return converged;
+    }
   }
 
 };
