@@ -308,7 +308,6 @@ class CpuOperations {
       exit(1);
     }
 }
-
   static T Determinant(const Matrix<T> &a);
 /// static int Rank(const Matrix <T> &a) is a function that returns
 ///                                      the rank of a m x n matrix
@@ -460,36 +459,76 @@ class CpuOperations {
     }
     return b;
   }
-/// statix Matrix <T> Normalize(const Matrix <T> &a, const int &p
-/// =2, const int &axis = 0) normalizes a m x n matrix by element.
-///
-/// \param a
-/// const Matrix<T> &a
-/// \param b
-/// const int &p = 2
-/// \param c
-/// const int &axis = 0
-///
-/// \return
-/// Matrix <T>
-/// \sa
-/// \ref Norm
-  static Matrix<T> Normalize(const Matrix<T> &a, const int &p = 2,
-                                                  const int &axis = 0) {
+  /// static Matrix <T> Normalize(const Matrix <T> &a, const int &p
+  /// =2, const int &axis = 0)
+  /// This function returns a vector of normalizes a m x n matrix by element.
+  ///
+  /// \param a
+  /// The data matrix to normalize
+  /// \param p
+  /// const int &p = 2
+  /// \param axis
+  /// const int &axis = 0
+  ///
+  /// \return
+  /// Matrix <T>
+  /// \sa
+  /// \ref Norm
+  static Matrix<T> Normalize(const Matrix<T> &a,
+                             const int &p = 2,
+                             const int &axis = 0) {
     int num_rows = a.rows();
     int num_cols = a.cols();
     Matrix<T> b(num_rows, num_cols);
     if (axis == 0) {
-     b = a.transpose().array().colwise() / Norm(a, p, axis).array();
-     return b.transpose();
+      b = a.transpose().array().colwise() / Norm(a, p, axis).array();
+      return b.transpose();
     } else if (axis == 1) {
-     b = a.array().colwise() / Norm(a, p, axis).array();
-     return b;
+      b = a.array().colwise() / Norm(a, p, axis).array();
+      return b;
     } else {
-     std::cerr << "Axis must be zero or one!";
-     exit(1);
+      std::cerr << "Axis must be zero or one!";
+      exit(1);
     }
-  }
+}
+  /// static void GetOrthogonal(const Vector<T> &a, Vector<T> &b)
+  /// This function takes a two vectors, a and b, and replaces b with a
+  /// vector that is orthogonal to a.
+  ///
+  /// \param a
+  /// A vector that is passed in.
+  /// \param b
+  /// A vector that is passed in and replaced by a vector that is orthogonal
+  /// to a.
+  static void GetOrthogonal(const Vector<T> &a, Vector<T> &b) {
+    if (a.isZero() == 1 || b.isZero() == 1)
+     std::cerr << "Vector can not be all zeros!";
+    Vector<T> projection;
+    projection = ((a.dot(b))/(pow(a.norm(), 2))) * a;
+    b -= projection;
+}
+  /// static void GetOrthogonal(const Matrix<T> &a, Vector<T> &b)
+  /// This function takes a matrix, in which all the columns are mutually
+  /// orthogonal to each other, and a vector. The vector is modified to be
+  /// orthogonal to each column vector in the matrix.
+  ///
+  /// \param a
+  /// A matrix that is passed in with mutually orthogonal column vectors.
+  /// \param b
+  /// A vector that is passed in and modified to be orthogonal
+  /// to a.
+  /// \sa
+  /// ref GetOrthogonal(const Vector<T> &a, Vector<T> &b)
+  static void GetOrthogonal(const Matrix<T> &a, Vector<T> &b) {
+    int num_cols = a.cols();
+    Vector<T> projection;
+    for (int j = 0; j < num_cols; j++) {
+      float Dotproduct = a.col(j).dot(b);
+      float MagnitudeSquared = pow((a.col(j).norm()), 2);
+      projection = (Dotproduct / MagnitudeSquared) * a.col(j);
+      b -= projection;
+    }
+}
   /// Generates a kernel matrix from an input data_matrix
   /// \param data_matrix
   /// Input matrix whose rows represent samples and columns represent features
