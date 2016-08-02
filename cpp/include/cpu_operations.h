@@ -674,21 +674,22 @@ class CpuOperations {
     //Matrix<T> temp = a.array().colwise() - a.array().rowwise().mean(); //This
     //is the same as centering the matrix row wise so we choose to center instead.
     Matrix<T> b = Center(a, axis);
+    std::cout << b << std::endl;
     Vector<T> returnValue;
     
-    if(axis == 0){ //Find Standard Deviation of each row
-      b = b.array().pow(2); //Square every element
-      returnValue = b.array().rowwise().sum(); //Sum entire row
-      returnValue *= (1.0/num_cols); //multply by 1/size
-      returnValue = returnValue.array().pow(.5); //take square root
-      return returnValue;
-    } else if(axis == 1){ //Find Standard Deviation of each column
+    if(axis == 0){ //Find Standard Deviation of each column
       b = b.array().pow(2);
       returnValue = b.array().colwise().sum();
       returnValue *= (1.0/num_rows);
       returnValue = returnValue.array().pow(.5);
       return returnValue; 
-    }else{ //Bad Axis
+    } else if(axis == 1){ //Find Standard Deviation of each row
+      b = b.array().pow(2); //Square every element
+      returnValue = b.array().rowwise().sum(); //Sum entire row
+      returnValue *= (1.0/num_cols); //multply by 1/size
+      returnValue = returnValue.array().pow(.5); //take square root
+      return returnValue;
+    } else{ //Bad Axis
       std::cerr << "Axis must be 0 or 1!";
       exit(1);
     }
