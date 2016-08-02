@@ -589,6 +589,8 @@ class CpuOperations {
     int num_rows = a.rows();
     int num_cols = a.cols();
     Matrix<T> b(num_rows, num_cols);
+    
+
     if (axis == 0) {
      b = a.transpose().array().colwise() / Norm(a, p, axis).array();
      return b.transpose();
@@ -599,6 +601,7 @@ class CpuOperations {
      std::cerr << "Axis must be zero or one!";
      exit(1);
     }
+
   }
   /// Generates a kernel matrix from an input data_matrix
   /// \param data_matrix
@@ -650,6 +653,47 @@ class CpuOperations {
     degree_matrix_to_the_minus_half = d_i.array().sqrt().unaryExpr(
         std::ptr_fun(util::reciprocal<T>)).matrix().asDiagonal();
   }
+  ///Calculates the standard deviation of a given vector 
+  ///
+  /// \param a
+  /// Input vector
+  /// 
+  /// Output a vector containing the standaard deviations of the rows or columns
+  /// of the input matrix
+  static Vector<T> StandardDeviation(const Matrix<T> &a, const int axis = 0){
+    //Std = sqrt(1/n*[(x1-u)^2+(x2-u)^2...+(xn-u)^2])
+    //u = average of the vector
+    //n = number of the elements
+    if(a.rows() == 0 || a.cols() == 0){
+      std::cerr << "EMPTY MATRIX!";
+      exit(1);
+    }  
+    int num_rows = a.rows();
+    int num_cols = a.cols();
+    
+    //Matrix<T> temp = a.array().colwise() - a.array().rowwise().mean(); //This
+    //is the same as centering the matrix row wise so we choose to center instead.
+    Matrix<T> b = Center(a, axis);
+    Vector<T> returnValue;
+    
+    if(axis == 0){ //Find Standard Deviation of each row
+      b = b.array().pow(2); //Square every element
+      returnValue = b.array().rowwise().sum(); //Sum entire row
+      returnValue *= (1.0/num_cols); //multply by 1/size
+      returnValue = returnValue.array().pow(.5); //take square root
+      return returnValue;
+    } else if(axis == 1){ //Find Standard Deviation of each column
+      b = b.array().pow(2);
+      returnValue = b.array().colwise().sum();
+      returnValue *= (1.0/num_rows);
+      returnValue = returnValue.array().pow(.5);
+      return returnValue; 
+    }else{ //Bad Axis
+      std::cerr << "Axis must be 0 or 1!";
+      exit(1);
+    }
+  } 
+
 };
 }  // namespace Nice
 #endif  // CPP_INCLUDE_CPU_OPERATIONS_H_
