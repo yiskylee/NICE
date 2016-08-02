@@ -566,7 +566,7 @@ class GpuOperations {
     int incx = 1;
     const T * h_a = &a(0);
 
-    //Traceocate and transfer memories
+    // Traceocate and transfer memories
     T * h_c = reinterpret_cast<T *>(malloc(sizeof(T)));
     T * d_a;  gpuErrchk(cudaMalloc(&d_a, m * n * sizeof(T)));
     gpuErrchk(cudaMemcpy(d_a, h_a, m * n * sizeof(T), cudaMemcpyHostToDevice));

@@ -31,4 +31,4 @@ enum KernelType {
 };
 }
 
-#endif  //CPP_INCLUDE_KERNEL_TYPES_H_
+#endif  // CPP_INCLUDE_KERNEL_TYPES_H_
