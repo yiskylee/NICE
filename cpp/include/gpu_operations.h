@@ -126,6 +126,16 @@ class GpuOperations {
       exit(1);
     }
   }
+
+  /// This function calculates the sum of the input Matrix and scalar
+  ///
+  /// \param a
+  /// Input Matrix
+  /// \param scalar
+  /// Input scalar of type T
+  ///
+  /// \return
+  /// This function returns a Matrix of type T
   static Matrix<T> Add(const Matrix<T> &a, const T &scalar) {
     int m = a.rows();
     int n = a.cols();
@@ -174,6 +184,16 @@ class GpuOperations {
     cublasDestroy(handle);
     return h_c;
   }
+
+  /// This function calculates the sum of the input Matricies
+  ///
+  /// \param a
+  /// Input Matrix 1
+  /// \param b
+  /// Input Matrix 2
+  ///
+  /// \return
+  /// This function returns a Matrix of type T
   static Matrix<T> Add(const Matrix<T> &a, const Matrix<T> &b) {
     if (a.rows() == b.rows() && a.cols() == b.cols()) {
       int m = a.rows();
@@ -227,7 +247,73 @@ class GpuOperations {
     }
   }
   static Matrix<T> Subtract(const Matrix<T> &a, const T &scalar);
-  static Matrix<T> Subtract(const Matrix<T> &a, const Matrix<T> &b);
+  static Matrix<T> Subtract(const Matrix<T> &a, const Matrix<T> &b) {
+    // If the matricies aren't identical sizes then we cannot subtract them.
+    if (a.rows() != b.rows() || a.cols() != b.cols()) {
+      std::cerr << "Matricies are not the same size" << std::endl;
+      exit(1);
+
+    // If the matricies are empty this function should not run.
+    } else if (a.rows() == 0) {
+      std::cerr << "Matricies are empty" << std::endl;
+      exit(1);
+
+    // Otherwise, everything should run fine.
+    } else {
+      // Allocate and Transfer Memory
+      int m = a.rows();
+      int n = a.cols();
+      int lda = m;
+      int ldb = n;
+      int ldc = m;
+      T alpha = 1.0;
+      T beta = -1.0;
+
+      const T * h_a = &a(0);
+      const T * h_b = &b(0);
+      Matrix<T> h_c(m, n);
+
+      T * d_a; gpuErrchk(cudaMalloc(&d_a, m * n * sizeof(T)));
+      T * d_b; gpuErrchk(cudaMalloc(&d_b, m * n * sizeof(T)));
+      T * d_c; gpuErrchk(cudaMalloc(&d_c, m * n * sizeof(T)));
+
+      gpuErrchk(cudaMemcpy(d_a, h_a, m * n * sizeof(T),
+                           cudaMemcpyHostToDevice));
+      gpuErrchk(cudaMemcpy(d_b, h_b, m * n * sizeof(T),
+                           cudaMemcpyHostToDevice));
+
+      // Set up and do cublas matrix subtract
+      cublasStatus_t stat;
+      cublasHandle_t handle;
+      cublasCreate(&handle);
+      stat = GpuMatrixMatrixSub(handle, m, n, &alpha, d_a, lda,
+                                &beta, d_b, ldb, d_c, ldc);
+
+      // Error Check
+      if (stat != CUBLAS_STATUS_SUCCESS) {
+        std::cerr << "GPU Matrix Subtract Internal Failure" << std::endl;
+        cudaFree(d_a); cudaFree(d_b); cudaFree(d_c);
+        cublasDestroy(handle);
+        exit(1);
+      }
+      cudaDeviceSynchronize();
+      // Transfer memory back and clear it
+      gpuErrchk(cudaMemcpy(&h_c(0, 0), d_c, m * n * sizeof(T),
+                           cudaMemcpyDeviceToHost));
+      cudaFree(d_a); cudaFree(d_b); cudaFree(d_c);
+      cublasDestroy(handle);
+      // Return result
+      return h_c;
+    }
+  }
+  /// Return the inversion of a matrix
+  /// Computation all done in GPU
+  ///
+  /// \param a
+  /// An arbitrary matrix
+  ///
+  /// \return
+  /// Inversed matrix
   static Matrix<T> Inverse(const Matrix<T> &a) {
     // Sanity Check
     if (a.rows() != a.cols()) {
@@ -448,6 +534,15 @@ class GpuOperations {
     cusolverDnDestroy(handle);
     return det;
   }
+
+  /// Return the rank of a matrix
+  /// Computation all done in GPU
+  ///
+  /// \param a
+  /// An arbitrary matrix
+  ///
+  /// \return
+  /// Rank of the input matrix
   static int Rank(const Matrix<T> &a) {
     // Obtain row echelon form through SVD
     GpuSvdSolver<T> svd;
@@ -471,7 +566,7 @@ class GpuOperations {
     int incx = 1;
     const T * h_a = &a(0);
 
-    // Allocate and transfer memories
+    //Traceocate and transfer memories
     T * h_c = reinterpret_cast<T *>(malloc(sizeof(T)));
     T * d_a;  gpuErrchk(cudaMalloc(&d_a, m * n * sizeof(T)));
     gpuErrchk(cudaMemcpy(d_a, h_a, m * n * sizeof(T), cudaMemcpyHostToDevice));
@@ -497,6 +592,15 @@ class GpuOperations {
     cublasDestroy(handle);
     return *h_c;
   }
+
+  /// Return the trace of a matrix
+  /// Computation all done in GPU
+  ///
+  /// \param a
+  /// An arbitrary matrix
+  ///
+  /// \return
+  /// Trace of the input matrix
   static T Trace(const Matrix<T> &a) {
     // Get the diagonal vector
     Vector<T> diagonal_vector = a.diagonal();

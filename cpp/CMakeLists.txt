@@ -1,4 +1,7 @@
 cmake_minimum_required(VERSION 2.8.9)
+if (${CMAKE_VERSION} VERSION_GREATER 3.5)
+  cmake_policy(SET CMP0046 OLD)
+endif()
 set(PROJECT_NAME Nice)
 project(Nice)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)

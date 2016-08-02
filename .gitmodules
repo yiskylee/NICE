@@ -1,0 +1,4 @@
+[submodule "cpp/doc"]
+	path = cpp/doc
+	url = https://github.com/yiskylee/NiceCppDoc.git
+	branch = gh-pages
