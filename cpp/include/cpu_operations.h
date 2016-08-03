@@ -515,6 +515,9 @@ class CpuOperations {
       temp = Multiply(one, (1.0/n));
       C = Subtract(i,temp);
       return Multiply(a, C);
+    }else{
+      std::cerr <<"BAD AXIS! AXIS MUST BE 0 or 1!";
+      exit(1);
     }
   }
 /// statix Matrix <T> Normalize(const Matrix <T> &a, const int &p
