@@ -40,7 +40,8 @@ namespace Nice {
 template<typename T>
 class CpuOperations {
  public:
-  /// This is a function that calculates the transpose Matrix of the input Matrix
+  /// This is a function that calculates the transpose Matrix of the
+  /// input Matrix
   ///
   /// \param a
   /// Input Matrix
@@ -51,7 +52,8 @@ class CpuOperations {
     return a.transpose();  // Return transpose
   }
 
-  /// This is a function that calculates the transpose Vector of the input Vector
+  /// This is a function that calculates the transpose Vector of the
+  /// input Vector
   ///
   /// \param a
   /// Input Vector
@@ -62,31 +64,31 @@ class CpuOperations {
     return a.transpose();
   }
 
-/// This is a function that calculates the product Matrix of the input Matrix
-/// and a scalar
-///
-/// \param a
-/// Input Matrix
-/// \param scalar
-/// Input scalar
-///
-/// \return
-/// This function returns a Matrix of type T
+  /// This is a function that calculates the product Matrix of the input Matrix
+  /// and a scalar
+  ///
+  /// \param a
+  /// Input Matrix
+  /// \param scalar
+  /// Input scalar
+  ///
+  /// \return
+  /// This function returns a Matrix of type T
   static Matrix<T> Multiply(const Matrix<T> &a, const T &scalar) {
     // Scalar-matrix multiplication
     return scalar * a;
   }
 
-/// This is a funtion that calculates the product Matrix of the two input
-/// Matrices
-///
-/// \param a
-/// Input Matrix 1
-/// \param b
-/// Input Matrix 2
-///
-/// \return
-/// This function returns a Matrix of type T
+  /// This is a funtion that calculates the product Matrix of the two input
+  /// Matrices
+  ///
+  /// \param a
+  /// Input Matrix 1
+  /// \param b
+  /// Input Matrix 2
+  ///
+  /// \return
+  /// This function returns a Matrix of type T
   static Matrix<T> Multiply(const Matrix<T> &a, const Matrix<T> &b) {
     // Matrix-matrix multiplication
     return a * b;
@@ -169,16 +171,16 @@ class CpuOperations {
     return a - b;
   }
 
-/// This is a function that calculates the "logical or" of the two input
-/// Matrices
-///
-/// \param a
-/// Input Matrix 1
-/// \param b
-/// Input Matrix 2
-///
-/// \return
-/// This function returns a Matrix of type bool
+  /// This is a function that calculates the "logical or" of the two input
+  /// Matrices
+  ///
+  /// \param a
+  /// Input Matrix 1
+  /// \param b
+  /// Input Matrix 2
+  ///
+  /// \return
+  /// This function returns a Matrix of type bool
   static Matrix<bool> LogicalOr(const Matrix<bool> &a, const Matrix<bool> &b) {
     // Returns the resulting matrix that is created by running a logical or
     // operation on the two input matrices
@@ -193,13 +195,13 @@ class CpuOperations {
     return (a.array() || b.array());
   }
 
-/// This is a funtion that returns the "logical not" of the input Matrix
-///
-/// \param a
-/// Input Matrix 1
-///
-/// \return
-/// This funtion returns a Matrix of type bool
+  /// This is a funtion that returns the "logical not" of the input Matrix
+  ///
+  /// \param a
+  /// Input Matrix 1
+  ///
+  /// \return
+  /// This funtion returns a Matrix of type bool
   static Matrix<bool> LogicalNot(const Matrix<bool> &a) {
     Matrix<bool> b = a.replicate(1, 1);
     int r;
@@ -264,24 +266,24 @@ class CpuOperations {
     }
   }
 
-/// static Vector <T> Norm( const Matrix <T> &a,
-/// const int &p = 2, const int &axis = 0) calculates the norm of
-/// the values in an m x n dependent of the input p and axis.
-/// The norm is returned in the form of a vector. If the axis is 0,
-/// the norm will be calulated column wise and the size of the
-/// output vector will be dependent on n. If the axis is 1, the
-/// norm will be calculated row-wise and the size of the vector
-/// will be dependent on m.
-///
-/// \param a
-/// const Matrix <T> &a
-/// \param b
-/// \const int &p
-/// \param c
-/// \const int &axis
-///
-/// \return
-/// Vector <T>
+  /// static Vector <T> Norm( const Matrix <T> &a,
+  /// const int &p = 2, const int &axis = 0) calculates the norm of
+  /// the values in an m x n dependent of the input p and axis.
+  /// The norm is returned in the form of a vector. If the axis is 0,
+  /// the norm will be calulated column wise and the size of the
+  /// output vector will be dependent on n. If the axis is 1, the
+  /// norm will be calculated row-wise and the size of the vector
+  /// will be dependent on m.
+  ///
+  /// \param a
+  /// const Matrix <T> &a
+  /// \param b
+  /// \const int &p
+  /// \param c
+  /// \const int &axis
+  ///
+  /// \return
+  /// Vector <T>
   static Vector<T> Norm(const Matrix<T> &a,
                       const int &p = 2,
                       const int &axis = 0) {
@@ -313,13 +315,13 @@ class CpuOperations {
 }
 
   static T Determinant(const Matrix<T> &a);
-/// static int Rank(const Matrix <T> &a) is a function that returns
-///                                      the rank of a m x n matrix
-/// \param a
-/// Matrix<T> &a
-///
-/// \return
-/// This function returns an int value of the matrix's rank.
+  /// static int Rank(const Matrix <T> &a) is a function that returns
+  ///                                      the rank of a m x n matrix
+  /// \param a
+  /// Matrix<T> &a
+  ///
+  /// \return
+  /// This function returns an int value of the matrix's rank.
 
   static int Rank(const Matrix<T> &a) {
     // Rank of a matrix
@@ -327,12 +329,12 @@ class CpuOperations {
     return svd.Rank(a);
   }
 
-/// This is a function that returns the frobenius norm of Matrix a
-///
-/// \param a
-///
-/// \return
-/// This function returns a value of type T
+  /// This is a function that returns the frobenius norm of Matrix a
+  ///
+  /// \param a
+  ///
+  /// \return
+  /// This function returns a value of type T
   static T FrobeniusNorm(const Matrix<T> &a) {
     if (a.rows() == 0 || a.cols() == 0) {
       std::cerr << "EMPTY MATRIX AS ARGUMENT!";
@@ -342,14 +344,14 @@ class CpuOperations {
     }
   }
 
-/// This is a function that returns the sum of the diagonal coefficiants of a
-/// Matrix
-///
-/// \param a
-/// Input Matrix
-///
-/// \return
-/// This function returns a value of type T
+  /// This is a function that returns the sum of the diagonal coefficiants of a
+  /// Matrix
+  ///
+  /// \param a
+  /// Input Matrix
+  ///
+  /// \return
+  /// This function returns a value of type T
 
   static T Trace(const Matrix<T> &a) {
     // Trace of a matrix
@@ -385,15 +387,15 @@ class CpuOperations {
         return (a.dot(b));
     }
   }
-/// This is a function that calculates the "Outer Product of the input Vectors
-///
-/// \param a
-/// Input Vector 1
-/// \param b
-/// Input Vector 2
-///
-/// \return
-/// This function returns a Matrix of type T
+  /// This is a function that calculates the "Outer Product of the input Vectors
+  ///
+  /// \param a
+  /// Input Vector 1
+  /// \param b
+  /// Input Vector 2
+  ///
+  /// \return
+  /// This function returns a Matrix of type T
   static Matrix<T> OuterProduct(const Vector<T> &a, const Vector<T> &b) {
     // This function returns the outer product of he two passed in vectors
     if (a.size() == 0 || b.size() == 0) {
@@ -420,16 +422,16 @@ class CpuOperations {
       }
       return (a.array() && b.array());
   }
-/// This is a function that calculates the "logical or" of the two input
-/// Vectors
-///
-/// \param a
-/// Input Vector 1
-/// \param b
-/// Input Vector 2
-///
-/// \return
-/// This function returns a Vector of type bool
+  /// This is a function that calculates the "logical or" of the two input
+  /// Vectors
+  ///
+  /// \param a
+  /// Input Vector 1
+  /// \param b
+  /// Input Vector 2
+  ///
+  /// \return
+  /// This function returns a Vector of type bool
   static Vector<bool> LogicalOr(const Vector<bool> &a, const Vector<bool> &b) {
     // Returns the resulting vector that is created by running a logical or
     // operation on the two input vectors
@@ -443,13 +445,13 @@ class CpuOperations {
     return (a.array() || b.array());
   }
 
-/// This is a funtion that returns the "logical not" of the input Vector
-///
-/// \param a
-/// Input Vector 1
-///
-/// \return
-/// This funtion returns a Vector of type bool
+  /// This is a funtion that returns the "logical not" of the input Vector
+  ///
+  /// \param a
+  /// Input Vector 1
+  ///
+  /// \return
+  /// This funtion returns a Vector of type bool
   static Vector<bool> LogicalNot(const Vector<bool> &a) {
     Vector<bool> b = a.replicate(1, 1);
     int i;
@@ -529,7 +531,8 @@ class CpuOperations {
 /// Matrix <T>
 /// \sa
 /// \ref Norm
-  static Matrix<T> Normalize(const Matrix<T> &a, const int &p = 2, const int &axis = 0) {
+  static Matrix<T> Normalize(const Matrix<T> &a, const int &p = 2,
+                                                  const int &axis = 0) {
     int num_rows = a.rows();
     int num_cols = a.cols();
     Matrix<T> b(num_rows, num_cols);
@@ -585,13 +588,13 @@ class CpuOperations {
   /// Output matrix D^(-1/2)
   static void GenDegreeMatrix(
       const Matrix<T> &kernel_matrix,
-      Matrix<T> &degree_matrix,
-      Matrix<T> &degree_matrix_to_the_minus_half) {
+      Matrix<T> *degree_matrix,
+      Matrix<T> *degree_matrix_to_the_minus_half) {
     // Generate the diagonal vector d_i and degree matrix D
     Vector<T> d_i = kernel_matrix.rowwise().sum();
-    degree_matrix = d_i.asDiagonal();
+    *degree_matrix = d_i.asDiagonal();
     // Generate matrix D^(-1/2)
-    degree_matrix_to_the_minus_half = d_i.array().sqrt().unaryExpr(
+    *degree_matrix_to_the_minus_half = d_i.array().sqrt().unaryExpr(
         std::ptr_fun(util::reciprocal<T>)).matrix().asDiagonal();
   }
 };
