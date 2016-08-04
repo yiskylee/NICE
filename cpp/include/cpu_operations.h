@@ -147,19 +147,48 @@ class CpuOperations {
         return a + b;
     }
   }
-  static Matrix<T> Subtract(const Matrix<T> &a, const T &scalar) {
-    // Matrix-scalar subtraction
+ /// This is a function that subtracts a scalar from a matrix and returns
+ /// the resulting matrix.
+ ///
+ /// \param a
+ /// Input Matrix
+ /// \param scalar
+ /// Input Scalar
+ ///
+ /// \return
+ /// This function returns a matrix that is the result of subtracting a scalar
+ /// from a matrix.
+ ///
+ /// \sa
+ /// \ref Subtract(const Matrix<T> &a, const Matrix<T> &b)
+ static Matrix<T> Subtract(const Matrix<T> &a, const T &scalar) {
+    // Does not work if matrix is empty.
     if (a.rows() == 0 || a.cols() == 0) {
       std::cerr << "EMPTY MATRIX AS ARGUEMENT!";
       exit(1);
     }
     return (a.array() - scalar);
   }
-  static Matrix<T> Subtract(const Matrix<T> &a, const Matrix<T> &b) {
-    // Matrix-matrix subtraction
+ /// This is a function that subtracts two matricies and returns the resulting
+ /// matrix.
+ ///
+ /// \param a
+ /// Input Matrix 1
+ /// \param b
+ /// Input Matrix 2
+ ///
+ /// \return
+ /// This function returns a matrix that is the result of subtracting two
+ /// input matricies.
+ ///
+ /// \sa
+ /// \ref Add(const Matrix<T> &a, const T &scalar) 
+ static Matrix<T> Subtract(const Matrix<T> &a, const Matrix<T> &b) {
+    // Does not work if matricies are not the same size.
     if ((a.rows() != b.rows()) || (a.cols() != b.cols())) {
       std::cerr << "MATRICES ARE NOT THE SAME SIZE!";
-      exit(1);  // Exits the program
+      exit(1);
+    // Does not work if matricies are empty.
     } else if (b.rows() == 0 || b.cols() == 0 || a.rows() == 0
         || a.cols() == 0) {
       std::cerr << "EMPTY MATRIX AS ARGUMENT!";
