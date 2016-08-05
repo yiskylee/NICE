@@ -28,8 +28,19 @@
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
 #include <cusolverDn.h>
-
+#include <ctime>
+#include <time.h>
 #include <iostream>
+#include <sys/time.h>                                                           
+#include <string>                   
+
+#include "include/matrix.h"
+#include "include/vector.h"                                            
+                                                                                
+typedef struct {                                                                
+    struct timeval startTime;                                                   
+    struct timeval endTime;                                                     
+} Timer; 
 
 namespace Nice {
 
@@ -38,7 +49,30 @@ namespace Nice {
 //
 void gpuAssert(cudaError_t, const char *, int, bool);
 void gpuErrchk(cudaError_t);
-
+#ifdef __cplusplus                                                              
+extern "C" {                                                                    
+#endif                                                                          
+void startTime(Timer* timer);                                                   
+void stopTime(Timer* timer);                                                    
+float elapsedTime(Timer timer);  
+#ifdef __cplusplus                                                              
+}                                                                               
+#endif   
+void verify(const Nice::Matrix<float>&, const Nice::Matrix<float>&, 
+            int, int, std::string);
+void verify(const Nice::Matrix<double>&, const Nice::Matrix<double>&, 
+            int, int, std::string);                         
+void verify(const Nice::Vector<int>&, const Nice::Vector<int>&,
+            int, int, std::string);  
+void verify(const Nice::Matrix<int>&, const Nice::Matrix<int>&,
+            int, int, std::string);
+void copyHostToDevice(int *, const int *, int);                                       
+void copyHostToDevice(float *, const float *, int);                                   
+void copyHostToDevice(double *, const double *, int);                                  
+void copyDeviceToHost(int *, const int *, int);                                       
+void copyHostToDevice(float *, const float *, int);                                   
+void copyDeviceToHost(double *, const double *, int);                                  
+cudaDeviceProp setDevice(); 
 //
 // Cusolver wraper functions
 //

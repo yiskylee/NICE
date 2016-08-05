@@ -44,8 +44,7 @@ TYPED_TEST_CASE(GenKernelMatrixTest, FloatTypes);
     EXPECT_EQ(a.cols(), ref.cols());\
     for (int i = 0; i < a.rows(); i++)\
       for (int j = 0; j < a.cols(); j++)\
-        EXPECT_NEAR(static_cast<double>(a(i, j)), \
-          static_cast<double>(ref(i, j)), 0.0001);\
+        EXPECT_NEAR(double(a(i, j)), double(ref(i, j)), 0.0001);\
 
 TYPED_TEST(GenKernelMatrixTest, GaussianKernel) {
   Nice::KernelType kernel_type = Nice::kGaussianKernel;
@@ -57,7 +56,7 @@ TYPED_TEST(GenKernelMatrixTest, GaussianKernel) {
           this->data_matrix_,
           kernel_type,
           1.0);
-  Nice::Matrix<TypeParam> kernel_matrix_ref(2, 2);
+  Nice::Matrix<TypeParam> kernel_matrix_ref(2,2);
   kernel_matrix_ref << exp(-0.0), exp(-sqrt(27.0)/2.0),
                        exp(-sqrt(27.0)/2.0), exp(-0.0);
   EXPECT_MATRIX_EQ(kernel_matrix, kernel_matrix_ref);

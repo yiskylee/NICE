@@ -9,13 +9,15 @@ include(eigen)
 include(check)
 include(doc)
 find_package(Threads REQUIRED)
-
+find_package(OpenMP REQUIRED)                                                   
+ 
 set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_MACOSX_RPATH 1)
 if(CMAKE_COMPILER_IS_GNUCXX)
-    add_definitions(-Wall -ansi -Wno-deprecated -pthread -std=c++11)
+    add_definitions(-Wall -ansi -Wno-deprecated -pthread ${OpenMP_CXX_FLAGS} -std=c++11)
 endif()
-
+#set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -Wall -Werror  -fopenmp")
 add_definitions(-std=c++11)
 #if("${CMAKE_COMPILER_ID}" STREQUAL "Clang")
 #    add_definitions(-std=c++11)
@@ -26,7 +28,7 @@ include_directories(${EIGEN_INCLUDE_DIRS})
 include_directories(${COMMON_INCLUDES}) 
 
 # Set source files
-file(GLOB_RECURSE SOURCES RELATIVE ${CMAKE_SOURCE_DIR} src/*.cc)
+file(GLOB_RECURSE SOURCES RELATIVE ${CMAKE_SOURCE_DIR} src/*.cc src/*.cu)
 message(STATUS "Source files: " ${SOURCES})
 
 # Locate CUDA package 
@@ -36,18 +38,26 @@ if (CUDA_FOUND)
   # Print messge to indicate that CUDA exists
   message(STATUS "CUDA exists")
 
+  set(Python_ADDITIONAL_VERSIONS 3.4)                                             
+#  find_package(OpenMP REQUIRED)                                                   
+  find_package(CUDA QUIET REQUIRED)                                               
+  find_package(PythonLibs 3 REQUIRED) 
+
+
   # Add defination
   add_definitions(-DNEED_CUDA)
 
   #include the built-in findCUDA cmake scripts
   include(FindCUDA)
-  
+ 
   # Set NVCC flags  
-  set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -std=c++11 -O3 -gencode arch=compute_50,code=sm_50)
+  set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -std=c++11 -O3 -gencode arch=compute_50,code=sm_50
+                      -Xptxas=-v -D_MWAITXINTRIN_H_INCLUDED -D_FORCE_INLINES)
 
   # Find cusolver library
   find_library(CUDA_SOLVER_LIBRARY cusolver HINTS ${CUDA_TOOLKIT_ROOT_DIR}/lib64)
   find_library(CUDA_BLAS_LIBRARY   cublas   HINTS ${CUDA_TOOLKIT_ROOT_DIR}/lib64)
+#  find_library(CUDA_KMEANS_LIBRARY libKMCUDA.so HINTS libraries/)
 
   # Add NICE library together with CUDA
   cuda_include_directories(${CUDA_INCLUDE_DIR})
@@ -55,7 +65,18 @@ if (CUDA_FOUND)
   add_dependencies(${PROJECT_NAME} ${CUDA_SOLVER_LIBRARY})
   add_dependencies(${PROJECT_NAME} ${CUDA_BLAS_LIBRARY})
   add_dependencies(${PROJECT_NAME} ${CUDA_LIBRARIES})
-  target_link_libraries(${PROJECT_NAME} ${CUDA_SOLVER_LIBRARY} ${CUDA_BLAS_LIBRARY} ${CUDA_LIBRARIES})
+#  add_dependencies(${PROJECT_NAME} ${CUDA_KMEANS_LIBRARY})
+  target_link_libraries(${PROJECT_NAME} 
+    ${CUDA_SOLVER_LIBRARY} 
+    ${CUDA_BLAS_LIBRARY} 
+    ${CUDA_LIBRARIES} 
+#    ${CUDA_KMEANS_LIBRARY}
+    )
+  if(PYTHONLIBS_FOUND)
+    message("Python exists")
+    include_directories(${PYTHON_INCLUDE_DIRS})                                   
+    target_link_libraries(${PROJECT_NAME} ${PYTHON_LIBRARIES})                             
+  endif() 
 
 else()
 
@@ -86,6 +107,7 @@ if (enable-test)
          test/cpu_solver_test/*.cc
          test/gpu_operations_test/*.cc
          test/gpu_solver_test/*.cc
+         test/gpu_kmeans_test/*.cc
          )
   else()
     file(GLOB_RECURSE TEST_SRC_FILES RELATIVE 
@@ -107,10 +129,12 @@ if (enable-test)
     add_dependencies(${PROJECT_TEST_NAME} ${CUDA_SOLVER_LIBRARY})
     add_dependencies(${PROJECT_TEST_NAME} ${CUDA_BLAS_LIBRARY})
     add_dependencies(${PROJECT_TEST_NAME} ${CUDA_LIBRARIES})
+#    add_dependencies(${PROJECT_TEST_NAME} ${CUDA_KMEANS_LIBRARY})
     target_link_libraries(${PROJECT_TEST_NAME}
         ${CUDA_SOLVER_LIBRARY}
         ${CUDA_BLAS_LIBRARY}
         ${CUDA_LIBRARIES}
+#        ${CUDA_KMEANS_LIBRARY}
         ${GTEST_LIBS_DIR}/libgtest.a
         ${GTEST_LIBS_DIR}/libgtest_main.a
         ${PROJECT_NAME}

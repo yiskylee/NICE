@@ -37,17 +37,27 @@
 #include "include/gpu_util.h"
 
 namespace Nice {
-
+///  This is a template class to calculate the SVD of a matrix
 template<typename T>
 class GpuSvdSolver {
  private:
-  Matrix<T> u_;
-  Matrix<T> v_;
-  Vector<T> s_;
+  Matrix<T> u_;  ///< Private member variable for U matrix
+  Matrix<T> v_;  ///< Private member variable for V matrix
+  Vector<T> s_;  ///< Private member variable for Singular Values vector
 
  public:
   GpuSvdSolver() {}
 
+/// void Compute(const Matrix<T> &A)
+///      is the templated function to calculate the SVD
+///
+/// \param a
+///  const Matrix<T> &A : Input m x n matrix to have SVD calculated
+///
+/// \return
+/// This function outputs U and V as matrices and the Singular Values as a
+/// vector and stores them in private member variables for this class u_,
+/// v_, and s_ respectively.
   void Compute(const Matrix<T> &A) {
     int M = A.rows();
     int N = A.cols();

@@ -48,6 +48,20 @@ namespace Nice {
 template <typename T>
 class GpuOperations {
  public:
+  ///  static Matrix<T> Multiply(const Matrix<T> &a, const T &scalar)
+  ///                   calculates the element by element product of
+  ///                   a matrix and a scalar.
+  ///
+  ///  \param a
+  ///  const Matrix<T> &a : The m x n matrix to be multiplied by the scalar
+  ///  \param b
+  ///  const T &scalar : The scalar to multiply the matirx
+  ///
+  ///  \return
+  ///   returns the resulting matrix of a[i] = a[i] * scalar
+  ///
+  ///  \sa
+  ///  \ref static Matrix<T> Multiply(const Matrix<T> &a, const Matrix<T> &b)
   static Matrix<T> Multiply(const Matrix<T> &a, const T &scalar) {
       // Alocate and transfer memories
       int n = a.cols() * a.rows();
@@ -80,6 +94,20 @@ class GpuOperations {
       return h_c;
   }
 
+  ///  static Matrix<T> Multiply(const Matrix<T> &a, const Matrix<T> &b)
+  ///                   calculates the matrix multiplication of two matrices.
+  ///
+  ///  \param a
+  ///  const Matrix<T> &a : The m x k input matrix
+  ///  \param b
+  ///  const Matrix<T> &b : The k x n input matrix
+  ///
+  ///  \return
+  ///  returns the resulting matrix of
+  ///  c[i,j] = sum(l=0->l=k){a[i,l] * b[l,j]}
+  ///
+  ///  \sa
+  ///  \ref static Matrix<T> Multiply(const Matrix<T> &a, const T &scalar)
   static Matrix<T> Multiply(const Matrix<T> &a, const Matrix<T> &b) {
     if (a.cols() == b.rows()) {  // Check if matricies k vals are equal
       // Allocate and transfer memories
@@ -434,6 +462,26 @@ class GpuOperations {
     // Return the result
     return b;
   }
+
+  ///  static Vector<T> Norm(const Matrix<T> &a, const int &p =2,
+  ///                        const int &axis = 0)
+  ///                   calculates the norm of each coloumn of a matrix and
+  ///                   stores the result in that column's corresponding
+  ///                   index in a vector
+  ///
+  ///  \param a
+  ///  const Matrix<T> &a : The input matrix to have the norm found
+  ///  \param b
+  ///  const int &p : Sets which Lx norm to calcualte. Here set to 2 for L2 norm
+  ///  \param c
+  ///  const int &axis : Sets row or column major order. Here set to 0 for
+  ///                    column major order.
+  ///
+  ///  \return
+  ///  returns the resulting vector of v[i] = norm(j=0->j=m){a[j,i]}
+  ///
+  ///  \sa
+  ///  \ref static T FrobeniousNorm(const Matrix<T> &a)
   static Vector<T> Norm(const Matrix<T> a, const int &p = 2,
                         const int &axis = 0) {
     int m = a.rows();
@@ -474,6 +522,20 @@ class GpuOperations {
     cublasDestroy(handle);
     return c;
   }
+
+  ///  static T Determinant(const Matrix<T> &a)
+  ///           Calculates the determinant of input matrix a using
+  ///           LU decomposition
+  ///
+  ///  \param a
+  ///  const Matrix<T> &a : The m x n matrix to have determinant found
+  ///
+  ///  \return
+  ///  returns the result of det = product(i == j){U(i,j)} * (-1)^n
+  ///  where U is the upper triangular matrix produced by doing LU
+  ///  decomposition on matrix a, product(i == j){U(i,j)} means
+  ///  means multiplying the diagonal elements of U, and n is the
+  ///  number of pivots needed to calculate U.
   static T Determinant(const Matrix<T> &a) {
     int m = a.rows();
     int n = a.cols();
@@ -574,13 +636,28 @@ class GpuOperations {
 
     return rank;
   }
+
+  ///  static T FrobeniousNorm(const Matrix<T> &a)
+  ///           calculates the norm of the entire matrix
+  ///
+  ///  \param a
+  ///  const Matrix<T> &a : The m x n input matrix to have the
+  ///                       frobenious norm found
+  ///
+  ///  \return
+  ///  returns the resulting scalar produced by
+  ///  c = (sum(i=0->i=m*n){a[i]^2})^(1/2) where the rhs
+  ///  is the norm of the input matrix if treated as a single vector
+  ///
+  ///  \sa
+  ///  \ref static T FrobeniousNorm(const Matrix<T> &a)
   static T FrobeniusNorm(const Matrix<T> &a) {
     int m = a.rows();
     int n = a.cols();
     int incx = 1;
     const T * h_a = &a(0);
 
-    // Traceocate and transfer memories
+    //Traceocate and transfer memories
     T * h_c = reinterpret_cast<T *>(malloc(sizeof(T)));
     T * d_a;  gpuErrchk(cudaMalloc(&d_a, m * n * sizeof(T)));
     gpuErrchk(cudaMemcpy(d_a, h_a, m * n * sizeof(T), cudaMemcpyHostToDevice));
@@ -686,6 +763,18 @@ class GpuOperations {
     // Return the result
     return h_result;
   }
+
+  ///  static T DotProduct(const Vector<T> &a, const Vector<T> &b)
+  ///                      calculates the dot product of two vectors
+  ///
+  ///  \param a
+  ///  const Vector<T> &a : The 1 x k input vector
+  ///  \param b
+  ///  const Vector<T> &b : The k , 1 input vector
+  ///
+  ///  \return
+  ///  returns the resulting sumation of
+  ///  c = sum(l=0->l=k){a[l] * b[l]}
   static T DotProduct(const Vector<T> &a, const Vector<T> &b) {
     int n = a.rows();
 
@@ -720,6 +809,21 @@ class GpuOperations {
     cublasDestroy(handle);
     return *h_c;
   }
+
+  ///  static Matrix<T> OuterProuct(const Vector<T> &a, const Vector<T> &b)
+  ///                   calculates the matrix multiplication of two Vectors.
+  ///
+  ///  \param a
+  ///  const Vector<T> &a : The p x 1 input vector
+  ///  \param b
+  ///  const Vector<T> &b : The 1 x p input vector
+  ///
+  ///  \return
+  ///  returns the resulting matrix of
+  ///  c[i,j] = sum(l=0->l=p){a[i,l] * b[l,j]}
+  ///
+  ///  \sa
+  ///  \ref static Matrix<T> Multiply(const Matrix<T> &a, const Matrix<T> &b)
   static Matrix<T> OuterProduct(const Vector<T> &a, const Vector<T> &b) {
     if (a.cols() == b.cols()) {
       int m = a.rows();

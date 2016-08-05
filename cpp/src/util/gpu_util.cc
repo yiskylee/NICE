@@ -39,7 +39,74 @@ void gpuAssert(cudaError_t code, const char *file,
 }
 
 void gpuErrchk(cudaError_t ans) { gpuAssert((ans), __FILE__, __LINE__); }
-
+void startTime(Timer* timer) {                                                  
+    gettimeofday(&(timer->startTime), NULL);                                    
+}                                                                               
+                                                                                
+void stopTime(Timer* timer) {                                                   
+    gettimeofday(&(timer->endTime), NULL);                                      
+}                                                                               
+                                                                                
+float elapsedTime(Timer timer) {                                                
+    stopTime(&timer);                                                           
+    return ((float) ((timer.endTime.tv_sec - timer.startTime.tv_sec) \
+                + (timer.endTime.tv_usec - timer.startTime.tv_usec)/1.0e6));    
+}  
+void copyHostToDevice(int * d_data, const int * h_data, int size) {                   
+  gpuErrchk(cudaMemcpy(d_data, h_data, size, cudaMemcpyHostToDevice));          
+}                                                                               
+void copyHostToDevice(float * d_data, const float * h_data, int size) {               
+  gpuErrchk(cudaMemcpy(d_data, h_data, size, cudaMemcpyHostToDevice));          
+}                                                                               
+void copyHostToDevice(double * d_data, const double * h_data, int size) {              
+  gpuErrchk(cudaMemcpy(d_data, h_data, size, cudaMemcpyHostToDevice));          
+}                                                                               
+void copyDeviceToHost(int * h_data, const  int * d_data, int size) {                   
+  gpuErrchk(cudaMemcpy(h_data, d_data, size, cudaMemcpyDeviceToHost));          
+}                                                                               
+void copyDeviceToHost(float * h_data, const float * d_data, int size) {               
+  gpuErrchk(cudaMemcpy(h_data, d_data, size, cudaMemcpyDeviceToHost));          
+}                                                                               
+void copyDeviceToHost(double * h_data, const double * d_data, int size) {              
+  gpuErrchk(cudaMemcpy(h_data, d_data, size, cudaMemcpyDeviceToHost));          
+} 
+                                                 
+cudaDeviceProp setDevice() {                                                    
+  int deviceCount;                                                              
+  int bestDeviceIndex = 0;                                                      
+  int maxThreadsPerBlock = 0;                                                   
+  int *maxGridDims = 0;                                                         
+  int maxThreads = 0;                                                           
+  int maxMultiProcessors = 0;                                                   
+  char *name;                                                                   
+  size_t maxSharedMem = 0;                                                      
+                                                                                
+  gpuErrchk(cudaGetDeviceCount(&deviceCount));                                  
+  cudaDeviceProp gpuDevices[deviceCount];                                       
+  for (int i = 0; i < deviceCount; ++i) {                                       
+    gpuErrchk(cudaGetDeviceProperties(&gpuDevices[i], i));                      
+    if(gpuDevices[i].sharedMemPerBlock >= maxSharedMem &&                       
+            gpuDevices[i].multiProcessorCount * 2048 >= maxThreads) {           
+      maxThreadsPerBlock = gpuDevices[i].maxThreadsPerBlock;                    
+      maxGridDims = gpuDevices[i].maxGridSize;                                  
+      maxMultiProcessors = gpuDevices[i].multiProcessorCount;                   
+      maxThreads = 2048 * maxMultiProcessors;                                   
+      maxSharedMem = gpuDevices[i].sharedMemPerBlock;                           
+      gpuErrchk(cudaSetDevice(i));                                              
+      name = gpuDevices[i].name;                                                
+      bestDeviceIndex = i;                                                      
+    }                                                                           
+  }                                                                             
+  std::cout<<"Number of Devices: "<<deviceCount<<std::endl;                     
+  std::cout<<"Name of Best Device: "<<name<<std::endl;                          
+  std::cout<<"Max Grid Dims: "<<maxGridDims[0]<<" ";                            
+  std::cout<<                   maxGridDims[1]<<" "<<maxGridDims[2]<<std::endl; 
+  std::cout<<"Max Number of Threads Per Block: "<<maxThreadsPerBlock<<std::endl;
+  std::cout<<"Max Number of Multi Processors: "<<maxMultiProcessors<<std::endl; 
+  std::cout<<"Max Number of Threads: "<<maxThreads<<std::endl;                  
+  std::cout<<"Max Shared Memory: "<<maxSharedMem<<std::endl;                    
+  return gpuDevices[bestDeviceIndex];                                           
+}                            
 //
 // Cusolver wraper functions
 //

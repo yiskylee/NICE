@@ -44,8 +44,7 @@ TYPED_TEST_CASE(GenDegreeMatrixTest, FloatTypes);
     EXPECT_EQ(a.cols(), ref.cols());\
     for (int i = 0; i < a.rows(); i++)\
       for (int j = 0; j < a.cols(); j++)\
-        EXPECT_NEAR(static_cast<double>(a(i, j)), \
-          static_cast<double>(ref(i, j)), 0.0001);\
+        EXPECT_NEAR(double(a(i, j)), double(ref(i, j)), 0.0001);\
 
 TYPED_TEST(GenDegreeMatrixTest, SimpleTest) {
   this->kernel_matrix_.resize(2, 2);
@@ -55,13 +54,15 @@ TYPED_TEST(GenDegreeMatrixTest, SimpleTest) {
   Nice::Matrix<TypeParam> degree_matrix;
   Nice::Matrix<TypeParam> degree_matrix_to_the_minus_half;
 
-  Nice::CpuOperations<TypeParam>::GenDegreeMatrix(this->kernel_matrix_,
-      &degree_matrix, &degree_matrix_to_the_minus_half);
+  Nice::CpuOperations<TypeParam>::GenDegreeMatrix(
+      this->kernel_matrix_,
+      degree_matrix,
+      degree_matrix_to_the_minus_half);
 
-  Nice::Matrix<TypeParam> degree_matrix_ref(2, 2);
+  Nice::Matrix<TypeParam> degree_matrix_ref(2,2);
   degree_matrix_ref << 4.0, 0.0,
                        0.0, 4.0;
-  Nice::Matrix<TypeParam> degree_matrix_to_the_minus_half_ref(2, 2);
+  Nice::Matrix<TypeParam> degree_matrix_to_the_minus_half_ref(2,2);
   degree_matrix_to_the_minus_half_ref << 0.5, 0.0,
                                          0.0, 0.5;
   EXPECT_MATRIX_EQ(degree_matrix, degree_matrix_ref);
