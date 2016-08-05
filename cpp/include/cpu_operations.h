@@ -494,25 +494,16 @@ class CpuOperations {
     int m = a.rows();
     int n = a.cols();
     Matrix<T> one;  // Matrix of size (m x m) OR (n x n) filled with just ones
-    Matrix<T> C;    // The centering identity that will be multiplied with a to
-                    // get the cetnered matrix
-    Matrix<T> temp;   // Intermediary matrix to hold (1/n)*one
+    Matrix<T> identity_matrix;
+    Matrix<T> centering_matrix;
 
     if (axis == 0) {  // Remove means from columns
       // Calculate Cm
-      Matrix<T> i(m, m);
-        i.setIdentity();
-      one.setConstant(m, m, 1);
-      temp = Multiply(one, (1.0/m));
-      C = Subtract(i, temp);
-      return Multiply(C, a);
+      centering_matrix = identity_matrix.Identity(m, m) - one.Constant(m, m, 1.0/m);
+      return centering_matrix * a;
     } else if (axis == 1) {  // Remove means from Rows
-      Matrix<T> i(n, n);
-        i.setIdentity();
-      one.setConstant(n, n, 1);
-      temp = Multiply(one, (1.0/n));
-      C = Subtract(i, temp);
-      return Multiply(a, C);
+      centering_matrix = identity_matrix.Identity(n, n) - one.Constant(n, n, 1.0/n);
+      return a * centering_matrix;
     } else {
       std::cerr <<"BAD AXIS! AXIS MUST BE 0 or 1!";
       exit(1);
