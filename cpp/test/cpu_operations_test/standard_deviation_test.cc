@@ -44,7 +44,7 @@ class MatrixStandardDeviationTest : public ::testing::Test {
 typedef ::testing::Types<float, double> FloatTypes;
 TYPED_TEST_CASE(MatrixStandardDeviationTest, FloatTypes);
 
-TYPED_TEST(MatrixStandardDeviationTest, MatrixTrue){
+TYPED_TEST(MatrixStandardDeviationTest, MatrixTrue) {
   ASSERT_TRUE(true);
 }
 

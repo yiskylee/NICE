@@ -36,11 +36,11 @@
 namespace Nice {
 
 // Abstract class of common matrix operation interface
-///This is a test - Andrew Tu
 template<typename T>
 class CpuOperations {
  public:
-  /// This is a function that calculates the transpose Matrix of the input Matrix
+  /// This is a function that calculates the transpose Matrix of the
+  /// input Matrix
   ///
   /// \param a
   /// Input Matrix
@@ -51,7 +51,8 @@ class CpuOperations {
     return a.transpose();  // Return transpose
   }
 
-  /// This is a function that calculates the transpose Vector of the input Vector
+  /// This is a function that calculates the transpose Vector of the
+  /// input Vector
   ///
   /// \param a
   /// Input Vector
@@ -62,31 +63,31 @@ class CpuOperations {
     return a.transpose();
   }
 
-/// This is a function that calculates the product Matrix of the input Matrix
-/// and a scalar
-///
-/// \param a
-/// Input Matrix
-/// \param scalar
-/// Input scalar
-///
-/// \return
-/// This function returns a Matrix of type T
+  /// This is a function that calculates the product Matrix of the input Matrix
+  /// and a scalar
+  ///
+  /// \param a
+  /// Input Matrix
+  /// \param scalar
+  /// Input scalar
+  ///
+  /// \return
+  /// This function returns a Matrix of type T
   static Matrix<T> Multiply(const Matrix<T> &a, const T &scalar) {
     // Scalar-matrix multiplication
     return scalar * a;
   }
 
-/// This is a funtion that calculates the product Matrix of the two input
-/// Matrices
-///
-/// \param a
-/// Input Matrix 1
-/// \param b
-/// Input Matrix 2
-///
-/// \return
-/// This function returns a Matrix of type T
+  /// This is a funtion that calculates the product Matrix of the two input
+  /// Matrices
+  ///
+  /// \param a
+  /// Input Matrix 1
+  /// \param b
+  /// Input Matrix 2
+  ///
+  /// \return
+  /// This function returns a Matrix of type T
   static Matrix<T> Multiply(const Matrix<T> &a, const Matrix<T> &b) {
     // Matrix-matrix multiplication
     return a * b;
@@ -169,16 +170,16 @@ class CpuOperations {
     return a - b;
   }
 
-/// This is a function that calculates the "logical or" of the two input
-/// Matrices
-///
-/// \param a
-/// Input Matrix 1
-/// \param b
-/// Input Matrix 2
-///
-/// \return
-/// This function returns a Matrix of type bool
+  /// This is a function that calculates the "logical or" of the two input
+  /// Matrices
+  ///
+  /// \param a
+  /// Input Matrix 1
+  /// \param b
+  /// Input Matrix 2
+  ///
+  /// \return
+  /// This function returns a Matrix of type bool
   static Matrix<bool> LogicalOr(const Matrix<bool> &a, const Matrix<bool> &b) {
     // Returns the resulting matrix that is created by running a logical or
     // operation on the two input matrices
@@ -193,13 +194,13 @@ class CpuOperations {
     return (a.array() || b.array());
   }
 
-/// This is a funtion that returns the "logical not" of the input Matrix
-///
-/// \param a
-/// Input Matrix 1
-///
-/// \return
-/// This funtion returns a Matrix of type bool
+  /// This is a funtion that returns the "logical not" of the input Matrix
+  ///
+  /// \param a
+  /// Input Matrix 1
+  ///
+  /// \return
+  /// This funtion returns a Matrix of type bool
   static Matrix<bool> LogicalNot(const Matrix<bool> &a) {
     Matrix<bool> b = a.replicate(1, 1);
     int r;
@@ -264,24 +265,24 @@ class CpuOperations {
     }
   }
 
-/// static Vector <T> Norm( const Matrix <T> &a,
-/// const int &p = 2, const int &axis = 0) calculates the norm of
-/// the values in an m x n dependent of the input p and axis.
-/// The norm is returned in the form of a vector. If the axis is 0,
-/// the norm will be calulated column wise and the size of the
-/// output vector will be dependent on n. If the axis is 1, the
-/// norm will be calculated row-wise and the size of the vector
-/// will be dependent on m.
-///
-/// \param a
-/// const Matrix <T> &a
-/// \param b
-/// \const int &p
-/// \param c
-/// \const int &axis
-///
-/// \return
-/// Vector <T>
+  /// static Vector <T> Norm( const Matrix <T> &a,
+  /// const int &p = 2, const int &axis = 0) calculates the norm of
+  /// the values in an m x n dependent of the input p and axis.
+  /// The norm is returned in the form of a vector. If the axis is 0,
+  /// the norm will be calulated column wise and the size of the
+  /// output vector will be dependent on n. If the axis is 1, the
+  /// norm will be calculated row-wise and the size of the vector
+  /// will be dependent on m.
+  ///
+  /// \param a
+  /// const Matrix <T> &a
+  /// \param b
+  /// \const int &p
+  /// \param c
+  /// \const int &axis
+  ///
+  /// \return
+  /// Vector <T>
   static Vector<T> Norm(const Matrix<T> &a,
                       const int &p = 2,
                       const int &axis = 0) {
@@ -313,13 +314,13 @@ class CpuOperations {
 }
 
   static T Determinant(const Matrix<T> &a);
-/// static int Rank(const Matrix <T> &a) is a function that returns
-///                                      the rank of a m x n matrix
-/// \param a
-/// Matrix<T> &a
-///
-/// \return
-/// This function returns an int value of the matrix's rank.
+  /// static int Rank(const Matrix <T> &a) is a function that returns
+  ///                                      the rank of a m x n matrix
+  /// \param a
+  /// Matrix<T> &a
+  ///
+  /// \return
+  /// This function returns an int value of the matrix's rank.
 
   static int Rank(const Matrix<T> &a) {
     // Rank of a matrix
@@ -327,12 +328,12 @@ class CpuOperations {
     return svd.Rank(a);
   }
 
-/// This is a function that returns the frobenius norm of Matrix a
-///
-/// \param a
-///
-/// \return
-/// This function returns a value of type T
+  /// This is a function that returns the frobenius norm of Matrix a
+  ///
+  /// \param a
+  ///
+  /// \return
+  /// This function returns a value of type T
   static T FrobeniusNorm(const Matrix<T> &a) {
     if (a.rows() == 0 || a.cols() == 0) {
       std::cerr << "EMPTY MATRIX AS ARGUMENT!";
@@ -342,14 +343,14 @@ class CpuOperations {
     }
   }
 
-/// This is a function that returns the sum of the diagonal coefficiants of a
-/// Matrix
-///
-/// \param a
-/// Input Matrix
-///
-/// \return
-/// This function returns a value of type T
+  /// This is a function that returns the sum of the diagonal coefficiants of a
+  /// Matrix
+  ///
+  /// \param a
+  /// Input Matrix
+  ///
+  /// \return
+  /// This function returns a value of type T
 
   static T Trace(const Matrix<T> &a) {
     // Trace of a matrix
@@ -385,15 +386,15 @@ class CpuOperations {
         return (a.dot(b));
     }
   }
-/// This is a function that calculates the "Outer Product of the input Vectors
-///
-/// \param a
-/// Input Vector 1
-/// \param b
-/// Input Vector 2
-///
-/// \return
-/// This function returns a Matrix of type T
+  /// This is a function that calculates the "Outer Product of the input Vectors
+  ///
+  /// \param a
+  /// Input Vector 1
+  /// \param b
+  /// Input Vector 2
+  ///
+  /// \return
+  /// This function returns a Matrix of type T
   static Matrix<T> OuterProduct(const Vector<T> &a, const Vector<T> &b) {
     // This function returns the outer product of he two passed in vectors
     if (a.size() == 0 || b.size() == 0) {
@@ -420,16 +421,16 @@ class CpuOperations {
       }
       return (a.array() && b.array());
   }
-/// This is a function that calculates the "logical or" of the two input
-/// Vectors
-///
-/// \param a
-/// Input Vector 1
-/// \param b
-/// Input Vector 2
-///
-/// \return
-/// This function returns a Vector of type bool
+  /// This is a function that calculates the "logical or" of the two input
+  /// Vectors
+  ///
+  /// \param a
+  /// Input Vector 1
+  /// \param b
+  /// Input Vector 2
+  ///
+  /// \return
+  /// This function returns a Vector of type bool
   static Vector<bool> LogicalOr(const Vector<bool> &a, const Vector<bool> &b) {
     // Returns the resulting vector that is created by running a logical or
     // operation on the two input vectors
@@ -443,13 +444,13 @@ class CpuOperations {
     return (a.array() || b.array());
   }
 
-/// This is a funtion that returns the "logical not" of the input Vector
-///
-/// \param a
-/// Input Vector 1
-///
-/// \return
-/// This funtion returns a Vector of type bool
+  /// This is a funtion that returns the "logical not" of the input Vector
+  ///
+  /// \param a
+  /// Input Vector 1
+  ///
+  /// \return
+  /// This funtion returns a Vector of type bool
   static Vector<bool> LogicalNot(const Vector<bool> &a) {
     Vector<bool> b = a.replicate(1, 1);
     int i;
@@ -463,15 +464,14 @@ class CpuOperations {
     }
     return b;
   }
-
-///  This is function calculates and returns the center of a matrix.
+  ///  This is function calculates and returns the center of a matrix.
   ///
   /// \param a
   /// Input matrix
-  /// 
+  ///
   /// \param axis
   /// The axis that you are centering along. If 0, center along cols. If 1
-  /// centers along rows. Defaults to column centering.  
+  /// centers along rows. Defaults to column centering.
   ///
   /// \return Matrix<T>
   /// This function returns a value of type Matrix<T>
@@ -486,123 +486,39 @@ class CpuOperations {
       exit(1);  // Exits the program
     }
     // If the axis is not 0 (default) or 1, exit with error message
-    if (axis != 0 && axis != 1){
+    if (axis != 0 && axis != 1) {
       std::cerr << "BAD AXIS! AXIS MUST BE 0 OR 1!";
-      //std::cout << "BAD AXIS! AXIS MUST BE 0 OR 1! (COUT)";
       exit(1);
     }
-    //std::cout << "Axis is " << axis << std::endl;
     // Otherwise,  matrix is an m x n matrix
     int m = a.rows();
     int n = a.cols();
-    Matrix<T> one; //Matrix of size (m x m) OR (n x n) filled with just ones
-    Matrix<T> C;   //The centering identity that will be multiplied with a to get the cetnered matrix
-    Matrix<T> temp; //Intermediary matrix to hold (1/n)*one
+    Matrix<T> one;  // Matrix of size (m x m) OR (n x n) filled with just ones
+    Matrix<T> C;    // The centering identity that will be multiplied with a to
+                    // get the cetnered matrix
+    Matrix<T> temp;   // Intermediary matrix to hold (1/n)*one
 
-    if(axis == 0) { //Remove means from columns
-      //Calculate Cm
+    if (axis == 0) {  // Remove means from columns
+      // Calculate Cm
       Matrix<T> i(m, m);
         i.setIdentity();
       one.setConstant(m, m, 1);
       temp = Multiply(one, (1.0/m));
-      C = Subtract(i,temp);
-      return Multiply(C,a);
-    } else if (axis == 1) { //Remove means from Rows
+      C = Subtract(i, temp);
+      return Multiply(C, a);
+    } else if (axis == 1) {  // Remove means from Rows
       Matrix<T> i(n, n);
         i.setIdentity();
       one.setConstant(n, n, 1);
       temp = Multiply(one, (1.0/n));
-      C = Subtract(i,temp);
+      C = Subtract(i, temp);
       return Multiply(a, C);
-    }
-  }
-
-  ///  This is function centeres and the returns a standard  matrix.
-  ///
-  /// \param a
-  /// Input matrix to be centered and standardized
-  /// 
-  /// \param axis
-  /// The axis that you are standardizing along. If 0, standardize along cols.
-  /// If 1 standardize along rows. Defaults to column standardization.  
-  ///
-  /// \return Matrix<T>
-  /// This function returns a value of type Matrix<T>
-  ///
-  static Matrix<T> Standardize(const Matrix<T> &a, const int axis = 0) {
-    // If the matrix is empty, exit with error message
-    if (a.rows() == 0 || a.cols() == 0) {
-      std::cerr << "EMPTY MATRIX AS ARGUMENT!";
-      exit(1);  // Exits the program
-    } else if (axis != 0 && axis != 1){ // If the axis is not 0 (default) or 1,
-                                        // exit with error message
-      std::cerr << "BAD AXIS. AXIS MUST BE 0 OR 1" << std::endl;
+    } else {
+      std::cerr <<"BAD AXIS! AXIS MUST BE 0 or 1!";
       exit(1);
     }
-    // Otherwise,  matrix is an m x n matrix
-    int m = a.rows();
-    int n = a.cols(); 
-   
-    Matrix<T> centered = Center(a, axis); //Always center the matrix first
-    Matrix<T> standardized; //We will write our new centered matrix into here
-
-    if(axis == 0) {  //Standardize via columns 
-      Vector<T> currentCol(m); 
-      Vector<T> colStdDev;
-      
-      for(int i = 0; i < m; i++){ //Subtract the standard deviation of each 
-                                  //column from their respective column
-        currentCol = centered.col(i);
-        colStdDev = Multiply(Norm(currentCol, 2, 1), sqrt(1.0/m));
-        std::cout << "Current Col: " << currentCol << " stDev: " << colStdDev << std::endl;
-        standardized.col(i) = Subtract(currentCol, colStdDev).col(0);
-      }
-    } else if (axis == 1) { //Standardize via rows
-      Vector<T> currentRow(n); 
-      Vector<T> rowStdDev(n); 
-      for(int i = 0; i < n; i++){ //Subtract the standard deviation of each row
-                                  // from their respective rows
-        currentRow = centered.row(i);
-        rowStdDev = Multiply(Norm(currentRow), sqrt(1.0/n));
-        standardized.row(i) = Subtract(currentRow, rowStdDev).row(0);
-      }
-    }
-    return standardized;
   }
 
-/// statix Matrix <T> Normalize(const Matrix <T> &a, const int &p
-/// =2, const int &axis = 0) normalizes a m x n matrix by element.
-///
-/// \param a
-/// const Matrix<T> &a
-/// \param b
-/// const int &p = 2
-/// \param c
-/// const int &axis = 0
-///
-/// \return
-/// Matrix <T>
-/// \sa
-/// \ref Norm
-  static Matrix<T> Normalize(const Matrix<T> &a, const int &p = 2,
-                                                  const int &axis = 0) {
-    int num_rows = a.rows();
-    int num_cols = a.cols();
-    Matrix<T> b(num_rows, num_cols);
-    
-
-    if (axis == 0) {
-     b = a.transpose().array().colwise() / Norm(a, p, axis).array();
-     return b.transpose();
-    } else if (axis == 1) {
-     b = a.array().colwise() / Norm(a, p, axis).array();
-     return b;
-    } else {
-     std::cerr << "Axis must be zero or one!";
-     exit(1);
-    }
-
-  }
   /// Generates a kernel matrix from an input data_matrix
   /// \param data_matrix
   /// Input matrix whose rows represent samples and columns represent features
@@ -644,57 +560,57 @@ class CpuOperations {
   /// Output matrix D^(-1/2)
   static void GenDegreeMatrix(
       const Matrix<T> &kernel_matrix,
-      Matrix<T> &degree_matrix,
-      Matrix<T> &degree_matrix_to_the_minus_half) {
+      Matrix<T> *degree_matrix,
+      Matrix<T> *degree_matrix_to_the_minus_half) {
     // Generate the diagonal vector d_i and degree matrix D
     Vector<T> d_i = kernel_matrix.rowwise().sum();
-    degree_matrix = d_i.asDiagonal();
+    *degree_matrix = d_i.asDiagonal();
     // Generate matrix D^(-1/2)
-    degree_matrix_to_the_minus_half = d_i.array().sqrt().unaryExpr(
+    *degree_matrix_to_the_minus_half = d_i.array().sqrt().unaryExpr(
         std::ptr_fun(util::reciprocal<T>)).matrix().asDiagonal();
   }
-  ///Calculates the standard deviation of a given vector 
+  /// Calculates the standard deviation of a given vector
   ///
   /// \param a
   /// Input vector
-  /// 
+  ///
   /// Output a vector containing the standaard deviations of the rows or columns
   /// of the input matrix
   static Vector<T> StandardDeviation(const Matrix<T> &a, const int axis = 0){
-    //Std = sqrt(1/n*[(x1-u)^2+(x2-u)^2...+(xn-u)^2])
-    //u = average of the vector
-    //n = number of the elements
-    if(a.rows() == 0 || a.cols() == 0){
+    // Std = sqrt(1/n*[(x1-u)^2+(x2-u)^2...+(xn-u)^2])
+    // u = average of the vector
+    // n = number of the elements
+    if (a.rows() == 0 || a.cols() == 0) {
       std::cerr << "EMPTY MATRIX!";
       exit(1);
-    }  
+    }
     int num_rows = a.rows();
     int num_cols = a.cols();
-    
-    //Matrix<T> temp = a.array().colwise() - a.array().rowwise().mean(); //This
-    //is the same as centering the matrix row wise so we choose to center instead.
+
+    // Matrix<T> temp = a.array().colwise() - a.array().rowwise().mean();
+    // This is the same as centering the matrix row wise so we choose to
+    // center instead.
     Matrix<T> b = Center(a, axis);
     std::cout << b << std::endl;
     Vector<T> returnValue;
-    
-    if(axis == 0){ //Find Standard Deviation of each column
+
+    if (axis == 0) {  // Find Standard Deviation of each column
       b = b.array().pow(2);
       returnValue = b.array().colwise().sum();
       returnValue *= (1.0/num_rows);
       returnValue = returnValue.array().pow(.5);
-      return returnValue; 
-    } else if(axis == 1){ //Find Standard Deviation of each row
-      b = b.array().pow(2); //Square every element
-      returnValue = b.array().rowwise().sum(); //Sum entire row
-      returnValue *= (1.0/num_cols); //multply by 1/size
-      returnValue = returnValue.array().pow(.5); //take square root
       return returnValue;
-    } else{ //Bad Axis
+    } else if (axis == 1) {  // Find Standard Deviation of each row
+      b = b.array().pow(2);  // Square every element
+      returnValue = b.array().rowwise().sum();  // Sum entire row
+      returnValue *= (1.0/num_cols);  // multply by 1/size
+      returnValue = returnValue.array().pow(.5);  // take square root
+      return returnValue;
+    } else {  // Bad Axis
       std::cerr << "Axis must be 0 or 1!";
       exit(1);
     }
-  } 
-
+  }
 };
 }  // namespace Nice
 #endif  // CPP_INCLUDE_CPU_OPERATIONS_H_

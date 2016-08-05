@@ -247,6 +247,20 @@ class GpuOperations {
     }
   }
   static Matrix<T> Subtract(const Matrix<T> &a, const T &scalar);
+
+  /// This function subtracts one matrix from another and returns the resulting
+  /// matrix.
+  ///
+  /// \param a
+  /// Input Matrix 1
+  /// \param b
+  /// Input Matrix 2
+  ///
+  /// \return
+  /// A matrix that reflects the difference of matricies a and b.
+  ///
+  /// \sa
+  /// \ref Subtract(const Matrix<T> &a, const T &scalar)
   static Matrix<T> Subtract(const Matrix<T> &a, const Matrix<T> &b) {
     // If the matricies aren't identical sizes then we cannot subtract them.
     if (a.rows() != b.rows() || a.cols() != b.cols()) {
@@ -566,7 +580,7 @@ class GpuOperations {
     int incx = 1;
     const T * h_a = &a(0);
 
-    //Traceocate and transfer memories
+    // Traceocate and transfer memories
     T * h_c = reinterpret_cast<T *>(malloc(sizeof(T)));
     T * d_a;  gpuErrchk(cudaMalloc(&d_a, m * n * sizeof(T)));
     gpuErrchk(cudaMemcpy(d_a, h_a, m * n * sizeof(T), cudaMemcpyHostToDevice));

@@ -54,7 +54,6 @@ TYPED_TEST(MatrixCenterTest, MatrixCenterCol) {
                        0, 0, 0,
                        1, 1, 1;
   this->MatrixCenter(0);
-  std::cout << "Col: \n" << this->answer << std::endl;
   ASSERT_TRUE(this->correct_ans.isApprox(this->answer, this->precision));
 }
 
@@ -68,7 +67,6 @@ TYPED_TEST(MatrixCenterTest, MatrixCenterRow) {
                        -1, 0, 1,
                        -1, 0, 1;
   this->MatrixCenter(1);
-  std::cout << "Row: \n" << this->answer << std::endl;
   ASSERT_TRUE(this->correct_ans.isApprox(this->answer, this->precision));
 }
 
