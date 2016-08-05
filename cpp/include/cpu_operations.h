@@ -499,10 +499,12 @@ class CpuOperations {
 
     if (axis == 0) {  // Remove means from columns
       // Calculate Cm
-      centering_matrix = identity_matrix.Identity(m, m) - one.Constant(m, m, 1.0/m);
+      centering_matrix = identity_matrix.Identity(m, m) -
+          one.Constant(m, m, 1.0/m);
       return centering_matrix * a;
     } else if (axis == 1) {  // Remove means from Rows
-      centering_matrix = identity_matrix.Identity(n, n) - one.Constant(n, n, 1.0/n);
+      centering_matrix = identity_matrix.Identity(n, n) -
+          one.Constant(n, n, 1.0/n);
       return a * centering_matrix;
     } else {
       std::cerr <<"BAD AXIS! AXIS MUST BE 0 or 1!";
