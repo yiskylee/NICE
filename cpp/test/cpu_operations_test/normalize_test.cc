@@ -35,14 +35,19 @@ class NormalizeTest : public ::testing::Test {
   Nice::Matrix<T> matrix_;
   Nice::Matrix<T> normalized_matrix_;
   Nice::Matrix<T> correct_matrix_;
+
+  Nice::Vector<T> StandardDeviation(int axis){
+    return Nice::CpuOperations<T>::StandardDeviation(this->matrix_, axis);
+  }
 };
 
 typedef ::testing::Types<float, double> MyTypes;
 TYPED_TEST_CASE(NormalizeTest, MyTypes);
 
-TYPED_TEST(NormalizeTest, WhenAxisis0) {
+TYPED_TEST(NormalizeTest, NormAxisis0) {
   int axis = 0;
   int p = 2;
+  std::string denom = "norm";
   this->matrix_.resize(2, 3);
   this->matrix_ << 1.0, 2.0, 3.0,
                    4.0, 5.0, 6.0;
@@ -52,7 +57,8 @@ TYPED_TEST(NormalizeTest, WhenAxisis0) {
   this->normalized_matrix_ = Nice::CpuOperations<TypeParam>::Normalize(
                                                           this->matrix_,
                                                           p,
-                                                          axis);
+                                                          axis,
+                                                          denom);
   for (int i = 0; i < 2; i++) {
     for (int j = 0; j < 3; j++) {
      ASSERT_NEAR(this->normalized_matrix_(i, j), this->correct_matrix_(i, j),
@@ -61,9 +67,11 @@ TYPED_TEST(NormalizeTest, WhenAxisis0) {
   }
 }
 
-TYPED_TEST(NormalizeTest, WhenAxisis1) {
+TYPED_TEST(NormalizeTest, NormAxisis1) {
   int axis = 1;
   int p = 2;
+  std::string denom = "norm";
+
   this->matrix_.resize(2, 3);
   this->matrix_ << 1.0, 2.0, 3.0,
                    4.0, 5.0, 6.0;
@@ -73,7 +81,8 @@ TYPED_TEST(NormalizeTest, WhenAxisis1) {
   this->normalized_matrix_ = Nice::CpuOperations<TypeParam>::Normalize(
                                                           this->matrix_,
                                                           p,
-                                                          axis);
+                                                          axis,
+                                                          denom);
   for (int i = 0; i < 2; i++) {
     for (int j = 0; j < 3; j++) {
      ASSERT_NEAR(this->normalized_matrix_(i, j), this->correct_matrix_(i, j),
@@ -82,4 +91,51 @@ TYPED_TEST(NormalizeTest, WhenAxisis1) {
   }
 }
 
+TYPED_TEST(NormalizeTest, StdAxisis0) { // Should divide each column by the std
+                                        // of the column
+  int axis = 0;
+  int p = 2;
+  std::string denom = "std";
+  this->matrix_.resize(2, 3);
+  this->matrix_ << 1.0, 2.0, 3.0,
+                   4.0, 5.0, 6.0;
+  this->correct_matrix_.resize(2, 3);
+  this->correct_matrix_ = this->matrix_.array().rowwise()/
+      this->StandardDeviation(axis).transpose().array();
+  this->normalized_matrix_ = Nice::CpuOperations<TypeParam>::Normalize(
+                                                          this->matrix_,
+                                                          p,
+                                                          axis,
+                                                          denom);
+  for (int i = 0; i < 2; i++) {
+    for (int j = 0; j < 3; j++) {
+     ASSERT_NEAR(this->normalized_matrix_(i, j), this->correct_matrix_(i, j),
+                                               0.001);
+    }
+  }
+}
 
+TYPED_TEST(NormalizeTest, StdAxisis1) { // Should divide each row by the std of
+                                        // the row
+  int axis = 1;
+  int p = 2;
+  std::string denom = "std";
+
+  this->matrix_.resize(2, 3);
+  this->matrix_ << 1.0, 2.0, 3.0,
+                   4.0, 5.0, 6.0;
+  this->correct_matrix_.resize(2, 3);
+  this->correct_matrix_ = this->matrix_.array().colwise()/
+      this->StandardDeviation(axis).array();
+  this->normalized_matrix_ = Nice::CpuOperations<TypeParam>::Normalize(
+                                                          this->matrix_,
+                                                          p,
+                                                          axis,
+                                                          denom);
+  for (int i = 0; i < 2; i++) {
+    for (int j = 0; j < 3; j++) {
+     ASSERT_NEAR(this->normalized_matrix_(i, j), this->correct_matrix_(i, j),
+                                               0.001);
+    }
+  }
+}
