@@ -26,7 +26,7 @@
 #include "gtest/gtest.h"
 
 template<class T>
-class GPU_MATRIX_SCALAR_ADD : public ::testing::Test {
+class GpuMatrixScalarAdd : public ::testing::Test {
  public:
   Nice::Matrix<T> a;
   Nice::Matrix<T> correct_ans;
@@ -39,9 +39,9 @@ class GPU_MATRIX_SCALAR_ADD : public ::testing::Test {
 };
 
 typedef ::testing::Types<float, double> dataTypes;
-TYPED_TEST_CASE(GPU_MATRIX_SCALAR_ADD, dataTypes);
+TYPED_TEST_CASE(GpuMatrixScalarAdd, dataTypes);
 
-TYPED_TEST(GPU_MATRIX_SCALAR_ADD, Basic_Test) {
+TYPED_TEST(GpuMatrixScalarAdd, Basic_Test) {
   this->a.resize(3, 4);
   this->a << 1, 2, 3, 4,
              1, 2, 3, 4,
