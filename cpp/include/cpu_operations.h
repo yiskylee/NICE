@@ -36,7 +36,6 @@
 namespace Nice {
 
 // Abstract class of common matrix operation interface
-///This is a test - Andrew Tu
 template<typename T>
 class CpuOperations {
  public:
@@ -469,10 +468,10 @@ class CpuOperations {
   ///
   /// \param a
   /// Input matrix
-  /// 
+  ///
   /// \param axis
   /// The axis that you are centering along. If 0, center along cols. If 1
-  /// centers along rows. Defaults to column centering.  
+  /// centers along rows. Defaults to column centering.
   ///
   /// \return Matrix<T>
   /// This function returns a value of type Matrix<T>
@@ -487,35 +486,34 @@ class CpuOperations {
       exit(1);  // Exits the program
     }
     // If the axis is not 0 (default) or 1, exit with error message
-    if (axis != 0 && axis != 1){
+    if (axis != 0 && axis != 1) {
       std::cerr << "BAD AXIS! AXIS MUST BE 0 OR 1!";
-      //std::cout << "BAD AXIS! AXIS MUST BE 0 OR 1! (COUT)";
       exit(1);
     }
-    //std::cout << "Axis is " << axis << std::endl;
     // Otherwise,  matrix is an m x n matrix
     int m = a.rows();
     int n = a.cols();
-    Matrix<T> one; //Matrix of size (m x m) OR (n x n) filled with just ones
-    Matrix<T> C;   //The centering identity that will be multiplied with a to get the cetnered matrix
-    Matrix<T> temp; //Intermediary matrix to hold (1/n)*one
+    Matrix<T> one;  // Matrix of size (m x m) OR (n x n) filled with just ones
+    Matrix<T> C;    // The centering identity that will be multiplied with a to
+                    // get the cetnered matrix
+    Matrix<T> temp;   // Intermediary matrix to hold (1/n)*one
 
-    if(axis == 0) { //Remove means from columns
-      //Calculate Cm
+    if (axis == 0) {  // Remove means from columns
+      // Calculate Cm
       Matrix<T> i(m, m);
         i.setIdentity();
       one.setConstant(m, m, 1);
       temp = Multiply(one, (1.0/m));
-      C = Subtract(i,temp);
-      return Multiply(C,a);
-    } else if (axis == 1) { //Remove means from Rows
+      C = Subtract(i, temp);
+      return Multiply(C, a);
+    } else if (axis == 1) {  // Remove means from Rows
       Matrix<T> i(n, n);
         i.setIdentity();
       one.setConstant(n, n, 1);
       temp = Multiply(one, (1.0/n));
-      C = Subtract(i,temp);
+      C = Subtract(i, temp);
       return Multiply(a, C);
-    }else{
+    } else {
       std::cerr <<"BAD AXIS! AXIS MUST BE 0 or 1!";
       exit(1);
     }
