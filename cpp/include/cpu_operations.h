@@ -164,7 +164,7 @@ class CpuOperations {
  static Matrix<T> Subtract(const Matrix<T> &a, const T &scalar) {
     // Does not work if matrix is empty.
     if (a.rows() == 0 || a.cols() == 0) {
-      std::cerr << "EMPTY MATRIX AS ARGUEMENT!";
+      std::cerr << "SUBTRACT: EMPTY MATRIX AS ARGUEMENT!";
       exit(1);
     }
     return (a.array() - scalar);
@@ -191,7 +191,7 @@ class CpuOperations {
     // Does not work if matricies are empty.
     } else if (b.rows() == 0 || b.cols() == 0 || a.rows() == 0
         || a.cols() == 0) {
-      std::cerr << "EMPTY MATRIX AS ARGUMENT!";
+      std::cerr << "SUBTRACT: EMPTY MATRIX AS ARGUMENT!";
       exit(1);  // Exits the program
     }
     return a - b;
@@ -491,20 +491,67 @@ class CpuOperations {
     }
     return b;
   }
-  /// statix Matrix <T> Normalize(const Matrix <T> &a, const int &p
-  /// =2, const int &axis = 0) normalizes a m x n matrix by element.
+  ///  This is function calculates and returns the center of a matrix.
   ///
   /// \param a
-  /// const Matrix<T> &a
-  /// \param b
-  /// const int &p = 2
-  /// \param c
-  /// const int &axis = 0
+  /// Input matrix
   ///
-  /// \return
-  /// Matrix <T>
-  /// \sa
-  /// \ref Norm
+  /// \param axis
+  /// The axis that you are centering along. If 0, center along cols. If 1
+  /// centers along rows. Defaults to column centering.
+  ///
+  /// \return Matrix<T>
+  /// This function returns a value of type Matrix<T>
+  ///
+  static Matrix<T> Center(const Matrix<T> &a, const int axis = 0) {
+    // Include: axis, default subtract means from columns, if 1, remove means
+    // from rows
+    //
+    // If the matrix is empty, exit with error message
+    if (a.rows() == 0 || a.cols() == 0) {
+      std::cerr << "EMPTY MATRIX AS ARGUMENT!";
+      exit(1);  // Exits the program
+    }
+    // If the axis is not 0 (default) or 1, exit with error message
+    if (axis != 0 && axis != 1) {
+      std::cerr << "BAD AXIS! AXIS MUST BE 0 OR 1!";
+      exit(1);
+    }
+    // Otherwise,  matrix is an m x n matrix
+    int m = a.rows();
+    int n = a.cols();
+    Matrix<T> one;  // Matrix of size (m x m) OR (n x n) filled with just ones
+    Matrix<T> identity_matrix;
+    Matrix<T> centering_matrix;
+
+    if (axis == 0) {  // Remove means from columns
+      // Calculate Cm
+      centering_matrix = identity_matrix.Identity(m, m) -
+          one.Constant(m, m, 1.0/m);
+      return centering_matrix * a;
+    } else if (axis == 1) {  // Remove means from Rows
+      centering_matrix = identity_matrix.Identity(n, n) -
+          one.Constant(n, n, 1.0/n);
+      return a * centering_matrix;
+    } else {
+      std::cerr <<"BAD AXIS! AXIS MUST BE 0 or 1!";
+      exit(1);
+    }
+  }
+/// statix Matrix <T> Normalize(const Matrix <T> &a, const int &p
+/// =2, const int &axis = 0) normalizes a m x n matrix by element.
+///
+/// \param a
+/// const Matrix<T> &a
+/// \param b
+/// const int &p = 2
+/// \param c
+/// const int &axis = 0
+///
+/// \return
+/// Matrix <T>
+/// \sa
+/// \ref Norm
   static Matrix<T> Normalize(const Matrix<T> &a, const int &p = 2,
                                                   const int &axis = 0) {
     int num_rows = a.rows();
