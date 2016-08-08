@@ -107,14 +107,14 @@ class CpuOperations {
   /// \sa
   /// \ref Add(const Matrix<T> &a, const Matrix<T> &b)
   static Matrix<T> Add(const Matrix<T> &a, const T &scalar) {
-      // Does not work if matrix is empty.
-      if (a.rows() == 0) {
-        std::cerr << "MATRICIES ARE EMPTY";
-        exit(1);
+    // Does not work if matrix is empty.
+    if (a.rows() == 0) {
+      std::cerr << "MATRICIES ARE EMPTY";
+      exit(1);
 
       // Otherwise, code will run fine.
     } else {
-        return (a.array() + scalar);
+      return (a.array() + scalar);
     }
   }
   /// This is a function that adds two matricies and returns the resulting
@@ -132,36 +132,36 @@ class CpuOperations {
   /// \sa
   /// \ref Add(const Matrix<T> &a, const T &scalar)
   static Matrix<T> Add(const Matrix<T> &a, const Matrix<T> &b) {
-      // Does not work if matricies are not the same size.
-      if ((a.rows() != b.rows()) || (a.cols() != b.cols())) {
-        std::cerr << "MATRICIES ARE NOT THE SAME SIZE";
-        exit(1);
+    // Does not work if matricies are not the same size.
+    if ((a.rows() != b.rows()) || (a.cols() != b.cols())) {
+      std::cerr << "MATRICIES ARE NOT THE SAME SIZE";
+      exit(1);
 
       // Does not work if matricies are empty.
     } else if (a.rows() == 0) {
-        std::cerr << "MATRICIES ARE EMPTY";
-        exit(1);
+      std::cerr << "MATRICIES ARE EMPTY";
+      exit(1);
 
       // Otherwise, code will run fine.
     } else {
-        return a + b;
+      return a + b;
     }
   }
- /// This is a function that subtracts a scalar from a matrix and returns
- /// the resulting matrix.
- ///
- /// \param a
- /// Input Matrix
- /// \param scalar
- /// Input Scalar
- ///
- /// \return
- /// This function returns a matrix that is the result of subtracting a scalar
- /// from a matrix.
- ///
- /// \sa
- /// \ref Subtract(const Matrix<T> &a, const Matrix<T> &b)
- static Matrix<T> Subtract(const Matrix<T> &a, const T &scalar) {
+  /// This is a function that subtracts a scalar from a matrix and returns
+  /// the resulting matrix.
+  ///
+  /// \param a
+  /// Input Matrix
+  /// \param scalar
+  /// Input Scalar
+  ///
+  /// \return
+  /// This function returns a matrix that is the result of subtracting a scalar
+  /// from a matrix.
+  ///
+  /// \sa
+  /// \ref Subtract(const Matrix<T> &a, const Matrix<T> &b)
+  static Matrix<T> Subtract(const Matrix<T> &a, const T &scalar) {
     // Does not work if matrix is empty.
     if (a.rows() == 0 || a.cols() == 0) {
       std::cerr << "SUBTRACT: EMPTY MATRIX AS ARGUEMENT!";
@@ -169,26 +169,26 @@ class CpuOperations {
     }
     return (a.array() - scalar);
   }
- /// This is a function that subtracts two matricies and returns the resulting
- /// matrix.
- ///
- /// \param a
- /// Input Matrix 1
- /// \param b
- /// Input Matrix 2
- ///
- /// \return
- /// This function returns a matrix that is the result of subtracting two
- /// input matricies.
- ///
- /// \sa
- /// \ref Add(const Matrix<T> &a, const T &scalar) 
- static Matrix<T> Subtract(const Matrix<T> &a, const Matrix<T> &b) {
+  /// This is a function that subtracts two matricies and returns the resulting
+  /// matrix.
+  ///
+  /// \param a
+  /// Input Matrix 1
+  /// \param b
+  /// Input Matrix 2
+  ///
+  /// \return
+  /// This function returns a matrix that is the result of subtracting two
+  /// input matricies.
+  ///
+  /// \sa
+  /// \ref Add(const Matrix<T> &a, const T &scalar)
+  static Matrix<T> Subtract(const Matrix<T> &a, const Matrix<T> &b) {
     // Does not work if matricies are not the same size.
     if ((a.rows() != b.rows()) || (a.cols() != b.cols())) {
       std::cerr << "MATRICES ARE NOT THE SAME SIZE!";
       exit(1);
-    // Does not work if matricies are empty.
+      // Does not work if matricies are empty.
     } else if (b.rows() == 0 || b.cols() == 0 || a.rows() == 0
         || a.cols() == 0) {
       std::cerr << "SUBTRACT: EMPTY MATRIX AS ARGUMENT!";
@@ -272,19 +272,19 @@ class CpuOperations {
   /// \return
   /// This function returns a matrix that is the inverse of the input matrix.
   static Matrix<T> Inverse(const Matrix<T> &a) {
-      // If the matrix is empty, it should not check for inverse.
-      if (a.cols() == 0) {
-        std::cerr << "MATRIX IS EMPTY";
-        exit(1);
+    // If the matrix is empty, it should not check for inverse.
+    if (a.cols() == 0) {
+      std::cerr << "MATRIX IS EMPTY";
+      exit(1);
       // If the matrix is not sqaure it will not produce an inverse.
     } else if (a.cols() != a.rows()) {
-        std::cerr << "MATRIX IS NOT A SQUARE MATRIX!";
-        exit(1);
+      std::cerr << "MATRIX IS NOT A SQUARE MATRIX!";
+      exit(1);
 
       // If the determinant of a matrix is 0, it does not have an inverse.
     } else if (a.determinant() == 0) {
-        std::cerr << "MATRIX DOES NOT HAVE AN INVERSE (DETERMINANT IS ZERO)!";
-        exit(1);
+      std::cerr << "MATRIX DOES NOT HAVE AN INVERSE (DETERMINANT IS ZERO)!";
+      exit(1);
 
       // If this point is reached then an inverse of the matrix exists.
     } else {
@@ -310,35 +310,34 @@ class CpuOperations {
   ///
   /// \return
   /// Vector <T>
-  static Vector<T> Norm(const Matrix<T> &a,
-                      const int &p = 2,
-                      const int &axis = 0) {
+  static Vector<T> Norm(const Matrix<T> &a, const int &p = 2, const int &axis =
+                            0) {
     int num_rows = a.rows();
     int num_cols = a.cols();
     float norm_value = 0;
     if (axis == 0) {
-    Vector<T> norm(num_cols);
-     for (int j = 0; j < num_cols; j++) {
-      for (int i = 0; i < num_rows; i++)
-         norm_value += pow(a(i, j), p);
-       norm(j) = pow(norm_value, (1.0/p));
-       norm_value = 0;
-     }
-     return norm;
+      Vector<T> norm(num_cols);
+      for (int j = 0; j < num_cols; j++) {
+        for (int i = 0; i < num_rows; i++)
+          norm_value += pow(a(i, j), p);
+        norm(j) = pow(norm_value, (1.0 / p));
+        norm_value = 0;
+      }
+      return norm;
     } else if (axis == 1) {
-     Vector<T> norm(num_rows);
-     for (int i = 0; i < num_rows; i++) {
-      for (int j = 0; j < num_cols; j++)
-         norm_value += pow(a(i, j), p);
-       norm(i) = pow(norm_value, (1.0/p));
-       norm_value = 0;
-     }
-     return norm;
+      Vector<T> norm(num_rows);
+      for (int i = 0; i < num_rows; i++) {
+        for (int j = 0; j < num_cols; j++)
+          norm_value += pow(a(i, j), p);
+        norm(i) = pow(norm_value, (1.0 / p));
+        norm_value = 0;
+      }
+      return norm;
     } else {
       std::cerr << "Axis must be zero or one!";
       exit(1);
     }
-}
+  }
 
   static T Determinant(const Matrix<T> &a);
   /// static int Rank(const Matrix <T> &a) is a function that returns
@@ -395,10 +394,10 @@ class CpuOperations {
   /// This function returns a value of type T which is the dot product of
   /// the two vectors.
   static T DotProduct(const Vector<T> &a, const Vector<T> &b) {
-      // Checks to see if the size of the two vectors are not the same
-      if (a.size() != b.size()) {
-        std::cerr << "VECTORS ARE NOT THE SAME SIZE!";
-        exit(1);
+    // Checks to see if the size of the two vectors are not the same
+    if (a.size() != b.size()) {
+      std::cerr << "VECTORS ARE NOT THE SAME SIZE!";
+      exit(1);
 
       // Checks to see if both vectors contain at least one element
       // Only one vector is checked because it is known that both
@@ -410,7 +409,7 @@ class CpuOperations {
       // If this point is reached then calculating the dot product
       // of the two vectors is valid
     } else {
-        return (a.dot(b));
+      return (a.dot(b));
     }
   }
   /// This is a function that calculates the "Outer Product of the input Vectors
@@ -442,11 +441,11 @@ class CpuOperations {
   /// \return
   /// This function returns a Vector of type bool
   static Vector<bool> LogicalAnd(const Vector<T> &a, const Vector<T> &b) {
-  if ((a.rows() != b.rows()) || (a.cols() != b.cols())) {
-        std::cerr << "MATRICES ARE NOT THE SAME SIZE!";
-        exit(1);  // Exits the program
-      }
-      return (a.array() && b.array());
+    if ((a.rows() != b.rows()) || (a.cols() != b.cols())) {
+      std::cerr << "MATRICES ARE NOT THE SAME SIZE!";
+      exit(1);  // Exits the program
+    }
+    return (a.array() && b.array());
   }
   /// This is a function that calculates the "logical or" of the two input
   /// Vectors
@@ -526,15 +525,15 @@ class CpuOperations {
 
     if (axis == 0) {  // Remove means from columns
       // Calculate Cm
-      centering_matrix = identity_matrix.Identity(m, m) -
-          one.Constant(m, m, 1.0/m);
+      centering_matrix = identity_matrix.Identity(m, m)
+          - one.Constant(m, m, 1.0 / m);
       return centering_matrix * a;
     } else if (axis == 1) {  // Remove means from Rows
-      centering_matrix = identity_matrix.Identity(n, n) -
-          one.Constant(n, n, 1.0/n);
+      centering_matrix = identity_matrix.Identity(n, n)
+          - one.Constant(n, n, 1.0 / n);
       return a * centering_matrix;
     } else {
-      std::cerr <<"BAD AXIS! AXIS MUST BE 0 or 1!";
+      std::cerr << "BAD AXIS! AXIS MUST BE 0 or 1!";
       exit(1);
     }
   }
@@ -553,19 +552,19 @@ class CpuOperations {
 /// \sa
 /// \ref Norm
   static Matrix<T> Normalize(const Matrix<T> &a, const int &p = 2,
-                                                  const int &axis = 0) {
+                             const int &axis = 0) {
     int num_rows = a.rows();
     int num_cols = a.cols();
     Matrix<T> b(num_rows, num_cols);
     if (axis == 0) {
-     b = a.transpose().array().colwise() / Norm(a, p, axis).array();
-     return b.transpose();
+      b = a.transpose().array().colwise() / Norm(a, p, axis).array();
+      return b.transpose();
     } else if (axis == 1) {
-     b = a.array().colwise() / Norm(a, p, axis).array();
-     return b;
+      b = a.array().colwise() / Norm(a, p, axis).array();
+      return b;
     } else {
-     std::cerr << "Axis must be zero or one!";
-     exit(1);
+      std::cerr << "Axis must be zero or one!";
+      exit(1);
     }
   }
   /// Generates a kernel matrix from an input data_matrix
@@ -579,10 +578,10 @@ class CpuOperations {
   /// In Linear kernel, this is c as well
   /// \return
   /// An nxn kernel matrix where n is the number of samples in data_matrix
-  static Matrix<T> GenKernelMatrix(
-      const Matrix<T> &data_matrix,
-      const KernelType kernel_type = kGaussianKernel,
-      const float constant = 1.0) {
+  static Matrix<T> GenKernelMatrix(const Matrix<T> &data_matrix,
+                                   const KernelType kernel_type =
+                                       kGaussianKernel,
+                                   const float constant = 1.0) {
     int num_samples = data_matrix.rows();
     // An n x n kernel matrix
     Matrix<T> kernel_matrix(num_samples, num_samples);
@@ -607,10 +606,9 @@ class CpuOperations {
   /// Output degree matrix D
   /// \param degree_matrix_to_the_minus_half
   /// Output matrix D^(-1/2)
-  static void GenDegreeMatrix(
-      const Matrix<T> &kernel_matrix,
-      Matrix<T> *degree_matrix,
-      Matrix<T> *degree_matrix_to_the_minus_half) {
+  static void GenDegreeMatrix(const Matrix<T> &kernel_matrix,
+                              Matrix<T> *degree_matrix,
+                              Matrix<T> *degree_matrix_to_the_minus_half) {
     // Generate the diagonal vector d_i and degree matrix D
     Vector<T> d_i = kernel_matrix.rowwise().sum();
     *degree_matrix = d_i.asDiagonal();
