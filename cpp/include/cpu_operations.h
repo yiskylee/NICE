@@ -622,8 +622,7 @@ class CpuOperations {
   /// \param a
   /// input matrix a
   ///
-  /// \param b
-  /// input int axis
+  /// \param axis
   /// The axis for the standard deviation to be calculated along. If axis is 1
   /// will return the standard deviation calculated by column. If axis is 0,
   /// will return the standard deviation calculated by row.
