@@ -616,15 +616,17 @@ class CpuOperations {
     *degree_matrix_to_the_minus_half = d_i.array().sqrt().unaryExpr(
         std::ptr_fun(util::reciprocal<T>)).matrix().asDiagonal();
   }
-  /// Calculates the standard deviation of a given matrix
+  /// Calculates the standard deviation of a given matrix and returns it as a
+  /// vector.
   ///
   /// \param a
-  /// Input matrix
+  /// input matrix a
   ///
   /// \param b
+  /// input int axis
   /// The axis for the standard deviation to be calculated along. If axis is 1
   /// will return the standard deviation calculated by column. If axis is 0,
-  /// will return the standard deviation calcualted by row.
+  /// will return the standard deviation calculated by row.
   ///
   /// /return
   /// Output a vector containing the standaard deviations of the rows or columns
