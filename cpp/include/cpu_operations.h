@@ -188,7 +188,7 @@ class CpuOperations {
     if ((a.rows() != b.rows()) || (a.cols() != b.cols())) {
       std::cerr << "MATRICES ARE NOT THE SAME SIZE!";
       exit(1);
-      // Does not work if matricies are empty.
+    // Does not work if matricies are empty.
     } else if (b.rows() == 0 || b.cols() == 0 || a.rows() == 0
         || a.cols() == 0) {
       std::cerr << "SUBTRACT: EMPTY MATRIX AS ARGUMENT!";
@@ -615,6 +615,54 @@ class CpuOperations {
     // Generate matrix D^(-1/2)
     *degree_matrix_to_the_minus_half = d_i.array().sqrt().unaryExpr(
         std::ptr_fun(util::reciprocal<T>)).matrix().asDiagonal();
+  }
+  /// Calculates the standard deviation of a given matrix and returns it as a
+  /// vector.
+  ///
+  /// \param a
+  /// input matrix a
+  ///
+  /// \param axis
+  /// The axis for the standard deviation to be calculated along. If axis is 1
+  /// will return the standard deviation calculated by column. If axis is 0,
+  /// will return the standard deviation calculated by row.
+  ///
+  /// /return
+  /// Output a vector containing the standaard deviations of the rows or columns
+  /// of the input matrix
+  static Vector<T> StandardDeviation(const Matrix<T> &a, const int axis = 0){
+    // Std = sqrt(1/n*[(x1-u)^2+(x2-u)^2...+(xn-u)^2])
+    // u = average of the vector
+    // n = number of the elements
+    if (a.rows() == 0 || a.cols() == 0) {
+      std::cerr << "EMPTY MATRIX!";
+      exit(1);
+    }
+    int num_rows = a.rows();
+    int num_cols = a.cols();
+
+    // Matrix<T> temp = a.array().colwise() - a.array().rowwise().mean();
+    // This is the same as centering the matrix row wise so we choose to
+    // center instead.
+    Matrix<T> b = Center(a, axis);
+    Vector<T> calculated_std;
+
+    if (axis == 0) {  // Find Standard Deviation of each column
+      b = b.array().pow(2);
+      calculated_std = b.array().colwise().sum();
+      calculated_std *= (1.0 / num_rows);
+      calculated_std = calculated_std.array().sqrt();
+      return calculated_std;
+    } else if (axis == 1) {  // Find Standard Deviation of each row
+      b = b.array().pow(2);  // Square every element
+      calculated_std = b.array().rowwise().sum();  // Sum entire row
+      calculated_std *= (1.0 / num_cols);  // multply by 1/size
+      calculated_std = calculated_std.array().sqrt();  // take square root
+      return calculated_std;
+    } else {  // Bad Axis
+      std::cerr << "Axis must be 0 or 1!";
+      exit(1);
+    }
   }
 };
 }  // namespace Nice
