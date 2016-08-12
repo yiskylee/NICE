@@ -7,3 +7,9 @@ Debug
 cpp/build/
 cpp/dlib/
 python
+formatData
+Notebooks
+genKmeansData.py
+.ipynb*
+*~
+cpp/include/data_k4_p10_d4_c1.txt

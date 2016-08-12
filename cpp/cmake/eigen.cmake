@@ -8,5 +8,5 @@ ExternalProject_Add(eigen
 
 # Specify include dir
 ExternalProject_Get_Property(eigen source_dir)
-#message(STATUS ${source_dir})
+#message(STATUS "//////////////////Eigen source dir:" ${source_dir})
 set(EIGEN_INCLUDE_DIRS ${source_dir})

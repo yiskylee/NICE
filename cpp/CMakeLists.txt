@@ -6,8 +6,11 @@ set(PROJECT_NAME Nice)
 project(Nice)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
 include(eigen)
+message(STATUS "Status of Eigen:" eigen)
 include(check)
 include(doc)
+include(kmlocal)
+message(STATUS "Status of kmlocal:" kmlocal)
 find_package(Threads REQUIRED)
 
 set(CMAKE_BUILD_TYPE Release)
@@ -21,12 +24,21 @@ if("${CMAKE_COMPILER_ID}" STREQUAL "Clang")
     add_definitions(-std=c++11)
 endif()
 message(STATUS "Eigen path: " ${EIGEN_INCLUDE_DIRS})
+message(STATUS "kmlocal path: " ${KMLOCAL_INCLUDE_DIRS})
 set(COMMON_INCLUDES ${PROJECT_SOURCE_DIR})
 include_directories(${EIGEN_INCLUDE_DIRS})
+include_directories(${KMLOCAL_INCLUDE_DIRS})
 include_directories(${COMMON_INCLUDES}) 
+
+#message(STATUS "Include Directories: ")
+#get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
+#foreach(dir ${dirs})
+#  message(STATUS "dir='${dir}'")
+#endforeach()
 
 # Set source files
 file(GLOB_RECURSE SOURCES RELATIVE ${CMAKE_SOURCE_DIR} src/*.cc)
+message(STATUS "CMAKE_SOURCE_DIR" ${CMAKE_SOURCE_DIR})
 message(STATUS "Source files: " ${SOURCES})
 
 # Locate CUDA package 
@@ -66,7 +78,9 @@ else()
 
 endif()
 
-add_dependencies(${PROJECT_NAME} eigen)
+  message(STATUS "KMSOURCES VARIABLE:" ${KMSOURCES})
+  add_dependencies(${PROJECT_NAME} eigen)
+  add_dependencies(${PROJECT_NAME} kmlocal)
 
 # Test
 option (enable-test "Compile all Nice unit tests" ON)
@@ -84,6 +98,7 @@ if (enable-test)
          test/cpu_operations_test/*.cc
          test/util_test/*.cc
          test/cpu_solver_test/*.cc
+         test/model_test/*.cc
          test/gpu_operations_test/*.cc
          test/gpu_solver_test/*.cc
          )
@@ -92,7 +107,8 @@ if (enable-test)
          ${PROJECT_SOURCE_DIR} 
          test/cpu_operations_test/*.cc
          test/util_test/*.cc
-         test/cpu_solver_test/*.cc)
+         test/cpu_solver_test/*.cc
+         test/model_test/*.cc)
   endif()
   message(STATUS "Test case source files: " ${TEST_SRC_FILES})
 
@@ -100,8 +116,9 @@ if (enable-test)
 
   add_dependencies(${PROJECT_TEST_NAME} googletest)
   add_dependencies(${PROJECT_TEST_NAME} eigen)
+  add_dependencies(${PROJECT_TEST_NAME} kmlocal)
   add_dependencies(${PROJECT_TEST_NAME} ${PROJECT_NAME})
-
+ 
   # Add dependencies and link libraries according to machine setup
   if (CUDA_FOUND)
     add_dependencies(${PROJECT_TEST_NAME} ${CUDA_SOLVER_LIBRARY})
@@ -119,6 +136,7 @@ if (enable-test)
     target_link_libraries(${PROJECT_TEST_NAME}
         ${GTEST_LIBS_DIR}/libgtest.a
         ${GTEST_LIBS_DIR}/libgtest_main.a
+        ${CMAKE_CURRENT_BINARY_DIR}/kmlocallib/libkmlocal.a
         ${PROJECT_NAME}
         )
   endif()

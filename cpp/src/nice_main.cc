@@ -28,7 +28,7 @@
 #include "include/gpu_svd_solver.h"
 #include "include/util.h"
 #include "include/gpu_util.h"
-
+#include "include/kmeans.h"
 // Place holder
 //
 /// THIS IS A TEST
