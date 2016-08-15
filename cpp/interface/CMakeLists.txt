@@ -17,5 +17,4 @@ target_link_libraries(${PROJECT_NAME}4Py
   ${PROJECT_NAME} 
   ${Boost_LIBRARIES} 
   ${PYTHON_LIBRARIES})
-add_dependencies(${PROJECT_NAME}4Py eigen)
 add_dependencies(${PROJECT_NAME}4Py ${PROJECT_NAME})
