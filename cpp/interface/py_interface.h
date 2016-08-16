@@ -35,38 +35,56 @@
 
 namespace Nice {
 
-typedef void (*FunctionPointers)(boost::python::dict &);
-
 enum DataType {
   INT = 0,
   FLOAT,
   DOUBLE
 };
 
-template <typename T>
-using MatrixMap = Eigen::Map< Matrix<T> >;
+enum ModelType {
+  KMEANS = 0,
+  OTHERS
+};
 
-template <typename T>
-using VectorMap = Eigen::Map< Vector<T> >;
+using IMatrixMap = Eigen::Map< Matrix<int> >;
+using FMatrixMap = Eigen::Map< Matrix<float> >;
+using DMatrixMap = Eigen::Map< Matrix<double> >;
+
+using IVectorMap = Eigen::Map< Vector<int> >;
+using FVectorMap = Eigen::Map< Vector<float> >;
+using DVectorMap = Eigen::Map< Vector<double> >;
 
 class PyInterface {
  private:
   int row_;
   int col_;
-  std::map<const char*, boost::python::dict> param_map_;
-  std::map<const char *, FunctionPointers> func_map_;
-  void RunKmeans(boost::python::dict &param);
+  DataType dtype_;
+  std::map<ModelType, boost::python::dict> param_map_;
+
+  std::shared_ptr<IMatrixMap> input_imat_;
+  std::shared_ptr<FMatrixMap> input_fmat_;
+  std::shared_ptr<DMatrixMap> input_dmat_;
+  std::shared_ptr<IMatrixMap> output_imat_;
+  std::shared_ptr<FMatrixMap> output_fmat_;
+  std::shared_ptr<DMatrixMap> output_dmat_;
+  std::shared_ptr<IVectorMap> input_ivec_;
+  std::shared_ptr<FVectorMap> input_fvec_;
+  std::shared_ptr<DVectorMap> input_dvec_;
+  std::shared_ptr<IVectorMap> output_ivec_;
+  std::shared_ptr<FVectorMap> output_fvec_;
+  std::shared_ptr<DVectorMap> output_dvec_;
+  
+  template <typename T>
+  void RunKmeans(boost::python::dict &param,
+    const Eigen::MatrixBase<T>& in,
+    Eigen::MatrixBase<T>& out) { out = in; } 
  public:
-  PyInterface(){}//;
-  void Init(const char *, int row, int col, DataType){}//;
-  void Init(PyObject *, int row, int col, DataType){}//;
-  void SetupParams(boost::python::dict &params, const char *){}//;
-  void GetResults(PyObject *, int &row, int &col){}//;
-  void Run(const char *){}//;
-  template <typename T> static MatrixMap<T> input_mat_;
-  template <typename T> static VectorMap<T> input_vec_; 
-  template <typename T> static MatrixMap<T> output_mat_;
-  template <typename T> static VectorMap<T> output_vec_;
+  PyInterface();
+  PyInterface(DataType dtype);
+  void Init(const char *path, int row, int col);
+  void Init(PyObject *in, int row, int col);
+  void SetupParams(boost::python::dict &params, ModelType model_type);
+  void Run(ModelType model_type, PyObject *out, int row, int col);
 };
 
 }  // namespace Nice
