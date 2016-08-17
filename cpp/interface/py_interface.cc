@@ -42,28 +42,22 @@ PyInterface::PyInterface(DataType dtype)
 : dtype_(dtype) {}
 
 void PyInterface::Init(const char *path, int row, int col) {
-  // Set dimension
-  row_ = row;
-  col_ = col;
-
   // Create corresponding matrix/vector based on the given path
 }
 
 void PyInterface::Init(PyObject *in, int row, int col) {
+  // Get the python object buffer
   Py_buffer pybuf;
   PyObject_GetBuffer(in, &pybuf, PyBUF_SIMPLE);
 
+  // Initialze the input data
   switch (dtype_) {
     case INT:
       break;
     case FLOAT:
       break;
     case DOUBLE:
-      if (col_ == 1) {
-        input_dvec_.reset(new DVectorMap((double *)(pybuf.buf), row_, col_));
-      } else {
-        input_dmat_.reset(new DMatrixMap((double *)(pybuf.buf), row_, col_));
-      }
+      input_dmat_.reset(new DMatrixMap((double *)(pybuf.buf), row, col));
       break;
     default:
       break;
@@ -74,34 +68,43 @@ void PyInterface::SetupParams(boost::python::dict &params, ModelType model_type)
 }
 
 void PyInterface::Run(ModelType model_type, PyObject *out, int row, int col) {
+  // Get python object buffer
   Py_buffer pybuf;
   PyObject_GetBuffer(out, &pybuf, PyBUF_SIMPLE);
 
-  boost::python::dict d;
+  // Get parameters
+  boost::python::dict param; 
+  if (param_map_.find(model_type) != param_map_.end())
+    param = param_map_[model_type];
+
   switch (dtype_) {
     case INT:
       break;
     case FLOAT:
       break;
     case DOUBLE:
-      if (col_ == 1) {
-        output_dvec_ = std::make_shared<DVectorMap>((double *)(pybuf.buf),
-                                                   row, col);
-      } else {
-        output_dmat_ = std::make_shared<DMatrixMap>((double *)(pybuf.buf),
-                                                   row, col);
-      }
+      output_dmat_.reset(new DMatrixMap((double *)(pybuf.buf),
+                                        row, col));
       break;
     default:
       break;
   }
 
-  switch (model_type) {
-    case KMEANS:
-      RunKmeans(d, *input_dmat_, *output_dmat_);
-      break;
-    default:
-      break;
+  // Run the KMEANS model
+  if (model_type == KMEANS) {
+    if (dtype_ == INT) {
+      RunKmeans(param,
+                *input_imat_,
+                *output_imat_);
+    } else if (dtype_ == FLOAT) {
+      RunKmeans(param,
+                *input_fmat_,
+                *output_fmat_);
+    } else if (dtype_ == DOUBLE) {
+      RunKmeans(param,
+                *input_dmat_,
+                *output_dmat_);
+    }
   }
  
 }

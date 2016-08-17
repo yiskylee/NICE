@@ -25,6 +25,7 @@
 
 #include <map>
 #include <vector>
+#include <iostream>
 #include <boost/python.hpp>
 
 #include "Eigen/Dense"
@@ -46,18 +47,13 @@ enum ModelType {
   OTHERS
 };
 
+
 using IMatrixMap = Eigen::Map< Matrix<int> >;
 using FMatrixMap = Eigen::Map< Matrix<float> >;
 using DMatrixMap = Eigen::Map< Matrix<double> >;
 
-using IVectorMap = Eigen::Map< Vector<int> >;
-using FVectorMap = Eigen::Map< Vector<float> >;
-using DVectorMap = Eigen::Map< Vector<double> >;
-
 class PyInterface {
  private:
-  int row_;
-  int col_;
   DataType dtype_;
   std::map<ModelType, boost::python::dict> param_map_;
 
@@ -67,17 +63,13 @@ class PyInterface {
   std::shared_ptr<IMatrixMap> output_imat_;
   std::shared_ptr<FMatrixMap> output_fmat_;
   std::shared_ptr<DMatrixMap> output_dmat_;
-  std::shared_ptr<IVectorMap> input_ivec_;
-  std::shared_ptr<FVectorMap> input_fvec_;
-  std::shared_ptr<DVectorMap> input_dvec_;
-  std::shared_ptr<IVectorMap> output_ivec_;
-  std::shared_ptr<FVectorMap> output_fvec_;
-  std::shared_ptr<DVectorMap> output_dvec_;
   
   template <typename T>
   void RunKmeans(boost::python::dict &param,
-    const Eigen::MatrixBase<T>& in,
-    Eigen::MatrixBase<T>& out) { out = in; } 
+    const Eigen::MatrixBase<T> &in,
+    Eigen::MatrixBase<T> &out) {
+      //out = in + in * 3.;
+    } 
  public:
   PyInterface();
   PyInterface(DataType dtype);
