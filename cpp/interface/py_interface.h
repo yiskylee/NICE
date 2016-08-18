@@ -44,6 +44,7 @@ enum DataType {
 
 enum ModelType {
   KMEANS = 0,
+  INVERSE,
   OTHERS
 };
 
@@ -51,25 +52,36 @@ enum ModelType {
 using IMatrixMap = Eigen::Map< Matrix<int> >;
 using FMatrixMap = Eigen::Map< Matrix<float> >;
 using DMatrixMap = Eigen::Map< Matrix<double> >;
+using IMatrix = Matrix<int>;
+using FMatrix = Matrix<float>;
+using DMatrix = Matrix<double>;
 
 class PyInterface {
  private:
   DataType dtype_;
   std::map<ModelType, boost::python::dict> param_map_;
 
-  std::shared_ptr<IMatrixMap> input_imat_;
-  std::shared_ptr<FMatrixMap> input_fmat_;
-  std::shared_ptr<DMatrixMap> input_dmat_;
-  std::shared_ptr<IMatrixMap> output_imat_;
-  std::shared_ptr<FMatrixMap> output_fmat_;
-  std::shared_ptr<DMatrixMap> output_dmat_;
+  IMatrix input_imat_;
+  FMatrix input_fmat_;
+  DMatrix input_dmat_;
+  IMatrix output_imat_;
+  FMatrix output_fmat_;
+  DMatrix output_dmat_;
   
   template <typename T>
   void RunKmeans(boost::python::dict &param,
-    const Eigen::MatrixBase<T> &in,
-    Eigen::MatrixBase<T> &out) {
-      //out = in + in * 3.;
-    } 
+    const Matrix<T> &in,
+    Matrix<T> &out) {
+    out = in + in * 3.;
+  } 
+
+  // Only for test
+  template <typename T>
+  void RunInverse(const Matrix<T> &in,
+    Matrix<T> &out) {
+    out = CpuOperations<T>::Inverse(in); 
+  }
+  
  public:
   PyInterface();
   PyInterface(DataType dtype);
