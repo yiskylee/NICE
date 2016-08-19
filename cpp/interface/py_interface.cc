@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#include <boost/python.hpp>
 #include <typeinfo>
 #include "include/matrix.h"
 #include "include/vector.h"
@@ -30,13 +31,11 @@
 #include "include/util.h"
 #include "include/gpu_util.h"
 
-#include "py_interface.h"
-
-#include <boost/python.hpp>
+#include "interface/py_interface.h"
 
 namespace Nice {
 
-PyInterface::PyInterface() 
+PyInterface::PyInterface()
 : dtype_(DOUBLE) {}
 
 PyInterface::PyInterface(DataType dtype)
@@ -57,14 +56,16 @@ void PyInterface::Init(PyObject *in, int row, int col) {
       break;
     case DOUBLE:
       input_dmat_.resize(row, col);
-      new (&input_dmat_) DMatrixMap((double *)(pybuf.buf), row, col);
+      new (&input_dmat_) DMatrixMap(reinterpret_cast<double *>(pybuf.buf),
+                                    row, col);
       break;
     default:
       break;
   }
 }
 
-void PyInterface::SetupParams(boost::python::dict &params, ModelType model_type) {
+void PyInterface::SetupParams(const boost::python::dict &params,
+                              ModelType model_type) {
 }
 
 void PyInterface::Run(ModelType model_type, PyObject *out, int row, int col) {
@@ -73,7 +74,7 @@ void PyInterface::Run(ModelType model_type, PyObject *out, int row, int col) {
   PyObject_GetBuffer(out, &pybuf, PyBUF_SIMPLE);
 
   // Get parameters
-  boost::python::dict param; 
+  boost::python::dict param;
   if (param_map_.find(model_type) != param_map_.end())
     param = param_map_[model_type];
 
@@ -82,7 +83,8 @@ void PyInterface::Run(ModelType model_type, PyObject *out, int row, int col) {
       break;
     case DOUBLE:
       output_dmat_.resize(row, col);
-      new (&output_dmat_) DMatrixMap((double *)(pybuf.buf), row, col);
+      new (&output_dmat_) DMatrixMap(reinterpret_cast<double *>(pybuf.buf),
+                                     row, col);
       break;
     default:
       break;
@@ -93,24 +95,23 @@ void PyInterface::Run(ModelType model_type, PyObject *out, int row, int col) {
     if (dtype_ == FLOAT) {
       RunKmeans(param,
                 input_fmat_,
-                output_fmat_);
+                &output_fmat_);
     } else if (dtype_ == DOUBLE) {
       RunKmeans(param,
                 input_dmat_,
-                output_dmat_);
+                &output_dmat_);
     }
   }
   // Run Inverse only for test
   if (model_type == INVERSE) {
     if (dtype_ == FLOAT) {
       RunInverse(input_fmat_,
-                 output_fmat_);
+                 &output_fmat_);
     } else if (dtype_ == DOUBLE) {
       RunInverse(input_dmat_,
-                 output_dmat_);
+                 &output_dmat_);
     }
   }
-
 }
 
 }  // namespace Nice
@@ -125,18 +126,16 @@ BOOST_PYTHON_MODULE(Nice4Py) {
   boost::python::enum_<Nice::DataType>("DataType")
     .value("INT", Nice::DataType::INT)
     .value("FLOAT", Nice::DataType::FLOAT)
-    .value("DOUBLE", Nice::DataType::DOUBLE)
-    ;
+    .value("DOUBLE", Nice::DataType::DOUBLE);
   boost::python::enum_<Nice::ModelType>("ModelType")
     .value("KMEANS", Nice::ModelType::KMEANS)
     .value("INVERSE", Nice::ModelType::INVERSE)
-    .value("OTHERS", Nice::ModelType::OTHERS)
-    ;
-  boost::python::class_<Nice::PyInterface>("PyInterface", boost::python::init<>())
+    .value("OTHERS", Nice::ModelType::OTHERS);
+  boost::python::class_<Nice::PyInterface>("PyInterface",
+                                           boost::python::init<>())
     .def(boost::python::init<Nice::DataType>())
     .def("Init", Init1)
     .def("Init", Init2)
     .def("SetupParams", &Nice::PyInterface::SetupParams)
-    .def("Run", &Nice::PyInterface::Run)
-    ;
+    .def("Run", &Nice::PyInterface::Run);
 }

@@ -20,13 +20,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef CPP_INCLUDE_PY_INTERFACE_H_
-#define CPP_INCLUDE_PY_INTERFACE_H_
+#ifndef CPP_INTERFACE_PY_INTERFACE_H_
+#define CPP_INTERFACE_PY_INTERFACE_H_
+
+#include <boost/python.hpp>
 
 #include <map>
 #include <vector>
 #include <iostream>
-#include <boost/python.hpp>
 
 #include "Eigen/Dense"
 #include "Eigen/Core"
@@ -69,34 +70,34 @@ class PyInterface {
   IMatrix output_imat_;
   FMatrix output_fmat_;
   DMatrix output_dmat_;
-  
+
   template <typename T>
-  void RunKmeans(boost::python::dict &param,
+  void RunKmeans(const boost::python::dict &param,
     const Matrix<T> &in,
-    Matrix<T> &out) {
-    out = in + in * 3.;
-  } 
+    Matrix<T> *out) {
+    *out = in + in * 3.;
+  }
 
   // Only for test
   template <typename T>
   void RunInverse(const Matrix<T> &in,
-    Matrix<T> &out) {
+    Matrix<T> *out) {
     // Has to be this way due to a bug of eigen
     Matrix<T> temp = CpuOperations<T>::Inverse(in);
-    out = temp;
+    *out = temp;
 
-    //out = CpuOperations<T>::Inverse(in);
+    // out = CpuOperations<T>::Inverse(in);
   }
-  
+
  public:
   PyInterface();
-  PyInterface(DataType dtype);
+  explicit PyInterface(DataType dtype);
   void Init(const char *path, int row, int col);
   void Init(PyObject *in, int row, int col);
-  void SetupParams(boost::python::dict &params, ModelType model_type);
+  void SetupParams(const boost::python::dict &params, ModelType model_type);
   void Run(ModelType model_type, PyObject *out, int row, int col);
 };
 
 }  // namespace Nice
 
-#endif  // CPP_INCLUDE_PY_INTERFACE_H_
+#endif  // CPP_INTERFACE_PY_INTERFACE_H_
