@@ -126,3 +126,6 @@ if (enable-test)
   target_link_libraries(${PROJECT_TEST_NAME} ${CMAKE_THREAD_LIBS_INIT})
   add_test(test1 ${PROJECT_TEST_NAME} "--gtest_color=yes")
 endif()
+
+# Build Python interface
+add_subdirectory(interface)
