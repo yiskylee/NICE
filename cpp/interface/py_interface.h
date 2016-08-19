@@ -71,7 +71,7 @@ class PyInterface {
   template <typename T>
   Matrix<T> RunKmeans(const boost::python::dict &param,
     const Matrix<T> &in) {
-    // TODO acutal code here
+    // TODO(shidong): acutal code here
     return in + in * 3.;
   }
 
