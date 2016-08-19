@@ -32,6 +32,8 @@
 #include "Eigen/Core"
 #include "include/matrix.h"
 #include "include/vector.h"
+#include "include/cpu_operations.h"
+#include "include/gpu_operations.h"
 #include "include/util.h"
 
 namespace Nice {
@@ -79,7 +81,11 @@ class PyInterface {
   template <typename T>
   void RunInverse(const Matrix<T> &in,
     Matrix<T> &out) {
-    out = CpuOperations<T>::Inverse(in); 
+    // Has to be this way due to a bug of eigen
+    Matrix<T> temp = CpuOperations<T>::Inverse(in);
+    out = temp;
+
+    //out = CpuOperations<T>::Inverse(in);
   }
   
  public:
