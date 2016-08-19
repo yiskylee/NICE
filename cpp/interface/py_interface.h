@@ -55,38 +55,30 @@ enum ModelType {
 using IMatrixMap = Eigen::Map< Matrix<int> >;
 using FMatrixMap = Eigen::Map< Matrix<float> >;
 using DMatrixMap = Eigen::Map< Matrix<double> >;
-using IMatrix = Matrix<int>;
-using FMatrix = Matrix<float>;
-using DMatrix = Matrix<double>;
 
 class PyInterface {
  private:
   DataType dtype_;
   std::map<ModelType, boost::python::dict> param_map_;
 
-  IMatrix input_imat_;
-  FMatrix input_fmat_;
-  DMatrix input_dmat_;
-  IMatrix output_imat_;
-  FMatrix output_fmat_;
-  DMatrix output_dmat_;
+  IMatrixMap input_imat_;
+  FMatrixMap input_fmat_;
+  DMatrixMap input_dmat_;
+  IMatrixMap output_imat_;
+  FMatrixMap output_fmat_;
+  DMatrixMap output_dmat_;
 
   template <typename T>
-  void RunKmeans(const boost::python::dict &param,
-    const Matrix<T> &in,
-    Matrix<T> *out) {
-    *out = in + in * 3.;
+  Matrix<T> RunKmeans(const boost::python::dict &param,
+    const Matrix<T> &in) {
+    // TODO acutal code here
+    return in + in * 3.;
   }
 
   // Only for test
   template <typename T>
-  void RunInverse(const Matrix<T> &in,
-    Matrix<T> *out) {
-    // Has to be this way due to a bug of eigen
-    Matrix<T> temp = CpuOperations<T>::Inverse(in);
-    *out = temp;
-
-    // out = CpuOperations<T>::Inverse(in);
+  Matrix<T> RunInverse(const Matrix<T> &in) {
+    return CpuOperations<T>::Inverse(in);
   }
 
  public:

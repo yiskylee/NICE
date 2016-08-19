@@ -36,10 +36,22 @@
 namespace Nice {
 
 PyInterface::PyInterface()
-: dtype_(DOUBLE) {}
+: dtype_(DOUBLE),
+input_imat_(nullptr, 0, 0),
+input_fmat_(nullptr, 0, 0),
+input_dmat_(nullptr, 0, 0),
+output_imat_(nullptr, 0, 0),
+output_fmat_(nullptr, 0, 0),
+output_dmat_(nullptr, 0, 0) {}
 
 PyInterface::PyInterface(DataType dtype)
-: dtype_(dtype) {}
+: dtype_(dtype),
+input_imat_(nullptr, 0, 0),
+input_fmat_(nullptr, 0, 0),
+input_dmat_(nullptr, 0, 0),
+output_imat_(nullptr, 0, 0),
+output_fmat_(nullptr, 0, 0),
+output_dmat_(nullptr, 0, 0) {}
 
 void PyInterface::Init(const char *path, int row, int col) {
   // Create corresponding matrix/vector based on the given path
@@ -53,9 +65,10 @@ void PyInterface::Init(PyObject *in, int row, int col) {
   // Initialze the input data
   switch (dtype_) {
     case FLOAT:
+      new (&input_fmat_) FMatrixMap(reinterpret_cast<float *>(pybuf.buf),
+                                    row, col);
       break;
     case DOUBLE:
-      input_dmat_.resize(row, col);
       new (&input_dmat_) DMatrixMap(reinterpret_cast<double *>(pybuf.buf),
                                     row, col);
       break;
@@ -80,9 +93,10 @@ void PyInterface::Run(ModelType model_type, PyObject *out, int row, int col) {
 
   switch (dtype_) {
     case FLOAT:
+      new (&output_fmat_) FMatrixMap(reinterpret_cast<float *>(pybuf.buf),
+                                     row, col);
       break;
     case DOUBLE:
-      output_dmat_.resize(row, col);
       new (&output_dmat_) DMatrixMap(reinterpret_cast<double *>(pybuf.buf),
                                      row, col);
       break;
@@ -93,23 +107,19 @@ void PyInterface::Run(ModelType model_type, PyObject *out, int row, int col) {
   // Run the KMEANS model
   if (model_type == KMEANS) {
     if (dtype_ == FLOAT) {
-      RunKmeans(param,
-                input_fmat_,
-                &output_fmat_);
+      output_fmat_ = RunKmeans<float>(param,
+                input_fmat_);
     } else if (dtype_ == DOUBLE) {
-      RunKmeans(param,
-                input_dmat_,
-                &output_dmat_);
+      output_dmat_ = RunKmeans<double>(param,
+                input_dmat_);
     }
   }
   // Run Inverse only for test
   if (model_type == INVERSE) {
     if (dtype_ == FLOAT) {
-      RunInverse(input_fmat_,
-                 &output_fmat_);
+      output_fmat_ = RunInverse<float>(input_fmat_);
     } else if (dtype_ == DOUBLE) {
-      RunInverse(input_dmat_,
-                 &output_dmat_);
+      output_dmat_ = RunInverse<double>(input_dmat_);
     }
   }
 }
