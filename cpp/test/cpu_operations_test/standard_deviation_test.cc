@@ -23,42 +23,55 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
-#include <cmath>
 #include "Eigen/Dense"
 #include "gtest/gtest.h"
 #include "include/cpu_operations.h"
 #include "include/matrix.h"
-#include "include/kernel_types.h"
 
-template<class T>
-class GenKernelMatrixTest : public ::testing::Test {
+template<typename T>
+class MatrixStandardDeviationTest : public ::testing::Test {
  public:
-  Nice::Matrix<T> data_matrix_;
+  Nice::Matrix<T> a;
+  Nice::Vector<T> correct_ans;
+  Nice::Vector<T> answer;
+  float precision = .0001;
+
+  void MatrixStandardDeviation(int row) {
+    answer = Nice::CpuOperations<T>::StandardDeviation(a, row);
+  }
 };
 
 typedef ::testing::Types<float, double> FloatTypes;
-TYPED_TEST_CASE(GenKernelMatrixTest, FloatTypes);
+TYPED_TEST_CASE(MatrixStandardDeviationTest, FloatTypes);
 
-#define EXPECT_MATRIX_EQ(a, ref)\
-    EXPECT_EQ(a.rows(), ref.rows());\
-    EXPECT_EQ(a.cols(), ref.cols());\
-    for (int i = 0; i < a.rows(); i++)\
-      for (int j = 0; j < a.cols(); j++)\
-        EXPECT_NEAR(static_cast<double>(a(i, j)), \
-          static_cast<double>(ref(i, j)), 0.0001);\
+TYPED_TEST(MatrixStandardDeviationTest, MatrixTrue) {
+  ASSERT_TRUE(true);
+}
 
-TYPED_TEST(GenKernelMatrixTest, GaussianKernel) {
-  Nice::KernelType kernel_type = Nice::kGaussianKernel;
-  this->data_matrix_.resize(2, 3);
-  this->data_matrix_ << 1.0, 2.0, 3.0,
-                        4.0, 5.0, 6.0;
-  Nice::Matrix<TypeParam> kernel_matrix =
-      Nice::CpuOperations<TypeParam>::GenKernelMatrix(
-          this->data_matrix_,
-          kernel_type,
-          1.0);
-  Nice::Matrix<TypeParam> kernel_matrix_ref(2, 2);
-  kernel_matrix_ref << exp(-0.0), exp(-sqrt(27.0)/2.0),
-                       exp(-sqrt(27.0)/2.0), exp(-0.0);
-  EXPECT_MATRIX_EQ(kernel_matrix, kernel_matrix_ref);
+TYPED_TEST(MatrixStandardDeviationTest, MatrixStandardDeviationCol) {
+  this->a.resize(3, 2);
+  this->a << 1, 4,
+             2, 5,
+             3, 6;
+  this->correct_ans.resize(2);
+  this->correct_ans << .8165, .8165;
+  this->MatrixStandardDeviation(0);
+  ASSERT_TRUE(this->correct_ans.isApprox(this->answer, this->precision));
+}
+
+TYPED_TEST(MatrixStandardDeviationTest, MatrixStandardDeviationRow) {
+  this->a.resize(2, 3);
+  this->a << 1, 2, 3,
+             4, 5, 6;
+  this->correct_ans.resize(2);
+  this->correct_ans << .8165, .8165;
+  this->MatrixStandardDeviation(1);
+  ASSERT_TRUE(this->correct_ans.isApprox(this->answer, this->precision));
+}
+
+TYPED_TEST(MatrixStandardDeviationTest, BadAxis) {
+  this->a.resize(2, 3);
+  this->a << 1, 2, 3,
+             4, 5, 6;
+  ASSERT_DEATH(this->MatrixStandardDeviation(2), ".*");
 }
