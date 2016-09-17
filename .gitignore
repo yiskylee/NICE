@@ -8,3 +8,5 @@ cpp/build/
 cpp/dlib/
 python
 cpp/doc/
+.idea
+matlab
