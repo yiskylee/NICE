@@ -361,7 +361,6 @@ class KDAC {
           Matrix<T> &a_matrix_ij = a_matrix_list_[i * n_ + j];
           T exp_term = exp(static_cast<T>(-w_l.transpose() * a_matrix_ij * w_l)
                            / (2.0 * pow(constant_, 2)));
-          std::cout << exp_term << "," << std::endl;
           w_gradient += -gamma_matrix_(i, j) * g_of_w(i, j) * exp_term *
               a_matrix_ij * w_l / pow(constant_, 2);
 //          w_gradient += -gamma_matrix_(i, j) * g_of_w(i, j) *
@@ -406,7 +405,7 @@ class KDAC {
   void OptimizeW(void) {
     // Initialize lambda
     lambda_ = 0;
-    // Generate K_y
+    // Generate the kernel for the label matrix Y: K_y
     k_matrix_y_ = y_matrix_ * y_matrix_.transpose();
     // Generate Y tilde matrix in equation 5 from kernel matrix of Y
     y_matrix_tilde_ = h_matrix_ * k_matrix_y_ * h_matrix_;
@@ -421,10 +420,6 @@ class KDAC {
     // This is an element-wise operation
     // u*ut and didj matrix has the same size
 
-    CheckFinite(u_matrix_, "u_matrix");
-    CheckFinite(didj_matrix_, "didj_matrix");
-    CheckFinite(y_matrix_tilde_, "y_matrix_tilde");
-    CheckFinite(gamma_matrix_, "gamma_matrix before");
     gamma_matrix_ = ((u_matrix_ * u_matrix_.transpose()).array() /
         didj_matrix_.array()).matrix() - lambda_ * y_matrix_tilde_;
     CheckFinite(gamma_matrix_, "gamma_matrix after");
@@ -438,8 +433,12 @@ class KDAC {
     // when l = 1, g_of_w is 1 .* g(w_1)
     // when l = 2, g_of_w is 1 .* g(w_1) .* g(w_2)...
     Matrix<T> g_of_w = Matrix<T>::Constant(n_, n_, 1);
+
+    // We optimize each column in the W matrix
     for (int l = 0; l < w_matrix_.cols(); l++) {
-      std::cout << l << "th column:" << std::endl;
+      std::cout.precision(8);
+      std::cout << std::scientific;
+//      std::cout << l << "th column:" << std::endl;
 
       // Optimize the column vector in w_matrix w_l
       Vector<T> w_l;
@@ -451,11 +450,7 @@ class KDAC {
         w_l = GenOrthogonal(w_matrix_.leftCols(l), w_matrix_.col(l));
       // Normalize w_l
       w_l = w_l.array() / w_l.norm();
-
-      CheckFinite(w_l, "w_l");
-
-
-      // Make sure every w_l is converged
+      // Search for the w_l that maximizes formula 5
       bool w_l_converged = false;
       int num_iter = 0;
       while (!w_l_converged) {
@@ -469,13 +464,12 @@ class KDAC {
         // If this is the first column w_0, then we use the gradient directly
         // for updating
         if (l == 0) {
-          w_l_gradient = w_l_gradient.array() / w_l_gradient.norm();
 //          std::cout << "grad: " <<
 //              w_l_gradient(0) << "\t" << w_l_gradient(1) << std::endl;
           alpha_ = LineSearch(w_l, w_l_gradient);
-//          std::cout << "pre: " << w_l(0) << "\t" << w_l(1) << std::endl;
+          std::cout << "alpha: " << alpha_ << std::endl; 
           w_l = sqrt(1.0 - pow(alpha_, 2)) * w_l + alpha_ * w_l_gradient;
-//          std::cout << w_l(0) << ", ";
+          std::cout << "w_l: " << w_l(0) << "\t" << w_l(1) << std::endl;
 //          std::cout << std::endl << std::endl;
         }
         // If this is a column from w_1 to w_d, then we need to use the
@@ -491,7 +485,7 @@ class KDAC {
               alpha_ * w_l_gradient_vertical;
         }
         num_iter++;
-//        std::cout << "The " << num_iter << "th iteration: " << std::endl;
+        std::cout << "The " << num_iter << "th iteration: " << std::endl;
 //          std::cout << "w_l:\n" << w_l << std::endl;
 //        std::cout << w_l_gradient(0) << "\t" << w_l_gradient(1) << std::endl;
 //          std::cout << "vertical:\n" << w_l_gradient_vertical << std::endl;
@@ -499,8 +493,6 @@ class KDAC {
           exit(1);
         CheckFinite(w_l, "w_l");
         w_l_converged = CheckConverged(w_l, pre_w_l, threshold_);
-        std::cout.precision(3);
-        std::cout << std::scientific;
 //        if (num_iter > 990) {
 //          for (int i = 0; i < d_; i++)
 //            std::cout << pre_w_l(i) << " \t " << w_l(i) << " \t" <<
@@ -519,7 +511,7 @@ class KDAC {
 
   float LineSearch(const Vector<T> &w_l, const Vector<T> &gradient) {
     float alpha = 1.0;
-    float a1 = 0.0001;
+    float a1 = 0.1;
     float rho = 0.8;
 
 
@@ -528,7 +520,7 @@ class KDAC {
     float phi_of_zero = 0;
     float phi_of_zero_prime = 0;
 
-    // Four terms used to calculate phi of alpha
+    // Three terms used to calculate phi of alpha
     // They only change if w_l or gradient change
     Matrix<T> waw_matrix(n_, n_);
     Matrix<T> waf_matrix(n_, n_);
@@ -545,12 +537,13 @@ class KDAC {
       std::cout << "phi less than zero";
       exit(1);
     }
-
+//    std::cout << "old phi: " << phi_of_zero << std::endl;
     while (phi_of_alpha < phi_of_zero + alpha * a1 * phi_of_zero_prime) {
       alpha = alpha * rho;
       GenPhi(alpha, waw_matrix, waf_matrix, faf_matrix, false,
                 &phi_of_alpha, &phi_of_alpha_prime);
     }
+    std::cout << "obj: " << phi_of_alpha << std::endl;
     return alpha;
   }
 
@@ -680,7 +673,13 @@ class KDAC {
 //      return false;
 //      // else check if the change is less than the threshold
 //    } else {
+//      std::cout << "pre_w_l: \n" << pre_vector(0) << ", " << pre_vector(1) << std::endl;
+//      std::cout << "cur_w_l: \n" << vector(0) << ", " << vector(1) << std::endl;
+//      std::cout << "diff: " << (vector - pre_vector).norm() << std::endl;
+//      std::cout << "pre_vector norm: " << pre_vector.norm() << std::endl;
+//      std::cout << "cur_vector norm: " << vector.norm() << std::endl;
       T change = (vector - pre_vector).norm() / pre_vector.norm();
+//      std::cout << "change: " << change << std::endl;
       bool converged = (change < threshold);
 //      std::cout << change << std::endl;
       return converged;
