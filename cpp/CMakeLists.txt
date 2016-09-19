@@ -16,6 +16,12 @@ set(CMAKE_MACOSX_RPATH 1)
 if(CMAKE_COMPILER_IS_GNUCXX)
     add_definitions(-Wall -ansi -Wno-deprecated -pthread -std=c++11)
 endif()
+if("${CMAKE_COMPILER_ID}" STREQUAL "Clang")
+    add_definitions(-std=c++11)
+endif()
+if(${APPLE})
+    add_definitions(-Wall -ansi -Wno-deprecated -pthread -std=c++11)
+endif()
 
 set(COMMON_INCLUDES ${PROJECT_SOURCE_DIR})
 include_directories(${EIGEN_INCLUDE_DIRS})
@@ -86,11 +92,15 @@ if (enable-test)
         test/model_test/spectral_clustering_test.cc)
         
   else()
-    file(GLOB_RECURSE TEST_SRC_FILES RELATIVE 
-         ${PROJECT_SOURCE_DIR} 
-         test/cpu_operations_test/*.cc
-         test/util_test/*.cc
-         test/cpu_solver_test/*.cc)
+#    file(GLOB_RECURSE TEST_SRC_FILES RELATIVE 
+#         ${PROJECT_SOURCE_DIR} 
+#         test/cpu_operations_test/*.cc
+#         test/util_test/*.cc
+#         test/cpu_solver_test/*.cc)
+    file(GLOB_RECURSE TEST_SRC_FILES RELATIVE
+        ${PROJECT_SOURCE_DIR}
+        test/model_test/kdac_test.cc
+        test/model_test/spectral_clustering_test.cc)
   endif()
   message(STATUS "Test case source files: " ${TEST_SRC_FILES})
 

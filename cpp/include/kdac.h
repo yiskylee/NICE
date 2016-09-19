@@ -489,7 +489,7 @@ class KDAC {
 //          std::cout << "w_l:\n" << w_l << std::endl;
 //        std::cout << w_l_gradient(0) << "\t" << w_l_gradient(1) << std::endl;
 //          std::cout << "vertical:\n" << w_l_gradient_vertical << std::endl;
-        if (num_iter > 1000)
+        if (num_iter > 10000)
           exit(1);
         CheckFinite(w_l, "w_l");
         w_l_converged = CheckConverged(w_l, pre_w_l, threshold_);
@@ -520,51 +520,45 @@ class KDAC {
     float phi_of_zero = 0;
     float phi_of_zero_prime = 0;
 
-    // Three terms used to calculate phi of alpha
-    // They only change if w_l or gradient change
-    Matrix<T> waw_matrix(n_, n_);
-    Matrix<T> waf_matrix(n_, n_);
-    Matrix<T> faf_matrix(n_, n_);
-    GenPhiCoeff(w_l, gradient,
-                &waw_matrix, &waf_matrix, &faf_matrix);
-    GenPhi(alpha, waw_matrix, waf_matrix, faf_matrix, false,
-              &phi_of_alpha, &phi_of_alpha_prime);
-    GenPhi(0, waw_matrix, waf_matrix, faf_matrix, true,
-              &phi_of_zero, &phi_of_zero_prime);
-//    std::cout << "alpha: " << alpha << std::endl;
-//    std::cout << "phi zero prime: " << phi_of_zero_prime << std::endl;
-    if (phi_of_zero_prime < 0) {
-      std::cout << "phi less than zero";
-      exit(1);
-    }
-//    std::cout << "old phi: " << phi_of_zero << std::endl;
-    while (phi_of_alpha < phi_of_zero + alpha * a1 * phi_of_zero_prime) {
-      alpha = alpha * rho;
-      GenPhi(alpha, waw_matrix, waf_matrix, faf_matrix, false,
-                &phi_of_alpha, &phi_of_alpha_prime);
-    }
-    std::cout << "obj: " << phi_of_alpha << std::endl;
-    return alpha;
-  }
-
-  void GenPhiCoeff(const Vector<T> &w_l, const Vector<T> &gradient,
-                   Matrix<T> *waw, Matrix<T> *waf, Matrix<T> *faf) {
     if (kernel_type_ == kGaussianKernel) {
+      // Three terms used to calculate phi of alpha
+      // They only change if w_l or gradient change
+      Matrix<T> waw_matrix(n_, n_);
+      Matrix<T> waf_matrix(n_, n_);
+      Matrix<T> faf_matrix(n_, n_);
       for (int i = 0; i < n_; i++) {
         for (int j = 0; j < n_; j++) {
           Matrix<T> &a_matrix_ij = a_matrix_list_[i * n_ + j];
-          (*waw)(i, j) = w_l.transpose() * a_matrix_ij * w_l;
-          (*waf)(i, j) = w_l.transpose() * a_matrix_ij * gradient;
-          (*faf)(i, j) = gradient.transpose() * a_matrix_ij * gradient;
+          waw_matrix(i, j) = w_l.transpose() * a_matrix_ij * w_l;
+          waf_matrix(i, j) = w_l.transpose() * a_matrix_ij * gradient;
+          faf_matrix(i, j) = gradient.transpose() * a_matrix_ij * gradient;
         }
       }
+      GenPhi(alpha, waw_matrix, waf_matrix, faf_matrix, false,
+                &phi_of_alpha, &phi_of_alpha_prime);
+      GenPhi(0, waw_matrix, waf_matrix, faf_matrix, true,
+                &phi_of_zero, &phi_of_zero_prime);
+  //    std::cout << "alpha: " << alpha << std::endl;
+  //    std::cout << "phi zero prime: " << phi_of_zero_prime << std::endl;
+      if (phi_of_zero_prime < 0) {
+        std::cout << "phi less than zero";
+        exit(1);
+      }
+  //    std::cout << "old phi: " << phi_of_zero << std::endl;
+      while (phi_of_alpha < phi_of_zero + alpha * a1 * phi_of_zero_prime) {
+        alpha = alpha * rho;
+        GenPhi(alpha, waw_matrix, waf_matrix, faf_matrix, false,
+                  &phi_of_alpha, &phi_of_alpha_prime);
+      }
+      std::cout << "obj: " << phi_of_alpha << std::endl;
+      return alpha;
     }
   }
 
   void GenPhi(const float &alpha,
-               const Matrix<T> &waw,
-               const Matrix<T> &waf,
-               const Matrix<T> &faf,
+               const Matrix<T> &waw_matrix,
+               const Matrix<T> &waf_matrix,
+               const Matrix<T> &faf_matrix,
                const bool &gen_prime,
                float *phi_of_alpha,
                float *phi_of_alpha_prime
@@ -573,67 +567,71 @@ class KDAC {
     if (kernel_type_ == kGaussianKernel) {
       // Generate phi of alpha, if gen_prime is true, the prime of phi of alpha
       // will also be generated
-      Matrix<T> k_matrix_ij_alpha(n_, n_);
-      Matrix<T> k_matrix_ij_alpha_prime(n_, n_);
 
-      *phi_of_alpha = 0;
-      *phi_of_alpha_prime = 0;
-
-      GenKij(alpha, waw, waf, faf, gen_prime,
-             &k_matrix_ij_alpha, &k_matrix_ij_alpha_prime);
-      for (int i = 0; i < n_; i++) {
-        for (int j = 0; j < n_; j++) {
-          *phi_of_alpha += gamma_matrix_(i, j) * k_matrix_ij_alpha(i, j);
-          *phi_of_alpha_prime += gamma_matrix_(i, j) *
-              k_matrix_ij_alpha_prime(i, j);
-        }
-      }
-    }
-  }
-
-  // This k_matrix_ij is from the univariate function phi from the formula after 8
-  // in the paper. Note that this Kij is not the kernel function for optimizing
-  // W as in 5, because we need to use dimension growth algorithm to optimize
-  // W which would break Kij
-  // a to e is the abbreviation of terms in the formula of phi(alpha) that
-  // I deducted. I use those to make the code more readable. But I do not
-  // know how to write the formula down here in the comment section to
-  // make the term more understandable. Maybe I could upload a picture
-  // somewhere?
-  void GenKij(const float &alpha,
-              const Matrix<T> &waw_matrix,
-              const Matrix<T> &waf_matrix,
-              const Matrix<T> &faf_matrix,
-              const bool &gen_prime,
-              Matrix<T> *k_matrix_ij,
-              Matrix<T> *k_matrix_ij_prime) {
-    if (kernel_type_ == kGaussianKernel) {
       float alpha_square = pow(alpha, 2);
       float sqrt_one_minus_alpha = pow((1-alpha_square), 0.5);
       float denom = -1 / (2 * pow(constant_, 2));
+      Matrix<T> k_matrix_ij_alpha(n_, n_);
+      Matrix<T> k_matrix_ij_alpha_prime(n_, n_);
+      *phi_of_alpha = 0;
+      *phi_of_alpha_prime = 0;
       for (int i = 0; i < n_; i++) {
         for (int j = 0; j < n_; j++) {
-          float waw = waw_matrix(i, j);
-          float waf = waf_matrix(i, j);
-          float faf = faf_matrix(i, j);
-          (*k_matrix_ij)(i, j) = exp(
-              denom *
-              (
-                    (faf - waw) * alpha_square +
-                    2 * waf * sqrt_one_minus_alpha * alpha +
-                    waw
-              )
-                   );
+          T waw = waw_matrix(i, j);
+          T waf = waf_matrix(i, j);
+          T faf = faf_matrix(i, j);
+          T kij = exp(denom * ((faf - waw) * alpha_square +
+              2 * waf * sqrt_one_minus_alpha * alpha + waw));
+          *phi_of_alpha += gamma_matrix_(i, j) * kij;
           if (gen_prime) {
-            (*k_matrix_ij_prime)(i, j) = denom *
-                (2 * waf * (1 - 2 * alpha_square) / sqrt_one_minus_alpha +
-                2 * (faf - waw) * alpha)
-                    * (*k_matrix_ij)(i, j);
+            *phi_of_alpha_prime += gamma_matrix_(i, j) *
+                denom * (2 * waf * (1 - 2 * alpha_square) /
+                    sqrt_one_minus_alpha + 2 * (faf - waw) * alpha) * kij;
           }
         }
       }
     }
   }
+
+//  // This k_matrix_ij is from the univariate function phi from the formula after
+//  // 8 in the paper. Note that this Kij is not the kernel function for
+//  // optimizing
+//  // W as in 5, because we need to use dimension growth algorithm to optimize
+//  // W which would break Kij
+//  void GenKij(const float &alpha,
+//              const Matrix<T> &waw_matrix,
+//              const Matrix<T> &waf_matrix,
+//              const Matrix<T> &faf_matrix,
+//              const bool &gen_prime,
+//              Matrix<T> *k_matrix_ij,
+//              Matrix<T> *k_matrix_ij_prime) {
+//    if (kernel_type_ == kGaussianKernel) {
+//      float alpha_square = pow(alpha, 2);
+//      float sqrt_one_minus_alpha = pow((1-alpha_square), 0.5);
+//      float denom = -1 / (2 * pow(constant_, 2));
+//      for (int i = 0; i < n_; i++) {
+//        for (int j = 0; j < n_; j++) {
+//          float waw = waw_matrix(i, j);
+//          float waf = waf_matrix(i, j);
+//          float faf = faf_matrix(i, j);
+//          (*k_matrix_ij)(i, j) = exp(
+//              denom *
+//              (
+//                    (faf - waw) * alpha_square +
+//                    2 * waf * sqrt_one_minus_alpha * alpha +
+//                    waw
+//              )
+//                   );
+//          if (gen_prime) {
+//            (*k_matrix_ij_prime)(i, j) = denom *
+//                (2 * waf * (1 - 2 * alpha_square) / sqrt_one_minus_alpha +
+//                2 * (faf - waw) * alpha)
+//                    * (*k_matrix_ij)(i, j);
+//          }
+//        }
+//      }
+//    }
+//  }
 
 
 

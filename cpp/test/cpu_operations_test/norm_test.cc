@@ -46,7 +46,7 @@ TYPED_TEST(NormTest, SquareMatrix) {
   this->norm_matrix_ <<1.0, 2.0, 3.0,
                        4.0, 5.0, 6.0,
                        7.0, 8.0, 9.0;
-  float correct_norm[3] = {sqrt(66), sqrt(93), sqrt(126)};
+  float correct_norm[3] = {static_cast<float>(sqrt(66)), static_cast<float>(sqrt(93)), static_cast<float>(sqrt(126))};
   this->calculated_norm_ = Nice::CpuOperations<TypeParam>::Norm(
                                                           this->norm_matrix_,
                                                           p,
@@ -62,7 +62,7 @@ TYPED_TEST(NormTest, NonsingularMatrix) {
   this->norm_matrix_ <<1.0, 2.0, 3.0, 4.0,
                        5.0, 6.0, 7.0, 8.0,
                        9.0, 10.0, 11.0, 12.0;
-  float correct_norm[4] = {sqrt(107), sqrt(140), sqrt(179), sqrt(224)};
+  float correct_norm[4] = {static_cast<float>(sqrt(107)), static_cast<float>(sqrt(140)), static_cast<float>(sqrt(179)), static_cast<float>(sqrt(224))};
   this-> calculated_norm_ = Nice::CpuOperations<TypeParam>::Norm(
                                                            this->norm_matrix_,
                                                            p,
@@ -79,7 +79,7 @@ TYPED_TEST(NormTest, WhenAxisIsntZero) {
   this->norm_matrix_ <<1.0, 2.0, 3.0, 4.0,
                        5.0, 6.0, 7.0, 8.0,
                        9.0, 10.0, 11.0, 12.0;
-  float correct_norm[3] = {sqrt(30), sqrt(174), sqrt(446)};
+  float correct_norm[3] = {static_cast<float>(sqrt(30)), static_cast<float>(sqrt(174)), static_cast<float>(sqrt(446))};
   this-> calculated_norm_ = Nice::CpuOperations<TypeParam>::Norm(
                                                            this->norm_matrix_,
                                                            p,
@@ -96,8 +96,9 @@ TYPED_TEST(NormTest, WhenPIsntTwo) {
   this->norm_matrix_ <<1.0, 2.0, 3.0, 4.0,
                        5.0, 6.0, 7.0, 8.0,
                        9.0, 10.0, 11.0, 12.0;
-  float correct_norm[3] = {pow(100, (1.0/3)), pow(1196, (1.0/3))
-                            , pow(4788, (1.0/3))};
+  float correct_norm[3] = {static_cast<float>(pow(100, (1.0/3))),
+                           static_cast<float>(pow(1196, (1.0/3))),
+                           static_cast<float>(pow(4788, (1.0/3)))};
   this-> calculated_norm_ = Nice::CpuOperations<TypeParam>::Norm(
                                                            this->norm_matrix_,
                                                            p,
