@@ -151,15 +151,22 @@ class KDAC {
     constant_ = constant;
   }
 
-  Vector<T> GenOrthogonal(const Matrix<T> &plain,
+  Vector<T> GenOrthogonal(const Matrix<T> &space,
                      const Vector<T> &vector) {
-    Vector<T> projection = Vector<T>::Zero(plain.rows());
-    for (int j = 0; j < plain.cols(); j++) {
+    Vector<T> projection = Vector<T>::Zero(space.rows());
+    for (int j = 0; j < space.cols(); j++) {
       // projection = (v * u / u^2) * u
-      projection += (vector * plain.col(j) /
-          plain.col(j).squaredNorm()) * plain.col(j);
+      projection += (vector.dot(space.col(j)) /
+          space.col(j).squaredNorm()) * space.col(j);
     }
+//    Print(projection, "proj");
     return vector - projection;
+  }
+
+  Vector<T> GenOrthonormal(const Matrix<T> &space,
+                           const Vector<T> &vector) {
+    Vector<T> ortho_vector = GenOrthogonal(space, vector);
+    return ortho_vector.array() / ortho_vector.norm();
   }
 
   /// This function creates the first clustering result
@@ -348,9 +355,26 @@ class KDAC {
 
   void CheckFinite(const Vector<T> &vector, std::string name) {
     if (!vector.allFinite()) {
-      std::cout << name << ": " << std::endl << vector << std::endl;
+      std::cout << name << " not finite: " << std::endl << vector << std::endl;
       exit(1);
     }
+  }
+
+  void Print(const Vector<T> &vector, std::string name) {
+    std::cout.precision(8);
+    std::cout << std::scientific;
+    std::cout << name << std::endl;
+    for (int i = 0; i < vector.rows(); i++) {
+      std::cout << vector(i) << " ";
+    }
+    std::cout << std::endl;
+  }
+
+  void Print(const T &scalar, std::string name) {
+    std::cout.precision(8);
+    std::cout << std::scientific;
+    std::cout << name << std::endl;
+    std::cout << scalar << std::endl;
   }
 
   Vector<T> GenWGradient(const Matrix<T> &g_of_w, const Vector<T> &w_l) {
@@ -402,6 +426,8 @@ class KDAC {
 
   }
 
+
+
   void OptimizeW(void) {
     // Initialize lambda
     lambda_ = 0;
@@ -422,7 +448,6 @@ class KDAC {
 
     gamma_matrix_ = ((u_matrix_ * u_matrix_.transpose()).array() /
         didj_matrix_.array()).matrix() - lambda_ * y_matrix_tilde_;
-    CheckFinite(gamma_matrix_, "gamma_matrix after");
 
     // After gamma_matrix is generated, we are optimizing gamma * kij as in 5
     // g_of_w is g(w_l) that is multiplied by g(w_(l+1)) in each iteration
@@ -436,71 +461,41 @@ class KDAC {
 
     // We optimize each column in the W matrix
     for (int l = 0; l < w_matrix_.cols(); l++) {
-      std::cout.precision(8);
-      std::cout << std::scientific;
-//      std::cout << l << "th column:" << std::endl;
-
+      std::cout << std::endl << std::endl << l << "th column: " << std::endl;
       // Optimize the column vector in w_matrix w_l
       Vector<T> w_l;
       // Get orthogonal to make w_l orthogonal to vectors from w_0 to w_(l-1)
       // when l is not 0
-      if (l == 0)
+      if (l == 0) {
         w_l = w_matrix_.col(l);
-      else
-        w_l = GenOrthogonal(w_matrix_.leftCols(l), w_matrix_.col(l));
-      // Normalize w_l
-      w_l = w_l.array() / w_l.norm();
+        w_l = w_l.array() / w_l.norm();
+      }
+      else {
+        w_l = GenOrthonormal(w_matrix_.leftCols(l), w_matrix_.col(l));
+      }
       // Search for the w_l that maximizes formula 5
       bool w_l_converged = false;
+
       int num_iter = 0;
       while (!w_l_converged) {
-        Vector<T> w_l_gradient_vertical;
+        std::cout << std::endl << std::endl <<
+            "The " << num_iter++ << "th iteration: " << std::endl;
+        Vector<T> grad_f_vertical;
         Vector<T> pre_w_l = w_l;
-        // Calculate the w gradient in equation 13
-        Vector<T> w_l_gradient = GenWGradient(g_of_w, w_l);
-//        std::cout << w_l_gradient << std::endl;
-        CheckFinite(w_l_gradient, "w_l_gradient");
-//        std::cout << w_l_gradient(0) << "\t" << w_l_gradient(1) << std::endl;
-        // If this is the first column w_0, then we use the gradient directly
-        // for updating
-        if (l == 0) {
-//          std::cout << "grad: " <<
-//              w_l_gradient(0) << "\t" << w_l_gradient(1) << std::endl;
-          alpha_ = LineSearch(w_l, w_l_gradient);
-          std::cout << "alpha: " << alpha_ << std::endl; 
-          w_l = sqrt(1.0 - pow(alpha_, 2)) * w_l + alpha_ * w_l_gradient;
-          std::cout << "w_l: " << w_l(0) << "\t" << w_l(1) << std::endl;
-//          std::cout << std::endl << std::endl;
-        }
-        // If this is a column from w_1 to w_d, then we need to use the
-        // gradient that is vertical to the space spanned by w_0 to w_l
-        else {
-          w_l_gradient_vertical =
-              GenOrthogonal(w_matrix_.leftCols(l), w_l_gradient);
-          // Make w_gradient norm 1
-          w_l_gradient_vertical = w_l_gradient_vertical.array() /
-              w_l_gradient_vertical.norm();
-          alpha_ = LineSearch(w_l, w_l_gradient_vertical);
-          w_l = sqrt(1.0 - pow(alpha_, 2)) * w_l +
-              alpha_ * w_l_gradient_vertical;
-        }
-        num_iter++;
-        std::cout << "The " << num_iter << "th iteration: " << std::endl;
-//          std::cout << "w_l:\n" << w_l << std::endl;
-//        std::cout << w_l_gradient(0) << "\t" << w_l_gradient(1) << std::endl;
-//          std::cout << "vertical:\n" << w_l_gradient_vertical << std::endl;
-        if (num_iter > 10000)
-          exit(1);
-        CheckFinite(w_l, "w_l");
+        // Calculate the w gradient in equation 13, then find the gradient
+        // that is vertical to the space spanned by w_0 to w_l
+        Vector<T> grad_f = GenWGradient(g_of_w, w_l);
+        grad_f_vertical =
+            GenOrthonormal(w_matrix_.leftCols(l+1), grad_f);
+        std::cout << "ifOrth: " <<
+            grad_f_vertical.dot(w_l) << std::endl;
+        alpha_ = LineSearch(w_l, grad_f_vertical);
+        w_l = sqrt(1.0 - pow(alpha_, 2)) * w_l +
+            alpha_ * grad_f_vertical;
+        w_matrix_.col(l) = w_l;
         w_l_converged = CheckConverged(w_l, pre_w_l, threshold_);
-//        if (num_iter > 990) {
-//          for (int i = 0; i < d_; i++)
-//            std::cout << pre_w_l(i) << " \t " << w_l(i) << " \t" <<
-//            w_l_gradient_vertical(i) << std::endl;
-//        }
         if (w_l_converged)
           std::cout << "Converged" << std::endl;
-        w_matrix_.col(l) = w_l;
       }
       // Update col l in matrix w by the new w_l
       // TODO: Need to learn about if using Vector<T> &w_l = w_matrix_.col(l)
@@ -513,8 +508,6 @@ class KDAC {
     float alpha = 1.0;
     float a1 = 0.1;
     float rho = 0.8;
-
-
     float phi_of_alpha = 0;
     float phi_of_alpha_prime = 0;
     float phi_of_zero = 0;
@@ -538,21 +531,17 @@ class KDAC {
                 &phi_of_alpha, &phi_of_alpha_prime);
       GenPhi(0, waw_matrix, waf_matrix, faf_matrix, true,
                 &phi_of_zero, &phi_of_zero_prime);
-  //    std::cout << "alpha: " << alpha << std::endl;
-  //    std::cout << "phi zero prime: " << phi_of_zero_prime << std::endl;
       if (phi_of_zero_prime < 0) {
         std::cout << "phi less than zero";
         exit(1);
       }
-  //    std::cout << "old phi: " << phi_of_zero << std::endl;
       while (phi_of_alpha < phi_of_zero + alpha * a1 * phi_of_zero_prime) {
         alpha = alpha * rho;
         GenPhi(alpha, waw_matrix, waf_matrix, faf_matrix, false,
                   &phi_of_alpha, &phi_of_alpha_prime);
       }
-      std::cout << "obj: " << phi_of_alpha << std::endl;
-      return alpha;
     }
+    return alpha;
   }
 
   void GenPhi(const float &alpha,
