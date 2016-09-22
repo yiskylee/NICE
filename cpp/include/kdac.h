@@ -158,6 +158,7 @@ class KDAC {
       // projection = (v * u / u^2) * u
       projection += (vector.dot(space.col(j)) /
           space.col(j).squaredNorm()) * space.col(j);
+      Print(projection, "proj");
     }
 //    Print(projection, "proj");
     return vector - projection;
@@ -473,6 +474,7 @@ class KDAC {
       else {
         w_l = GenOrthonormal(w_matrix_.leftCols(l), w_matrix_.col(l));
       }
+      w_matrix_.col(l) = w_l;
       // Search for the w_l that maximizes formula 5
       bool w_l_converged = false;
 
@@ -480,19 +482,25 @@ class KDAC {
       while (!w_l_converged) {
         std::cout << std::endl << std::endl <<
             "The " << num_iter++ << "th iteration: " << std::endl;
+        std::cout << w_matrix_ << std::endl;
         Vector<T> grad_f_vertical;
         Vector<T> pre_w_l = w_l;
         // Calculate the w gradient in equation 13, then find the gradient
         // that is vertical to the space spanned by w_0 to w_l
         Vector<T> grad_f = GenWGradient(g_of_w, w_l);
+        Print(w_l, "w_l");
+        Print(grad_f, "grad_f");
         grad_f_vertical =
             GenOrthonormal(w_matrix_.leftCols(l+1), grad_f);
+        Print(grad_f_vertical, "grad_f_vertical");
         std::cout << "ifOrth: " <<
             grad_f_vertical.dot(w_l) << std::endl;
         alpha_ = LineSearch(w_l, grad_f_vertical);
         w_l = sqrt(1.0 - pow(alpha_, 2)) * w_l +
             alpha_ * grad_f_vertical;
         w_matrix_.col(l) = w_l;
+        Print(w_l, "w_l after");
+        Print(w_l.norm(), "w_l after norm");
         w_l_converged = CheckConverged(w_l, pre_w_l, threshold_);
         if (w_l_converged)
           std::cout << "Converged" << std::endl;
@@ -672,6 +680,7 @@ class KDAC {
       return converged;
 //    }
   }
+  
 
 };
 }  // namespace NICE
