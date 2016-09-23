@@ -44,7 +44,7 @@ class KDACTest : public ::testing::Test {
 
   virtual void SetUp() {
     data_matrix_ = Nice::util::FromFile<T>(
-        "../test/data_for_test/kdac/data_4_corners.csv", ",");
+        "../test/data_for_test/kdac/data_gaussian.csv", ",");
     c_ = 2;
     kdac_ = std::make_shared<Nice::KDAC<T>>();
     kdac_->SetC(c_);
