@@ -34,10 +34,11 @@ set(MKL_ROOT /tmp/mkl/mkl)
 
 # Locate MKL
 if (EXISTS ${MKL_ROOT})
-  add_definitions(-DMKL_LP64 -m64 -DEIGEN_USE_MKL_ALL -Wno-unused-local-typedefs)
+  add_definitions(-m64 -DEIGEN_USE_MKL_ALL -Wno-unused-local-typedefs)
   include_directories(${MKL_ROOT}/include)
   find_library(MKL_LP64 mkl_intel_lp64 HINTS ${MKL_ROOT}/lib/intel64)
   find_library(MKL_CORE mkl_core HINTS ${MKL_ROOT}/lib/intel64)
+  find_library(MKL_SEQ mkl_sequential HINTS ${MKL_ROOT}/lib/intel64)
 endif()
 
 # Locate CUDA package 
@@ -68,7 +69,7 @@ else()
   set(CUDA_HAVE_GPU FALSE CACHE BOOL "Whether CUDA-capable GPU is present")
 endif()
 
-# Buld NICE library with CUDA
+# Buld NICE library with/without CUDA
 if (CUDA_HAVE_GPU)
 
   # Print messge to indicate that CUDA exists
@@ -98,8 +99,9 @@ if (CUDA_HAVE_GPU)
                         ${CUDA_BLAS_LIBRARY} 
                         ${CUDA_LIBRARIES} 
                         ${MKL_LP64} 
-                        ${MKL_CORE}
-                        stdc++ pthread m dl)
+                        ${MKL_CORE} 
+                        ${MKL_SEQ}
+                        pthread m dl)
 
 else()
 
@@ -107,21 +109,18 @@ else()
 
   # Add NICE library
   add_library(${PROJECT_NAME} SHARED ${SOURCES})
-  message(STATUS ${MKL_LP64})
-  message(STATUS ${MKL_CORE})
-  add_dependencies(${PROJECT_NAME} ${MKL_LP64})
-  add_dependencies(${PROJECT_NAME} ${MKL_CORE})
   target_link_libraries(${PROJECT_NAME} 
                         ${MKL_LP64} 
                         ${MKL_CORE} 
-                        stdc++ pthread m dl)
+                        ${MKL_SEQ}
+                        pthread m dl)
 
 endif()
 
 add_dependencies(${PROJECT_NAME} eigen)
 
 # Test
-option (enable-test "Compile all Nice unit tests" OFF)
+option (enable-test "Compile all Nice unit tests" ON)
 
 if (enable-test)
   include(gtest)
