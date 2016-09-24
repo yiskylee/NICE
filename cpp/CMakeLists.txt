@@ -34,6 +34,7 @@ set(MKL_ROOT /tmp/mkl/mkl)
 
 # Locate MKL
 if (EXISTS ${MKL_ROOT})
+  message(STATUS "MKL Found")
   add_definitions(-m64 -DEIGEN_USE_MKL_ALL -Wno-unused-local-typedefs)
   include_directories(${MKL_ROOT}/include)
   find_library(MKL_LP64 mkl_intel_lp64 HINTS ${MKL_ROOT}/lib/intel64)
@@ -153,26 +154,14 @@ if (enable-test)
   add_dependencies(${PROJECT_TEST_NAME} eigen)
   add_dependencies(${PROJECT_TEST_NAME} ${PROJECT_NAME})
 
-  # Add dependencies and link libraries according to machine setup
-  if (CUDA_HAVE_GPU)
-    add_dependencies(${PROJECT_TEST_NAME} ${CUDA_SOLVER_LIBRARY})
-    add_dependencies(${PROJECT_TEST_NAME} ${CUDA_BLAS_LIBRARY})
-    add_dependencies(${PROJECT_TEST_NAME} ${CUDA_LIBRARIES})
-    target_link_libraries(${PROJECT_TEST_NAME}
-        ${CUDA_SOLVER_LIBRARY}
-        ${CUDA_BLAS_LIBRARY}
-        ${CUDA_LIBRARIES}
-        ${GTEST_LIBS_DIR}/libgtest.a
-        ${GTEST_LIBS_DIR}/libgtest_main.a
-        ${PROJECT_NAME})
-  else()
-    target_link_libraries(${PROJECT_TEST_NAME}
-        ${GTEST_LIBS_DIR}/libgtest.a
-        ${GTEST_LIBS_DIR}/libgtest_main.a
-        ${PROJECT_NAME})
-  endif()
+  # Link libraries
+  target_link_libraries(${PROJECT_TEST_NAME}
+      ${GTEST_LIBS_DIR}/libgtest.a
+      ${GTEST_LIBS_DIR}/libgtest_main.a
+      ${PROJECT_NAME} 
+      ${CMAKE_THREAD_LIBS_INIT})
 
-  target_link_libraries(${PROJECT_TEST_NAME} ${CMAKE_THREAD_LIBS_INIT})
+  # Add test
   add_test(test1 ${PROJECT_TEST_NAME} "--gtest_color=yes")
 endif()
 
