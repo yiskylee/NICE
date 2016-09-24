@@ -29,12 +29,50 @@ include_directories(${COMMON_INCLUDES})
 file(GLOB_RECURSE SOURCES RELATIVE ${CMAKE_SOURCE_DIR} src/*.cc)
 message(STATUS "Source files: " ${SOURCES})
 
+# The path of MKL
+set(MKL_ROOT /tmp/mkl/mkl) 
+
+# Locate MKL
+if (EXISTS ${MKL_ROOT})
+  add_definitions(-DMKL_LP64 -m64 -DEIGEN_USE_MKL_ALL -Wno-unused-local-typedefs)
+  include_directories(${MKL_ROOT}/include)
+  find_library(MKL_LP64 mkl_intel_lp64 HINTS ${MKL_ROOT}/lib/intel64)
+  find_library(MKL_CORE mkl_core HINTS ${MKL_ROOT}/lib/intel64)
+endif()
+
 # Locate CUDA package 
 find_package(CUDA)
-if (CUDA_FOUND)
+
+# Detect GPU device
+if(CUDA_FOUND)
+  try_run(RUN_RESULT_VAR COMPILE_RESULT_VAR
+    ${CMAKE_BINARY_DIR} 
+    ${CMAKE_CURRENT_SOURCE_DIR}/tools/has_cuda_gpu.c
+    CMAKE_FLAGS 
+      -DINCLUDE_DIRECTORIES:STRING=${CUDA_TOOLKIT_INCLUDE}
+      -DLINK_LIBRARIES:STRING=${CUDA_CUDART_LIBRARY}
+    COMPILE_OUTPUT_VARIABLE COMPILE_OUTPUT_VAR
+    RUN_OUTPUT_VARIABLE RUN_OUTPUT_VAR)
+
+  # Display number of GPUs found
+  message("${RUN_OUTPUT_VAR}")
+
+  # COMPILE_RESULT_VAR is TRUE when compile succeeds
+  # RUN_RESULT_VAR is zero when a GPU is found
+  if(COMPILE_RESULT_VAR AND NOT RUN_RESULT_VAR)
+      set(CUDA_HAVE_GPU TRUE CACHE BOOL "Whether CUDA-capable GPU is present")
+  else()
+      set(CUDA_HAVE_GPU FALSE CACHE BOOL "Whether CUDA-capable GPU is present")
+  endif()
+else()
+  set(CUDA_HAVE_GPU FALSE CACHE BOOL "Whether CUDA-capable GPU is present")
+endif()
+
+# Buld NICE library with CUDA
+if (CUDA_HAVE_GPU)
 
   # Print messge to indicate that CUDA exists
-  message(STATUS "CUDA exists")
+  message(STATUS "GPU device exists")
 
   # Add defination
   add_definitions(-DNEED_CUDA)
@@ -55,21 +93,35 @@ if (CUDA_FOUND)
   add_dependencies(${PROJECT_NAME} ${CUDA_SOLVER_LIBRARY})
   add_dependencies(${PROJECT_NAME} ${CUDA_BLAS_LIBRARY})
   add_dependencies(${PROJECT_NAME} ${CUDA_LIBRARIES})
-  target_link_libraries(${PROJECT_NAME} ${CUDA_SOLVER_LIBRARY} ${CUDA_BLAS_LIBRARY} ${CUDA_LIBRARIES})
+  target_link_libraries(${PROJECT_NAME} 
+                        ${CUDA_SOLVER_LIBRARY} 
+                        ${CUDA_BLAS_LIBRARY} 
+                        ${CUDA_LIBRARIES} 
+                        ${MKL_LP64} 
+                        ${MKL_CORE}
+                        stdc++ pthread m dl)
 
 else()
 
-  message(STATUS "CUDA not exists")
-  
+  message(STATUS "GPU device not exists")
+
   # Add NICE library
   add_library(${PROJECT_NAME} SHARED ${SOURCES})
+  message(STATUS ${MKL_LP64})
+  message(STATUS ${MKL_CORE})
+  add_dependencies(${PROJECT_NAME} ${MKL_LP64})
+  add_dependencies(${PROJECT_NAME} ${MKL_CORE})
+  target_link_libraries(${PROJECT_NAME} 
+                        ${MKL_LP64} 
+                        ${MKL_CORE} 
+                        stdc++ pthread m dl)
 
 endif()
 
 add_dependencies(${PROJECT_NAME} eigen)
 
 # Test
-option (enable-test "Compile all Nice unit tests" ON)
+option (enable-test "Compile all Nice unit tests" OFF)
 
 if (enable-test)
   include(gtest)
@@ -78,7 +130,7 @@ if (enable-test)
   include_directories(${GTEST_INCLUDE_DIRS})
 
   # Add source files according to machine setup
-  if (CUDA_FOUND)
+  if (CUDA_HAVE_GPU)
     file(GLOB_RECURSE TEST_SRC_FILES RELATIVE 
          ${PROJECT_SOURCE_DIR} 
          test/cpu_operations_test/*.cc
@@ -103,7 +155,7 @@ if (enable-test)
   add_dependencies(${PROJECT_TEST_NAME} ${PROJECT_NAME})
 
   # Add dependencies and link libraries according to machine setup
-  if (CUDA_FOUND)
+  if (CUDA_HAVE_GPU)
     add_dependencies(${PROJECT_TEST_NAME} ${CUDA_SOLVER_LIBRARY})
     add_dependencies(${PROJECT_TEST_NAME} ${CUDA_BLAS_LIBRARY})
     add_dependencies(${PROJECT_TEST_NAME} ${CUDA_LIBRARIES})
@@ -113,14 +165,12 @@ if (enable-test)
         ${CUDA_LIBRARIES}
         ${GTEST_LIBS_DIR}/libgtest.a
         ${GTEST_LIBS_DIR}/libgtest_main.a
-        ${PROJECT_NAME}
-        )
+        ${PROJECT_NAME})
   else()
     target_link_libraries(${PROJECT_TEST_NAME}
         ${GTEST_LIBS_DIR}/libgtest.a
         ${GTEST_LIBS_DIR}/libgtest_main.a
-        ${PROJECT_NAME}
-        )
+        ${PROJECT_NAME})
   endif()
 
   target_link_libraries(${PROJECT_TEST_NAME} ${CMAKE_THREAD_LIBS_INIT})
