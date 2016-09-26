@@ -29,11 +29,10 @@ include_directories(${COMMON_INCLUDES})
 file(GLOB_RECURSE SOURCES RELATIVE ${CMAKE_SOURCE_DIR} src/*.cc)
 message(STATUS "Source files: " ${SOURCES})
 
-# The path of MKL
-set(MKL_ROOT /tmp/mkl/mkl) 
+option (enable-mkl "Compile NICE library with MKL" OFF)
 
 # Locate MKL
-if (EXISTS ${MKL_ROOT})
+if (EXISTS ${MKL_ROOT} AND enable-mkl)
   message(STATUS "MKL Found")
   add_definitions(-m64 -DEIGEN_USE_MKL_ALL -Wno-unused-local-typedefs)
   include_directories(${MKL_ROOT}/include)
