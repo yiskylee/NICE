@@ -195,7 +195,7 @@ Vector<T> FromFile(const std::string &input_file_path,
 }
 
 template<typename T>
-T reciprocal(T x) {
+static T reciprocal(T x) {
   return T(1) / x;
 }
 

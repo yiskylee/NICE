@@ -7,6 +7,6 @@ Debug
 cpp/build/
 # cpp/dlib/
 python
-cpp/doc/
+# cpp/doc/
 .idea
 matlab
