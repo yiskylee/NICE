@@ -44,7 +44,7 @@ class KDACTest : public ::testing::Test {
 
   virtual void SetUp() {
     data_matrix_ = Nice::util::FromFile<T>(
-        "../test/data_for_test/kdac/data_gaussian.csv", ",");
+        "../test/data_for_test/kdac/data_gaussian_2.csv", ",");
     c_ = 2;
     kdac_ = std::make_shared<Nice::KDAC<T>>();
     kdac_->SetC(c_);
@@ -67,7 +67,8 @@ class KDACTest : public ::testing::Test {
 
 typedef ::testing::Types<float, int, long, double> AllTypes;
 typedef ::testing::Types<int, long> IntTypes;
-typedef ::testing::Types<float, double> FloatTypes;
+typedef ::testing::Types<float> FloatTypes;
+typedef ::testing::Types<float, double> BothTypes;
 
 
 TYPED_TEST_CASE(KDACTest, FloatTypes);
@@ -169,7 +170,6 @@ TYPED_TEST_CASE(KDACTest, FloatTypes);
 ////  std::cout << gamma_matrix << std::endl;
 //  EXPECT_MATRIX_EQ(gamma_matrix.col(0), gamma_matrix_ref.col(0));
 //}
-//
 
 //TEST(KDACTest, ReferTest) {
 //  Nice::Matrix<float> a(2,2);
@@ -186,10 +186,12 @@ TYPED_TEST_CASE(KDACTest, FloatTypes);
 //}
 
 TYPED_TEST(KDACTest, Pred) {
+  this->kdac_->SetQ(2);
+  this->kdac_->SetC(2);
   this->kdac_->Fit(this->data_matrix_);
-//  std::cout << this->kdac_->Predict() << std::endl;
+  std::cout << this->kdac_->Predict() << std::endl;
   this->kdac_->Fit();
-//  std::cout << this->kdac_->Predict() << std::endl;
+  std::cout << this->kdac_->Predict() << std::endl;
 }
 
 //TYPED_TEST(KDACTest, Ortho) {

@@ -35,6 +35,7 @@
 #include <functional>
 #include <vector>
 #include <cmath>
+#include <X11/Xlib.h>
 #include "include/matrix.h"
 #include "include/vector.h"
 #include "include/cpu_operations.h"
@@ -90,9 +91,14 @@ class KDAC {
   KDAC(const KDAC &rhs) {}
   KDAC &operator=(const KDAC &rhs) {}
 
-  /// Set the number of clusters c
+  // Set the number of clusters c
   void SetC(int c) {
     c_ = c;
+  }
+
+  // Set lambda for HSIC
+  void SetLambda(float lambda) {
+    lambda_ = lambda;
   }
 
   /// Set the reduced dimension q
@@ -154,7 +160,6 @@ class KDAC {
       // projection = (v * u / u^2) * u
       projection += (vector.dot(space.col(j)) /
           space.col(j).squaredNorm()) * space.col(j);
-      Print(projection, "proj");
     }
 //    Print(projection, "proj");
     return vector - projection;
@@ -179,6 +184,9 @@ class KDAC {
     // lambda * HSIC is zero, we do not need to optimize W, and we directly
     // go to kmeans where Y_0 is generated. And both u and v are converged.
     OptimizeU();
+
+//    std::cout << "U Optimized" << std::endl;
+//    Print(u_matrix_, "u_matrix");
     RunKMeans();
   }
 
@@ -196,10 +204,17 @@ class KDAC {
       pre_u_matrix_ = u_matrix_;
       pre_w_matrix_ = w_matrix_;
       OptimizeU();
+//      Print(u_matrix_, "u_matrix");
+//      std::cout << "U Optimized" << std::endl;
       OptimizeW();
-      u_w_converge_ = CheckConverged(u_matrix_, pre_u_matrix_, threshold_) &&
-          CheckConverged(w_matrix_, pre_w_matrix_, threshold_);
+//      std::cout << "W Optimized" << std::endl;
+      u_converge_ = CheckConverged(u_matrix_, pre_u_matrix_, threshold_);
+//      std::cout << "U Converged? " << u_converge_ << std::endl;
+      w_converge_ = CheckConverged(w_matrix_, pre_w_matrix_, threshold_);
+//      std::cout << "W Converged? " << w_converge_ << std::endl;
+      u_w_converge_ = u_converge_ && w_converge_;
     }
+//    Print(u_matrix_, "u_matrix");
     RunKMeans();
   }
 
@@ -255,6 +270,9 @@ class KDAC {
   std::vector<Matrix<T>> a_matrix_list_;  // An n*n list that contains all of
   // the A_ij matrix
   Vector<T> clustering_result_;  // Current clustering result
+  Matrix<T> waw_matrix_;
+  Matrix<T> waf_matrix_;
+  Matrix<T> faf_matrix_;
 
 
   // Initialization
@@ -263,13 +281,15 @@ class KDAC {
     n_ = input_matrix.rows();
     d_ = input_matrix.cols();
     CheckQD();
-    w_matrix_ = Matrix<T>::Identity(d_, d_);
-    y_matrix_ = Matrix<T>::Zero(n_, c_);
+    w_matrix_ = Matrix<T>::Zero(d_, q_);
     threshold_ = 0.01;
 //    y_matrix_ = Matrix<bool>::Zero(n_, c_);
 //    d_matrix_ = Matrix<T>::Zero(n_, n_, 0);
 //    k_matrix_ = Matrix<T>::Zero(n_, n_, 0);
 //    u_matrix_ = Matrix<T>::Zero(n_, c_, 0);
+    waw_matrix_ = Matrix<T>::Zero(n_, n_);
+    waf_matrix_ = Matrix<T>::Zero(n_, n_);
+    faf_matrix_ = Matrix<T>::Zero(n_, n_);
     h_matrix_ = Matrix<T>::Identity(n_, n_)
         - Matrix<T>::Constant(n_, n_, 1) / float(n_);
     y_matrix_temp_ = Matrix<T>::Zero(n_, c_);
@@ -277,6 +297,7 @@ class KDAC {
   }
 
   void Init(void) {
+    w_matrix_ = Matrix<T>::Identity(d_, d_);
     u_converge_ = false;
     w_converge_ = false;
     u_w_converge_ = false;
@@ -287,9 +308,7 @@ class KDAC {
     for (int i = 0; i < n_; i++) {
       for (int j = 0; j < n_; j++) {
         Vector<T> delta_x_ij = x_matrix_.row(i) - x_matrix_.row(j);
-//        Matrix<T> A_ij = delta_x_ij.transpose() * delta_x_ij;
         Matrix<T> a_ij = CpuOperations<T>::OuterProduct(delta_x_ij, delta_x_ij);
-//        std::cout << A_ij << std::endl << std::endl;
         a_matrix_list_[i * n_ + j] = a_ij;
       }
     }
@@ -307,8 +326,9 @@ class KDAC {
   void RunKMeans() {
     KMeans<T> kms;
     clustering_result_ = kms.FitPredict(u_matrix_normalized_, c_);
-    if (y_matrix_.cols() == c_) {
+    if (y_matrix_.cols() == 0) {
       // When this is calculating Y0
+      y_matrix_ = Matrix<T>::Zero(n_, c_);
       for (int i = 0; i < n_; i++)
         y_matrix_(i, clustering_result_(i)) = 1;
     } else {
@@ -323,21 +343,13 @@ class KDAC {
     }
   }
 
-  void UpdateGOfW(Matrix<T> &g_of_w,
-                  const Vector<T> &w_l) {
+  void UpdateGOfW(Matrix<T> &g_of_w, const Vector<T> &w_l) {
     for (int i = 0; i < n_; i++) {
       for (int j = 0; j < n_; j++) {
         if (kernel_type_ == kGaussianKernel) {
-//          std::cout << i << ", " << j << std::endl;
-//          std::cout << g_of_w(i, j) *
           g_of_w(i, j) = g_of_w(i, j) *
               static_cast<T>(-w_l.transpose() * a_matrix_list_[i * n_ + j] *
                   w_l) / static_cast<T>(2 * pow(constant_, 2));
-//            g_of_w_l = g_of_w_l / (2 * pow(constant_, 2));
-//            g_of_w(i, j) = g_of_w(i, j) / (2 * pow(constant_, 2));
-//          g_of_w(i, j) = g_of_w(i, j) *
-//              exp( (-w_l.transpose() * a_matrix_list_[i * n_ + j] * w_l) /
-//                   (2 * constant_ * constant_) );
         }
       }
     }
@@ -364,6 +376,14 @@ class KDAC {
     for (int i = 0; i < vector.rows(); i++) {
       std::cout << vector(i) << " ";
     }
+    std::cout << std::endl;
+  }
+
+  void Print(const Matrix<T> &matrix, std::string name) {
+    std::cout.precision(8);
+    std::cout << std::scientific;
+    std::cout << name << std::endl;
+    std::cout << matrix << " ";
     std::cout << std::endl;
   }
 
@@ -396,15 +416,17 @@ class KDAC {
   }
 
   void OptimizeU(void) {
-    // Projects X to subspace W (n * d to n * q)
-    // If this is the first round, then projected X equals to X
-    Matrix<T> projected_x_matrix = x_matrix_ * w_matrix_;
-    // Generate the kernel matrix based on kernel type from projected X
-    k_matrix_ = CpuOperations<T>::GenKernelMatrix(
-        projected_x_matrix, kernel_type_, constant_);
+    // If this is the first round, then we use the full X to initialize the U matrix
+    // Otherwise, we project X to subspace W (n * d to n * q)
+    if (y_matrix_.rows() == 0) {
+      k_matrix_ = CpuOperations<T>::GenKernelMatrix(x_matrix_, kernel_type_, constant_);
+    } else {
+      Matrix<T> projected_x_matrix = x_matrix_ * w_matrix_;
+      // Generate the kernel matrix based on kernel type from projected X
+      k_matrix_ = CpuOperations<T>::GenKernelMatrix(projected_x_matrix, kernel_type_, constant_);
+    }
     // Generate degree matrix from the kernel matrix
     // d_i is the diagonal vector of degree matrix D
-
     // This is a reference to how to directly generate D^(-1/2)
     // Vector<T> d_i = k_matrix_.rowwise().sum().array().sqrt().unaryExpr(
     //     std::ptr_fun(util::reciprocal<T>));
@@ -424,8 +446,6 @@ class KDAC {
   }
 
   void OptimizeW(void) {
-    // Initialize lambda
-    lambda_ = 0;
     // Generate the kernel for the label matrix Y: K_y
     k_matrix_y_ = y_matrix_ * y_matrix_.transpose();
     // Generate Y tilde matrix in equation 5 from kernel matrix of Y
@@ -454,11 +474,14 @@ class KDAC {
     // when l = 2, g_of_w is 1 .* g(w_1) .* g(w_2)...
     Matrix<T> g_of_w = Matrix<T>::Constant(n_, n_, 1);
 
-    w_matrix_ = w_matrix_.leftCols(q_);
+    // w_matrix_ = w_matrix.leftCols(q_) does not work, thus I use new_w_matrix
+    // to firstly convert w_matrix_.leftCols(q_) to a real matrix
+    Matrix<T> new_w_matrix = w_matrix_.leftCols(q_);
+    w_matrix_ = new_w_matrix;
 
     // We optimize each column in the W matrix
     for (int l = 0; l < w_matrix_.cols(); l++) {
-      std::cout << std::endl << std::endl << l << "th column: " << std::endl;
+//      std::cout << std::endl << std::endl << l << "th column: " << std::endl;
       // Optimize the column vector in w_matrix w_l
       Vector<T> w_l;
       // Get orthogonal to make w_l orthogonal to vectors from w_0 to w_(l-1)
@@ -473,32 +496,26 @@ class KDAC {
       // Search for the w_l that maximizes formula 5
       bool w_l_converged = false;
 
-      int num_iter = 0;
       while (!w_l_converged) {
-        std::cout << std::endl << std::endl <<
-                  "The " << num_iter++ << "th iteration: " << std::endl;
-        std::cout << w_matrix_ << std::endl;
+//        std::cout << std::endl << std::endl <<
+//                  "The " << num_iter++ << "th iteration: " << std::endl;
         Vector<T> grad_f_vertical;
         Vector<T> pre_w_l = w_l;
         // Calculate the w gradient in equation 13, then find the gradient
         // that is vertical to the space spanned by w_0 to w_l
         Vector<T> grad_f = GenWGradient(g_of_w, w_l);
-        Print(w_l, "w_l");
-        Print(grad_f, "grad_f");
         grad_f_vertical =
             GenOrthonormal(w_matrix_.leftCols(l + 1), grad_f);
-        Print(grad_f_vertical, "grad_f_vertical");
-        std::cout << "ifOrth: " <<
-                  grad_f_vertical.dot(w_l) << std::endl;
-        alpha_ = LineSearch(w_l, grad_f_vertical);
+//        std::cout << "ifOrth: " <<
+//                  grad_f_vertical.dot(w_l) << std::endl;
+        alpha_ = LineSearch(grad_f_vertical, &w_l);
         w_l = sqrt(1.0 - pow(alpha_, 2)) * w_l +
             alpha_ * grad_f_vertical;
         w_matrix_.col(l) = w_l;
-        Print(w_l, "w_l after");
-        Print(w_l.norm(), "w_l after norm");
+//        Print(w_l.norm(), "w_l after norm");
         w_l_converged = CheckConverged(w_l, pre_w_l, threshold_);
-        if (w_l_converged)
-          std::cout << "Converged" << std::endl;
+//        if (w_l_converged)
+//          std::cout << "Converged" << std::endl;
       }
       // Update col l in matrix w by the new w_l
       // TODO: Need to learn about if using Vector<T> &w_l = w_matrix_.col(l)
@@ -507,80 +524,89 @@ class KDAC {
     }
   }
 
-  float LineSearch(const Vector<T> &w_l, const Vector<T> &gradient) {
+  float LineSearch(const Vector<T> &gradient, Vector<T> *w_l) {
     float alpha = 1.0;
     float a1 = 0.1;
     float rho = 0.8;
     float phi_of_alpha = 0;
-    float phi_of_alpha_prime = 0;
     float phi_of_zero = 0;
     float phi_of_zero_prime = 0;
 
     if (kernel_type_ == kGaussianKernel) {
-      // Three terms used to calculate phi of alpha
-      // They only change if w_l or gradient change
-      Matrix<T> waw_matrix(n_, n_);
-      Matrix<T> waf_matrix(n_, n_);
-      Matrix<T> faf_matrix(n_, n_);
-      for (int i = 0; i < n_; i++) {
-        for (int j = 0; j < n_; j++) {
-          Matrix<T> &a_matrix_ij = a_matrix_list_[i * n_ + j];
-          waw_matrix(i, j) = w_l.transpose() * a_matrix_ij * w_l;
-          waf_matrix(i, j) = w_l.transpose() * a_matrix_ij * gradient;
-          faf_matrix(i, j) = gradient.transpose() * a_matrix_ij * gradient;
-        }
-      }
-      GenPhi(alpha, waw_matrix, waf_matrix, faf_matrix, false,
-             &phi_of_alpha, &phi_of_alpha_prime);
-      GenPhi(0, waw_matrix, waf_matrix, faf_matrix, true,
-             &phi_of_zero, &phi_of_zero_prime);
+      GenPhi(alpha, *w_l, gradient, true, &phi_of_alpha, &phi_of_zero, &phi_of_zero_prime);
       if (phi_of_zero_prime < 0) {
-        std::cout << "phi less than zero";
-        exit(1);
+//        std::cout << "phi less than zero: " << phi_of_zero_prime << std::endl;
+        *w_l = -(*w_l);
+        GenPhi(alpha, *w_l, gradient, true, &phi_of_alpha, &phi_of_zero, &phi_of_zero_prime);
+//        std::cout << "new phi: " << phi_of_zero_prime << std::endl;
       }
       while (phi_of_alpha < phi_of_zero + alpha * a1 * phi_of_zero_prime) {
         alpha = alpha * rho;
-        GenPhi(alpha, waw_matrix, waf_matrix, faf_matrix, false,
-               &phi_of_alpha, &phi_of_alpha_prime);
+        GenPhi(alpha, *w_l, gradient, false, &phi_of_alpha, &phi_of_zero, &phi_of_zero_prime);
       }
     }
     return alpha;
   }
 
+  // Generate phi(alpha), phi(0) and phi'(0) for LineSearch
+  // If this is the first time to generate phi(), then w_l_changed is true
+  // Or if the w_l is negated because phi'(0) is negative, then w_l_changed is true
+  // If w_l_changed is true, generate phi(0) and phi'(0), otherwise
+  // when we are only computing phi(alpha) with a different alpha in the loop
+  // of the LineSearch, the w_l_changed is false and we do not generate new waw, waf and faf
   void GenPhi(const float &alpha,
-              const Matrix<T> &waw_matrix,
-              const Matrix<T> &waf_matrix,
-              const Matrix<T> &faf_matrix,
-              const bool &gen_prime,
+              const Vector<T> &w_l,
+              const Vector<T> &gradient,
+              bool w_l_changed,
               float *phi_of_alpha,
-              float *phi_of_alpha_prime
+              float *phi_of_zero,
+              float *phi_of_zero_prime
   ) {
 
     if (kernel_type_ == kGaussianKernel) {
-      // Generate phi of alpha, if gen_prime is true, the prime of phi of alpha
-      // will also be generated
-
       float alpha_square = pow(alpha, 2);
       float sqrt_one_minus_alpha = pow((1 - alpha_square), 0.5);
       float denom = -1 / (2 * pow(constant_, 2));
-      Matrix<T> k_matrix_ij_alpha(n_, n_);
-      Matrix<T> k_matrix_ij_alpha_prime(n_, n_);
       *phi_of_alpha = 0;
-      *phi_of_alpha_prime = 0;
+
+      if (w_l_changed) {
+        GenPhiCoeff(w_l, gradient);
+        *phi_of_zero = 0;
+        *phi_of_zero_prime = 0;
+      }
+
       for (int i = 0; i < n_; i++) {
         for (int j = 0; j < n_; j++) {
-          T waw = waw_matrix(i, j);
-          T waf = waf_matrix(i, j);
-          T faf = faf_matrix(i, j);
+          T waw = waw_matrix_(i, j);
+          T waf = waf_matrix_(i, j);
+          T faf = faf_matrix_(i, j);
           T kij = exp(denom * ((faf - waw) * alpha_square +
               2 * waf * sqrt_one_minus_alpha * alpha + waw));
           *phi_of_alpha += gamma_matrix_(i, j) * kij;
-          if (gen_prime) {
-            *phi_of_alpha_prime += gamma_matrix_(i, j) *
-                denom * (2 * waf * (1 - 2 * alpha_square) /
-                sqrt_one_minus_alpha + 2 * (faf - waw) * alpha) * kij;
+          if (w_l_changed) {
+            T kij = exp(denom * waw);
+            *phi_of_zero += gamma_matrix_(i, j) * kij;
+            *phi_of_zero_prime += gamma_matrix_(i, j) * denom * 2 * waf * kij;
           }
+//          if (gen_prime) {
+//            *phi_of_alpha_prime += gamma_matrix_(i, j) *
+//                denom * (2 * waf * (1 - 2 * alpha_square) /
+//                sqrt_one_minus_alpha + 2 * (faf - waw) * alpha) * kij;
+//          }
         }
+      }
+    }
+  }
+
+  void GenPhiCoeff(const Vector<T> &w_l, const Vector<T> &gradient) {
+    // Three terms used to calculate phi of alpha
+    // They only change if w_l or gradient change
+    for (int i = 0; i < n_; i++) {
+      for (int j = 0; j < n_; j++) {
+        Matrix<T> &a_matrix_ij = a_matrix_list_[i * n_ + j];
+        waw_matrix_(i, j) = w_l.transpose() * a_matrix_ij * w_l;
+        waf_matrix_(i, j) = w_l.transpose() * a_matrix_ij * gradient;
+        faf_matrix_(i, j) = gradient.transpose() * a_matrix_ij * gradient;
       }
     }
   }
@@ -598,6 +624,8 @@ class KDAC {
 
   bool CheckConverged(const Matrix<T> &matrix, Matrix<T> &pre_matrix,
                       const T &threshold) {
+    if ( (matrix.rows() != pre_matrix.rows()) || (matrix.cols() != pre_matrix.cols()) )
+      return false;
     T change = CpuOperations<T>::FrobeniusNorm(matrix - pre_matrix)
         / CpuOperations<T>::FrobeniusNorm(pre_matrix);
     bool converged = (change < threshold);
@@ -607,6 +635,8 @@ class KDAC {
 
   bool CheckConverged(const Vector<T> &vector, Vector<T> &pre_vector,
                       const T &threshold) {
+    if ( vector.rows() != pre_vector.rows() )
+      return false;
     T change = (vector - pre_vector).norm() / pre_vector.norm();
 //      std::cout << "change: " << change << std::endl;
     bool converged = (change < threshold);
