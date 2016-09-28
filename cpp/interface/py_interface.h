@@ -26,6 +26,7 @@
 #include <boost/python.hpp>
 
 #include <map>
+#include <memory>
 #include <vector>
 #include <iostream>
 
@@ -35,6 +36,7 @@
 #include "include/vector.h"
 #include "include/cpu_operations.h"
 #include "include/gpu_operations.h"
+#include "include/kdac.h"
 #include "include/util.h"
 
 namespace Nice {
@@ -48,17 +50,23 @@ enum DataType {
 enum ModelType {
   KMEANS = 0,
   INVERSE,
+  KDACLUSTER,
   OTHERS
 };
 
 
-using IMatrixMap = Eigen::Map< Matrix<int> >;
-using FMatrixMap = Eigen::Map< Matrix<float> >;
-using DMatrixMap = Eigen::Map< Matrix<double> >;
+// The numpy array is stored in row major
+using IMatrixMap = Eigen::Map< Eigen::Matrix<int, Eigen::Dynamic,
+                               Eigen::Dynamic, Eigen::RowMajor> >;
+using FMatrixMap = Eigen::Map< Eigen::Matrix<float, Eigen::Dynamic,
+                               Eigen::Dynamic, Eigen::RowMajor> >;
+using DMatrixMap = Eigen::Map< Eigen::Matrix<double, Eigen::Dynamic,
+                               Eigen::Dynamic, Eigen::RowMajor> >;
 
 class PyInterface {
  private:
   DataType dtype_;
+  ModelType model_type_;
   std::map<ModelType, boost::python::dict> param_map_;
 
   IMatrixMap input_imat_;
@@ -67,6 +75,10 @@ class PyInterface {
   IMatrixMap output_imat_;
   FMatrixMap output_fmat_;
   DMatrixMap output_dmat_;
+
+  std::shared_ptr<Nice::KDAC<float> > f_kdac_;
+  std::shared_ptr<Nice::KDAC<double> > d_kdac_;
+  bool is_first_kdac_;
 
   template <typename T>
   Matrix<T> RunKmeans(const boost::python::dict &param,
@@ -81,13 +93,26 @@ class PyInterface {
     return CpuOperations<T>::Inverse(in);
   }
 
+  template <typename T>
+  Matrix<T> RunKDAC(const Matrix<T> &in,
+                    Nice::KDAC<T> *kdac,
+                    bool *is_first_kdac) {
+    if (*is_first_kdac) {
+      kdac->Fit(in);
+      *is_first_kdac = false;
+    } else {
+      kdac->Fit();
+    }
+    return kdac->Predict();
+  }
+
  public:
   PyInterface();
   explicit PyInterface(DataType dtype);
-  void Init(const char *path, int row, int col);
-  void Init(PyObject *in, int row, int col);
-  void SetupParams(const boost::python::dict &params, ModelType model_type);
-  void Run(ModelType model_type, PyObject *out, int row, int col);
+  void Init(const char *path, ModelType model_type, int row, int col);
+  void Init(PyObject *in, ModelType model_type, int row, int col);
+  void SetupParams(const boost::python::dict &params);
+  void Run(PyObject *out, int row, int col);
 };
 
 }  // namespace Nice
