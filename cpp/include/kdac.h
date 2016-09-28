@@ -205,13 +205,13 @@ class KDAC {
       pre_w_matrix_ = w_matrix_;
       OptimizeU();
 //      Print(u_matrix_, "u_matrix");
-//      std::cout << "U Optimized" << std::endl;
+      std::cout << "U Optimized" << std::endl;
       OptimizeW();
-//      std::cout << "W Optimized" << std::endl;
+      std::cout << "W Optimized" << std::endl;
       u_converge_ = CheckConverged(u_matrix_, pre_u_matrix_, threshold_);
-//      std::cout << "U Converged? " << u_converge_ << std::endl;
+      std::cout << "U Converged? " << u_converge_ << std::endl;
       w_converge_ = CheckConverged(w_matrix_, pre_w_matrix_, threshold_);
-//      std::cout << "W Converged? " << w_converge_ << std::endl;
+      std::cout << "W Converged? " << w_converge_ << std::endl;
       u_w_converge_ = u_converge_ && w_converge_;
     }
 //    Print(u_matrix_, "u_matrix");
@@ -481,7 +481,7 @@ class KDAC {
 
     // We optimize each column in the W matrix
     for (int l = 0; l < w_matrix_.cols(); l++) {
-//      std::cout << std::endl << std::endl << l << "th column: " << std::endl;
+      std::cout << std::endl << std::endl << l << "th column: " << std::endl;
       // Optimize the column vector in w_matrix w_l
       Vector<T> w_l;
       // Get orthogonal to make w_l orthogonal to vectors from w_0 to w_(l-1)
@@ -494,38 +494,35 @@ class KDAC {
       }
       w_matrix_.col(l) = w_l;
       // Search for the w_l that maximizes formula 5
+      // The initial objective is set to the lowest number
+      T objective = std::numeric_limits<T>::lowest();
       bool w_l_converged = false;
-
+      int num_iter = 0;
       while (!w_l_converged) {
-//        std::cout << std::endl << std::endl <<
-//                  "The " << num_iter++ << "th iteration: " << std::endl;
+        std::cout << std::endl << std::endl <<
+                  "The " << num_iter++ << "th iteration: " << std::endl;
         Vector<T> grad_f_vertical;
-        Vector<T> pre_w_l = w_l;
+//        Vector<T> pre_w_l = w_l;
+        T pre_objective = objective;
         // Calculate the w gradient in equation 13, then find the gradient
         // that is vertical to the space spanned by w_0 to w_l
         Vector<T> grad_f = GenWGradient(g_of_w, w_l);
         grad_f_vertical =
             GenOrthonormal(w_matrix_.leftCols(l + 1), grad_f);
-//        std::cout << "ifOrth: " <<
-//                  grad_f_vertical.dot(w_l) << std::endl;
-        alpha_ = LineSearch(grad_f_vertical, &w_l);
+        LineSearch(grad_f_vertical, &w_l, &alpha_, &objective);
         w_l = sqrt(1.0 - pow(alpha_, 2)) * w_l +
             alpha_ * grad_f_vertical;
         w_matrix_.col(l) = w_l;
-//        Print(w_l.norm(), "w_l after norm");
-        w_l_converged = CheckConverged(w_l, pre_w_l, threshold_);
-//        if (w_l_converged)
-//          std::cout << "Converged" << std::endl;
+//        Print(w_l, "w_l");
+        w_l_converged = CheckConverged(objective, pre_objective, threshold_);
       }
-      // Update col l in matrix w by the new w_l
-      // TODO: Need to learn about if using Vector<T> &w_l = w_matrix_.col(l)
-      // would be better
       UpdateGOfW(g_of_w, w_l);
+      // TODO: Need to learn about if using Vector<T> &w_l = w_matrix_.col(l)
     }
   }
 
-  float LineSearch(const Vector<T> &gradient, Vector<T> *w_l) {
-    float alpha = 1.0;
+  void LineSearch(const Vector<T> &gradient, Vector<T> *w_l, float *alpha, T *objective) {
+    *alpha = 1.0;
     float a1 = 0.1;
     float rho = 0.8;
     float phi_of_alpha = 0;
@@ -533,19 +530,18 @@ class KDAC {
     float phi_of_zero_prime = 0;
 
     if (kernel_type_ == kGaussianKernel) {
-      GenPhi(alpha, *w_l, gradient, true, &phi_of_alpha, &phi_of_zero, &phi_of_zero_prime);
+      GenPhi(*alpha, *w_l, gradient, true, &phi_of_alpha, &phi_of_zero, &phi_of_zero_prime);
       if (phi_of_zero_prime < 0) {
-//        std::cout << "phi less than zero: " << phi_of_zero_prime << std::endl;
         *w_l = -(*w_l);
-        GenPhi(alpha, *w_l, gradient, true, &phi_of_alpha, &phi_of_zero, &phi_of_zero_prime);
-//        std::cout << "new phi: " << phi_of_zero_prime << std::endl;
+        GenPhi(*alpha, *w_l, gradient, true, &phi_of_alpha, &phi_of_zero, &phi_of_zero_prime);
       }
-      while (phi_of_alpha < phi_of_zero + alpha * a1 * phi_of_zero_prime) {
-        alpha = alpha * rho;
-        GenPhi(alpha, *w_l, gradient, false, &phi_of_alpha, &phi_of_zero, &phi_of_zero_prime);
+      while (phi_of_alpha < phi_of_zero + *alpha * a1 * phi_of_zero_prime) {
+        *alpha = *alpha * rho;
+        GenPhi(*alpha, *w_l, gradient, false, &phi_of_alpha, &phi_of_zero, &phi_of_zero_prime);
       }
+      std::cout << "obj: " << phi_of_alpha << std::endl;
+      *objective = phi_of_alpha;
     }
-    return alpha;
   }
 
   // Generate phi(alpha), phi(0) and phi'(0) for LineSearch
@@ -622,7 +618,7 @@ class KDAC {
     d_matrix_to_the_minus_half_ = d_i_.asDiagonal();
   }
 
-  bool CheckConverged(const Matrix<T> &matrix, Matrix<T> &pre_matrix,
+  bool CheckConverged(const Matrix<T> &matrix, const Matrix<T> &pre_matrix,
                       const T &threshold) {
     if ( (matrix.rows() != pre_matrix.rows()) || (matrix.cols() != pre_matrix.cols()) )
       return false;
@@ -630,19 +626,21 @@ class KDAC {
         / CpuOperations<T>::FrobeniusNorm(pre_matrix);
     bool converged = (change < threshold);
     return converged;
-//    }
   }
 
-  bool CheckConverged(const Vector<T> &vector, Vector<T> &pre_vector,
+  bool CheckConverged(const Vector<T> &vector, const Vector<T> &pre_vector,
                       const T &threshold) {
     if ( vector.rows() != pre_vector.rows() )
       return false;
     T change = (vector - pre_vector).norm() / pre_vector.norm();
-//      std::cout << "change: " << change << std::endl;
     bool converged = (change < threshold);
-//      std::cout << change << std::endl;
     return converged;
-//    }
+  }
+
+  bool CheckConverged(const T &scalar, const T &pre_scalar, const T &threshold) {
+    T change = (scalar - pre_scalar) / scalar;
+    bool converged = (change < scalar);
+    return converged;
   }
 
 };
