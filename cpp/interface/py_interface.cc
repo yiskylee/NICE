@@ -79,7 +79,6 @@ void PyInterface::Init(PyObject *in, ModelType model_type,
       break;
   }
 
-
   // Initialization of internal parameters
   model_type_ = model_type;
   is_first_kdac_ = true;

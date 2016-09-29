@@ -20,17 +20,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "include/matrix.h"
-#include "include/vector.h"
-#include "include/cpu_operations.h"
-#include "include/gpu_operations.h"
-#include "include/svd_solver.h"
-#include "include/gpu_svd_solver.h"
-#include "include/util.h"
-#include "include/gpu_util.h"
-#include "include/kdac.h"
+#ifndef CPP_INCLUDE_STOP_WATCH_H_
+#define CPP_INCLUDE_STOP_WATCH_H_
 
-// Place holder
-//
-/// THIS IS A TEST
-/// DOXYGEN - Andrew Tu
+#include <time.h>
+
+namespace Nice {
+
+// Class StopWatch
+class StopWatch {
+ private:
+  struct timeval start_;
+  struct timeval end_;
+ public:
+  void Start() {
+    gettimeofday(&start_, NULL);
+  }
+  void Stop() {
+    gettimeofday(&end_, NULL);
+  }
+  double DiffInMs() {
+    return (double)(end_.tv_sec * 1000 + end_.tv_usec / 1000) - 
+      (double)(start_.tv_sec * 1000 + start_.tv_usec / 1000);
+}
+
+} // namespace Nice
+
+#endif  // CPP_INCLUDE_STOP_WATCH_H_
+

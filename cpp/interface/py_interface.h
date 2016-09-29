@@ -50,7 +50,10 @@ enum DataType {
 enum ModelType {
   KMEANS = 0,
   INVERSE,
+<<<<<<< HEAD
   KDACLUSTER,
+=======
+>>>>>>> origin/mkl-cmake
   OTHERS
 };
 
