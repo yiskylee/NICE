@@ -34,16 +34,16 @@ file(GLOB_RECURSE SOURCES RELATIVE ${CMAKE_SOURCE_DIR} src/*.cc)
 message(STATUS "Source files: " ${SOURCES})
 
 # The path of MKL
-set(MKL_ROOT /tmp/mkl/mkl) 
+set(MKL_ROOT /usr/local/anaconda2) 
 
 # Locate MKL
 if (EXISTS ${MKL_ROOT})
   message(STATUS "MKL Found")
   add_definitions(-m64 -DEIGEN_USE_MKL_ALL -Wno-unused-local-typedefs)
-  include_directories(${MKL_ROOT}/include)
-  find_library(MKL_LP64 mkl_intel_lp64 HINTS ${MKL_ROOT}/lib/intel64)
-  find_library(MKL_CORE mkl_core HINTS ${MKL_ROOT}/lib/intel64)
-  find_library(MKL_SEQ mkl_sequential HINTS ${MKL_ROOT}/lib/intel64)
+  include_directories(${MKL_ROOT}/include/mkl)
+  find_library(MKL_LP64 mkl_intel_lp64 HINTS ${MKL_ROOT}/lib)
+  find_library(MKL_CORE mkl_core HINTS ${MKL_ROOT}/lib)
+  find_library(MKL_SEQ mkl_sequential HINTS ${MKL_ROOT}/lib)
 endif()
 
 # Locate CUDA package 
