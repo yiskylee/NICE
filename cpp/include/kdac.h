@@ -108,6 +108,18 @@ class KDAC {
     q_ = q;
   }
 
+  int GetD(void) {
+    return d_;
+  }
+
+  int GetN(void) {
+    return n_;
+  }
+
+  int GetQ(void) {
+    return q_;
+  }
+
   Matrix<T> GetU(void) {
     return u_matrix_;
   }
@@ -124,7 +136,7 @@ class KDAC {
     return l_matrix_;
   }
 
-  Matrix<T> GetD(void) {
+  Matrix<T> GetDMatrix(void) {
     return d_matrix_;
   }
 
