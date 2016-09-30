@@ -31,6 +31,7 @@
 #include "include/util.h"
 #include "include/matrix.h"
 #include "include/vector.h"
+#include "include/kernel_types.h"
 
 template<typename T>
 class KDACTest : public ::testing::Test {
@@ -78,11 +79,13 @@ TYPED_TEST_CASE(KDACTest, FloatTypes);
       for (int j = 0; j < a.cols(); j++)\
         EXPECT_NEAR(double(a(i, j)), double(ref(i, j)), 0.0001);\
 
-#define PRINTV(v)\
-  for (int i = 0; i < v.rows(); i++)\
-    std::cout << v(i) << " ";\
+#define PRINTV(v, num_per_line)\
+  for (int i = 0; i < v.rows(); i++) {\
+    if (i % num_per_line == 0 && i != 0)\
+      std::cout << std::endl;\
+    std::cout << v(i) << ",";\
+  }\
   std::cout << std::endl;\
-
 
 
 #define EXPECT_MATRIX_ABS_EQ(a, ref, error)\
@@ -92,18 +95,38 @@ TYPED_TEST_CASE(KDACTest, FloatTypes);
       for (int j = 0; j < a.cols(); j++)\
         EXPECT_NEAR(std::abs(a(i, j)), std::abs(ref(i, j)), error);\
 
-TYPED_TEST(KDACTest, Pred600) {
+TYPED_TEST(KDACTest, PredGaussian) {
   this->kdac_->SetQ(3);
   this->kdac_->SetC(3);
+  this->kdac_->SetKernel(Nice::kGaussianKernel, 5.0);
   Nice::Matrix<TypeParam> data_matrix = Nice::util::FromFile<TypeParam>(
-      "../test/data_for_test/kdac/data_600_6_c3.csv", ",");
+      "../test/data_for_test/kdac/data_gaussian_120_6_3.csv", ",");
   this->kdac_->Fit(data_matrix);
-  Nice::Vector<TypeParam> pred = this->kdac_->Predict();
-  PRINTV(pred);
-  this->kdac_->Fit();
-  pred = this->kdac_->Predict();
-  PRINTV(pred);
+  PRINTV(this->kdac_->Predict(), 40);
+
+//  Nice::Matrix<TypeParam>
+//
+//  Nice::Matrix<TypeParam> first_y = this->kdac_->GetY();
+//  this->kdac_->SetLambda(1.0);
+//  this->kdac_->Fit(data_matrix, first_y);
+//  PRINTV(this->kdac_->Predict(), 40);
+//
+//  this->kdac_->SetLambda(2.0);
+//  this->kdac_->Fit(data_matrix, first_y);
+//  PRINTV(this->kdac_->Predict());
+//
+//  this->kdac_->SetLambda(3.0);
+//  this->kdac_->Fit(data_matrix, first_y);
+//  PRINTV(this->kdac_->Predict());
 }
+
+//TYPED_TEST(KDACTest, Kernel) {
+//  this->kdac_->SetQ(2);
+//  this->kdac_->SetC(2);
+//  Nice::Matrix<TypeParam> data_matrix = Nice::util::FromFile<TypeParam>(
+//      "../test/data_for_test/kdac/data_test_4_6.csv", ",");
+//  this->kdac_->Fit(data_matrix);
+//}
 
 //TYPED_TEST(KDACTest, FitUMatrix) {
 //  this->kdac_->Fit(this->data_matrix_);

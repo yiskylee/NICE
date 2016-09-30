@@ -96,7 +96,8 @@ Matrix<T> FromFile(const std::string &input_file_path,
     return m;
   } else {
     // Error for when the file doesn't exist
-    std::cerr << "Cannot open file " + input_file_path + ", exiting...";
+    std::cerr << "Cannot open file " + input_file_path + ", exiting..."
+              << std::endl;
     exit(1);
   }
 }
@@ -158,7 +159,7 @@ Matrix<T> FromFile(const std::string &input_file_path,
       // If the matrix in the file is shaped incorrectly, throw an error
       } else if (num_cols != cols_in_row) {
         std::cerr << "Problem with Matrix in: " + input_file_path +
-                     ", exiting...";
+                     ", exiting..." << std::endl;
         exit(1);
       }
       ++num_rows;
@@ -173,7 +174,8 @@ Matrix<T> FromFile(const std::string &input_file_path,
     return m;
   } else {
     // Error for when the file doesn't exist
-    std::cerr << "Cannot open file " + input_file_path + ", exiting...";
+    std::cerr << "Cannot open file " + input_file_path + ", exiting..."
+              << std::endl;
     exit(1);
   }
 }

@@ -46,6 +46,8 @@
 #include "include/util.h"
 #include "include/kernel_types.h"
 
+//#define DEBUG
+
 namespace Nice {
 template<typename T>
 class KDAC {
@@ -134,6 +136,10 @@ class KDAC {
     return k_matrix_;
   }
 
+  Matrix<T> GetY(void) {
+    return y_matrix_;
+  }
+
   std::vector<Matrix<T>> GetAList(void) {
     return a_matrix_list_;
   }
@@ -184,38 +190,79 @@ class KDAC {
     // lambda * HSIC is zero, we do not need to optimize W, and we directly
     // go to kmeans where Y_0 is generated. And both u and v are converged.
     OptimizeU();
-
-//    std::cout << "U Optimized" << std::endl;
-//    Print(u_matrix_, "u_matrix");
     RunKMeans();
+#ifdef DEBUG
+    Print(l_matrix_, "l_matrix");
+    Print(u_matrix_, "u_matrix");
+    Print(u_matrix_normalized_, "u_matrix_normalized");
+#endif
   }
 
-  /// This function creates an alternative clustering result
-  /// Must be called after \ref Fit(const Matrix<T> &input_matrix)
-  /// when the first clustering result is generated
+
+  // Fit() with an empyt param list can only be run when the X and Y already
+  // exist from the previous round of computation
   void Fit(void) {
-    // Fit() without an input data matrix is only called when we already
-    // have an existing clustering result in Y
-    // When Y exist, we are generating an alternative view with a
-    // given Y_previous by doing Optimize both W and U until they converge
-    // Following the pseudo code in Algorithm 1 in the paper
     Init();
     while (!u_w_converge_) {
       pre_u_matrix_ = u_matrix_;
       pre_w_matrix_ = w_matrix_;
       OptimizeU();
-//      Print(u_matrix_, "u_matrix");
+#ifdef DEBUG
+      Print(u_matrix_, "u_matrix");
       std::cout << "U Optimized" << std::endl;
+#endif
       OptimizeW();
+#ifdef DEBUG
       std::cout << "W Optimized" << std::endl;
+#endif
       u_converge_ = CheckConverged(u_matrix_, pre_u_matrix_, threshold_);
-      std::cout << "U Converged? " << u_converge_ << std::endl;
       w_converge_ = CheckConverged(w_matrix_, pre_w_matrix_, threshold_);
+#ifdef DEBUG
+      std::cout << "U Converged? " << u_converge_ << std::endl;
       std::cout << "W Converged? " << w_converge_ << std::endl;
+#endif
       u_w_converge_ = u_converge_ && w_converge_;
     }
-//    Print(u_matrix_, "u_matrix");
     RunKMeans();
+#ifdef DEBUG
+    Print(y_matrix_, "y_matrix");
+#endif
+  }
+
+  /// This function creates an alternative clustering result
+  /// Must be called after \ref Fit(const Matrix<T> &input_matrix)
+  /// when the first clustering result is generated
+  void Fit(const Matrix<T> &input_matrix, const Matrix<T> &y_matrix) {
+    // This is called when we have exsiting labels Y
+    // now we are generating an alternative view with a
+    // given Y_previous by doing Optimize both W and U until they converge
+    // Following the pseudo code in Algorithm 1 in the paper
+    Init(input_matrix, y_matrix);
+    while (!u_w_converge_) {
+      pre_u_matrix_ = u_matrix_;
+      pre_w_matrix_ = w_matrix_;
+      OptimizeU();
+#ifdef DEBUG
+      Print(u_matrix_, "u_matrix");
+      std::cout << "U Optimized" << std::endl;
+#endif
+      OptimizeW();
+#ifdef DEBUG
+      std::cout << "W Optimized" << std::endl;
+#endif
+      u_converge_ = CheckConverged(u_matrix_, pre_u_matrix_, threshold_);
+      w_converge_ = CheckConverged(w_matrix_, pre_w_matrix_, threshold_);
+#ifdef DEBUG
+      std::cout << "U Converged? " << u_converge_ << std::endl;
+      std::cout << "W Converged? " << w_converge_ << std::endl;
+#endif
+      u_w_converge_ = u_converge_ && w_converge_;
+    }
+    RunKMeans();
+#ifdef DEBUG
+    Print(y_matrix_, "y_matrix");
+#endif
+
   }
 
   /// Running Predict() after Fit() returns
@@ -247,7 +294,8 @@ class KDAC {
   bool u_w_converge_;  // If matrix U and W both converge, false by default
   T threshold_;  // To determine convergence
   Matrix<T> x_matrix_;  // Input matrix X (n by d)
-  Matrix<T> w_matrix_;  // Transformation matrix W (d by q, q < d). Initialized to I (d by d)
+  Matrix<T> w_matrix_;  // Transformation matrix W (d by q, q < d).
+                        // Initialized to (d by d) of I
   Matrix<T> pre_w_matrix_;  // W matrix from last iteration,
   // to check convergence
   Matrix<T> y_matrix_;  // Labeling matrix Y (n by (c0 + c1 + c2 + ..))
@@ -275,29 +323,57 @@ class KDAC {
   Matrix<T> faf_matrix_;
 
 
-  // Initialization
+  // Initialization for generating the first clustering result
   void Init(const Matrix<T> &input_matrix) {
     x_matrix_ = input_matrix;
     n_ = input_matrix.rows();
     d_ = input_matrix.cols();
-    CheckQD();
-    w_matrix_ = Matrix<T>::Zero(d_, q_);
-    threshold_ = 0.01;
-//    y_matrix_ = Matrix<bool>::Zero(n_, c_);
-//    d_matrix_ = Matrix<T>::Zero(n_, n_, 0);
-//    k_matrix_ = Matrix<T>::Zero(n_, n_, 0);
-//    u_matrix_ = Matrix<T>::Zero(n_, c_, 0);
+//    CheckQD();
+    // w_matrix_ is I initially
+    w_matrix_ = Matrix<T>::Identity(d_, d_);
+  }
+
+  // Initialization for generating alternative views when Y is already generated
+  // from last run
+  void Init() {
+    h_matrix_ = Matrix<T>::Identity(n_, n_)
+        - Matrix<T>::Constant(n_, n_, 1) / static_cast<T>(n_);
+    y_matrix_temp_ = Matrix<T>::Zero(n_, c_);
+    // Generate the kernel for the label matrix Y: K_y
+    k_matrix_y_ = y_matrix_ * y_matrix_.transpose();
+    // Generate Y tilde matrix in equation 5 from kernel matrix of Y
+    y_matrix_tilde_ = h_matrix_ * k_matrix_y_ * h_matrix_;
+    InitAMatrixList();
+    // Coefficients for calculating phi
     waw_matrix_ = Matrix<T>::Zero(n_, n_);
     waf_matrix_ = Matrix<T>::Zero(n_, n_);
     faf_matrix_ = Matrix<T>::Zero(n_, n_);
-    h_matrix_ = Matrix<T>::Identity(n_, n_)
-        - Matrix<T>::Constant(n_, n_, 1) / float(n_);
-    y_matrix_temp_ = Matrix<T>::Zero(n_, c_);
-    InitAMatrixList();
+    u_converge_ = false;
+    w_converge_ = false;
+    u_w_converge_ = false;
   }
 
-  void Init(void) {
+  // Initialization for generating alternative views with a given Y
+  void Init(const Matrix<T> &input_matrix, const Matrix<T> &y_matrix) {
+    x_matrix_ = input_matrix;
+    n_ = input_matrix.rows();
+    d_ = input_matrix.cols();
+    // w_matrix_ is I initially
     w_matrix_ = Matrix<T>::Identity(d_, d_);
+    CheckQD();
+    h_matrix_ = Matrix<T>::Identity(n_, n_)
+        - Matrix<T>::Constant(n_, n_, 1) / static_cast<T>(n_);
+    y_matrix_temp_ = Matrix<T>::Zero(n_, c_);
+    y_matrix_ = y_matrix;
+    // Generate the kernel for the label matrix Y: K_y
+    k_matrix_y_ = y_matrix_ * y_matrix_.transpose();
+    // Generate Y tilde matrix in equation 5 from kernel matrix of Y
+    y_matrix_tilde_ = h_matrix_ * k_matrix_y_ * h_matrix_;
+    InitAMatrixList();
+    // Coefficients for calculating phi
+    waw_matrix_ = Matrix<T>::Zero(n_, n_);
+    waf_matrix_ = Matrix<T>::Zero(n_, n_);
+    faf_matrix_ = Matrix<T>::Zero(n_, n_);
     u_converge_ = false;
     w_converge_ = false;
     u_w_converge_ = false;
@@ -325,7 +401,13 @@ class KDAC {
   /// This function runs KMeans on the normalized U
   void RunKMeans() {
     KMeans<T> kms;
-    clustering_result_ = kms.FitPredict(u_matrix_normalized_, c_);
+    T eps = std::numeric_limits<T>::min();
+    // Add a very small number to the l2 norm of each row in case it is 0
+    u_matrix_normalized_ = u_matrix_.array().colwise() /
+        (u_matrix_.rowwise().norm().array() + eps);
+    CheckFinite(u_matrix_normalized_, "normalized_u");
+    kms.Fit(u_matrix_normalized_, c_);
+    clustering_result_ = kms.GetLabels();
     if (y_matrix_.cols() == 0) {
       // When this is calculating Y0
       y_matrix_ = Matrix<T>::Zero(n_, c_);
@@ -370,8 +452,8 @@ class KDAC {
   }
 
   void Print(const Vector<T> &vector, std::string name) {
-    std::cout.precision(8);
-    std::cout << std::scientific;
+//    std::cout.precision(2);
+//    std::cout << std::scientific;
     std::cout << name << std::endl;
     for (int i = 0; i < vector.rows(); i++) {
       std::cout << vector(i) << " ";
@@ -380,16 +462,16 @@ class KDAC {
   }
 
   void Print(const Matrix<T> &matrix, std::string name) {
-    std::cout.precision(8);
-    std::cout << std::scientific;
+//    std::cout.precision(2);
+//    std::cout << std::scientific;
     std::cout << name << std::endl;
     std::cout << matrix << " ";
     std::cout << std::endl;
   }
 
   void Print(const T &scalar, std::string name) {
-    std::cout.precision(8);
-    std::cout << std::scientific;
+//    std::cout.precision(2);
+//    std::cout << std::scientific;
     std::cout << name << std::endl;
     std::cout << scalar << std::endl;
   }
@@ -416,15 +498,16 @@ class KDAC {
   }
 
   void OptimizeU(void) {
-    // If this is the first round, then we use the full X to initialize the U matrix
-    // Otherwise, we project X to subspace W (n * d to n * q)
-    if (y_matrix_.rows() == 0) {
-      k_matrix_ = CpuOperations<T>::GenKernelMatrix(x_matrix_, kernel_type_, constant_);
-    } else {
-      Matrix<T> projected_x_matrix = x_matrix_ * w_matrix_;
-      // Generate the kernel matrix based on kernel type from projected X
-      k_matrix_ = CpuOperations<T>::GenKernelMatrix(projected_x_matrix, kernel_type_, constant_);
-    }
+    // If this is the first round and second,
+    // then we use the full X to initialize the
+    // U matrix, Otherwise, we project X to subspace W (n * d to n * q)
+    Matrix<T> projected_x_matrix = x_matrix_ * w_matrix_;
+    CheckFinite(projected_x_matrix, "projected_x_matrix");
+    // Generate the kernel matrix based on kernel type from projected X
+    k_matrix_ = CpuOperations<T>::GenKernelMatrix(
+        projected_x_matrix, kernel_type_, constant_);
+
+
     // Generate degree matrix from the kernel matrix
     // d_i is the diagonal vector of degree matrix D
     // This is a reference to how to directly generate D^(-1/2)
@@ -434,23 +517,37 @@ class KDAC {
 
     // Generate D and D^(-1/2)
     GenDegreeMatrix();
-    l_matrix_ = d_matrix_to_the_minus_half_ * k_matrix_ *
-        d_matrix_to_the_minus_half_;
+    l_matrix_ = d_matrix_to_the_minus_half_ *
+        k_matrix_ * d_matrix_to_the_minus_half_;
+
     SvdSolver<T> solver;
     solver.Compute(l_matrix_);
-    // Generate a u matrix from SVD solver and then use Normalize to normalize
-    // its rows
+    // Generate a u matrix from SVD solver and then use Normalize
+    // to normalize its rows
     u_matrix_ = solver.MatrixU().leftCols(c_);
-    u_matrix_normalized_ = CpuOperations<T>::Normalize(u_matrix_, 2, 1);
 
+    CheckFiniteOptimizeU();
+//    if (y_matrix_.rows() == 0) {
+//      Print(u_matrix_, "u_matrix");
+//      Print(u_matrix_normalized_, "u_norm");
+//    }
+  }
+
+  void CheckFiniteOptimizeU(void) {
+
+    CheckFinite(k_matrix_, "Kernel");
+    CheckFinite(d_matrix_to_the_minus_half_, "d_matrix_to_minus_half");
+    CheckFinite(l_matrix_, "L");
+    CheckFinite(u_matrix_, "U");
+  }
+
+  void CheckFiniteOptimizeW(void) {
+    CheckFinite(didj_matrix_, "didj");
+    CheckFinite(gamma_matrix_, "Gamma");
+    CheckFinite(w_matrix_, "W");
   }
 
   void OptimizeW(void) {
-    // Generate the kernel for the label matrix Y: K_y
-    k_matrix_y_ = y_matrix_ * y_matrix_.transpose();
-    // Generate Y tilde matrix in equation 5 from kernel matrix of Y
-    y_matrix_tilde_ = h_matrix_ * k_matrix_y_ * h_matrix_;
-
     // didj matrix contains the element (i, j) that equal to d_i * d_j
     didj_matrix_ = d_i_ * d_i_.transpose();
 
@@ -474,15 +571,16 @@ class KDAC {
     // when l = 2, g_of_w is 1 .* g(w_1) .* g(w_2)...
     Matrix<T> g_of_w = Matrix<T>::Constant(n_, n_, 1);
 
-    // w_matrix_ = w_matrix.leftCols(q_) does not work, thus I use new_w_matrix
-    // to firstly convert w_matrix_.leftCols(q_) to a real matrix
-    Matrix<T> new_w_matrix = w_matrix_.leftCols(q_);
-    w_matrix_ = new_w_matrix;
+    // If w_matrix is still I (d x d), now it is time to change it to d x q
+    if (w_matrix_.cols() == d_)
+      w_matrix_ = Matrix<T>::Identity(d_, q_);
 
     // We optimize each column in the W matrix
     for (int l = 0; l < w_matrix_.cols(); l++) {
+#ifdef DEBUG
       std::cout << std::endl << std::endl << l << "th column: " << std::endl;
-      // Optimize the column vector in w_matrix w_l
+      Print(w_matrix_, "w_matrix");
+#endif
       Vector<T> w_l;
       // Get orthogonal to make w_l orthogonal to vectors from w_0 to w_(l-1)
       // when l is not 0
@@ -497,10 +595,14 @@ class KDAC {
       // The initial objective is set to the lowest number
       T objective = std::numeric_limits<T>::lowest();
       bool w_l_converged = false;
+#ifdef DEBUG
       int num_iter = 0;
+#endif
       while (!w_l_converged) {
+#ifdef DEBUG
         std::cout << std::endl << std::endl <<
                   "The " << num_iter++ << "th iteration: " << std::endl;
+#endif
         Vector<T> grad_f_vertical;
 //        Vector<T> pre_w_l = w_l;
         T pre_objective = objective;
@@ -510,18 +612,26 @@ class KDAC {
         grad_f_vertical =
             GenOrthonormal(w_matrix_.leftCols(l + 1), grad_f);
         LineSearch(grad_f_vertical, &w_l, &alpha_, &objective);
+#ifdef DEBUG
+        Print(objective, "obj");
+#endif
         w_l = sqrt(1.0 - pow(alpha_, 2)) * w_l +
             alpha_ * grad_f_vertical;
         w_matrix_.col(l) = w_l;
-//        Print(w_l, "w_l");
         w_l_converged = CheckConverged(objective, pre_objective, threshold_);
+#ifdef DEBUG
+        if (w_l_converged)
+          std::cout << "converged\n";
+#endif
       }
       UpdateGOfW(g_of_w, w_l);
       // TODO: Need to learn about if using Vector<T> &w_l = w_matrix_.col(l)
+      CheckFiniteOptimizeW();
     }
   }
 
-  void LineSearch(const Vector<T> &gradient, Vector<T> *w_l, float *alpha, T *objective) {
+  void LineSearch(const Vector<T> &gradient,
+                  Vector<T> *w_l, float *alpha, T *objective) {
     *alpha = 1.0;
     float a1 = 0.1;
     float rho = 0.8;
@@ -530,26 +640,31 @@ class KDAC {
     float phi_of_zero_prime = 0;
 
     if (kernel_type_ == kGaussianKernel) {
-      GenPhi(*alpha, *w_l, gradient, true, &phi_of_alpha, &phi_of_zero, &phi_of_zero_prime);
+      GenPhi(*alpha, *w_l, gradient, true,
+             &phi_of_alpha, &phi_of_zero, &phi_of_zero_prime);
       if (phi_of_zero_prime < 0) {
         *w_l = -(*w_l);
-        GenPhi(*alpha, *w_l, gradient, true, &phi_of_alpha, &phi_of_zero, &phi_of_zero_prime);
+        GenPhi(*alpha, *w_l, gradient, true,
+               &phi_of_alpha, &phi_of_zero, &phi_of_zero_prime);
       }
       while (phi_of_alpha < phi_of_zero + *alpha * a1 * phi_of_zero_prime) {
         *alpha = *alpha * rho;
-        GenPhi(*alpha, *w_l, gradient, false, &phi_of_alpha, &phi_of_zero, &phi_of_zero_prime);
+        GenPhi(*alpha, *w_l, gradient, false,
+               &phi_of_alpha, &phi_of_zero, &phi_of_zero_prime);
       }
-      std::cout << "obj: " << phi_of_alpha << std::endl;
+//      std::cout << "obj: " << phi_of_alpha << std::endl;
       *objective = phi_of_alpha;
     }
   }
 
   // Generate phi(alpha), phi(0) and phi'(0) for LineSearch
   // If this is the first time to generate phi(), then w_l_changed is true
-  // Or if the w_l is negated because phi'(0) is negative, then w_l_changed is true
+  // Or if the w_l is negated because phi'(0) is negative,
+  // then w_l_changed is true
   // If w_l_changed is true, generate phi(0) and phi'(0), otherwise
   // when we are only computing phi(alpha) with a different alpha in the loop
-  // of the LineSearch, the w_l_changed is false and we do not generate new waw, waf and faf
+  // of the LineSearch, the w_l_changed is false and we do not generate
+  // new waw, waf and faf
   void GenPhi(const float &alpha,
               const Vector<T> &w_l,
               const Vector<T> &gradient,
@@ -620,7 +735,8 @@ class KDAC {
 
   bool CheckConverged(const Matrix<T> &matrix, const Matrix<T> &pre_matrix,
                       const T &threshold) {
-    if ( (matrix.rows() != pre_matrix.rows()) || (matrix.cols() != pre_matrix.cols()) )
+    if ( (matrix.rows() != pre_matrix.rows()) ||
+        (matrix.cols() != pre_matrix.cols()) )
       return false;
     T change = CpuOperations<T>::FrobeniusNorm(matrix - pre_matrix)
         / CpuOperations<T>::FrobeniusNorm(pre_matrix);
@@ -639,7 +755,7 @@ class KDAC {
 
   bool CheckConverged(const T &scalar, const T &pre_scalar, const T &threshold) {
     T change = (scalar - pre_scalar) / scalar;
-    bool converged = (change < scalar);
+    bool converged = (change < threshold);
     return converged;
   }
 
