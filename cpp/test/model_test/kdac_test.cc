@@ -31,21 +31,20 @@
 #include "include/util.h"
 #include "include/matrix.h"
 #include "include/vector.h"
+#include "include/kernel_types.h"
 
 template<typename T>
 class KDACTest : public ::testing::Test {
  protected:
-  Nice::Matrix<T> data_matrix_;
+//  Nice::Matrix<T> data_matrix_;
   std::shared_ptr<Nice::KDAC<T>> kdac_;
   int c_;
-  int n_;
-  int d_;
   std::string base_dir_;
 
   virtual void SetUp() {
-    data_matrix_ = Nice::util::FromFile<T>(
-        "../test/data_for_test/kdac/data_gaussian_2.csv", ",");
-    c_ = 2;
+//    data_matrix_ = Nice::util::FromFile<T>(
+//        "../test/data_for_test/kdac/data_400.csv", ",");
+//    c_ = 2;
     kdac_ = std::make_shared<Nice::KDAC<T>>();
     kdac_->SetC(c_);
     base_dir_ = "../test/data_for_test/kdac";
@@ -80,6 +79,14 @@ TYPED_TEST_CASE(KDACTest, FloatTypes);
       for (int j = 0; j < a.cols(); j++)\
         EXPECT_NEAR(double(a(i, j)), double(ref(i, j)), 0.0001);\
 
+#define PRINTV(v, num_per_line)\
+  for (int i = 0; i < v.rows(); i++) {\
+    if (i % num_per_line == 0 && i != 0)\
+      std::cout << std::endl;\
+    std::cout << v(i) << ",";\
+  }\
+  std::cout << std::endl;\
+
 
 #define EXPECT_MATRIX_ABS_EQ(a, ref, error)\
     EXPECT_EQ(a.rows(), ref.rows());\
@@ -88,7 +95,38 @@ TYPED_TEST_CASE(KDACTest, FloatTypes);
       for (int j = 0; j < a.cols(); j++)\
         EXPECT_NEAR(std::abs(a(i, j)), std::abs(ref(i, j)), error);\
 
+TYPED_TEST(KDACTest, PredGaussian) {
+  this->kdac_->SetQ(3);
+  this->kdac_->SetC(3);
+  this->kdac_->SetKernel(Nice::kGaussianKernel, 5.0);
+  Nice::Matrix<TypeParam> data_matrix = Nice::util::FromFile<TypeParam>(
+      "../test/data_for_test/kdac/data_gaussian_120_6_3.csv", ",");
+  this->kdac_->Fit(data_matrix);
+  PRINTV(this->kdac_->Predict(), 40);
 
+//  Nice::Matrix<TypeParam>
+//
+//  Nice::Matrix<TypeParam> first_y = this->kdac_->GetY();
+//  this->kdac_->SetLambda(1.0);
+//  this->kdac_->Fit(data_matrix, first_y);
+//  PRINTV(this->kdac_->Predict(), 40);
+//
+//  this->kdac_->SetLambda(2.0);
+//  this->kdac_->Fit(data_matrix, first_y);
+//  PRINTV(this->kdac_->Predict());
+//
+//  this->kdac_->SetLambda(3.0);
+//  this->kdac_->Fit(data_matrix, first_y);
+//  PRINTV(this->kdac_->Predict());
+}
+
+//TYPED_TEST(KDACTest, Kernel) {
+//  this->kdac_->SetQ(2);
+//  this->kdac_->SetC(2);
+//  Nice::Matrix<TypeParam> data_matrix = Nice::util::FromFile<TypeParam>(
+//      "../test/data_for_test/kdac/data_test_4_6.csv", ",");
+//  this->kdac_->Fit(data_matrix);
+//}
 
 //TYPED_TEST(KDACTest, FitUMatrix) {
 //  this->kdac_->Fit(this->data_matrix_);
@@ -185,14 +223,7 @@ TYPED_TEST_CASE(KDACTest, FloatTypes);
 //  std::cout << b << std::endl;
 //}
 
-TYPED_TEST(KDACTest, Pred) {
-  this->kdac_->SetQ(2);
-  this->kdac_->SetC(2);
-  this->kdac_->Fit(this->data_matrix_);
-  std::cout << this->kdac_->Predict() << std::endl;
-  this->kdac_->Fit();
-  std::cout << this->kdac_->Predict() << std::endl;
-}
+
 
 //TYPED_TEST(KDACTest, Ortho) {
 //  Nice::Matrix<TypeParam> m(3, 2);

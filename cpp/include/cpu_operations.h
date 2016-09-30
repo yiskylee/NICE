@@ -591,8 +591,10 @@ class CpuOperations {
       for (int i = 0; i < num_samples; i++)
         for (int j = 0; j < num_samples; j++) {
           // Calculate the the norm of (x_i - x_j) for all (i, j) pairs
-          float i_j_dist = (data_matrix.row(i) - data_matrix.row(j)).norm();
+
+          T i_j_dist = (data_matrix.row(i) - data_matrix.row(j)).squaredNorm();
           kernel_matrix(i, j) = exp(-i_j_dist / (2 * sigma * sigma));
+//          std::cout << i_j_dist << ", " << -i_j_dist / (2 * sigma * sigma) << ", ";
         }
     }
     return kernel_matrix;

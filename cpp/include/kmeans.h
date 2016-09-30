@@ -34,7 +34,7 @@ namespace Nice {
 template<typename T>
 class KMeans {
  public:
-  Vector<T> FitPredict(const Matrix<T> &input_data, int k) {
+  void Fit(const Matrix<T> &input_data, int k) {
     int num_features = input_data.cols();
     int num_samples = input_data.rows();
     typedef dlib::matrix<T> sample_type;
@@ -53,13 +53,20 @@ class KMeans {
     km.set_number_of_centers(k);
     dlib::pick_initial_centers(k, initial_centers, samples, km.get_kernel());
     km.train(samples, initial_centers);
-    Vector<T> assignments(num_samples);
+//    Vector<T> assignments(num_samples);
+    assignments_ = Vector<T>::Zero(num_samples);
     for (long i = 0; i < num_samples; i++) {
 //      std::cout << samples[i] << std::endl;
-      assignments[i] = km(samples[i]);
+      assignments_[i] = km(samples[i]);
     }
-    return assignments;
   }
+
+  Vector<T> GetLabels() {
+    return assignments_;
+  }
+
+ private:
+  Vector<T> assignments_;
 };
 }
 #endif  // CPP_INCLUDE_KMEANS_H
