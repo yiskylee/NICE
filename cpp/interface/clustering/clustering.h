@@ -75,6 +75,21 @@ class KdacInterface : public PyInterface{
     return kdac->GetW();
   }
 
+  template <typename T>
+  int TemplateGetD(Nice::KDAC<T> *kdac) {
+    return kdac->GetD();
+  }
+
+  template <typename T>
+  int TemplateGetN(Nice::KDAC<T> *kdac) {
+    return kdac->GetN();
+  }
+
+  template <typename T>
+  int TemplateGetQ(Nice::KDAC<T> *kdac) {
+    return kdac->GetQ();
+  }
+
  public:
   KdacInterface();
   void SetupParams(const boost::python::dict &params);
@@ -83,6 +98,9 @@ class KdacInterface : public PyInterface{
   void Predict(PyObject *in, int row, int col);
   void GetU(PyObject *in, int row, int col);
   void GetW(PyObject *in, int row, int col);
+  int GetD();
+  int GetN();
+  int GetQ();
 
 };
 
