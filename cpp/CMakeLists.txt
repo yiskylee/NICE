@@ -24,7 +24,7 @@ add_definitions(-std=c++11)
 if(${APPLE})
   add_definitions(-Wall -ansi -Wno-deprecated -pthread -std=c++11)
 endif()
-
+message(STATUS "Eigen path: " ${EIGEN_INCLUDE_DIRS})
 set(COMMON_INCLUDES ${PROJECT_SOURCE_DIR})
 include_directories(${EIGEN_INCLUDE_DIRS})
 include_directories(${COMMON_INCLUDES}) 
@@ -33,11 +33,11 @@ include_directories(${COMMON_INCLUDES})
 file(GLOB_RECURSE SOURCES RELATIVE ${CMAKE_SOURCE_DIR} src/*.cc)
 message(STATUS "Source files: " ${SOURCES})
 
-# The path of MKL
-set(MKL_ROOT /tmp/mkl/mkl) 
+set(enable-mkl)
+option (enable-mkl "Compile NICE library with MKL" OFF)
 
 # Locate MKL
-if (EXISTS ${MKL_ROOT})
+if (enable-mkl AND EXISTS ${MKL_ROOT})
   message(STATUS "MKL Found")
   add_definitions(-m64 -DEIGEN_USE_MKL_ALL -Wno-unused-local-typedefs)
   include_directories(${MKL_ROOT}/include)

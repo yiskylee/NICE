@@ -20,8 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef CPP_INTERFACE_PY_INTERFACE_H_
-#define CPP_INTERFACE_PY_INTERFACE_H_
+#ifndef CPP_INTERFACE_CLUSTERING_CLUSTERING_H_
+#define CPP_INTERFACE_CLUSTERING_CLUSTERING_H_
 
 #include <boost/python.hpp>
 
@@ -39,57 +39,71 @@
 #include "include/kdac.h"
 #include "include/util.h"
 
+#include "interface/py_interface.h"
+
 namespace Nice {
 
-enum DataType {
-  INT = 0,
-  FLOAT,
-  DOUBLE
-};
+class KdacInterface : public PyInterface{
+ private:
 
+  std::shared_ptr<Nice::KDAC<float> > f_kdac_;
+  std::shared_ptr<Nice::KDAC<double> > d_kdac_;
 
-// The numpy array is stored in row major
-using IMatrixMap = Eigen::Map< Eigen::Matrix<int, Eigen::Dynamic,
-                               Eigen::Dynamic, Eigen::RowMajor> >;
-using FMatrixMap = Eigen::Map< Eigen::Matrix<float, Eigen::Dynamic,
-                               Eigen::Dynamic, Eigen::RowMajor> >;
-using DMatrixMap = Eigen::Map< Eigen::Matrix<double, Eigen::Dynamic,
-                               Eigen::Dynamic, Eigen::RowMajor> >;
+  template <typename T>
+  void TemplateFit(const Matrix<T> &in,
+           Nice::KDAC<T> *kdac) {
+    kdac->Fit(in);
+  }
 
-class PyInterface {
- protected:
-  DataType dtype_;
-  boost::python::dict params_;
+  template <typename T>
+  void TemplateFit(Nice::KDAC<T> *kdac) {
+    kdac->Fit();
+  }
 
-  IMatrixMap input_imat_;
-  FMatrixMap input_fmat_;
-  DMatrixMap input_dmat_;
-  IMatrixMap output_imat_;
-  FMatrixMap output_fmat_;
-  DMatrixMap output_dmat_;
+  template <typename T>
+  Matrix<T> TemplatePredict(Nice::KDAC<T> *kdac) {
+    return kdac->Predict();
+  }
+
+  template <typename T>
+  Matrix<T> TemplateGetU(Nice::KDAC<T> *kdac) {
+    return kdac->GetU();
+  }
+
+  template <typename T>
+  Matrix<T> TemplateGetW(Nice::KDAC<T> *kdac) {
+    return kdac->GetW();
+  }
+
+  template <typename T>
+  int TemplateGetD(Nice::KDAC<T> *kdac) {
+    return kdac->GetD();
+  }
+
+  template <typename T>
+  int TemplateGetN(Nice::KDAC<T> *kdac) {
+    return kdac->GetN();
+  }
+
+  template <typename T>
+  int TemplateGetQ(Nice::KDAC<T> *kdac) {
+    return kdac->GetQ();
+  }
 
  public:
-  PyInterface()
-  : dtype_(DOUBLE),
-  input_imat_(nullptr, 0, 0),
-  input_fmat_(nullptr, 0, 0),
-  input_dmat_(nullptr, 0, 0),
-  output_imat_(nullptr, 0, 0),
-  output_fmat_(nullptr, 0, 0),
-  output_dmat_(nullptr, 0, 0) {}
+  KdacInterface();
+  void SetupParams(const boost::python::dict &params);
+  void Fit(PyObject *in, int row, int col);
+  void Fit();
+  void Predict(PyObject *in, int row, int col);
+  void GetU(PyObject *in, int row, int col);
+  void GetW(PyObject *in, int row, int col);
+  int GetD();
+  int GetN();
+  int GetQ();
 
-  explicit PyInterface(DataType dtype)
-  : dtype_(dtype),
-  input_imat_(nullptr, 0, 0),
-  input_fmat_(nullptr, 0, 0),
-  input_dmat_(nullptr, 0, 0),
-  output_imat_(nullptr, 0, 0),
-  output_fmat_(nullptr, 0, 0),
-  output_dmat_(nullptr, 0, 0) {}
-
-  virtual void SetupParams(const boost::python::dict &params) = 0;
 };
 
 }  // namespace Nice
 
-#endif  // CPP_INTERFACE_PY_INTERFACE_H_
+#endif  // CPP_INTERFACE_CLUSTERING_CLUSTERING_H_

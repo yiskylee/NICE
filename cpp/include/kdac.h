@@ -45,6 +45,7 @@
 #include "Eigen/Core"
 #include "include/util.h"
 #include "include/kernel_types.h"
+#include "stop_watch.h"
 
 //#define DEBUG
 
@@ -93,6 +94,32 @@ class KDAC {
   KDAC(const KDAC &rhs) {}
   KDAC &operator=(const KDAC &rhs) {}
 
+  void Print(const Vector<T> &vector, std::string name) {
+//    std::cout.precision(2);
+//    std::cout << std::scientific;
+    std::cout << name << std::endl;
+    for (int i = 0; i < vector.rows(); i++) {
+      std::cout << vector(i) << " ";
+    }
+    std::cout << std::endl;
+  }
+
+  void Print(const Matrix<T> &matrix, std::string name) {
+//    std::cout.precision(2);
+//    std::cout << std::scientific;
+    std::cout << name << std::endl;
+    std::cout << matrix << " ";
+    std::cout << std::endl;
+  }
+
+  void Print(const T &scalar, std::string name) {
+//    std::cout.precision(2);
+//    std::cout << std::scientific;
+    std::cout << name << std::endl;
+    std::cout << scalar << std::endl;
+  }
+
+
   // Set the number of clusters c
   void SetC(int c) {
     c_ = c;
@@ -118,6 +145,10 @@ class KDAC {
 
   int GetQ(void) {
     return q_;
+  }
+
+  int GetC(void) {
+    return c_;
   }
 
   Matrix<T> GetU(void) {
@@ -249,7 +280,11 @@ class KDAC {
     // now we are generating an alternative view with a
     // given Y_previous by doing Optimize both W and U until they converge
     // Following the pseudo code in Algorithm 1 in the paper
+    StopWatch sw();
+    sw.Start();
     Init(input_matrix, y_matrix);
+    sw.Stop();
+    Print(sw.DiffInMs(), "Init");
     while (!u_w_converge_) {
       pre_u_matrix_ = u_matrix_;
       pre_w_matrix_ = w_matrix_;
@@ -463,30 +498,6 @@ class KDAC {
     }
   }
 
-  void Print(const Vector<T> &vector, std::string name) {
-//    std::cout.precision(2);
-//    std::cout << std::scientific;
-    std::cout << name << std::endl;
-    for (int i = 0; i < vector.rows(); i++) {
-      std::cout << vector(i) << " ";
-    }
-    std::cout << std::endl;
-  }
-
-  void Print(const Matrix<T> &matrix, std::string name) {
-//    std::cout.precision(2);
-//    std::cout << std::scientific;
-    std::cout << name << std::endl;
-    std::cout << matrix << " ";
-    std::cout << std::endl;
-  }
-
-  void Print(const T &scalar, std::string name) {
-//    std::cout.precision(2);
-//    std::cout << std::scientific;
-    std::cout << name << std::endl;
-    std::cout << scalar << std::endl;
-  }
 
   Vector<T> GenWGradient(const Matrix<T> &g_of_w, const Vector<T> &w_l) {
     Vector<T> w_gradient = Vector<T>::Zero(d_);

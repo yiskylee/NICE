@@ -98,11 +98,28 @@ TYPED_TEST_CASE(KDACTest, FloatTypes);
 TYPED_TEST(KDACTest, PredGaussian) {
   this->kdac_->SetQ(3);
   this->kdac_->SetC(3);
-  this->kdac_->SetKernel(Nice::kGaussianKernel, 5.0);
+
   Nice::Matrix<TypeParam> data_matrix = Nice::util::FromFile<TypeParam>(
       "../test/data_for_test/kdac/data_gaussian_120_6_3.csv", ",");
-  this->kdac_->Fit(data_matrix);
+  Nice::Matrix<TypeParam> first_y =
+      Nice::Matrix<TypeParam>::Zero(data_matrix.rows(), this->kdac_->GetC());
+//  this->kdac_->Print(first_y, "y_before");
+  for (int i = 0; i < 40; i++)
+    first_y(i, 0) = static_cast<TypeParam>(1);
+  for (int i = 40; i < 80; i++)
+    first_y(i, 1) = static_cast<TypeParam>(1);
+  for (int i = 80; i < 120; i++)
+    first_y(i, 2) = static_cast<TypeParam>(1);
+//  this->kdac_->Print(first_y, "y_after");
+//  for (float sigma = 1; sigma < 20; sigma++) {
+  this->kdac_->SetKernel(Nice::kGaussianKernel, 1.0);
+  this->kdac_->Fit(data_matrix, first_y);
   PRINTV(this->kdac_->Predict(), 40);
+//  }
+
+//
+//  this->kdac_->Fit(data_matrix);
+//  PRINTV(this->kdac_->Predict(), 40);
 
 //  Nice::Matrix<TypeParam>
 //
