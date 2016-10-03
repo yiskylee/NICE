@@ -45,7 +45,7 @@
 #include "Eigen/Core"
 #include "include/util.h"
 #include "include/kernel_types.h"
-#include "stop_watch.h"
+#include "include/stop_watch.h"
 
 //#define DEBUG
 
@@ -280,7 +280,7 @@ class KDAC {
     // now we are generating an alternative view with a
     // given Y_previous by doing Optimize both W and U until they converge
     // Following the pseudo code in Algorithm 1 in the paper
-    StopWatch sw();
+    StopWatch sw;
     sw.Start();
     Init(input_matrix, y_matrix);
     sw.Stop();
