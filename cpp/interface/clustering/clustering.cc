@@ -59,17 +59,24 @@ void KdacInterface::SetupParams(const boost::python::dict &params) {
   // Obtain parameters from python
   boost::python::list key_list = params.keys();
   int c = 2;
+  bool has_c = false;
   int q = 2;
+  bool has_q = false;
   KernelType kernel = kGaussianKernel;
+  bool has_kernel = false;
   double lambda = 1.0;
+  bool has_lambda = false;
   double sigma = 1.0;
+  bool has_sigma = false;
   for (int i = 0; i < boost::python::len(key_list); i++) {
     if (strcmp("c", boost::python::extract<char *>(key_list[i])) == 0) {
       c = boost::python::extract<int>(params["c"]);
+      has_c = true;
       continue;
     }
     if (strcmp("q", boost::python::extract<char *>(key_list[i])) == 0) {
       q = boost::python::extract<int>(params["q"]);
+      has_q = true;
       continue;
     }
     if (strcmp("kernel", boost::python::extract<char *>(key_list[i])) == 0) {
@@ -85,14 +92,17 @@ void KdacInterface::SetupParams(const boost::python::dict &params) {
                  boost::python::extract<char *>(params["kernel"])) == 0) {
         kernel = kPolynomialKernel;
       }
+      has_kernel = true;
       continue;
     }
     if (strcmp("lambda", boost::python::extract<char *>(key_list[i])) == 0) {
       lambda = boost::python::extract<double>(params["lambda"]);
+      has_lambda = true;
       continue;
     }
     if (strcmp("sigma", boost::python::extract<char *>(key_list[i])) == 0) {
       sigma = boost::python::extract<double>(params["sigma"]);
+      has_sigma = true;
       continue;
     }
   }
@@ -100,16 +110,24 @@ void KdacInterface::SetupParams(const boost::python::dict &params) {
   // Set up parameters according to model type
   switch (dtype_) {
     case FLOAT:
-      f_kdac_->SetQ(q);
-      f_kdac_->SetC(c);
-      f_kdac_->SetLambda(lambda);
-      f_kdac_->SetKernel(kernel, sigma);
+      if (has_q)
+        f_kdac_->SetQ(q);
+      if (has_c)
+        f_kdac_->SetC(c);
+      if (has_lambda)
+        f_kdac_->SetLambda(lambda);
+      if (has_kernel && has_sigma)
+        f_kdac_->SetKernel(kernel, sigma);
       break;
     case DOUBLE:
-      d_kdac_->SetQ(q);
-      d_kdac_->SetC(c);
-      d_kdac_->SetLambda(lambda);
-      d_kdac_->SetKernel(kernel, sigma);
+      if (has_q)
+        d_kdac_->SetQ(q);
+      if (has_c)
+        d_kdac_->SetC(c);
+      if (has_lambda)
+        d_kdac_->SetLambda(lambda);
+      if (has_kernel && has_sigma)
+        d_kdac_->SetKernel(kernel, sigma);
       break;
     default:
       break;
