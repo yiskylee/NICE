@@ -48,5 +48,4 @@ class StopWatch {
 };
 
 } // namespace Nice
-
 #endif  // CPP_INCLUDE_STOP_WATCH_H_
