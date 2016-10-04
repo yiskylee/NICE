@@ -23,7 +23,7 @@
 #ifndef CPP_INCLUDE_STOP_WATCH_H_
 #define CPP_INCLUDE_STOP_WATCH_H_
 
-#include <time.h>
+#include <sys/time.h>
 
 namespace Nice {
 
@@ -44,7 +44,7 @@ class StopWatch {
       (double)(start_.tv_sec * 1000 + start_.tv_usec / 1000);
   }
 
-}
+};
 
 } // namespace Nice
 
