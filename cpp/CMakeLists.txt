@@ -43,7 +43,7 @@ if (enable-mkl AND EXISTS ${MKL_ROOT})
   include_directories(${MKL_ROOT}/include)
   find_library(MKL_LP64 mkl_intel_lp64 HINTS ${MKL_ROOT}/lib/intel64)
   find_library(MKL_CORE mkl_core HINTS ${MKL_ROOT}/lib/intel64)
-  find_library(MKL_SEQ mkl_sequential HINTS ${MKL_ROOT}/lib/intel64)
+  find_library(MKL_THREAD mkl_gnu_thread HINTS ${MKL_ROOT}/lib/intel64)
 endif()
 
 # Locate CUDA package 
@@ -106,7 +106,7 @@ if (CUDA_HAVE_GPU)
                         ${CUDA_LIBRARIES} 
                         ${MKL_LP64} 
                         ${MKL_CORE} 
-                        ${MKL_SEQ}
+                        ${MKL_THREAD}
                         pthread m dl)
 
 else()
@@ -118,7 +118,7 @@ else()
   target_link_libraries(${PROJECT_NAME} 
                         ${MKL_LP64} 
                         ${MKL_CORE} 
-                        ${MKL_SEQ}
+                        ${MKL_THREAD}
                         pthread m dl)
 
 endif()
