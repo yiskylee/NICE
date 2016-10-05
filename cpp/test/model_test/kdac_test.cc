@@ -97,7 +97,8 @@ TYPED_TEST_CASE(KDACTest, FloatTypes);
 
 TYPED_TEST(KDACTest, PredGaussian) {
   int num_clusters = 3;
-  int num_samples = 150;
+  int num_samples_per_cluster = 100;
+  int num_samples = num_clusters * num_samples_per_cluster;
   int dim = 6;
   this->kdac_->SetQ(num_clusters);
   this->kdac_->SetC(num_clusters);
@@ -111,7 +112,6 @@ TYPED_TEST(KDACTest, PredGaussian) {
   Nice::Matrix<TypeParam> first_y =
       Nice::Matrix<TypeParam>::Zero(data_matrix.rows(), this->kdac_->GetC());
 
-  int num_samples_per_cluster = num_samples / num_clusters;
   for (int center = 0; center < num_clusters; center++) {
     for (int sample = 0; sample < num_samples_per_cluster; sample ++) {
       first_y(center * num_samples_per_cluster + sample, center) =
