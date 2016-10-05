@@ -196,6 +196,46 @@ Vector<T> FromFile(const std::string &input_file_path,
   }
 }
 
+template <typename T>
+void ToFile(const Matrix<T> a,
+            const std::string &output_file_path,
+            const std::string delimiter = ",") {
+  std::ofstream output(output_file_path, std::ofstream::out);
+  if (output) {
+    for (int i = 0; i < a.rows(); i++) {
+      for (int j = 0; j < a.cols(); j++) {
+        output << a(i, j);
+        if (j == a.cols() - 1)
+          output << std::endl;
+        else
+          output << delimiter;
+      }
+    }
+  } else {
+    std::cerr << "Cannot open file " + output_file_path + ", exiting..." <<
+        std::endl;
+    exit(1);
+  }
+  output.close();
+}
+
+template <typename T>
+void ToFile(const Vector<T> a,
+            const std::string &output_file_path) {
+  std::ofstream output(output_file_path, std::ofstream::out);
+  if (output) {
+    for (int i = 0; i < a.rows(); i++) {
+      output << a(i);
+      output << std::endl;
+    }
+  } else {
+    std::cerr << "Cannot open file " + output_file_path + ", exiting..." <<
+        std::endl;
+    exit(1);
+  }
+  output.close();
+}
+
 template<typename T>
 static T reciprocal(T x) {
   return T(1) / x;
