@@ -96,13 +96,44 @@ TYPED_TEST_CASE(KDACTest, FloatTypes);
         EXPECT_NEAR(std::abs(a(i, j)), std::abs(ref(i, j)), error);\
 
 TYPED_TEST(KDACTest, PredGaussian) {
-  this->kdac_->SetQ(3);
-  this->kdac_->SetC(3);
-  this->kdac_->SetKernel(Nice::kGaussianKernel, 5.0);
+  int num_clusters = 3;
+  int num_samples = 150;
+  int dim = 6;
+  this->kdac_->SetQ(num_clusters);
+  this->kdac_->SetC(num_clusters);
+  std::string root_dir("../test/data_for_test/kdac/");
+  std::string file_name = "data_gaussian_" + std::to_string(num_samples) + "_"
+  + std::to_string(dim) + "_" + std::to_string(num_clusters) + ".csv";
+//  Nice::Matrix<TypeParam> data_matrix = Nice::util::FromFile<TypeParam>(
+//      "../test/data_for_test/kdac/data_gaussian_150_6_3.csv", ",");
   Nice::Matrix<TypeParam> data_matrix = Nice::util::FromFile<TypeParam>(
-      "../test/data_for_test/kdac/data_gaussian_120_6_3.csv", ",");
-  this->kdac_->Fit(data_matrix);
-  PRINTV(this->kdac_->Predict(), 40);
+      root_dir + file_name, ",");
+  Nice::Matrix<TypeParam> first_y =
+      Nice::Matrix<TypeParam>::Zero(data_matrix.rows(), this->kdac_->GetC());
+
+  int num_samples_per_cluster = num_samples / num_clusters;
+  for (int center = 0; center < num_clusters; center++) {
+    for (int sample = 0; sample < num_samples_per_cluster; sample ++) {
+      first_y(center * num_samples_per_cluster + sample, center) =
+          static_cast<TypeParam>(1);
+    }
+  }
+//  for (int i = 0; i < 40; i++)
+//    first_y(i, 0) = static_cast<TypeParam>(1);
+//  for (int i = 40; i < 80; i++)
+//    first_y(i, 1) = static_cast<TypeParam>(1);
+//  for (int i = 80; i < 120; i++)
+//    first_y(i, 2) = static_cast<TypeParam>(1);
+//  this->kdac_->Print(first_y, "y_after");
+//  for (float sigma = 1; sigma < 20; sigma++) {
+  this->kdac_->SetKernel(Nice::kGaussianKernel, 1.0);
+  this->kdac_->Fit(data_matrix, first_y);
+  PRINTV(this->kdac_->Predict(), num_samples_per_cluster);
+//  }
+
+//
+//  this->kdac_->Fit(data_matrix);
+//  PRINTV(this->kdac_->Predict(), 40);
 
 //  Nice::Matrix<TypeParam>
 //
@@ -120,13 +151,17 @@ TYPED_TEST(KDACTest, PredGaussian) {
 //  PRINTV(this->kdac_->Predict());
 }
 
-//TYPED_TEST(KDACTest, Kernel) {
-//  this->kdac_->SetQ(2);
-//  this->kdac_->SetC(2);
-//  Nice::Matrix<TypeParam> data_matrix = Nice::util::FromFile<TypeParam>(
-//      "../test/data_for_test/kdac/data_test_4_6.csv", ",");
-//  this->kdac_->Fit(data_matrix);
-//}
+TYPED_TEST(KDACTest, WlRef) {
+  Nice::Matrix<TypeParam> w_matrix(3,3);
+  for (int i = 0; i < 3; i++)
+    for (int j = 0; j < 3; j++)
+      w_matrix(i, j) = i * 3 + j;
+  std::cout << w_matrix << std::endl;
+  Nice::Vector<TypeParam> w_l = w_matrix.col(0);
+  w_l(0) = 88;
+  std::cout << w_l << std::endl;
+  std::cout << w_matrix << std::endl;
+}
 
 //TYPED_TEST(KDACTest, FitUMatrix) {
 //  this->kdac_->Fit(this->data_matrix_);

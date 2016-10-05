@@ -45,8 +45,10 @@
 #include "Eigen/Core"
 #include "include/util.h"
 #include "include/kernel_types.h"
+#include "include/stop_watch.h"
 
 //#define DEBUG
+#define profile_level_0
 
 namespace Nice {
 template<typename T>
@@ -93,6 +95,32 @@ class KDAC {
   KDAC(const KDAC &rhs) {}
   KDAC &operator=(const KDAC &rhs) {}
 
+  void Print(const Vector<T> &vector, std::string name) {
+//    std::cout.precision(2);
+//    std::cout << std::scientific;
+    std::cout << name << std::endl;
+    for (int i = 0; i < vector.rows(); i++) {
+      std::cout << vector(i) << " ";
+    }
+    std::cout << std::endl;
+  }
+
+  void Print(const Matrix<T> &matrix, std::string name) {
+//    std::cout.precision(2);
+//    std::cout << std::scientific;
+    std::cout << name << std::endl;
+    std::cout << matrix << " ";
+    std::cout << std::endl;
+  }
+
+  void Print(const T &scalar, std::string name) {
+//    std::cout.precision(2);
+//    std::cout << std::scientific;
+    std::cout << name << std::endl;
+    std::cout << scalar << std::endl;
+  }
+
+
   // Set the number of clusters c
   void SetC(int c) {
     c_ = c;
@@ -118,6 +146,12 @@ class KDAC {
 
   int GetQ(void) {
     return q_;
+    // To test if Nice4Py reflects changes
+    // return 88;
+  }
+
+  int GetC(void) {
+    return c_;
   }
 
   Matrix<T> GetU(void) {
@@ -197,6 +231,10 @@ class KDAC {
   /// It only generates the clustering result but does not returns it
   /// Users can use Predict() to get the clustering result returned
   void Fit(const Matrix<T> &input_matrix) {
+#ifdef profile_level_0
+    StopWatch sw_fit;
+    sw_fit.Start();
+#endif
     Init(input_matrix);
     // When there is no Y, it is the the first round when the second term
     // lambda * HSIC is zero, we do not need to optimize W, and we directly
@@ -208,12 +246,17 @@ class KDAC {
     Print(u_matrix_, "u_matrix");
     Print(u_matrix_normalized_, "u_matrix_normalized");
 #endif
+#ifdef profile_level_0
+    sw_fit.Stop();
+    Print(sw_fit.DiffInMs(), "Fit");
+#endif
   }
 
 
   // Fit() with an empyt param list can only be run when the X and Y already
   // exist from the previous round of computation
   void Fit(void) {
+    std::cout << "In Fit" << std::endl;
     Init();
     while (!u_w_converge_) {
       pre_u_matrix_ = u_matrix_;
@@ -249,16 +292,42 @@ class KDAC {
     // now we are generating an alternative view with a
     // given Y_previous by doing Optimize both W and U until they converge
     // Following the pseudo code in Algorithm 1 in the paper
+#ifdef profile_level_0
+    StopWatch sw_fit;
+    sw_fit.Start();
+#endif
+#ifdef profile_level_1
+    StopWatch sw;
+    sw.Start();
+#endif
     Init(input_matrix, y_matrix);
+#ifdef profile_level_1
+    sw.Stop();
+    Print(sw.DiffInMs(), "Init");
+#endif
     while (!u_w_converge_) {
       pre_u_matrix_ = u_matrix_;
       pre_w_matrix_ = w_matrix_;
+#ifdef profile_level_1
+      sw.Start();
+#endif
       OptimizeU();
+#ifdef profile_level_1
+      sw.Stop();
+      Print(sw.DiffInMs(), "OptimizeU");
+#endif
 #ifdef DEBUG
       Print(u_matrix_, "u_matrix");
       std::cout << "U Optimized" << std::endl;
 #endif
+#ifdef profile_level_1
+      sw.Start();
+#endif
       OptimizeW();
+#ifdef profile_level_1
+      sw.Stop();
+      Print(sw.DiffInMs(), "OptimizeW");
+#endif
 #ifdef DEBUG
       std::cout << "W Optimized" << std::endl;
 #endif
@@ -270,7 +339,18 @@ class KDAC {
 #endif
       u_w_converge_ = u_converge_ && w_converge_;
     }
+#ifdef profile_level_1
+    sw.Start();
+#endif
     RunKMeans();
+#ifdef profile_level_1
+    sw.Stop();
+    Print(sw.DiffInMs(), "RunKMeans");
+#endif
+#ifdef profile_level_0
+    sw_fit.Stop();
+    Print(sw_fit.DiffInMs(), "Fit");
+#endif
 #ifdef DEBUG
     Print(y_matrix_, "y_matrix");
 #endif
@@ -463,30 +543,6 @@ class KDAC {
     }
   }
 
-  void Print(const Vector<T> &vector, std::string name) {
-//    std::cout.precision(2);
-//    std::cout << std::scientific;
-    std::cout << name << std::endl;
-    for (int i = 0; i < vector.rows(); i++) {
-      std::cout << vector(i) << " ";
-    }
-    std::cout << std::endl;
-  }
-
-  void Print(const Matrix<T> &matrix, std::string name) {
-//    std::cout.precision(2);
-//    std::cout << std::scientific;
-    std::cout << name << std::endl;
-    std::cout << matrix << " ";
-    std::cout << std::endl;
-  }
-
-  void Print(const T &scalar, std::string name) {
-//    std::cout.precision(2);
-//    std::cout << std::scientific;
-    std::cout << name << std::endl;
-    std::cout << scalar << std::endl;
-  }
 
   Vector<T> GenWGradient(const Matrix<T> &g_of_w, const Vector<T> &w_l) {
     Vector<T> w_gradient = Vector<T>::Zero(d_);
@@ -561,7 +617,16 @@ class KDAC {
 
   void OptimizeW(void) {
     // didj matrix contains the element (i, j) that equal to d_i * d_j
+#ifdef profile_level_1
+    StopWatch sw;
+    sw.Start();
+#endif
     didj_matrix_ = d_i_ * d_i_.transpose();
+#ifdef profile_level_1
+    sw.Stop();
+    Print(sw.DiffInMs(), "didj");
+#endif
+
 
     // Generate the Gamma matrix in equation 5, which is a constant since
     // we have U fixed. Note that instead of generating one element of
@@ -570,8 +635,15 @@ class KDAC {
     // This is an element-wise operation
     // u*ut and didj matrix has the same size
 
+#ifdef profile_level_1
+    sw.Start();
+#endif
     gamma_matrix_ = ((u_matrix_ * u_matrix_.transpose()).array() /
         didj_matrix_.array()).matrix() - lambda_ * y_matrix_tilde_;
+#ifdef profile_level_1
+    sw.Stop();
+    Print(sw.DiffInMs(), "gamma");
+#endif
 
     // After gamma_matrix is generated, we are optimizing gamma * kij as in 5
     // g_of_w is g(w_l) that is multiplied by g(w_(l+1)) in each iteration
@@ -586,12 +658,18 @@ class KDAC {
     // If w_matrix is still I (d x d), now it is time to change it to d x q
     if (w_matrix_.cols() == d_)
       w_matrix_ = Matrix<T>::Identity(d_, q_);
-
+#ifdef profile_level_1
+    sw.Start();
+#endif
     // We optimize each column in the W matrix
     for (int l = 0; l < w_matrix_.cols(); l++) {
 #ifdef DEBUG
       std::cout << std::endl << std::endl << l << "th column: " << std::endl;
       Print(w_matrix_, "w_matrix");
+#endif
+#ifdef profile_level_1
+      StopWatch sw_per_loop;
+      sw_per_loop.Start();
 #endif
       Vector<T> w_l;
       // Get orthogonal to make w_l orthogonal to vectors from w_0 to w_(l-1)
@@ -616,21 +694,41 @@ class KDAC {
                   "The " << num_iter++ << "th iteration: " << std::endl;
 #endif
         Vector<T> grad_f_vertical;
-//        Vector<T> pre_w_l = w_l;
         T pre_objective = objective;
         // Calculate the w gradient in equation 13, then find the gradient
         // that is vertical to the space spanned by w_0 to w_l
+#ifdef profile_level_1
+        StopWatch sw_wl;
+        sw_wl.Start();
+#endif
         Vector<T> grad_f = GenWGradient(g_of_w, w_l);
         grad_f_vertical =
             GenOrthonormal(w_matrix_.leftCols(l + 1), grad_f);
+#ifdef profile_level_1
+        sw_wl.Stop();
+        Print(sw_wl.DiffInMs(), "GenOrthonormal");
+        sw_wl.Start();
+#endif
         LineSearch(grad_f_vertical, &w_l, &alpha_, &objective);
+#ifdef profile_level_1
+        sw_wl.Stop();
+        Print(sw_wl.DiffInMs(), "LineSearch");
+#endif
 #ifdef DEBUG
         Print(objective, "obj");
+#endif
+
+#ifdef profile_level_1
+        sw_wl.Start();
 #endif
         w_l = sqrt(1.0 - pow(alpha_, 2)) * w_l +
             alpha_ * grad_f_vertical;
         w_matrix_.col(l) = w_l;
         w_l_converged = CheckConverged(objective, pre_objective, threshold_);
+#ifdef profile_level_1
+        sw_wl.Stop();
+        Print(sw_wl.DiffInMs(), "GenNewWl");
+#endif
 #ifdef DEBUG
         if (w_l_converged)
           std::cout << "converged\n";
@@ -639,7 +737,15 @@ class KDAC {
       UpdateGOfW(g_of_w, w_l);
       // TODO: Need to learn about if using Vector<T> &w_l = w_matrix_.col(l)
       CheckFiniteOptimizeW();
+#ifdef profile_level_1
+      sw_per_loop.Stop();
+      Print(sw_per_loop.DiffInMs(), "per loop");
+#endif
     }
+#ifdef profile_level_1
+    sw.Stop();
+    Print(sw.DiffInMs(), "loop total");
+#endif
   }
 
   void LineSearch(const Vector<T> &gradient,

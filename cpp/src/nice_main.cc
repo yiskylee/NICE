@@ -31,6 +31,3 @@
 #include "include/kdac.h"
 
 // Place holder
-//
-/// THIS IS A TEST
-/// DOXYGEN - Andrew Tu
