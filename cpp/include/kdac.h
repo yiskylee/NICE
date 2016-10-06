@@ -47,8 +47,12 @@
 #include "include/kernel_types.h"
 #include "include/stop_watch.h"
 
-//#define DEBUG
-#define profile_level_0
+#define PROFILE(func, timer, time)\
+  timer.Start();\
+  func;\
+  timer.Stop();\
+  time += timer.DiffInMs();\
+
 
 namespace Nice {
 template<typename T>
@@ -242,7 +246,6 @@ class KDAC {
   // Fit() with an empyt param list can only be run when the X and Y already
   // exist from the previous round of computation
   void Fit(void) {
-    std::cout << "In Fit" << std::endl;
     Init();
     while (!u_w_converge_) {
       pre_u_matrix_ = u_matrix_;
@@ -273,17 +276,21 @@ class KDAC {
     // now we are generating an alternative view with a
     // given Y_previous by doing Optimize both W and U until they converge
     // Following the pseudo code in Algorithm 1 in the paper
-    Init(input_matrix, y_matrix);
+    PROFILE(Init(input_matrix, y_matrix), timer_init_, time_init_);
     while (!u_w_converge_) {
       pre_u_matrix_ = u_matrix_;
       pre_w_matrix_ = w_matrix_;
-      OptimizeU();
-      OptimizeW();
+      PROFILE(OptimizeU(), timer_u_, time_u_);
+      PROFILE(OptimizeW(), timer_w_, time_w_);
       u_converge_ = CheckConverged(u_matrix_, pre_u_matrix_, threshold_);
       w_converge_ = CheckConverged(w_matrix_, pre_w_matrix_, threshold_);
       u_w_converge_ = u_converge_ && w_converge_;
     }
-    RunKMeans();
+    PROFILE(RunKMeans(), timer_kmeans_, time_kmeans_);
+    Print(time_init_, "time_init");
+    Print(time_u_, "time_u");
+    Print(time_w_, "time_w");
+    Print(time_kmeans_, "time_kmeans");
   }
 
   /// Running Predict() after Fit() returns
@@ -343,6 +350,17 @@ class KDAC {
   Matrix<T> waf_matrix_;
   Matrix<T> faf_matrix_;
 
+  double time_fit_;
+  StopWatch timer_fit_;
+  double time_u_;
+  StopWatch timer_u_;
+  double time_w_;
+  StopWatch timer_w_;
+  double time_init_;
+  StopWatch timer_init_;
+  double time_kmeans_;
+  StopWatch timer_kmeans_;
+
 
   // Initialization for generating the first clustering result
   void Init(const Matrix<T> &input_matrix) {
@@ -397,6 +415,11 @@ class KDAC {
     u_converge_ = false;
     w_converge_ = false;
     u_w_converge_ = false;
+    time_fit_ = 0;
+    time_u_ = 0;
+    time_w_ = 0;
+    time_init_ = 0;
+    time_kmeans_ = 0;
   }
 
   void InitAMatrixList(void) {
