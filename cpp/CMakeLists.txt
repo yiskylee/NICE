@@ -46,7 +46,7 @@ if (enable-mkl AND EXISTS ${MKL_ROOT})
   find_library(MKL_THREAD mkl_intel_thread HINTS ${MKL_ROOT}/lib/intel64)
 
   get_filename_component(INTEL_DIR ${MKL_ROOT} PATH)
-  find_library(INTEL_OMP iomp5 ${INTEL_DIR}/compilers_and_libraries/linux/lib/intel64_lin)
+  find_library(INTEL_OMP iomp5 HINTS ${INTEL_DIR}/compilers_and_libraries/linux/lib/intel64_lin)
 endif()
 
 # Locate CUDA package 
