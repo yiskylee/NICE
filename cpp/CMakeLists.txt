@@ -39,11 +39,14 @@ option (enable-mkl "Compile NICE library with MKL" OFF)
 # Locate MKL
 if (enable-mkl AND EXISTS ${MKL_ROOT})
   message(STATUS "MKL Found")
-  add_definitions(-fopenmp -m64 -DEIGEN_USE_MKL_ALL -Wno-unused-local-typedefs)
+  add_definitions(-m64 -DEIGEN_USE_MKL_ALL -Wno-unused-local-typedefs)
   include_directories(${MKL_ROOT}/include)
   find_library(MKL_LP64 mkl_intel_lp64 HINTS ${MKL_ROOT}/lib/intel64)
   find_library(MKL_CORE mkl_core HINTS ${MKL_ROOT}/lib/intel64)
-  find_library(MKL_THREAD mkl_gnu_thread HINTS ${MKL_ROOT}/lib/intel64)
+  find_library(MKL_THREAD mkl_intel_thread HINTS ${MKL_ROOT}/lib/intel64)
+
+  get_filename_component(INTEL_DIR ${MKL_ROOT} PATH)
+  find_library(INTEL_OMP iomp5 ${INTEL_DIR}/compilers_and_libraries/linux/lib/intel64_lin)
 endif()
 
 # Locate CUDA package 
@@ -107,6 +110,7 @@ if (CUDA_HAVE_GPU)
                         ${MKL_LP64} 
                         ${MKL_CORE} 
                         ${MKL_THREAD}
+                        ${INTEL_OMP}
                         pthread m dl)
 
 else()
@@ -119,6 +123,7 @@ else()
                         ${MKL_LP64} 
                         ${MKL_CORE} 
                         ${MKL_THREAD}
+                        ${INTEL_OMP}
                         pthread m dl)
 
 endif()
