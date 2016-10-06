@@ -35,6 +35,17 @@ There are two ways to contribute to this project. If you are added to the projec
 
 ## Compile and Test Nice:
 We use CMake tool to automatically build and test the framework. After you download the repository, you need to go to NICE/cpp and run `./configure.sh`. This is only a one time operation as it will create a build directory where all executables generated will be put into. To build the code and the tests, go to build directory and run 1) `make` 2) `make test ARGS="-V"`.
+### Build with MKL
+NICE can be built with MKL(Intel Math Kernel Library) for acceleration purpose. You have to download and install MKL before building NICE with it. Addtionaly, you probably need an intel developer account and apply a serial number for installaiton. For more information, you can go to intel's [offical website](https://software.intel.com/en-us/intel-mkl).
+
+The default build procedure with helper script `./configure.sh` can only provide non-MKL compilation. In order to enable MKL-supported compilation, you need to type command `cmake -Denable-mkl=ON -DMKL_ROOT=<path to mkl installed. E.g /opt/intel/mkl>` inside build directory. After that, just follow the normal procedure to build NICE framework with MKL.
+
+### Run with MKL in Python
+If you need to run numpy with NICE python-interface, several extra steps shoule be taken. Otherwise, MKL library cannot be found during runtime
+
+1. Build numpy with MKL mannualy, prabably also need to build sci-py or scikit-learn as well if necessary. Note that sci-py and scikit-learn os dependent of numpy, so only budiling numpy requires MKL configuration
+
+2. Export environment variable LD_PRELOAD with MKL libs such as mkl_core, mkl_intel_thread and iomp5(iomp5 is not located in MKL lib directory but in somewhere of the same intel installed software dirctory, you can use command "find" to locate it) 
 
 ## Coding Style:
 We are following [Google c++ style guide](https://google.github.io/styleguide/cppguide.html), make sure to use `google_styleguide/cpplint/cpplint.py` to check your code and make sure there are no errors. Additionally, `cpplint.py` has been integrated to Nice together with cmake, so you should be able to check your code through cmake-generated Makefile. After you run `./configure.sh` indicated in previous section, go to build directory and run `make check`.
