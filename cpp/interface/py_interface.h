@@ -61,9 +61,9 @@ class PyInterface {
   DataType dtype_;
   boost::python::dict params_;
 
-  IMatrixMap input_imat_;
-  FMatrixMap input_fmat_;
-  DMatrixMap input_dmat_;
+  std::vector<IMatrixMap> input_imat_;
+  std::vector<FMatrixMap> input_fmat_;
+  std::vector<DMatrixMap> input_dmat_;
   IMatrixMap output_imat_;
   FMatrixMap output_fmat_;
   DMatrixMap output_dmat_;
@@ -71,21 +71,23 @@ class PyInterface {
  public:
   PyInterface()
   : dtype_(DOUBLE),
-  input_imat_(nullptr, 0, 0),
-  input_fmat_(nullptr, 0, 0),
-  input_dmat_(nullptr, 0, 0),
-  output_imat_(nullptr, 0, 0),
-  output_fmat_(nullptr, 0, 0),
-  output_dmat_(nullptr, 0, 0) {}
+    output_imat_(nullptr, 0, 0),
+    output_fmat_(nullptr, 0, 0),
+    output_dmat_(nullptr, 0, 0) {
+    input_imat_.push_back(IMatrixMap(nullptr, 0, 0));
+    input_fmat_.push_back(FMatrixMap(nullptr, 0, 0));
+    input_dmat_.push_back(DMatrixMap(nullptr, 0, 0));
+  }
 
   explicit PyInterface(DataType dtype)
   : dtype_(dtype),
-  input_imat_(nullptr, 0, 0),
-  input_fmat_(nullptr, 0, 0),
-  input_dmat_(nullptr, 0, 0),
-  output_imat_(nullptr, 0, 0),
-  output_fmat_(nullptr, 0, 0),
-  output_dmat_(nullptr, 0, 0) {}
+    output_imat_(nullptr, 0, 0),
+    output_fmat_(nullptr, 0, 0),
+    output_dmat_(nullptr, 0, 0) {
+    input_imat_.push_back(IMatrixMap(nullptr, 0, 0));
+    input_fmat_.push_back(FMatrixMap(nullptr, 0, 0));
+    input_dmat_.push_back(DMatrixMap(nullptr, 0, 0));
+  }
 
   virtual void SetupParams(const boost::python::dict &params) = 0;
 };

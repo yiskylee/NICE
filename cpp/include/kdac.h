@@ -36,6 +36,8 @@
 #include <vector>
 #include <cmath>
 #include <X11/Xlib.h>
+#include <valarray>
+#include <tgmath.h>
 #include "include/matrix.h"
 #include "include/vector.h"
 #include "include/cpu_operations.h"
@@ -202,6 +204,36 @@ class KDAC {
     return gamma_matrix_;
   }
 
+  double GetTimeInit(void) {
+    return time_init_;
+  }
+
+  double GetTimeU(void) {
+    return time_u_;
+  }
+
+  double GetTimeW(void) {
+    return time_w_;
+  }
+
+  double GetTimeKMeans(void) {
+    return time_kmeans_;
+  }
+
+  double GetTimeFit(void) {
+    return time_fit_;
+  }
+
+  int GetNumItersFit(void) {
+    return num_iters_fit_;
+  }
+
+  int GetNumItersWMatrix(void) {
+    return num_iters_w_matrix_.sum();
+  }
+
+
+
   /// Set the kernel type: kGaussianKernel, kPolynomialKernel, kLinearKernel
   /// And set the constant associated the kernel
   void SetKernel(KernelType kernel_type, float constant) {
@@ -276,7 +308,9 @@ class KDAC {
     // now we are generating an alternative view with a
     // given Y_previous by doing Optimize both W and U until they converge
     // Following the pseudo code in Algorithm 1 in the paper
+    timer_fit_.Start();
     PROFILE(Init(input_matrix, y_matrix), timer_init_, time_init_);
+
     while (!u_w_converge_) {
       pre_u_matrix_ = u_matrix_;
       pre_w_matrix_ = w_matrix_;
@@ -285,12 +319,11 @@ class KDAC {
       u_converge_ = CheckConverged(u_matrix_, pre_u_matrix_, threshold_);
       w_converge_ = CheckConverged(w_matrix_, pre_w_matrix_, threshold_);
       u_w_converge_ = u_converge_ && w_converge_;
+      num_iters_fit_ ++;
     }
     PROFILE(RunKMeans(), timer_kmeans_, time_kmeans_);
-    Print(time_init_, "time_init");
-    Print(time_u_, "time_u");
-    Print(time_w_, "time_w");
-    Print(time_kmeans_, "time_kmeans");
+    timer_fit_.Stop();
+    time_fit_ = timer_fit_.DiffInMs();
   }
 
   /// Running Predict() after Fit() returns
@@ -360,6 +393,9 @@ class KDAC {
   StopWatch timer_init_;
   double time_kmeans_;
   StopWatch timer_kmeans_;
+  int num_iters_fit_;
+  // Record the number of iterations for each column in w_matrix to converge
+  Vector<T> num_iters_w_matrix_;
 
 
   // Initialization for generating the first clustering result
@@ -369,6 +405,7 @@ class KDAC {
     d_ = input_matrix.cols();
     // w_matrix_ is I initially
     w_matrix_ = Matrix<T>::Identity(d_, d_);
+    num_iters_w_matrix_ = Vector<T>::Zero(q_);
   }
 
   // Initialization for generating alternative views when Y is already generated
@@ -393,11 +430,7 @@ class KDAC {
 
   // Initialization for generating alternative views with a given Y
   void Init(const Matrix<T> &input_matrix, const Matrix<T> &y_matrix) {
-    x_matrix_ = input_matrix;
-    n_ = input_matrix.rows();
-    d_ = input_matrix.cols();
-    // w_matrix_ is I initially
-    w_matrix_ = Matrix<T>::Identity(d_, d_);
+    Init(input_matrix);
     CheckQD();
     h_matrix_ = Matrix<T>::Identity(n_, n_)
         - Matrix<T>::Constant(n_, n_, 1) / static_cast<T>(n_);
@@ -420,6 +453,8 @@ class KDAC {
     time_w_ = 0;
     time_init_ = 0;
     time_kmeans_ = 0;
+    num_iters_fit_ = 0;
+    num_iters_w_matrix_ = Vector<T>::Zero(q_);
   }
 
   void InitAMatrixList(void) {
@@ -589,9 +624,13 @@ class KDAC {
     // If w_matrix is still I (d x d), now it is time to change it to d x q
     if (w_matrix_.cols() == d_)
       w_matrix_ = Matrix<T>::Identity(d_, q_);
+
+
     // We optimize each column in the W matrix
     for (int l = 0; l < w_matrix_.cols(); l++) {
       Vector<T> w_l;
+      // Number of iterations in converging w_l
+      int num_iters = 0;
       // Get orthogonal to make w_l orthogonal to vectors from w_0 to w_(l-1)
       // when l is not 0
       if (l == 0) {
@@ -618,7 +657,9 @@ class KDAC {
             alpha_ * grad_f_vertical;
         w_matrix_.col(l) = w_l;
         w_l_converged = CheckConverged(objective, pre_objective, threshold_);
+        num_iters ++;
       }
+      num_iters_w_matrix_(l) += num_iters;
       UpdateGOfW(g_of_w, w_l);
       // TODO: Need to learn about if using Vector<T> &w_l = w_matrix_.col(l)
       CheckFiniteOptimizeW();
@@ -753,7 +794,6 @@ class KDAC {
     bool converged = (change < threshold);
     return converged;
   }
-
 };
 }  // namespace NICE
 

@@ -61,6 +61,14 @@ class KdacInterface : public PyInterface{
   }
 
   template <typename T>
+  void TemplateFit(const Matrix<T> &in_1,
+                   const Matrix<T> &in_2,
+                   Nice::KDAC<T> *kdac) {
+    kdac->Fit(in_1, in_2);
+  }
+
+
+  template <typename T>
   Matrix<T> TemplatePredict(Nice::KDAC<T> *kdac) {
     return kdac->Predict();
   }
@@ -90,11 +98,49 @@ class KdacInterface : public PyInterface{
     return kdac->GetQ();
   }
 
+  template <typename T>
+  double TemplateGetTimeInit(Nice::KDAC<T> *kdac) {
+    return kdac->GetTimeInit();
+  }
+
+  template <typename T>
+  double TemplateGetTimeU(Nice::KDAC<T> *kdac) {
+    return kdac->GetTimeU();
+  }
+
+  template <typename T>
+  double TemplateGetTimeW(Nice::KDAC<T> *kdac) {
+    return kdac->GetTimeW();
+  }
+
+  template <typename T>
+  double TemplateGetTimeKMeans(Nice::KDAC<T> *kdac) {
+    return kdac->GetTimeKMeans();
+  }
+
+  template <typename T>
+  double TemplateGetTimeFit(Nice::KDAC<T> *kdac) {
+    return kdac->GetTimeFit();
+  }
+
+  template <typename T>
+  int TemplateGetNumItersFit(Nice::KDAC<T> *kdac) {
+    return kdac->GetNumItersFit();
+  }
+
+  template <typename T>
+  int TemplateGetNumItersWMatrix(Nice::KDAC<T> *kdac) {
+    return kdac->GetNumItersWMatrix();
+  }
+
  public:
   KdacInterface();
   void SetupParams(const boost::python::dict &params);
+  void GetTimes(boost::python::dict &times);
   void Fit(PyObject *in, int row, int col);
   void Fit();
+  void Fit(PyObject *in_1, int row_1, int col_1,
+           PyObject *in_2, int row_2, int col_2);
   void Predict(PyObject *in, int row, int col);
   void GetU(PyObject *in, int row, int col);
   void GetW(PyObject *in, int row, int col);

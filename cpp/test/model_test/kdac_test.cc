@@ -97,7 +97,7 @@ TYPED_TEST_CASE(KDACTest, FloatTypes);
 
 TYPED_TEST(KDACTest, PredGaussian) {
   int num_clusters = 3;
-  int num_samples_per_cluster = 200;
+  int num_samples_per_cluster = 50;
   int num_samples = num_clusters * num_samples_per_cluster;
   int dim = 6;
   this->kdac_->SetQ(num_clusters);
