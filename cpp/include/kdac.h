@@ -624,8 +624,6 @@ class KDAC {
     // If w_matrix is still I (d x d), now it is time to change it to d x q
     if (w_matrix_.cols() == d_)
       w_matrix_ = Matrix<T>::Identity(d_, q_);
-
-
     // We optimize each column in the W matrix
     for (int l = 0; l < w_matrix_.cols(); l++) {
       Vector<T> w_l;
