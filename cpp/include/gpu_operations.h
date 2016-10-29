@@ -22,6 +22,7 @@
 
 #ifndef CPP_INCLUDE_GPU_OPERATIONS_H_
 #define CPP_INCLUDE_GPU_OPERATIONS_H_
+#define NEED_CUDA
 #ifdef NEED_CUDA
 
 #include <stdlib.h>
@@ -49,7 +50,7 @@ template <typename T>
 class GpuOperations {
  public:
   static Matrix<T> Multiply(const Matrix<T> &a, const T &scalar) {
-      // Alocate and transfer memories
+      // Allocate and transfer memory
       int n = a.cols() * a.rows();
       const T * h_a = &a(0);
       Matrix<T> h_c(a.rows(), a.cols());
@@ -78,6 +79,35 @@ class GpuOperations {
       cudaFree(d_a);
       cublasDestroy(handle);
       return h_c;
+  }
+
+  static Vector<T> Multiply(const Vector<T> &a, const T &scalar) {
+      // Allocate and transfer memory
+    int n = a.rows();
+    const T * h_a = &a(0);
+    Vector<T> h_c(a.rows());
+    T * d_a;
+    gpuErrchk(cudaMalloc(&d_a, n * sizeof(T)));
+    gpuErrchk(cudaMemcpy(d_a, h_a, n * sizeof(T), cudaMemcpyHostToDevice));
+    cublasStatus_t stat;
+    cublasHandle_t handle;
+    cublasCreate(&handle);
+    stat = GpuMatrixScalarMul(handle, n, scalar, d_a);
+    // Error check
+    if (stat != CUBLAS_STATUS_SUCCESS) {
+      std::cerr << "GPU Matrix Scalar Multiply Internal Failure" << std::endl;
+      cudaFree(d_a);
+      cublasDestroy(handle);
+      exit(1);
+    }
+    cudaDeviceSynchronize();
+
+    // Transfer memories back, clear memories, and return result
+    gpuErrchk(cudaMemcpy(&h_c(0), d_a, n * sizeof(T),
+                         cudaMemcpyDeviceToHost));
+    cudaFree(d_a);
+    cublasDestroy(handle);
+    return h_c;
   }
 
   static Matrix<T> Multiply(const Matrix<T> &a, const Matrix<T> &b) {
