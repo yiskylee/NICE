@@ -44,26 +44,24 @@
 
 // This is a template test fixture class containing test matrices
 template<class T>  // Template
-class GpuMatrixScalarMultiplyTest : public ::testing::Test {
+class GpuVectorScalarMultiplyTest : public ::testing::Test {
  public:  // Members must be public to be accessed by tests
-  Nice::Matrix<T> a_;
+  Nice::Vector<T> a_;
   T b_;
-  Nice::Matrix<T> c_;
+  Nice::Vector<T> c_;
 
-  int row_;
-  int col_;
+  int num_elem_;
 
-  void CreateTestData(int m, int n, T scalar) {
-    // Check matrix
-    if (a_.rows() != 0 && a_.cols() != 0)
+  void CreateTestData(int num_elem, T scalar) {
+    // Check if vector already exists
+    if (a_.rows() != 0)
       return;
 
     // Set up dimension
-    row_ = m;
-    col_ = n;
+    num_elem_ = num_elem;
 
     // Create matrix
-    a_ = Nice::Matrix<T>::Random(row_, col_);
+    a_ = Nice::Vector<T>::Random(num_elem);
     b_ = scalar;
 
     Nice::CpuOperations<T> cpu_op;
@@ -75,23 +73,20 @@ class GpuMatrixScalarMultiplyTest : public ::testing::Test {
 // Establishes a test case with the given types, Char and short types will
 // Throw compiler errors
 typedef ::testing::Types<float, double> dataTypes;
-TYPED_TEST_CASE(GpuMatrixScalarMultiplyTest, dataTypes);
+TYPED_TEST_CASE(GpuVectorScalarMultiplyTest, dataTypes);
 
-TYPED_TEST(GpuMatrixScalarMultiplyTest, FuncionalityTest) {
+TYPED_TEST(GpuVectorScalarMultiplyTest, FuncionalityTest) {
   // Create test data
-  int m = 5;
-  int n = 10;
-  int scalar = 3;
+  int num_elem = 100;
+  int scalar = 4.8;
   srand(time(NULL));
-  this->CreateTestData(m, n, scalar);
-  Nice::Matrix<TypeParam> gpu_c(m, n);
-  // Test gpu matrix matrix multiply in Nice
+  this->CreateTestData(num_elem, scalar);
+  Nice::Vector<TypeParam> gpu_c(num_elem);
+  // Test gpu vector multiplying scalar in Nice
   Nice::GpuOperations<TypeParam> gpu_op;
   gpu_c = gpu_op.Multiply(this->a_, this->b_);
 
   // Verify the result
-  for (int i = 0; i < m; i++)
-    for (int j = 0; j < n; j++)
-      EXPECT_NEAR(this->c_(i, j), gpu_c(i, j), 0.001);
+  for (int i = 0; i < num_elem; i++)
+    EXPECT_NEAR(this->c_(i), gpu_c(i), 0.001);
 }
-
