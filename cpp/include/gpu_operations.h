@@ -604,6 +604,45 @@ class GpuOperations {
 
     return rank;
   }
+
+  static T Norm(const Vector<T> &a) {
+    int num_elem = a.rows();
+    int incx = 1;
+    const T * h_a = &a(0);
+
+    T * h_c = reinterpret_cast<T *>(malloc(sizeof(T)));
+    T * d_a;
+    gpuErrchk(cudaMalloc(&d_a, num_elem * sizeof(T)));
+    gpuErrchk(
+        cudaMemcpy(d_a, h_a, num_elem * sizeof(T), cudaMemcpyHostToDevice));
+
+    // Setup and do Frobenious Norm
+    cublasHandle_t  handle;
+    cublasCreate(&handle);
+    cublasStatus_t stat;
+    stat = GpuFrobeniusNorm(handle, num_elem, incx, d_a, h_c);
+
+    // Error Check
+    if (stat != CUBLAS_STATUS_SUCCESS) {
+      std::cerr << "GPU Vector Norm Internal Failure"
+                << std::endl;
+      cudaFree(d_a); free(h_c);
+      cublasDestroy(handle);
+      exit(1);
+    }
+    cudaDeviceSynchronize();
+
+    // Free memories and return answer
+    cudaFree(d_a);
+    cublasDestroy(handle);
+    return *h_c;
+  }
+
+  static T SquaredNorm(const Vector<T> &a) {
+    T norm = Norm(a);
+    return norm * norm;
+  }
+
   static T FrobeniusNorm(const Matrix<T> &a) {
     int m = a.rows();
     int n = a.cols();
