@@ -22,7 +22,7 @@
 
 #ifndef CPP_INCLUDE_GPU_OPERATIONS_H_
 #define CPP_INCLUDE_GPU_OPERATIONS_H_
-#define NEED_CUDA
+
 #ifdef NEED_CUDA
 
 #include <stdlib.h>

@@ -20,7 +20,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#define NEED_CUDA
 #ifdef NEED_CUDA
 #include "include/gpu_util.h"
 

@@ -29,17 +29,20 @@ include_directories(${COMMON_INCLUDES})
 file(GLOB_RECURSE SOURCES RELATIVE ${CMAKE_SOURCE_DIR} src/*.cc)
 message(STATUS "Source files: " ${SOURCES})
 
-# The path of MKL
-set(MKL_ROOT /tmp/mkl/mkl) 
+set(enable-mkl)
+option (enable-mkl "Compile NICE library with MKL" OFF)
 
 # Locate MKL
-if (EXISTS ${MKL_ROOT})
+if (enable-mkl AND EXISTS ${MKL_ROOT})
   message(STATUS "MKL Found")
   add_definitions(-m64 -DEIGEN_USE_MKL_ALL -Wno-unused-local-typedefs)
   include_directories(${MKL_ROOT}/include)
   find_library(MKL_LP64 mkl_intel_lp64 HINTS ${MKL_ROOT}/lib/intel64)
   find_library(MKL_CORE mkl_core HINTS ${MKL_ROOT}/lib/intel64)
-  find_library(MKL_SEQ mkl_sequential HINTS ${MKL_ROOT}/lib/intel64)
+  find_library(MKL_THREAD mkl_intel_thread HINTS ${MKL_ROOT}/lib/intel64)
+
+  get_filename_component(INTEL_DIR ${MKL_ROOT} PATH)
+  find_library(INTEL_OMP iomp5 HINTS ${INTEL_DIR}/compilers_and_libraries/linux/lib/intel64_lin)
 endif()
 
 # Locate CUDA package 
@@ -76,7 +79,7 @@ if (CUDA_HAVE_GPU)
   # Print messge to indicate that CUDA exists
   message(STATUS "GPU device exists")
 
-  # Add defination
+  # Add definition
   add_definitions(-DNEED_CUDA)
 
   #include the built-in findCUDA cmake scripts
@@ -101,7 +104,8 @@ if (CUDA_HAVE_GPU)
                         ${CUDA_LIBRARIES} 
                         ${MKL_LP64} 
                         ${MKL_CORE} 
-                        ${MKL_SEQ}
+                        ${MKL_THREAD}
+                        ${INTEL_OMP}
                         pthread m dl)
 
 else()
@@ -113,7 +117,8 @@ else()
   target_link_libraries(${PROJECT_NAME} 
                         ${MKL_LP64} 
                         ${MKL_CORE} 
-                        ${MKL_SEQ}
+                        ${MKL_THREAD}
+                        ${INTEL_OMP}
                         pthread m dl)
 
 endif()
