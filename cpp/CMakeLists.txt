@@ -86,7 +86,7 @@ if (CUDA_HAVE_GPU)
   include(FindCUDA)
   
   # Set NVCC flags  
-  set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -std=c++11 -O3 -gencode arch=compute_50,code=sm_50)
+  set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -std=c++11 -O3 -gencode arch=compute_50,code=sm_50 -fopenmp -fgomp)
 
   # Find cusolver library
   find_library(CUDA_SOLVER_LIBRARY cusolver HINTS ${CUDA_TOOLKIT_ROOT_DIR}/lib64)
@@ -106,7 +106,7 @@ if (CUDA_HAVE_GPU)
                         ${MKL_CORE} 
                         ${MKL_THREAD}
                         ${INTEL_OMP}
-                        pthread m dl)
+                        pthread m dl gomp)
 
 else()
 
