@@ -642,8 +642,8 @@ class KDAC {
     profiler_.w_part1.SumRecords();
     profiler_.w_part2.SumRecords();
     profiler_.w_part3.SumRecords();
-//    profiler_.w_part4.SumRecords();
-//    profiler_.w_part5.SumRecords();
+    profiler_.w_part4.SumRecords();
+    profiler_.w_part5.SumRecords();
 //    profiler_.w_part6.SumRecords();
 //    profiler_.w_part7.SumRecords();
   }
@@ -658,13 +658,18 @@ class KDAC {
     float phi_of_zero_prime = 0;
 
     if (kernel_type_ == kGaussianKernel) {
+      profiler_.w_part4.Start();
       GenPhi(*alpha, *w_l, gradient, true,
              &phi_of_alpha, &phi_of_zero, &phi_of_zero_prime);
+      profiler_.w_part4.Record();
+      profiler_.w_part5.Start();
       if (phi_of_zero_prime < 0) {
         *w_l = -(*w_l);
         GenPhi(*alpha, *w_l, gradient, true,
                &phi_of_alpha, &phi_of_zero, &phi_of_zero_prime);
       }
+      profiler_.w_part5.Record();
+      profiler_.w_part4.Start();
       while (phi_of_alpha < phi_of_zero + *alpha * a1 * phi_of_zero_prime) {
         *alpha = *alpha * rho;
         GenPhi(*alpha, *w_l, gradient, false,
@@ -672,6 +677,7 @@ class KDAC {
       }
 //      std::cout << "obj: " << phi_of_alpha << std::endl;
       *objective = phi_of_alpha;
+      profiler_.w_part4.Record();
     }
   }
 
