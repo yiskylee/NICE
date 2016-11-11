@@ -44,16 +44,18 @@
 
 // This is a template test fixture class containing test matrices
 template<class T>  // Template
-class GpuMatrixScalarMultiplyTest : public ::testing::Test {
+class GpuFrobeniusNormTest : public ::testing::Test {  // Inherits testing::Test
  public:  // Members must be public to be accessed by tests
   Nice::Matrix<T> a_;
-  T b_;
-  Nice::Matrix<T> c_;
+  Nice::Vector<T> a_vec_;
+  T norm_;
+  T norm_vec_;
 
   int row_;
   int col_;
 
-  void CreateTestData(int m, int n, T scalar) {
+  // Constructor
+  void CreateTestData(int m, int n) {
     // Check matrix
     if (a_.rows() != 0 && a_.cols() != 0)
       return;
@@ -64,34 +66,38 @@ class GpuMatrixScalarMultiplyTest : public ::testing::Test {
 
     // Create matrix
     a_ = Nice::Matrix<T>::Random(row_, col_);
-    b_ = scalar;
+    a_vec_ = Nice::Vector<T>(4);
+    a_vec_ << 1,2,3,4;
 
     Nice::CpuOperations<T> cpu_op;
 
     // Solve in CPU
-    c_ = cpu_op.Multiply(a_, b_);
+    norm_ = cpu_op.FrobeniusNorm(a_);
+    norm_vec_ = cpu_op.FrobeniusNorm(a_vec_);
   }
 };
 // Establishes a test case with the given types, Char and short types will
 // Throw compiler errors
 typedef ::testing::Types<float, double> dataTypes;
-TYPED_TEST_CASE(GpuMatrixScalarMultiplyTest, dataTypes);
+TYPED_TEST_CASE(GpuFrobeniusNormTest, dataTypes);
 
-TYPED_TEST(GpuMatrixScalarMultiplyTest, FuncionalityTest) {
+TYPED_TEST(GpuFrobeniusNormTest, FuncionalityTest) {
   // Create test data
   int m = 5;
   int n = 10;
-  int scalar = 3;
   srand(time(NULL));
-  this->CreateTestData(m, n, scalar);
-  Nice::Matrix<TypeParam> gpu_c(m, n);
+  this->CreateTestData(m, n);
+  TypeParam gpu_norm;
   // Test gpu matrix matrix multiply in Nice
   Nice::GpuOperations<TypeParam> gpu_op;
-  gpu_c = gpu_op.Multiply(this->a_, this->b_);
+  gpu_norm = gpu_op.FrobeniusNorm(this->a_);
 
   // Verify the result
-  for (int i = 0; i < m; i++)
-    for (int j = 0; j < n; j++)
-      EXPECT_NEAR(this->c_(i, j), gpu_c(i, j), 0.001);
+  EXPECT_NEAR(this->norm_, gpu_norm, 0.001);
 }
 
+TYPED_TEST(GpuFrobeniusNormTest, VecTest) {
+  this->CreateTestData(10, 10);
+  Nice::GpuOperations<TypeParam>::FrobeniusNorm(this->a_vec_);
+  std::cout << this->norm_vec_;
+}

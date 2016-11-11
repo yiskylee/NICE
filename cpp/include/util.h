@@ -33,6 +33,7 @@
 
 #include "include/matrix.h"
 #include "include/vector.h"
+#include "include/stop_watch.h"
 
 namespace Nice {
 
@@ -240,6 +241,8 @@ template<typename T>
 static T reciprocal(T x) {
   return T(1) / x;
 }
+
+
 
 }  // namespace util
 

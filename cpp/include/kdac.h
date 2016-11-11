@@ -38,6 +38,7 @@
 #include <X11/Xlib.h>
 #include <valarray>
 #include <tgmath.h>
+#include <numeric>
 #include "include/matrix.h"
 #include "include/vector.h"
 #include "include/cpu_operations.h"
@@ -48,12 +49,16 @@
 #include "include/util.h"
 #include "include/kernel_types.h"
 #include "include/stop_watch.h"
+#include "include/kdac_profiler.h"
+#include "include/timer.h"
 
-#define PROFILE(func, timer, time)\
+
+// Pass in a timer and a function, the time taken by that function is then
+// recorded in the timer
+#define PROFILE(func, timer)\
   timer.Start();\
   func;\
   timer.Stop();\
-  time += timer.DiffInMs();\
 
 
 namespace Nice {
@@ -142,6 +147,10 @@ class KDAC {
     q_ = q;
   }
 
+  void SetVerbose(bool verbose) {
+    verbose_ = verbose;
+  }
+
   int GetD(void) {
     return d_;
   }
@@ -152,8 +161,6 @@ class KDAC {
 
   int GetQ(void) {
     return q_;
-    // To test if Nice4Py reflects changes
-    // return 88;
   }
 
   int GetC(void) {
@@ -204,35 +211,9 @@ class KDAC {
     return gamma_matrix_;
   }
 
-  double GetTimeInit(void) {
-    return time_init_;
+  KDACProfiler GetProfiler(void) {
+    return profiler_;
   }
-
-  double GetTimeU(void) {
-    return time_u_;
-  }
-
-  double GetTimeW(void) {
-    return time_w_;
-  }
-
-  double GetTimeKMeans(void) {
-    return time_kmeans_;
-  }
-
-  double GetTimeFit(void) {
-    return time_fit_;
-  }
-
-  int GetNumItersFit(void) {
-    return num_iters_fit_;
-  }
-
-  int GetNumItersWMatrix(void) {
-    return num_iters_w_matrix_.sum();
-  }
-
-
 
   /// Set the kernel type: kGaussianKernel, kPolynomialKernel, kLinearKernel
   /// And set the constant associated the kernel
@@ -308,22 +289,21 @@ class KDAC {
     // now we are generating an alternative view with a
     // given Y_previous by doing Optimize both W and U until they converge
     // Following the pseudo code in Algorithm 1 in the paper
-    timer_fit_.Start();
-    PROFILE(Init(input_matrix, y_matrix), timer_init_, time_init_);
-
+    profiler_.fit.Start();
+    PROFILE(Init(input_matrix, y_matrix), profiler_.init);
     while (!u_w_converge_) {
+      profiler_.fit_loop.Start();
       pre_u_matrix_ = u_matrix_;
       pre_w_matrix_ = w_matrix_;
-      PROFILE(OptimizeU(), timer_u_, time_u_);
-      PROFILE(OptimizeW(), timer_w_, time_w_);
+      PROFILE(OptimizeU(), profiler_.u);
+      PROFILE(OptimizeW(), profiler_.w);
       u_converge_ = CheckConverged(u_matrix_, pre_u_matrix_, threshold_);
       w_converge_ = CheckConverged(w_matrix_, pre_w_matrix_, threshold_);
       u_w_converge_ = u_converge_ && w_converge_;
-      num_iters_fit_ ++;
+      profiler_.fit_loop.Stop();
     }
-    PROFILE(RunKMeans(), timer_kmeans_, time_kmeans_);
-    timer_fit_.Stop();
-    time_fit_ = timer_fit_.DiffInMs();
+    PROFILE(RunKMeans(), profiler_.kmeans);
+    profiler_.fit.Stop();
   }
 
   /// Running Predict() after Fit() returns
@@ -383,20 +363,12 @@ class KDAC {
   Matrix<T> waf_matrix_;
   Matrix<T> faf_matrix_;
 
-  double time_fit_;
-  StopWatch timer_fit_;
-  double time_u_;
-  StopWatch timer_u_;
-  double time_w_;
-  StopWatch timer_w_;
-  double time_init_;
-  StopWatch timer_init_;
-  double time_kmeans_;
-  StopWatch timer_kmeans_;
-  int num_iters_fit_;
-  // Record the number of iterations for each column in w_matrix to converge
-  Vector<T> num_iters_w_matrix_;
+  // A struct contains timers for different functions
+  KDACProfiler profiler_;
+  int w_col_num_iters_;
 
+  // Set to true for debug use
+  bool verbose_;
 
   // Initialization for generating the first clustering result
   void Init(const Matrix<T> &input_matrix) {
@@ -405,7 +377,7 @@ class KDAC {
     d_ = input_matrix.cols();
     // w_matrix_ is I initially
     w_matrix_ = Matrix<T>::Identity(d_, d_);
-    num_iters_w_matrix_ = Vector<T>::Zero(q_);
+//    num_iters_w_matrix_ = Vector<T>::Zero(q_);
   }
 
   // Initialization for generating alternative views when Y is already generated
@@ -448,14 +420,10 @@ class KDAC {
     u_converge_ = false;
     w_converge_ = false;
     u_w_converge_ = false;
-    time_fit_ = 0;
-    time_u_ = 0;
-    time_w_ = 0;
-    time_init_ = 0;
-    time_kmeans_ = 0;
-    num_iters_fit_ = 0;
-    num_iters_w_matrix_ = Vector<T>::Zero(q_);
   }
+
+
+
 
   void InitAMatrixList(void) {
     a_matrix_list_.resize(n_ * n_);
@@ -555,13 +523,13 @@ class KDAC {
     // If this is the first round and second,
     // then we use the full X to initialize the
     // U matrix, Otherwise, we project X to subspace W (n * d to n * q)
+    if (verbose_)
+      std::cout << "Optimizing U" << std::endl;
     Matrix<T> projected_x_matrix = x_matrix_ * w_matrix_;
     CheckFinite(projected_x_matrix, "projected_x_matrix");
     // Generate the kernel matrix based on kernel type from projected X
     k_matrix_ = CpuOperations<T>::GenKernelMatrix(
         projected_x_matrix, kernel_type_, constant_);
-
-
     // Generate degree matrix from the kernel matrix
     // d_i is the diagonal vector of degree matrix D
     // This is a reference to how to directly generate D^(-1/2)
@@ -579,12 +547,7 @@ class KDAC {
     // Generate a u matrix from SVD solver and then use Normalize
     // to normalize its rows
     u_matrix_ = solver.MatrixU().leftCols(c_);
-
     CheckFiniteOptimizeU();
-//    if (y_matrix_.rows() == 0) {
-//      Print(u_matrix_, "u_matrix");
-//      Print(u_matrix_normalized_, "u_norm");
-//    }
   }
 
   void CheckFiniteOptimizeU(void) {
@@ -602,6 +565,9 @@ class KDAC {
   }
 
   void OptimizeW(void) {
+    profiler_.w_part1.Start();
+    if (verbose_)
+      std::cout << "Optimizing W" << std::endl;
     // didj matrix contains the element (i, j) that equal to d_i * d_j
     didj_matrix_ = d_i_ * d_i_.transpose();
     // Generate the Gamma matrix in equation 5, which is a constant since
@@ -624,11 +590,13 @@ class KDAC {
     // If w_matrix is still I (d x d), now it is time to change it to d x q
     if (w_matrix_.cols() == d_)
       w_matrix_ = Matrix<T>::Identity(d_, q_);
+    profiler_.w_part1.Record();
+
     // We optimize each column in the W matrix
     for (int l = 0; l < w_matrix_.cols(); l++) {
+      profiler_.w_part1.Start();
       Vector<T> w_l;
       // Number of iterations in converging w_l
-      int num_iters = 0;
       // Get orthogonal to make w_l orthogonal to vectors from w_0 to w_(l-1)
       // when l is not 0
       if (l == 0) {
@@ -640,9 +608,12 @@ class KDAC {
       w_matrix_.col(l) = w_l;
       // Search for the w_l that maximizes formula 5
       // The initial objective is set to the lowest number
+
       T objective = std::numeric_limits<T>::lowest();
       bool w_l_converged = false;
+      profiler_.w_part1.Record();
       while (!w_l_converged) {
+        profiler_.w_part2.Start();
         Vector<T> grad_f_vertical;
         T pre_objective = objective;
         // Calculate the w gradient in equation 13, then find the gradient
@@ -650,18 +621,31 @@ class KDAC {
         Vector<T> grad_f = GenWGradient(g_of_w, w_l);
         grad_f_vertical =
             GenOrthonormal(w_matrix_.leftCols(l + 1), grad_f);
+        profiler_.w_part2.Record();
+        profiler_.w_part3.Start();
         LineSearch(grad_f_vertical, &w_l, &alpha_, &objective);
         w_l = sqrt(1.0 - pow(alpha_, 2)) * w_l +
             alpha_ * grad_f_vertical;
         w_matrix_.col(l) = w_l;
         w_l_converged = CheckConverged(objective, pre_objective, threshold_);
-        num_iters ++;
+        profiler_.w_part3.Record();
       }
-      num_iters_w_matrix_(l) += num_iters;
+      profiler_.w_part2.Start();
+      if (verbose_)
+        std::cout << "Cost: " << objective << std::endl;
       UpdateGOfW(g_of_w, w_l);
       // TODO: Need to learn about if using Vector<T> &w_l = w_matrix_.col(l)
       CheckFiniteOptimizeW();
+      profiler_.w_part2.Record();
     }
+
+    profiler_.w_part1.SumRecords();
+    profiler_.w_part2.SumRecords();
+    profiler_.w_part3.SumRecords();
+//    profiler_.w_part4.SumRecords();
+//    profiler_.w_part5.SumRecords();
+//    profiler_.w_part6.SumRecords();
+//    profiler_.w_part7.SumRecords();
   }
 
   void LineSearch(const Vector<T> &gradient,
@@ -707,7 +691,7 @@ class KDAC {
               float *phi_of_zero,
               float *phi_of_zero_prime
   ) {
-
+    // Count number of times GenPhi is called inside one OptimizeW()
     if (kernel_type_ == kGaussianKernel) {
       float alpha_square = pow(alpha, 2);
       float sqrt_one_minus_alpha = pow((1 - alpha_square), 0.5);

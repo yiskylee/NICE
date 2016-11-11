@@ -23,7 +23,6 @@
 #define CPP_INCLUDE_GPU_UTIL_H_
 
 #ifdef NEED_CUDA
-
 #include <cuda_runtime_api.h>
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>

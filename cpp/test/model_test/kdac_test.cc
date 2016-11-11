@@ -20,7 +20,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-
 #include <stdio.h>
 #include <iostream>
 #include <memory>
@@ -32,6 +31,7 @@
 #include "include/matrix.h"
 #include "include/vector.h"
 #include "include/kernel_types.h"
+
 
 template<typename T>
 class KDACTest : public ::testing::Test {

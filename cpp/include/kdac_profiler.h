@@ -20,32 +20,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef CPP_INCLUDE_STOP_WATCH_H_
-#define CPP_INCLUDE_STOP_WATCH_H_
+#ifndef CPP_INCLUDE_KDAC_PROFILER_H
+#define CPP_INCLUDE_KDAC_PROFILER_H
 
-#include <sys/time.h>
+#include <vector>
+#include <numeric>
+#include "include/timer.h"
+#include "include/stop_watch.h"
 
 namespace Nice {
-
-// Class StopWatch
-class StopWatch {
- private:
-  struct timeval start_;
-  struct timeval end_;
- public:
-  void Start() {
-    gettimeofday(&start_, NULL);
-  }
-  void Stop() {
-    gettimeofday(&end_, NULL);
-  }
-  double DiffInMs() {
-    return (double)(end_.tv_sec * 1000 + static_cast<double>(end_.tv_usec) / 1000) -
-      (double)(start_.tv_sec * 1000 + static_cast<double>(start_.tv_usec) / 1000);
-  }
+// A profiler includes one timer for a function or a partition of code
+struct KDACProfiler {
+  Timer fit;
+  Timer fit_loop;
+  Timer u;
+  Timer w;
+  Timer w_part1;
+  Timer w_part2;
+  Timer w_part3;
+  Timer w_part4;
+  Timer w_part5;
+  Timer w_part6;
+  Timer w_part7;
+  Timer w_part8;
+  Timer init;
+  Timer kmeans;
 };
-
 } // namespace Nice
-
-#endif  // CPP_INCLUDE_STOP_WATCH_H_
-
+#endif  // CPP_INCLUDE_KDAC_PROFILER_H

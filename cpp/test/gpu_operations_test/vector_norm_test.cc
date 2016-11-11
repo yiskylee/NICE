@@ -44,50 +44,41 @@
 
 // This is a template test fixture class containing test matrices
 template<class T>  // Template
-class GpuFrobeniusNormTest : public ::testing::Test {  // Inherits testing::Test
+class VectorNormTest : public ::testing::Test {  // Inherits testing::Test
  public:  // Members must be public to be accessed by tests
-  Nice::Matrix<T> a_;
+  Nice::Vector<T> a_;
   T norm_;
-
-  int row_;
-  int col_;
+  T squared_norm_;
 
   // Constructor
-  void CreateTestData(int m, int n) {
+  void CreateTestData(int num_elem) {
     // Check matrix
-    if (a_.rows() != 0 && a_.cols() != 0)
+    if (a_.rows() != 0)
       return;
-
-    // Set up dimension
-    row_ = m;
-    col_ = n;
-
     // Create matrix
-    a_ = Nice::Matrix<T>::Random(row_, col_);
-
+    a_ = Nice::Vector<T>::Random(num_elem);
     Nice::CpuOperations<T> cpu_op;
-
     // Solve in CPU
     norm_ = cpu_op.FrobeniusNorm(a_);
+    squared_norm_ = a_.squaredNorm();
   }
 };
 // Establishes a test case with the given types, Char and short types will
 // Throw compiler errors
 typedef ::testing::Types<float, double> dataTypes;
-TYPED_TEST_CASE(GpuFrobeniusNormTest, dataTypes);
+TYPED_TEST_CASE(VectorNormTest, dataTypes);
 
-TYPED_TEST(GpuFrobeniusNormTest, FuncionalityTest) {
+TYPED_TEST(VectorNormTest, VectorNorm) {
   // Create test data
-  int m = 5;
-  int n = 10;
+  int num_elem = 5;
   srand(time(NULL));
-  this->CreateTestData(m, n);
-  TypeParam gpu_norm;
+  this->CreateTestData(num_elem);
+  TypeParam gpu_norm, gpu_squared_norm;
   // Test gpu matrix matrix multiply in Nice
   Nice::GpuOperations<TypeParam> gpu_op;
-  gpu_norm = gpu_op.FrobeniusNorm(this->a_);
-
+  gpu_norm = gpu_op.Norm(this->a_);
+  gpu_squared_norm = gpu_op.SquaredNorm(this->a_);
   // Verify the result
   EXPECT_NEAR(this->norm_, gpu_norm, 0.001);
+  EXPECT_NEAR(this->squared_norm_, gpu_squared_norm, 0.001);
 }
-

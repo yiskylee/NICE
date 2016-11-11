@@ -21,7 +21,6 @@
 // SOFTWARE.
 
 #ifdef NEED_CUDA
-
 #include "include/gpu_util.h"
 
 namespace Nice {

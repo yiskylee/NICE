@@ -24,6 +24,7 @@
 #include <typeinfo>
 #include <memory>
 #include <cstring>
+#include <string>
 
 #include "include/matrix.h"
 #include "include/vector.h"
@@ -34,7 +35,7 @@
 #include "include/util.h"
 #include "include/gpu_util.h"
 #include "include/kernel_types.h"
-
+#include "include/timer.h"
 #include "interface/clustering/clustering.h"
 
 namespace Nice {
@@ -51,32 +52,63 @@ KdacInterface::KdacInterface()
     default:
       break;
   }
-
 }
 
-void KdacInterface::GetTimes(boost::python::dict &times) {
+void KdacInterface::GetTimePerIter(PyObject *time_per_iter,
+                                   int num_iters,
+                                   std::string stat_name) {
+  KDACProfiler profiler;
+  Py_buffer pybuf;
+  PyObject_GetBuffer(time_per_iter, &pybuf, PyBUF_SIMPLE);
+  DMatrixMap output(reinterpret_cast<double *>(pybuf.buf),
+                    num_iters, 1);
+  switch (dtype_) {
+    case FLOAT:profiler = TemplateGetProfiler<float>(f_kdac_.get());
+      break;
+    case DOUBLE:profiler = TemplateGetProfiler<double>(d_kdac_.get());
+      break;
+    default:profiler = TemplateGetProfiler<double>(d_kdac_.get());
+  }
+  if (stat_name == "u_time_per_iter")
+    output = profiler.u.GetTimePerIter();
+  else if (stat_name == "w_time_per_iter")
+    output = profiler.w.GetTimePerIter();
+  else if (stat_name == "w_part1")
+    output = profiler.w_part1.GetTimePerIter();
+  else if (stat_name == "w_part2")
+    output = profiler.w_part2.GetTimePerIter();
+  else if (stat_name == "w_part3")
+    output = profiler.w_part3.GetTimePerIter();
+  else if (stat_name == "w_part4")
+    output = profiler.w_part4.GetTimePerIter();
+  else if (stat_name == "w_part5")
+    output = profiler.w_part5.GetTimePerIter();
+  else if (stat_name == "w_part6")
+    output = profiler.w_part6.GetTimePerIter();
+  else if (stat_name == "w_part7")
+    output = profiler.w_part7.GetTimePerIter();
+  else if (stat_name == "w_part8")
+    output = profiler.w_part8.GetTimePerIter();
+}
+
+void KdacInterface::GetProfiler(boost::python::dict &profile) {
+  KDACProfiler profiler;
   switch (dtype_) {
     case FLOAT:
-      times["init"] = TemplateGetTimeInit<float>(f_kdac_.get());
-      times["u"] = TemplateGetTimeU<float>(f_kdac_.get());
-      times["w"] = TemplateGetTimeW<float>(f_kdac_.get());
-      times["kmeans"] = TemplateGetTimeKMeans<float>(f_kdac_.get());
-      times["fit"] = TemplateGetTimeFit<float>(f_kdac_.get());
-      times["num_iters_fit"] = TemplateGetNumItersFit<float>(f_kdac_.get());
-      times["num_iters_w"] = TemplateGetNumItersWMatrix<float>(f_kdac_.get());
-      break;
+      profiler = TemplateGetProfiler<float>(f_kdac_.get());
+    break;
     case DOUBLE:
-      times["init"] = TemplateGetTimeInit<double>(d_kdac_.get());
-      times["u"] = TemplateGetTimeU<double>(d_kdac_.get());
-      times["w"] = TemplateGetTimeW<double>(d_kdac_.get());
-      times["kmeans"] = TemplateGetTimeKMeans<double>(d_kdac_.get());
-      times["fit"] = TemplateGetTimeFit<double>(d_kdac_.get());
-      times["num_iters_fit"] = TemplateGetNumItersFit<double>(d_kdac_.get());
-      times["num_iters_w"] = TemplateGetNumItersWMatrix<double>(d_kdac_.get());
+      profiler = TemplateGetProfiler<double>(d_kdac_.get());
       break;
     default:
       break;
   }
+  profile["init"] = profiler.init.GetTotalTime();
+  profile["u"] = profiler.u.GetTotalTime();
+  profile["w"] = profiler.w.GetTotalTime();
+  profile["kmeans"] = profiler.kmeans.GetTotalTime();
+  profile["fit"] = profiler.fit.GetTotalTime();
+  profile["num_iters"] = profiler.u.GetNumIters();
 }
 
 void KdacInterface::SetupParams(const boost::python::dict &params) {
@@ -93,6 +125,8 @@ void KdacInterface::SetupParams(const boost::python::dict &params) {
   bool has_lambda = false;
   double sigma = 1.0;
   bool has_sigma = false;
+  bool verbose = false;
+  bool has_verbose = false;
   for (int i = 0; i < boost::python::len(key_list); i++) {
     if (strcmp("c", boost::python::extract<char *>(key_list[i])) == 0) {
       c = boost::python::extract<int>(params["c"]);
@@ -130,6 +164,11 @@ void KdacInterface::SetupParams(const boost::python::dict &params) {
       has_sigma = true;
       continue;
     }
+    if (strcmp("verbose", boost::python::extract<char *>(key_list[i])) == 0) {
+      verbose = boost::python::extract<double>(params["verbose"]);
+      has_verbose = true;
+      continue;
+    }
   }
 
   // Set up parameters according to model type
@@ -143,6 +182,8 @@ void KdacInterface::SetupParams(const boost::python::dict &params) {
         f_kdac_->SetLambda(lambda);
       if (has_kernel && has_sigma)
         f_kdac_->SetKernel(kernel, sigma);
+      if (has_verbose)
+        f_kdac_->SetVerbose(verbose);
       break;
     case DOUBLE:
       if (has_q)
@@ -153,6 +194,8 @@ void KdacInterface::SetupParams(const boost::python::dict &params) {
         d_kdac_->SetLambda(lambda);
       if (has_kernel && has_sigma)
         d_kdac_->SetKernel(kernel, sigma);
+      if (has_verbose)
+        d_kdac_->SetVerbose(verbose);
       break;
     default:
       break;
@@ -346,7 +389,6 @@ int KdacInterface::GetQ() {
 
 }  // namespace Nice
 
-
 void (Nice::KdacInterface::*Fit1)(PyObject *, int row, int col)
   = &Nice::KdacInterface::Fit;
 void (Nice::KdacInterface::*Fit2)()
@@ -355,23 +397,21 @@ void (Nice::KdacInterface::*Fit3)(PyObject *, int row_1, int col_1,
                                   PyObject *, int row_2, int col_2)
   = &Nice::KdacInterface::Fit;
 
-
 BOOST_PYTHON_MODULE(Nice4Py) {
   boost::python::enum_<Nice::DataType>("DataType")
     .value("INT", Nice::DataType::INT)
     .value("FLOAT", Nice::DataType::FLOAT)
     .value("DOUBLE", Nice::DataType::DOUBLE);
-  boost::python::class_<Nice::KdacInterface>("KDAC",
-                                           boost::python::init<>())
+  boost::python::class_<Nice::KdacInterface>("KDAC", boost::python::init<>())
     .def("Fit", Fit1)
     .def("Fit", Fit2)
     .def("Fit", Fit3)
     .def("SetupParams", &Nice::KdacInterface::SetupParams)
-    .def("GetTimes", &Nice::KdacInterface::GetTimes)
     .def("Predict", &Nice::KdacInterface::Predict)
-    .def("GetU", &Nice::KdacInterface::GetU)
+    .def("GetProfiler", &Nice::KdacInterface::GetProfiler)
     .def("GetW", &Nice::KdacInterface::GetW)
     .def("GetD", &Nice::KdacInterface::GetD)
     .def("GetN", &Nice::KdacInterface::GetN)
-    .def("GetQ", &Nice::KdacInterface::GetQ);
+    .def("GetQ", &Nice::KdacInterface::GetQ)
+    .def("GetTimePerIter", &Nice::KdacInterface::GetTimePerIter);
 }

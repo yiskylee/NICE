@@ -38,6 +38,7 @@
 #include "include/gpu_operations.h"
 #include "include/kdac.h"
 #include "include/util.h"
+#include "include/kdac_profiler.h"
 
 #include "interface/py_interface.h"
 
@@ -49,94 +50,67 @@ class KdacInterface : public PyInterface{
   std::shared_ptr<Nice::KDAC<float> > f_kdac_;
   std::shared_ptr<Nice::KDAC<double> > d_kdac_;
 
-  template <typename T>
-  void TemplateFit(const Matrix<T> &in,
-           Nice::KDAC<T> *kdac) {
-    kdac->Fit(in);
+//  template <typename T>
+//  void TemplateFit(const Matrix<T> &in,
+//           Nice::KDAC<T> *kdac) {
+//    kdac->Fit(in);
+//  }
+//
+//  template <typename T>
+//  void TemplateFit(Nice::KDAC<T> *kdac) {
+//    kdac->Fit();
+//  }
+//
+//  template <typename T>
+//  void TemplateFit(const Matrix<T> &in_1,
+//                   const Matrix<T> &in_2,
+//                   Nice::KDAC<T> *kdac) {
+//    kdac->Fit(in_1, in_2);
+//  }
+//
+//
+//  template <typename T>
+//  Matrix<T> TemplatePredict(Nice::KDAC<T> *kdac) {
+//    return kdac->Predict();
+//  }
+//
+//  template <typename T>
+//  Matrix<T> TemplateGetU(Nice::KDAC<T> *kdac) {
+//    return kdac->GetU();
+//  }
+//
+//  template <typename T>
+//  Matrix<T> TemplateGetW(Nice::KDAC<T> *kdac) {
+//    return kdac->GetW();
+//  }
+//
+//  template <typename T>
+//  int TemplateGetD(Nice::KDAC<T> *kdac) {
+//    return kdac->GetD();
+//  }
+//
+//  template <typename T>
+//  int TemplateGetN(Nice::KDAC<T> *kdac) {
+//    return kdac->GetN();
+//  }
+//
+//  template <typename T>
+//  int TemplateGetQ(Nice::KDAC<T> *kdac) {
+//    return kdac->GetQ();
+//  }
+//
+//  template<typename T>
+//  KDACProfiler TemplateGetProfiler(Nice::KDAC<T> *kdac) {
+//    return kdac->GetProfiler();
   }
 
-  template <typename T>
-  void TemplateFit(Nice::KDAC<T> *kdac) {
-    kdac->Fit();
-  }
-
-  template <typename T>
-  void TemplateFit(const Matrix<T> &in_1,
-                   const Matrix<T> &in_2,
-                   Nice::KDAC<T> *kdac) {
-    kdac->Fit(in_1, in_2);
-  }
-
-
-  template <typename T>
-  Matrix<T> TemplatePredict(Nice::KDAC<T> *kdac) {
-    return kdac->Predict();
-  }
-
-  template <typename T>
-  Matrix<T> TemplateGetU(Nice::KDAC<T> *kdac) {
-    return kdac->GetU();
-  }
-
-  template <typename T>
-  Matrix<T> TemplateGetW(Nice::KDAC<T> *kdac) {
-    return kdac->GetW();
-  }
-
-  template <typename T>
-  int TemplateGetD(Nice::KDAC<T> *kdac) {
-    return kdac->GetD();
-  }
-
-  template <typename T>
-  int TemplateGetN(Nice::KDAC<T> *kdac) {
-    return kdac->GetN();
-  }
-
-  template <typename T>
-  int TemplateGetQ(Nice::KDAC<T> *kdac) {
-    return kdac->GetQ();
-  }
-
-  template <typename T>
-  double TemplateGetTimeInit(Nice::KDAC<T> *kdac) {
-    return kdac->GetTimeInit();
-  }
-
-  template <typename T>
-  double TemplateGetTimeU(Nice::KDAC<T> *kdac) {
-    return kdac->GetTimeU();
-  }
-
-  template <typename T>
-  double TemplateGetTimeW(Nice::KDAC<T> *kdac) {
-    return kdac->GetTimeW();
-  }
-
-  template <typename T>
-  double TemplateGetTimeKMeans(Nice::KDAC<T> *kdac) {
-    return kdac->GetTimeKMeans();
-  }
-
-  template <typename T>
-  double TemplateGetTimeFit(Nice::KDAC<T> *kdac) {
-    return kdac->GetTimeFit();
-  }
-
-  template <typename T>
-  int TemplateGetNumItersFit(Nice::KDAC<T> *kdac) {
-    return kdac->GetNumItersFit();
-  }
-
-  template <typename T>
-  int TemplateGetNumItersWMatrix(Nice::KDAC<T> *kdac) {
-    return kdac->GetNumItersWMatrix();
-  }
 
  public:
   KdacInterface();
   void SetupParams(const boost::python::dict &params);
-  void GetTimes(boost::python::dict &times);
+  void GetProfiler(boost::python::dict &profiler);
+  void GetTimePerIter(PyObject *time_per_iter,
+                      int max_num_iters, std::string stat_name);
   void Fit(PyObject *in, int row, int col);
   void Fit();
   void Fit(PyObject *in_1, int row_1, int col_1,
