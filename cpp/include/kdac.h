@@ -644,7 +644,7 @@ class KDAC {
     profiler_.w_part3.SumRecords();
     profiler_.w_part4.SumRecords();
     profiler_.w_part5.SumRecords();
-//    profiler_.w_part6.SumRecords();
+    profiler_.w_part6.SumRecords();
 //    profiler_.w_part7.SumRecords();
   }
 
@@ -669,7 +669,7 @@ class KDAC {
                &phi_of_alpha, &phi_of_zero, &phi_of_zero_prime);
       }
       profiler_.w_part5.Record();
-      profiler_.w_part4.Start();
+      profiler_.w_part6.Start();
       while (phi_of_alpha < phi_of_zero + *alpha * a1 * phi_of_zero_prime) {
         *alpha = *alpha * rho;
         GenPhi(*alpha, *w_l, gradient, false,
@@ -677,7 +677,7 @@ class KDAC {
       }
 //      std::cout << "obj: " << phi_of_alpha << std::endl;
       *objective = phi_of_alpha;
-      profiler_.w_part4.Record();
+      profiler_.w_part6.Record();
     }
   }
 

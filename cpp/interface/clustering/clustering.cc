@@ -63,11 +63,14 @@ void KdacInterface::GetTimePerIter(PyObject *time_per_iter,
   DMatrixMap output(reinterpret_cast<double *>(pybuf.buf),
                     num_iters, 1);
   switch (dtype_) {
-    case FLOAT:profiler = TemplateGetProfiler<float>(f_kdac_.get());
+    case FLOAT:profiler = f_kdac_->GetProfiler();
       break;
-    case DOUBLE:profiler = TemplateGetProfiler<double>(d_kdac_.get());
+    case DOUBLE:profiler = d_kdac_->GetProfiler();
       break;
-    default:profiler = TemplateGetProfiler<double>(d_kdac_.get());
+    default:
+      std::cerr << "Unknow Data Type" << std::endl;
+      exit(1);
+      break;
   }
   if (stat_name == "u_time_per_iter")
     output = profiler.u.GetTimePerIter();
@@ -95,12 +98,14 @@ void KdacInterface::GetProfiler(boost::python::dict &profile) {
   KDACProfiler profiler;
   switch (dtype_) {
     case FLOAT:
-      profiler = TemplateGetProfiler<float>(f_kdac_.get());
+      profiler = f_kdac_ -> GetProfiler();
     break;
     case DOUBLE:
-      profiler = TemplateGetProfiler<double>(d_kdac_.get());
+      profiler = d_kdac_ -> GetProfiler();
       break;
     default:
+      std::cerr << "Unknow Data Type" << std::endl;
+      exit(1);
       break;
   }
   profile["init"] = profiler.init.GetTotalTime();

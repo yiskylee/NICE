@@ -99,11 +99,6 @@ class KdacInterface : public PyInterface{
     return kdac->GetQ();
   }
 
-  template<typename T>
-  KDACProfiler TemplateGetProfiler(Nice::KDAC<T> *kdac) {
-    return kdac->GetProfiler();
-  }
-
 
  public:
   KdacInterface();
