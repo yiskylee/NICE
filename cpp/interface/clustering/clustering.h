@@ -39,7 +39,6 @@
 #include "include/kdac.h"
 #include "include/util.h"
 #include "include/kdac_profiler.h"
-
 #include "interface/py_interface.h"
 
 namespace Nice {
@@ -49,56 +48,6 @@ class KdacInterface : public PyInterface{
 
   std::shared_ptr<Nice::KDAC<float> > f_kdac_;
   std::shared_ptr<Nice::KDAC<double> > d_kdac_;
-
-  template <typename T>
-  void TemplateFit(const Matrix<T> &in,
-           Nice::KDAC<T> *kdac) {
-    kdac->Fit(in);
-  }
-
-  template <typename T>
-  void TemplateFit(Nice::KDAC<T> *kdac) {
-    kdac->Fit();
-  }
-
-  template <typename T>
-  void TemplateFit(const Matrix<T> &in_1,
-                   const Matrix<T> &in_2,
-                   Nice::KDAC<T> *kdac) {
-    kdac->Fit(in_1, in_2);
-  }
-
-
-  template <typename T>
-  Matrix<T> TemplatePredict(Nice::KDAC<T> *kdac) {
-    return kdac->Predict();
-  }
-
-  template <typename T>
-  Matrix<T> TemplateGetU(Nice::KDAC<T> *kdac) {
-    return kdac->GetU();
-  }
-
-  template <typename T>
-  Matrix<T> TemplateGetW(Nice::KDAC<T> *kdac) {
-    return kdac->GetW();
-  }
-
-  template <typename T>
-  int TemplateGetD(Nice::KDAC<T> *kdac) {
-    return kdac->GetD();
-  }
-
-  template <typename T>
-  int TemplateGetN(Nice::KDAC<T> *kdac) {
-    return kdac->GetN();
-  }
-
-  template <typename T>
-  int TemplateGetQ(Nice::KDAC<T> *kdac) {
-    return kdac->GetQ();
-  }
-
 
  public:
   KdacInterface();

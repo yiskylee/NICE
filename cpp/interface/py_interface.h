@@ -42,8 +42,7 @@
 namespace Nice {
 
 enum DataType {
-  INT = 0,
-  FLOAT,
+  FLOAT = 0,
   DOUBLE
 };
 

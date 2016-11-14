@@ -38,6 +38,34 @@
 #include "include/timer.h"
 #include "interface/clustering/clustering.h"
 
+#define CALL_FUNC_NO_BUF(func)\
+  switch (dtype_) {\
+    case FLOAT:\
+      return f_kdac_ -> func();\
+    case DOUBLE:\
+      return d_kdac_ -> func();\
+    default:\
+      std::cerr << "Unknown Data Type" << std::endl;\
+      exit(1);\
+}\
+
+#define CALL_FUNC_ONE_BUF(func, in, row, col)\
+  Py_buffer pybuf;\
+  PyObject_GetBuffer(in, &pybuf, PyBUF_SIMPLE);\
+  switch (dtype_) {\
+    case FLOAT:\
+      new (&output_fmat_) FMatrixMap(reinterpret_cast<float *>(pybuf.buf), row, col);\
+      output_fmat_ = f_kdac_ -> func();\
+      break;\
+    case DOUBLE:\
+      new (&output_dmat_) DMatrixMap(reinterpret_cast<double *>(pybuf.buf), row, col);\
+      output_dmat_ = d_kdac_ -> func();\
+      break;\
+    default:\
+      std::cerr << "Unknown Data Type" << std::endl;\
+      exit(1);\
+  }\
+
 namespace Nice {
 
 KdacInterface::KdacInterface()
@@ -68,9 +96,8 @@ void KdacInterface::GetTimePerIter(PyObject *time_per_iter,
     case DOUBLE:profiler = d_kdac_->GetProfiler();
       break;
     default:
-      std::cerr << "Unknow Data Type" << std::endl;
+      std::cerr << "Unknown Data Type" << std::endl;
       exit(1);
-      break;
   }
   if (stat_name == "u_time_per_iter")
     output = profiler.u.GetTimePerIter();
@@ -106,7 +133,6 @@ void KdacInterface::GetProfiler(boost::python::dict &profile) {
     default:
       std::cerr << "Unknow Data Type" << std::endl;
       exit(1);
-      break;
   }
   profile["init"] = profiler.init.GetTotalTime();
   profile["u"] = profiler.u.GetTotalTime();
@@ -203,9 +229,14 @@ void KdacInterface::SetupParams(const boost::python::dict &params) {
         d_kdac_->SetVerbose(verbose);
       break;
     default:
-      break;
+      std::cerr << "Unknown Data Type" << std::endl;
+      exit(1);
   }
 
+}
+
+void KdacInterface::Fit() {
+  CALL_FUNC_NO_BUF(Fit);
 }
 
 void KdacInterface::Fit(PyObject *in, int row, int col) {
@@ -218,33 +249,17 @@ void KdacInterface::Fit(PyObject *in, int row, int col) {
     case FLOAT:
       new (&input_fmat_[0]) FMatrixMap(reinterpret_cast<float *>(pybuf.buf),
                                     row, col);
+      f_kdac_ -> Fit(input_fmat_[0]);
       break;
     case DOUBLE:
       new (&input_dmat_[0]) DMatrixMap(reinterpret_cast<double *>(pybuf.buf),
                                     row, col);
+      d_kdac_ -> Fit(input_dmat_[0]);
       break;
     default:
-      break;
+      std::cerr << "Unknown Data Type" << std::endl;
+      exit(1);
   }
-
-  // Run Fit
-  if (dtype_ == FLOAT) {
-    TemplateFit<float>(input_fmat_[0], f_kdac_.get());
-  } else if (dtype_ == DOUBLE) {
-    TemplateFit<double>(input_dmat_[0], d_kdac_.get());
-  }
-
-
-}
-
-void KdacInterface::Fit() {
-  // Run Fit
-  if (dtype_ == FLOAT) {
-    TemplateFit<float>(f_kdac_.get());
-  } else if (dtype_ == DOUBLE) {
-    TemplateFit<double>(d_kdac_.get());
-  }
-
 }
 
 void KdacInterface::Fit(PyObject *in_1, int row_1, int col_1,
@@ -265,6 +280,7 @@ void KdacInterface::Fit(PyObject *in_1, int row_1, int col_1,
                                     row_1, col_1);
       new (&input_fmat_[1]) FMatrixMap(reinterpret_cast<float *>(pybuf_2.buf),
                                     row_2, col_2);
+      f_kdac_ -> Fit(input_fmat_[0], input_fmat_[1]);
       break;
     case DOUBLE:
       if (input_dmat_.size() < 2) {
@@ -274,122 +290,36 @@ void KdacInterface::Fit(PyObject *in_1, int row_1, int col_1,
                                     row_1, col_1);
       new (&input_dmat_[1]) DMatrixMap(reinterpret_cast<double *>(pybuf_2.buf),
                                     row_2, col_2);
+      d_kdac_ -> Fit(input_dmat_[0], input_dmat_[1]);
       break;
     default:
-      break;
+      std::cerr << "Unknown Data Type" << std::endl;
+      exit(1);
   }
-
-  // Run Fit
-  if (dtype_ == FLOAT) {
-    TemplateFit<float>(input_fmat_[0], input_fmat_[1], f_kdac_.get());
-  } else if (dtype_ == DOUBLE) {
-    TemplateFit<double>(input_dmat_[0], input_dmat_[1], d_kdac_.get());
-  }
-
-
 }
 
 void KdacInterface::Predict(PyObject *in, int row, int col) {
-  // Get python object buffer
-  Py_buffer pybuf;
-  PyObject_GetBuffer(in, &pybuf, PyBUF_SIMPLE);
-
-  switch (dtype_) {
-    case FLOAT:
-      new (&output_fmat_) FMatrixMap(reinterpret_cast<float *>(pybuf.buf),
-                                     row, col);
-      break;
-    case DOUBLE:
-      new (&output_dmat_) DMatrixMap(reinterpret_cast<double *>(pybuf.buf),
-                                     row, col);
-      break;
-    default:
-      break;
-  }
-
-  if (dtype_ == FLOAT) {
-    output_fmat_ = TemplatePredict<float>(f_kdac_.get());
-  } else if (dtype_ == DOUBLE) {
-    output_dmat_ = TemplatePredict<double>(d_kdac_.get());
-  }
-
+  CALL_FUNC_ONE_BUF(Predict, in, row, col);
 }
 
 void KdacInterface::GetU(PyObject *in, int row, int col) {
-  // Get python object buffer
-  Py_buffer pybuf;
-  PyObject_GetBuffer(in, &pybuf, PyBUF_SIMPLE);
-
-  switch (dtype_) {
-    case FLOAT:
-      new (&output_fmat_) FMatrixMap(reinterpret_cast<float *>(pybuf.buf),
-                                     row, col);
-      break;
-    case DOUBLE:
-      new (&output_dmat_) DMatrixMap(reinterpret_cast<double *>(pybuf.buf),
-                                     row, col);
-      break;
-    default:
-      break;
-  }
-
-  if (dtype_ == FLOAT) {
-    output_fmat_ = TemplateGetU<float>(f_kdac_.get());
-  } else if (dtype_ == DOUBLE) {
-    output_dmat_ = TemplateGetU<double>(d_kdac_.get());
-  }
+  CALL_FUNC_ONE_BUF(GetU, in, row, col);
 }
 
 void KdacInterface::GetW(PyObject *in, int row, int col) {
-  // Get python object buffer
-  Py_buffer pybuf;
-  PyObject_GetBuffer(in, &pybuf, PyBUF_SIMPLE);
-
-  switch (dtype_) {
-    case FLOAT:
-      new (&output_fmat_) FMatrixMap(reinterpret_cast<float *>(pybuf.buf),
-                                     row, col);
-      break;
-    case DOUBLE:
-      new (&output_dmat_) DMatrixMap(reinterpret_cast<double *>(pybuf.buf),
-                                     row, col);
-      break;
-    default:
-      break;
-  }
-
-  if (dtype_ == FLOAT) {
-    output_fmat_ = TemplateGetW<float>(f_kdac_.get());
-  } else if (dtype_ == DOUBLE) {
-    output_dmat_ = TemplateGetW<double>(d_kdac_.get());
-  }
+  CALL_FUNC_ONE_BUF(GetW, in, row, col);
 }
 
 int KdacInterface::GetD() {
-  if (dtype_ == FLOAT) {
-    return TemplateGetD<float>(f_kdac_.get());
-  } else if (dtype_ == DOUBLE) {
-    return TemplateGetD<double>(d_kdac_.get());
-  }
-  return -1;
+  CALL_FUNC_NO_BUF(GetD);
 }
 
 int KdacInterface::GetN() {
-  if (dtype_ == FLOAT) {
-    return TemplateGetN<float>(f_kdac_.get());
-  } else if (dtype_ == DOUBLE) {
-    return TemplateGetN<double>(d_kdac_.get());
-  }
-  return -1;
+  CALL_FUNC_NO_BUF(GetN);
 }
 
 int KdacInterface::GetQ() {
-  if (dtype_ == FLOAT) {
-    return TemplateGetQ<float>(f_kdac_.get());
-  } else if (dtype_ == DOUBLE) {
-    return TemplateGetQ<double>(d_kdac_.get());
-  }
-  return -1;
+  CALL_FUNC_NO_BUF(GetQ);
 }
 
 }  // namespace Nice
@@ -404,7 +334,6 @@ void (Nice::KdacInterface::*Fit3)(PyObject *, int row_1, int col_1,
 
 BOOST_PYTHON_MODULE(Nice4Py) {
   boost::python::enum_<Nice::DataType>("DataType")
-    .value("INT", Nice::DataType::INT)
     .value("FLOAT", Nice::DataType::FLOAT)
     .value("DOUBLE", Nice::DataType::DOUBLE);
   boost::python::class_<Nice::KdacInterface>("KDAC", boost::python::init<>())
