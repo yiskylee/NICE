@@ -68,7 +68,7 @@
 
 namespace Nice {
 
-KdacInterface::KdacInterface()
+KDACInterface::KDACInterface()
 : PyInterface() {
   switch (dtype_) {
     case FLOAT:
@@ -82,7 +82,7 @@ KdacInterface::KdacInterface()
   }
 }
 
-void KdacInterface::GetTimePerIter(PyObject *time_per_iter,
+void KDACInterface::GetTimePerIter(PyObject *time_per_iter,
                                    int num_iters,
                                    std::string stat_name) {
   KDACProfiler profiler;
@@ -121,7 +121,7 @@ void KdacInterface::GetTimePerIter(PyObject *time_per_iter,
     output = profiler.w_part8.GetTimePerIter();
 }
 
-void KdacInterface::GetProfiler(boost::python::dict &profile) {
+void KDACInterface::GetProfiler(boost::python::dict &profile) {
   KDACProfiler profiler;
   switch (dtype_) {
     case FLOAT:
@@ -142,7 +142,7 @@ void KdacInterface::GetProfiler(boost::python::dict &profile) {
   profile["num_iters"] = profiler.u.GetNumIters();
 }
 
-void KdacInterface::SetupParams(const boost::python::dict &params) {
+void KDACInterface::SetupParams(const boost::python::dict &params) {
 
   // Obtain parameters from python
   boost::python::list key_list = params.keys();
@@ -235,11 +235,11 @@ void KdacInterface::SetupParams(const boost::python::dict &params) {
 
 }
 
-void KdacInterface::Fit() {
+void KDACInterface::Fit() {
   CALL_FUNC_NO_BUF(Fit);
 }
 
-void KdacInterface::Fit(PyObject *in, int row, int col) {
+void KDACInterface::Fit(PyObject *in, int row, int col) {
   // Get the python object buffer
   Py_buffer pybuf;
   PyObject_GetBuffer(in, &pybuf, PyBUF_SIMPLE);
@@ -262,7 +262,7 @@ void KdacInterface::Fit(PyObject *in, int row, int col) {
   }
 }
 
-void KdacInterface::Fit(PyObject *in_1, int row_1, int col_1,
+void KDACInterface::Fit(PyObject *in_1, int row_1, int col_1,
                         PyObject *in_2, int row_2, int col_2) {
   // Get the python object buffer
   Py_buffer pybuf_1;
@@ -298,54 +298,54 @@ void KdacInterface::Fit(PyObject *in_1, int row_1, int col_1,
   }
 }
 
-void KdacInterface::Predict(PyObject *in, int row, int col) {
+void KDACInterface::Predict(PyObject *in, int row, int col) {
   CALL_FUNC_ONE_BUF(Predict, in, row, col);
 }
 
-void KdacInterface::GetU(PyObject *in, int row, int col) {
+void KDACInterface::GetU(PyObject *in, int row, int col) {
   CALL_FUNC_ONE_BUF(GetU, in, row, col);
 }
 
-void KdacInterface::GetW(PyObject *in, int row, int col) {
+void KDACInterface::GetW(PyObject *in, int row, int col) {
   CALL_FUNC_ONE_BUF(GetW, in, row, col);
 }
 
-int KdacInterface::GetD() {
+int KDACInterface::GetD() {
   CALL_FUNC_NO_BUF(GetD);
 }
 
-int KdacInterface::GetN() {
+int KDACInterface::GetN() {
   CALL_FUNC_NO_BUF(GetN);
 }
 
-int KdacInterface::GetQ() {
+int KDACInterface::GetQ() {
   CALL_FUNC_NO_BUF(GetQ);
 }
 
 }  // namespace Nice
 
-void (Nice::KdacInterface::*Fit1)(PyObject *, int row, int col)
-  = &Nice::KdacInterface::Fit;
-void (Nice::KdacInterface::*Fit2)()
-  = &Nice::KdacInterface::Fit;
-void (Nice::KdacInterface::*Fit3)(PyObject *, int row_1, int col_1,
+void (Nice::KDACInterface::*Fit1)(PyObject *, int row, int col)
+  = &Nice::KDACInterface::Fit;
+void (Nice::KDACInterface::*Fit2)()
+  = &Nice::KDACInterface::Fit;
+void (Nice::KDACInterface::*Fit3)(PyObject *, int row_1, int col_1,
                                   PyObject *, int row_2, int col_2)
-  = &Nice::KdacInterface::Fit;
+  = &Nice::KDACInterface::Fit;
 
 BOOST_PYTHON_MODULE(Nice4Py) {
   boost::python::enum_<Nice::DataType>("DataType")
     .value("FLOAT", Nice::DataType::FLOAT)
     .value("DOUBLE", Nice::DataType::DOUBLE);
-  boost::python::class_<Nice::KdacInterface>("KDAC", boost::python::init<>())
+  boost::python::class_<Nice::KDACInterface>("KDAC", boost::python::init<>())
     .def("Fit", Fit1)
     .def("Fit", Fit2)
     .def("Fit", Fit3)
-    .def("SetupParams", &Nice::KdacInterface::SetupParams)
-    .def("Predict", &Nice::KdacInterface::Predict)
-    .def("GetProfiler", &Nice::KdacInterface::GetProfiler)
-    .def("GetW", &Nice::KdacInterface::GetW)
-    .def("GetD", &Nice::KdacInterface::GetD)
-    .def("GetN", &Nice::KdacInterface::GetN)
-    .def("GetQ", &Nice::KdacInterface::GetQ)
-    .def("GetTimePerIter", &Nice::KdacInterface::GetTimePerIter);
+    .def("SetupParams", &Nice::KDACInterface::SetupParams)
+    .def("Predict", &Nice::KDACInterface::Predict)
+    .def("GetProfiler", &Nice::KDACInterface::GetProfiler)
+    .def("GetW", &Nice::KDACInterface::GetW)
+    .def("GetD", &Nice::KDACInterface::GetD)
+    .def("GetN", &Nice::KDACInterface::GetN)
+    .def("GetQ", &Nice::KDACInterface::GetQ)
+    .def("GetTimePerIter", &Nice::KDACInterface::GetTimePerIter);
 }

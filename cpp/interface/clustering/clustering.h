@@ -43,14 +43,14 @@
 
 namespace Nice {
 
-class KdacInterface : public PyInterface{
+class KDACInterface : public PyInterface{
  private:
 
   std::shared_ptr<Nice::KDAC<float> > f_kdac_;
   std::shared_ptr<Nice::KDAC<double> > d_kdac_;
 
  public:
-  KdacInterface();
+  KDACInterface();
   void SetupParams(const boost::python::dict &params);
   void GetProfiler(boost::python::dict &profiler);
   void GetTimePerIter(PyObject *time_per_iter,
