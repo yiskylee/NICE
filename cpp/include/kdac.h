@@ -42,6 +42,7 @@
 #include "include/matrix.h"
 #include "include/vector.h"
 #include "include/cpu_operations.h"
+#include "include/gpu_operations.h"
 #include "include/svd_solver.h"
 #include "include/kmeans.h"
 #include "include/spectral_clustering.h"
@@ -100,7 +101,8 @@ class KDAC {
       h_matrix_(),
       gamma_matrix_(),
       a_matrix_list_(),
-      clustering_result_() {}
+      clustering_result_(),
+      device_type_("cpu") {}
 
   ~KDAC() {}
   KDAC(const KDAC &rhs) {}
@@ -145,6 +147,24 @@ class KDAC {
   /// Set the reduced dimension q
   void SetQ(int q) {
     q_ = q;
+  }
+
+  /// Set the kernel type: kGaussianKernel, kPolynomialKernel, kLinearKernel
+  /// And set the constant associated the kernel
+  void SetKernel(KernelType kernel_type, float constant) {
+    kernel_type_ = kernel_type;
+    constant_ = constant;
+  }
+
+
+  /// Set the device type, by defulat it is cpu
+  void SetDevice(std::string device_type) {
+    if (device_type != "cpu" && device_type != "gpu") {
+      std::cerr << "Device type must be cpu or gpu, exiting" << std::endl;
+      exit(1);
+    } else {
+      device_type_ = device_type;
+    }
   }
 
   void SetVerbose(bool verbose) {
@@ -215,12 +235,6 @@ class KDAC {
     return profiler_;
   }
 
-  /// Set the kernel type: kGaussianKernel, kPolynomialKernel, kLinearKernel
-  /// And set the constant associated the kernel
-  void SetKernel(KernelType kernel_type, float constant) {
-    kernel_type_ = kernel_type;
-    constant_ = constant;
-  }
 
   Vector<T> GenOrthogonal(const Matrix<T> &space,
                           const Vector<T> &vector) {
@@ -374,6 +388,9 @@ class KDAC {
 
   // Set to true for debug use
   bool verbose_;
+
+  // Set to "cpu" or "gpu"
+  std::string device_type_;
 
   // Initialization for generating the first clustering result
   void Init(const Matrix<T> &input_matrix) {

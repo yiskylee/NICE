@@ -81,7 +81,7 @@ class GpuOperations {
   }
 
   static Vector<T> Multiply(const Vector<T> &a, const T &scalar) {
-      // Allocate and transfer memory
+    // Allocate and transfer memory
     int n = a.rows();
     const T * h_a = &a(0);
     Vector<T> h_c(a.rows());
