@@ -291,6 +291,7 @@ class KDAC {
     // Following the pseudo code in Algorithm 1 in the paper
     profiler_.fit.Start();
     PROFILE(Init(input_matrix, y_matrix), profiler_.init);
+    int i = 0;
     while (!u_w_converge_) {
       profiler_.fit_loop.Start();
       pre_u_matrix_ = u_matrix_;
@@ -299,8 +300,12 @@ class KDAC {
       PROFILE(OptimizeW(), profiler_.w);
       u_converge_ = CheckConverged(u_matrix_, pre_u_matrix_, threshold_);
       w_converge_ = CheckConverged(w_matrix_, pre_w_matrix_, threshold_);
+//      std::cout << i << " converge?" << std::endl;
+//      std::cout << "u: " << u_converge_ << std::endl;
+//      std::cout << "w: " << w_converge_ << std::endl;
       u_w_converge_ = u_converge_ && w_converge_;
       profiler_.fit_loop.Stop();
+      i++;
     }
     PROFILE(RunKMeans(), profiler_.kmeans);
     profiler_.fit.Stop();
@@ -611,6 +616,7 @@ class KDAC {
 
       T objective = std::numeric_limits<T>::lowest();
       bool w_l_converged = false;
+      int w_l_iter = 0;
       profiler_.w_part1.Record();
       while (!w_l_converged) {
         profiler_.w_part2.Start();
@@ -629,7 +635,9 @@ class KDAC {
         w_matrix_.col(l) = w_l;
         w_l_converged = CheckConverged(objective, pre_objective, threshold_);
         profiler_.w_part3.Record();
+        w_l_iter ++;
       }
+//      std::cout << w_l_iter << "\t";
       profiler_.w_part2.Start();
       if (verbose_)
         std::cout << "Cost: " << objective << std::endl;
@@ -670,11 +678,14 @@ class KDAC {
       }
       profiler_.w_part5.Record();
       profiler_.w_part6.Start();
+      int num_iter_alpha = 0;
       while (phi_of_alpha < phi_of_zero + *alpha * a1 * phi_of_zero_prime) {
         *alpha = *alpha * rho;
         GenPhi(*alpha, *w_l, gradient, false,
                &phi_of_alpha, &phi_of_zero, &phi_of_zero_prime);
+        num_iter_alpha ++;
       }
+//      std::cout << "alpha: " << *alpha << " num_iter_alpha: " << num_iter_alpha << std::endl;
 //      std::cout << "obj: " << phi_of_alpha << std::endl;
       *objective = phi_of_alpha;
       profiler_.w_part6.Record();

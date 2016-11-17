@@ -37,11 +37,13 @@ class Timer {
   void Start() {
     watch_.Start();
   }
+
   // Record the current elapsed time and store it temporary in vec_temp_
   void Record() {
     watch_.Stop();
     vec_temp_.push_back(watch_.DiffInMs());
   }
+
   void Stop() {
     watch_.Stop();
     vec_.push_back(watch_.DiffInMs());
