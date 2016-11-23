@@ -276,7 +276,64 @@ class GpuOperations {
       exit(1);
     }
   }
-  static Matrix<T> Subtract(const Matrix<T> &a, const T &scalar);
+
+  /// This function calculates the difference of the input Matrix and scalar
+  ///
+  /// \param a
+  /// Input Matrix
+  /// \param scalar
+  /// Input scalar of type T
+  ///
+  /// \return
+  /// This function returns a Matrix of type T
+  static Matrix<T> Subtract(const Matrix<T> &a, const T &scalar) {
+    int m = a.rows();
+    int n = a.cols();
+    int lda = m;
+    int ldb = m;
+    int ldc = m;
+
+    T alpha = 1.0;
+    T beta = -1.0;
+
+    const T * h_a = &a(0);
+    Matrix<T> b(m, n);
+    b = Matrix<T>::Constant(m, n, scalar);
+    const T * h_b = &b(0);
+    Matrix<T> h_c(m, n);
+
+    T * d_a;  gpuErrchk(cudaMalloc(&d_a, m * n * sizeof(T)));
+    T * d_b;  gpuErrchk(cudaMalloc(&d_b, m * n * sizeof(T)));
+    T * d_c;  gpuErrchk(cudaMalloc(&d_c, m * n * sizeof(T)));
+
+    gpuErrchk(cudaMemcpy(d_a, h_a, m * n * sizeof(T),
+                         cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMemcpy(d_b, h_b, m * n * sizeof(T),
+                         cudaMemcpyHostToDevice));
+
+    cublasStatus_t stat;
+    cublasHandle_t handle;
+    cublasCreate(&handle);
+    stat = GpuMatrixSub(handle,
+                       m, n,
+                       &alpha,
+                       d_a, lda,
+                       &beta,
+                       d_b, ldb,
+                       d_c, ldc);
+    if (stat != CUBLAS_STATUS_SUCCESS) {
+      std::cerr << "GPU Matrix Sub Internal Failure" << std::endl;
+      cudaFree(d_a); cudaFree(d_b); cudaFree(d_c);
+      cublasDestroy(handle);
+      exit(1);
+    }
+    cudaDeviceSynchronize();
+    gpuErrchk(cudaMemcpy(&h_c(0, 0), d_c, m * n * sizeof(T),
+                         cudaMemcpyDeviceToHost));
+    cudaFree(d_a); cudaFree(d_b); cudaFree(d_c);
+    cublasDestroy(handle);
+    return h_c;
+  }
 
   /// This function subtracts one matrix from another and returns the resulting
   /// matrix.
@@ -350,6 +407,7 @@ class GpuOperations {
       return h_c;
     }
   }
+
   /// Return the inversion of a matrix
   /// Computation all done in GPU
   ///
