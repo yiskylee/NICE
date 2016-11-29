@@ -48,37 +48,27 @@ namespace Nice {
 // Abstract class of common matrix operation interface
 template <typename T>
 class GpuOperations {
+ private:
+  static GpuUtil<T> *util_;
  public:
   static Matrix<T> Multiply(const Matrix<T> &a, const T &scalar) {
-      // Allocate and transfer memory
-      int n = a.cols() * a.rows();
-      const T * h_a = &a(0);
-      Matrix<T> h_c(a.rows(), a.cols());
-      T * d_a;  gpuErrchk(cudaMalloc(&d_a, n * sizeof(T)));
-      gpuErrchk(cudaMemcpy(d_a, h_a, n * sizeof(T),
-                           cudaMemcpyHostToDevice));
+    // Allocate and transfer memory
+    int n = a.cols() * a.rows();
+    const T * h_a = &a(0);
+    Matrix<T> h_c(a.rows(), a.cols());
+    T * d_a;
 
-      // Set up and do cublas matrix scalar multiply
-      cublasStatus_t stat;
-      cublasHandle_t  handle;
-      cublasCreate(&handle);
-      stat = GpuMatrixScalarMul(handle, n, scalar, d_a);
+    util_->SetupMem(&d_a, h_a, n);
 
-      // Error check
-      if (stat != CUBLAS_STATUS_SUCCESS) {
-        std::cerr << "GPU Matrix Scalar Multiply Internal Failure" << std::endl;
-        cudaFree(d_a);
-        cublasDestroy(handle);
-        exit(1);
-      }
-      cudaDeviceSynchronize();
+    // Set up and do cublas matrix scalar multiply
+    GpuMatrixScalarMul(util_->GetBlasHandle(), n, scalar, d_a);
 
-      // Transfer memories back, clear memories, and return result
-      gpuErrchk(cudaMemcpy(&h_c(0, 0), d_a, n * sizeof(T),
-                           cudaMemcpyDeviceToHost));
-      cudaFree(d_a);
-      cublasDestroy(handle);
-      return h_c;
+    //util_->SyncDev();
+
+    // Transfer memories back, clear memories, and return result
+    util_->SyncMem(d_a, &h_c(0, 0), n);
+
+    return h_c;
   }
 
   static Vector<T> Multiply(const Vector<T> &a, const T &scalar) {
@@ -837,6 +827,10 @@ class GpuOperations {
     }
   }
 };
+
+template <typename T>
+GpuUtil<T> *GpuOperations<T>::util_ = GpuUtil<T>::GetInstance();
+
 }  // namespace Nice
 #endif  // NEED_CUDA
 #endif  // CPP_INCLUDE_GPU_OPERATIONS_H_

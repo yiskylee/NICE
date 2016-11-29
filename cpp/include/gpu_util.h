@@ -28,14 +28,109 @@
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
 #include <cusolverDn.h>
+#include <cublas_v2.h>
 
 #include <iostream>
+#include <memory>
 
 namespace Nice {
 
 //
-// Helper functions
+// Helper macros
 //
+#define CUDA_CALL(x) \
+do {\
+  cudaError_t ret = x;\
+  if(ret != cudaSuccess) {\
+    std::cout << "CUDA Error at " << __FILE__ << __LINE__ << std::endl;\
+    std::cout << cudaGetErrorString(ret) << std::endl;\
+    exit(EXIT_FAILURE);\
+  }\
+} while(0)\
+
+#define CURAND_CALL(x) \
+do {\
+  if((x) != CURAND_STATUS_SUCCESS) {\
+    std::cout << "CURAND Error at " << __FILE__ << __LINE__;\
+    exit(EXIT_FAILURE);\
+  }\
+} while(0)\
+
+#define CUBLAS_CALL(x) \
+do {\
+  if((x) != CUBLAS_STATUS_SUCCESS) {\
+    std::cout << "CUBLAS Error at " << __FILE__ << __LINE__;\
+    exit(EXIT_FAILURE);\
+  }\
+} while(0)\
+
+#define CUSOLVER_CALL(x) \
+do {\
+  if((x) != CUSOLVER_STATUS_SUCCESS) {\
+    std::cout << "CUSOLVER Error at " << __FILE__ << __LINE__;\
+    exit(EXIT_FAILURE);\
+  }\
+} while(0)\
+
+
+//
+// GPU utilities
+//
+template <typename T>
+class GpuUtil {
+ private:
+  cusolverDnHandle_t solver_handle_;
+  cublasHandle_t blas_handle_;
+
+  GpuUtil() {
+    CUSOLVER_CALL(cusolverDnCreate(&solver_handle_));
+    CUBLAS_CALL(cublasCreate(&blas_handle_));
+  }
+
+  static std::unique_ptr<GpuUtil> instance_;
+ public:
+  static GpuUtil *GetInstance() {
+    if (instance_.get())
+      return instance_.get();
+    instance_.reset(new GpuUtil());
+    return instance_.get();
+  }
+  ~GpuUtil() {
+    CUSOLVER_CALL(cusolverDnDestroy(solver_handle_));
+    CUBLAS_CALL(cublasDestroy(blas_handle_));
+  }
+  cusolverDnHandle_t GetSolverHandle() {
+    return solver_handle_;
+  }
+
+  cublasHandle_t GetBlasHandle() {
+    return blas_handle_;
+  }
+
+  void SetupMem(T **dev, const T *host, int size) {
+    // Create memory
+    CUDA_CALL(cudaMalloc(dev, size * sizeof(T)));
+
+    // Copy memory over to device
+    CUDA_CALL(cudaMemcpy(*dev, host, size * sizeof(T), cudaMemcpyHostToDevice));
+  }
+  void SyncMem(T *dev, T *host, int size) {
+    // Copy memory over to device
+    CUDA_CALL(cudaMemcpy(host, dev, size * sizeof(T), cudaMemcpyDeviceToHost));   
+
+    // Free device memory
+    CUDA_CALL(cudaFree(dev));
+  }
+
+  void SyncDev() {
+    CUDA_CALL(cudaDeviceSynchronize());
+  }
+  
+};
+
+template <typename T>
+std::unique_ptr<GpuUtil<T>> GpuUtil<T>::instance_ = nullptr;
+
 void gpuAssert(cudaError_t, const char *, int, bool);
 void gpuErrchk(cudaError_t);
 
