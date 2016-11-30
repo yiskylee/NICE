@@ -82,3 +82,4 @@ TYPED_TEST(VectorNormTest, VectorNorm) {
   EXPECT_NEAR(this->norm_, gpu_norm, 0.001);
   EXPECT_NEAR(this->squared_norm_, gpu_squared_norm, 0.001);
 }
+

@@ -41,36 +41,36 @@ namespace Nice {
 #define CUDA_CALL(x) \
 do {\
   cudaError_t ret = x;\
-  if(ret != cudaSuccess) {\
+  if (ret != cudaSuccess) {\
     std::cout << "CUDA Error at " << __FILE__ << __LINE__ << std::endl;\
     std::cout << cudaGetErrorString(ret) << std::endl;\
     exit(EXIT_FAILURE);\
   }\
-} while(0)\
+} while (0)\
 
 #define CURAND_CALL(x) \
 do {\
-  if((x) != CURAND_STATUS_SUCCESS) {\
+  if ((x) != CURAND_STATUS_SUCCESS) {\
     std::cout << "CURAND Error at " << __FILE__ << __LINE__;\
     exit(EXIT_FAILURE);\
   }\
-} while(0)\
+} while (0)\
 
 #define CUBLAS_CALL(x) \
 do {\
-  if((x) != CUBLAS_STATUS_SUCCESS) {\
+  if ((x) != CUBLAS_STATUS_SUCCESS) {\
     std::cout << "CUBLAS Error at " << __FILE__ << __LINE__;\
     exit(EXIT_FAILURE);\
   }\
-} while(0)\
+} while (0)\
 
 #define CUSOLVER_CALL(x) \
 do {\
-  if((x) != CUSOLVER_STATUS_SUCCESS) {\
+  if ((x) != CUSOLVER_STATUS_SUCCESS) {\
     std::cout << "CUSOLVER Error at " << __FILE__ << __LINE__;\
     exit(EXIT_FAILURE);\
   }\
-} while(0)\
+} while (0)\
 
 
 //
@@ -88,6 +88,7 @@ class GpuUtil {
   }
 
   static std::unique_ptr<GpuUtil> instance_;
+
  public:
   static GpuUtil *GetInstance() {
     if (instance_.get())
@@ -122,7 +123,7 @@ class GpuUtil {
     // Copy memory over to device
     if (copy)
       CUDA_CALL(cudaMemcpy(host, dev, size * sizeof(T),
-        cudaMemcpyDeviceToHost));   
+        cudaMemcpyDeviceToHost));
 
     // Free device memory
     CUDA_CALL(cudaFree(dev));
@@ -143,7 +144,7 @@ class GpuUtil {
     // Copy memory over to device
     if (copy)
       CUDA_CALL(cudaMemcpy(host, dev, size * sizeof(int),
-        cudaMemcpyDeviceToHost));   
+        cudaMemcpyDeviceToHost));
 
     // Free device memory
     CUDA_CALL(cudaFree(dev));
@@ -152,7 +153,6 @@ class GpuUtil {
   void SyncDev() {
     CUDA_CALL(cudaDeviceSynchronize());
   }
-  
 };
 
 template <typename T>

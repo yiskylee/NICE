@@ -70,7 +70,7 @@ class GpuSvdSolver {
     T *d_U;
     T *d_V;
     T *d_S;
-    
+
     util_->SetupMem(&d_U, nullptr, M * M, false);
     util_->SetupMem(&d_V, nullptr, N * N, false);
     util_->SetupMem(&d_S, nullptr, N, false);
@@ -92,10 +92,9 @@ class GpuSvdSolver {
     util_->SyncDev();
 
     // Transfer memories back, clear memrory, and return result
-    util_->SyncMem(d_S, &s_(0, 0), N);   
+    util_->SyncMem(d_S, &s_(0, 0), N);
     util_->SyncMem(d_U, &u_(0, 0), M * M);
     util_->SyncMem(d_V, &v_(0, 0), N * N);
-
   }
 
   Matrix<T> MatrixU() const              { return u_; }

@@ -50,6 +50,7 @@ template <typename T>
 class GpuOperations {
  private:
   static GpuUtil<T> *util_;
+
  public:
   static Matrix<T> Multiply(const Matrix<T> &a, const T &scalar) {
     // Allocate and transfer memory
@@ -229,7 +230,7 @@ class GpuOperations {
 
       // Device sync
       util_->SyncDev();
-  
+
       // Transfer memories back, clear memrory, and return result
       util_->SyncMem(d_a, nullptr, 0, false);
       util_->SyncMem(d_b, nullptr, 0, false);
@@ -298,7 +299,7 @@ class GpuOperations {
 
       // Device sync
       util_->SyncDev();
-  
+
       // Transfer memories back, clear memrory, and return result
       util_->SyncMem(d_a, nullptr, 0, false);
       util_->SyncMem(d_b, nullptr, 0, false);
@@ -336,8 +337,8 @@ class GpuOperations {
 
     // Setup GPU memory
     util_->SetupMem(&d_a, h_a, n * n);
-    util_->SetupMem((T **)&d_ipiv, nullptr, n, false);
-    util_->SetupMem((T **)&d_info, nullptr, 1, false);
+    util_->SetupIntMem(&d_ipiv, nullptr, n, false);
+    util_->SetupIntMem(&d_info, nullptr, 1, false);
 
     // Setup cusolver parameters
     int lda = n;
@@ -378,8 +379,8 @@ class GpuOperations {
 
     // Transfer memories back, clear memrory, and return result
     util_->SyncMem(d_a, nullptr, 0, false);
-    util_->SyncMem((T *)d_ipiv, nullptr, 0, false);
-    util_->SyncMem((T *)d_info, nullptr, 0, false);
+    util_->SyncIntMem(d_ipiv, nullptr, 0, false);
+    util_->SyncIntMem(d_info, nullptr, 0, false);
     util_->SyncMem(d_b, h_b, n * n);
 
     // Return the result
@@ -398,7 +399,7 @@ class GpuOperations {
     T h_c;
     T * d_a;
     util_->SetupMem(&d_a, h_a, m * n);
-    
+
     // Setup and do Frobenious Norm
     int iter = 0;
     for (int i = 0; i < n; ++i) {
@@ -618,8 +619,8 @@ class GpuOperations {
     util_->SyncDev();
 
     // Transfer memories back, clear memrory, and return result
-    util_->SyncMem(d_a, nullptr, 0, false);   
-    util_->SyncMem(d_b, nullptr, 0, false);   
+    util_->SyncMem(d_a, nullptr, 0, false);
+    util_->SyncMem(d_b, nullptr, 0, false);
 
     return h_c;
   }
@@ -646,9 +647,9 @@ class GpuOperations {
 
       // Device sync
       util_->SyncDev();
-  
+
       // Transfer memories back, clear memrory, and return result
-      util_->SyncMem(d_a, nullptr, 0, false);   
+      util_->SyncMem(d_a, nullptr, 0, false);
       util_->SyncMem(d_b, nullptr, 0, false);
       util_->SyncMem(d_c, &h_c(0, 0), m * n);
 
