@@ -26,23 +26,9 @@
 namespace Nice {
 
 //
-// Helper functions
-//
-void gpuAssert(cudaError_t code, const char *file,
-               int line, bool abort = true) {
-  if (code != cudaSuccess) {
-    fprintf(stderr, "GPUassert: %s %s %d\n",
-            cudaGetErrorString(code), file, line);
-    if (abort) { exit(code); }
-    }
-}
-
-void gpuErrchk(cudaError_t ans) { gpuAssert((ans), __FILE__, __LINE__); }
-
-//
 // Cusolver wraper functions
 //
-cusolverStatus_t GpuSvd(cusolverDnHandle_t solver_handle,
+void GpuSvd(cusolverDnHandle_t solver_handle,
            int M,
            int N,
            float * d_A,
@@ -52,13 +38,13 @@ cusolverStatus_t GpuSvd(cusolverDnHandle_t solver_handle,
            float * work,
            int work_size,
            int * devInfo) {
-  return cusolverDnSgesvd(solver_handle,
+  CUSOLVER_CALL(cusolverDnSgesvd(solver_handle,
                           'A', 'A', M, N, d_A, M, d_S,
                           d_U, M, d_V, N, work, work_size,
-                          NULL, devInfo);
+                          NULL, devInfo));
 }
 
-cusolverStatus_t GpuSvd(cusolverDnHandle_t solver_handle,
+void GpuSvd(cusolverDnHandle_t solver_handle,
            int M,
            int N,
            double * d_A,
@@ -68,51 +54,53 @@ cusolverStatus_t GpuSvd(cusolverDnHandle_t solver_handle,
            double * work,
            int work_size,
            int * devInfo) {
-  return cusolverDnDgesvd(solver_handle,
+  CUSOLVER_CALL(cusolverDnDgesvd(solver_handle,
                          'A', 'A', M, N, d_A, M, d_S,
                           d_U, M, d_V, N, work, work_size,
-                          NULL, devInfo);
+                          NULL, devInfo));
 }
 
-cusolverStatus_t GpuGetLUDecompWorkspace(cusolverDnHandle_t handle,
+void GpuGetLUDecompWorkspace(cusolverDnHandle_t handle,
                                     int m,
                                     int n,
                                     float *A,
                                     int lda,
                                     int *Lwork) {
-  return cusolverDnSgetrf_bufferSize(handle, m, n, A, lda, Lwork);
+  CUSOLVER_CALL(cusolverDnSgetrf_bufferSize(handle, m, n, A, lda, Lwork));
 }
 
-cusolverStatus_t GpuGetLUDecompWorkspace(cusolverDnHandle_t handle,
+void GpuGetLUDecompWorkspace(cusolverDnHandle_t handle,
                                     int m,
                                     int n,
                                     double *A,
                                     int lda,
                                     int *Lwork) {
-  return cusolverDnDgetrf_bufferSize(handle, m, n, A, lda, Lwork);
+  CUSOLVER_CALL(cusolverDnDgetrf_bufferSize(handle, m, n, A, lda, Lwork));
 }
 
-cusolverStatus_t GpuLUDecomposition(cusolverDnHandle_t handle,
+void GpuLUDecomposition(cusolverDnHandle_t handle,
                                     int m,
                                     int n,
                                     float *A,
                                     int lda,
                                     float *Workspace,
                                     int *devIpiv, int *devInfo) {
-  return cusolverDnSgetrf(handle, m, n, A, lda, Workspace, devIpiv, devInfo);
+  CUSOLVER_CALL(cusolverDnSgetrf(handle, m, n, A, lda,
+    Workspace, devIpiv, devInfo));
 }
 
-cusolverStatus_t GpuLUDecomposition(cusolverDnHandle_t handle,
+void GpuLUDecomposition(cusolverDnHandle_t handle,
                                     int m,
                                     int n,
                                     double *A,
                                     int lda,
                                     double *Workspace,
                                     int *devIpiv, int *devInfo) {
-  return cusolverDnDgetrf(handle, m, n, A, lda, Workspace, devIpiv, devInfo);
+  CUSOLVER_CALL(cusolverDnDgetrf(handle, m, n, A, lda,
+    Workspace, devIpiv, devInfo));
 }
 
-cusolverStatus_t GpuLinearSolver(cusolverDnHandle_t handle,
+void GpuLinearSolver(cusolverDnHandle_t handle,
                                  cublasOperation_t trans,
                                  int n,
                                  int nrhs,
@@ -122,11 +110,11 @@ cusolverStatus_t GpuLinearSolver(cusolverDnHandle_t handle,
                                  float *B,
                                  int ldb,
                                  int *devInfo) {
-  return cusolverDnSgetrs(handle, trans, n, nrhs, A, lda,
-                          devIpiv, B, ldb, devInfo);
+  CUSOLVER_CALL(cusolverDnSgetrs(handle, trans, n, nrhs, A, lda,
+                          devIpiv, B, ldb, devInfo));
 }
 
-cusolverStatus_t GpuLinearSolver(cusolverDnHandle_t handle,
+void GpuLinearSolver(cusolverDnHandle_t handle,
                                  cublasOperation_t trans,
                                  int n,
                                  int nrhs,
@@ -136,46 +124,48 @@ cusolverStatus_t GpuLinearSolver(cusolverDnHandle_t handle,
                                  double *B,
                                  int ldb,
                                  int *devInfo) {
-  return cusolverDnDgetrs(handle, trans, n, nrhs, A, lda,
-                          devIpiv, B, ldb, devInfo);
+  CUSOLVER_CALL(cusolverDnDgetrs(handle, trans, n, nrhs, A, lda,
+                          devIpiv, B, ldb, devInfo));
 }
-cusolverStatus_t GpuLuWorkspace(cusolverDnHandle_t handle,
+void GpuLuWorkspace(cusolverDnHandle_t handle,
                                 int m,
                                 int n,
                                 float *a,
                                 int *worksize) {
-  return cusolverDnSgetrf_bufferSize(handle, m, n, a, m, &(*worksize));
+  CUSOLVER_CALL(cusolverDnSgetrf_bufferSize(handle, m, n, a, m, &(*worksize)));
 }
-cusolverStatus_t GpuLuWorkspace(cusolverDnHandle_t handle,
+void GpuLuWorkspace(cusolverDnHandle_t handle,
                                 int m,
                                 int n,
                                 double *a,
                                 int *worksize) {
-  return cusolverDnDgetrf_bufferSize(handle, m, n, a, m, &(*worksize));
+  CUSOLVER_CALL(cusolverDnDgetrf_bufferSize(handle, m, n, a, m, &(*worksize)));
 }
-cusolverStatus_t GpuDeterminant(cusolverDnHandle_t handle,
+void GpuDeterminant(cusolverDnHandle_t handle,
                                 int m,
                                 int n,
                                 float *a,
                                 float *workspace,
                                 int *devIpiv,
                                 int *devInfo) {
-  return cusolverDnSgetrf(handle, m, n, a, m, workspace, devIpiv, devInfo);
+  CUSOLVER_CALL(cusolverDnSgetrf(handle, m, n, a, m,
+    workspace, devIpiv, devInfo));
 }
-cusolverStatus_t GpuDeterminant(cusolverDnHandle_t handle,
+void GpuDeterminant(cusolverDnHandle_t handle,
                                 int m,
                                 int n,
                                 double *a,
                                 double *workspace,
                                 int *devIpiv,
                                 int *devInfo) {
-  return cusolverDnDgetrf(handle, m, n, a, m, workspace, devIpiv, devInfo);
+  CUSOLVER_CALL(cusolverDnDgetrf(handle, m, n, a, m,
+    workspace, devIpiv, devInfo));
 }
 
 //
 // Cublas wraper functions
 //
-cublasStatus_t GpuMatrixVectorMul(cublasHandle_t handle,
+void GpuMatrixVectorMul(cublasHandle_t handle,
                                   cublasOperation_t trans,
                                   int m, int n,
                                   const float *alpha,
@@ -183,11 +173,11 @@ cublasStatus_t GpuMatrixVectorMul(cublasHandle_t handle,
                                   const float *x, int incx,
                                   const float *beta,
                                   float *y, int incy) {
-  return cublasSgemv(handle, trans, m, n, alpha,
-                     A, lda, x, incx, beta, y, incy);
+  CUBLAS_CALL(cublasSgemv(handle, trans, m, n, alpha,
+                     A, lda, x, incx, beta, y, incy));
 }
 
-cublasStatus_t GpuMatrixVectorMul(cublasHandle_t handle,
+void GpuMatrixVectorMul(cublasHandle_t handle,
                                   cublasOperation_t trans,
                                   int m, int n,
                                   const double *alpha,
@@ -195,25 +185,25 @@ cublasStatus_t GpuMatrixVectorMul(cublasHandle_t handle,
                                   const double *x, int incx,
                                   const double *beta,
                                   double *y, int incy) {
-  return cublasDgemv(handle, trans, m, n, alpha,
-                     A, lda, x, incx, beta, y, incy);
+  CUBLAS_CALL(cublasDgemv(handle, trans, m, n, alpha,
+                     A, lda, x, incx, beta, y, incy));
 }
 
-cublasStatus_t GpuMatrixScalarMul(cublasHandle_t handle,
+void GpuMatrixScalarMul(cublasHandle_t handle,
                                   int n,
                                   const float &scalar,
                                   float *a) {
-  return cublasSscal(handle, n, &scalar, a, 1);
+  CUBLAS_CALL(cublasSscal(handle, n, &scalar, a, 1));
 }
 
-cublasStatus_t GpuMatrixScalarMul(cublasHandle_t handle,
+void GpuMatrixScalarMul(cublasHandle_t handle,
                                   int n,
                                   const double &scalar,
                                   double *a) {
-  return cublasDscal(handle, n, &scalar, a, 1);
+  CUBLAS_CALL(cublasDscal(handle, n, &scalar, a, 1));
 }
 
-cublasStatus_t GpuMatrixMatrixMul(cublasHandle_t handle,
+void GpuMatrixMatrixMul(cublasHandle_t handle,
                                   int m,
                                   int n,
                                   int k,
@@ -221,11 +211,11 @@ cublasStatus_t GpuMatrixMatrixMul(cublasHandle_t handle,
                                   float *b,
                                   float *c) {
   const float alpha = 1.0; const float beta = 0.0;
-  return cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N,
-                     m, n, k, &alpha, a, m, b, k, &beta, c, m);
+  CUBLAS_CALL(cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N,
+                     m, n, k, &alpha, a, m, b, k, &beta, c, m));
 }
 
-cublasStatus_t GpuMatrixMatrixMul(cublasHandle_t handle,
+void GpuMatrixMatrixMul(cublasHandle_t handle,
                                   int m,
                                   int n,
                                   int k,
@@ -233,11 +223,11 @@ cublasStatus_t GpuMatrixMatrixMul(cublasHandle_t handle,
                                   double *b,
                                   double *c) {
   const double alpha = 1.0; const double beta = 0.0;
-  return cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N,
-                     m, n, k, &alpha, a, m, b, k, &beta, c, m);
+  CUBLAS_CALL(cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N,
+                     m, n, k, &alpha, a, m, b, k, &beta, c, m));
 }
 
-cublasStatus_t GpuMatrixAdd(cublasHandle_t handle,
+void GpuMatrixAdd(cublasHandle_t handle,
                             int m,
                             int n,
                             const float *alpha,
@@ -245,11 +235,11 @@ cublasStatus_t GpuMatrixAdd(cublasHandle_t handle,
                             const float *beta,
                             const float *B, int ldb,
                             float *C, int ldc) {
-  return cublasSgeam(handle, CUBLAS_OP_N, CUBLAS_OP_N,
-                     m, n, alpha, A, lda, beta, B, ldb, C, ldc);
+  CUBLAS_CALL(cublasSgeam(handle, CUBLAS_OP_N, CUBLAS_OP_N,
+                     m, n, alpha, A, lda, beta, B, ldb, C, ldc));
 }
 
-cublasStatus_t GpuMatrixAdd(cublasHandle_t handle,
+void GpuMatrixAdd(cublasHandle_t handle,
                             int m,
                             int n,
                             const double *alpha,
@@ -257,56 +247,56 @@ cublasStatus_t GpuMatrixAdd(cublasHandle_t handle,
                             const double *beta,
                             const double *B, int ldb,
                             double *C, int ldc) {
-  return cublasDgeam(handle, CUBLAS_OP_N, CUBLAS_OP_N,
-                     m, n, alpha, A, lda, beta, B, ldb, C, ldc);
+  CUBLAS_CALL(cublasDgeam(handle, CUBLAS_OP_N, CUBLAS_OP_N,
+                     m, n, alpha, A, lda, beta, B, ldb, C, ldc));
 }
 
-cublasStatus_t GpuMatrixMatrixSub(cublasHandle_t handle, int m, int n,
+void GpuMatrixMatrixSub(cublasHandle_t handle, int m, int n,
                                   const float *alpha, float *a, int lda,
                                   const float *beta, float *b, int ldb,
                                   float *c, int ldc ) {
-  return cublasSgeam(handle, CUBLAS_OP_N, CUBLAS_OP_N, m, n, alpha, a, lda,
-                     beta, b, ldb, c, ldc);
+  CUBLAS_CALL(cublasSgeam(handle, CUBLAS_OP_N, CUBLAS_OP_N, m, n, alpha, a, lda,
+                     beta, b, ldb, c, ldc));
 }
 
-cublasStatus_t GpuMatrixMatrixSub(cublasHandle_t handle, int m, int n,
+void GpuMatrixMatrixSub(cublasHandle_t handle, int m, int n,
                                   const double *alpha, double *a, int lda,
                                   const double *beta, double *b, int ldb,
                                   double *c, int ldc ) {
-  return cublasDgeam(handle, CUBLAS_OP_N, CUBLAS_OP_N, m, n, alpha, a, lda,
-                     beta, b, ldb, c, ldc);
+  CUBLAS_CALL(cublasDgeam(handle, CUBLAS_OP_N, CUBLAS_OP_N, m, n, alpha, a, lda,
+                     beta, b, ldb, c, ldc));
 }
 
-cublasStatus_t GpuVectorVectorDot(cublasHandle_t handle,
+void GpuVectorVectorDot(cublasHandle_t handle,
                                   int n,
                                   float *a,
                                   float *b,
                                   float *c) {
-  return cublasSdot(handle, n, a, 1.0, b, 1.0, c);
+  CUBLAS_CALL(cublasSdot(handle, n, a, 1.0, b, 1.0, c));
 }
 
-cublasStatus_t GpuVectorVectorDot(cublasHandle_t handle,
+void GpuVectorVectorDot(cublasHandle_t handle,
                                   int n,
                                   double *a,
                                   double *b,
                                   double *c) {
-  return cublasDdot(handle, n, a, 1.0, b, 1.0, c);
+  CUBLAS_CALL(cublasDdot(handle, n, a, 1.0, b, 1.0, c));
 }
 
-cublasStatus_t GpuFrobeniusNorm(cublasHandle_t handle,
+void GpuFrobeniusNorm(cublasHandle_t handle,
                                 int n,
                                 int incx,
                                 float *a,
                                 float *c) {
-  return cublasSnrm2(handle, n, a, incx, c);
+  CUBLAS_CALL(cublasSnrm2(handle, n, a, incx, c));
 }
 
-cublasStatus_t GpuFrobeniusNorm(cublasHandle_t handle,
+void GpuFrobeniusNorm(cublasHandle_t handle,
                                 int n,
                                 int incx,
                                 double *a,
                                 double *c) {
-  return cublasDnrm2(handle, n, a, incx, c);
+  CUBLAS_CALL(cublasDnrm2(handle, n, a, incx, c));
 }
 
 }  // namespace Nice

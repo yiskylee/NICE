@@ -48,37 +48,30 @@ namespace Nice {
 // Abstract class of common matrix operation interface
 template <typename T>
 class GpuOperations {
+ private:
+  static GpuUtil<T> *util_;
+
  public:
   static Matrix<T> Multiply(const Matrix<T> &a, const T &scalar) {
-      // Allocate and transfer memory
-      int n = a.cols() * a.rows();
-      const T * h_a = &a(0);
-      Matrix<T> h_c(a.rows(), a.cols());
-      T * d_a;  gpuErrchk(cudaMalloc(&d_a, n * sizeof(T)));
-      gpuErrchk(cudaMemcpy(d_a, h_a, n * sizeof(T),
-                           cudaMemcpyHostToDevice));
+    // Allocate and transfer memory
+    int n = a.cols() * a.rows();
+    const T * h_a = &a(0);
+    Matrix<T> h_c(a.rows(), a.cols());
+    T * d_a;
 
-      // Set up and do cublas matrix scalar multiply
-      cublasStatus_t stat;
-      cublasHandle_t  handle;
-      cublasCreate(&handle);
-      stat = GpuMatrixScalarMul(handle, n, scalar, d_a);
+    // Setup GPU memory
+    util_->SetupMem(&d_a, h_a, n);
 
-      // Error check
-      if (stat != CUBLAS_STATUS_SUCCESS) {
-        std::cerr << "GPU Matrix Scalar Multiply Internal Failure" << std::endl;
-        cudaFree(d_a);
-        cublasDestroy(handle);
-        exit(1);
-      }
-      cudaDeviceSynchronize();
+    // Set up and do cublas matrix scalar multiply
+    GpuMatrixScalarMul(util_->GetBlasHandle(), n, scalar, d_a);
 
-      // Transfer memories back, clear memories, and return result
-      gpuErrchk(cudaMemcpy(&h_c(0, 0), d_a, n * sizeof(T),
-                           cudaMemcpyDeviceToHost));
-      cudaFree(d_a);
-      cublasDestroy(handle);
-      return h_c;
+    // Device sync
+    util_->SyncDev();
+
+    // Transfer memories back, clear memories, and return result
+    util_->SyncMem(d_a, &h_c(0, 0), n);
+
+    return h_c;
   }
 
   static Vector<T> Multiply(const Vector<T> &a, const T &scalar) {
@@ -87,26 +80,18 @@ class GpuOperations {
     const T * h_a = &a(0);
     Vector<T> h_c(a.rows());
     T * d_a;
-    gpuErrchk(cudaMalloc(&d_a, n * sizeof(T)));
-    gpuErrchk(cudaMemcpy(d_a, h_a, n * sizeof(T), cudaMemcpyHostToDevice));
-    cublasStatus_t stat;
-    cublasHandle_t handle;
-    cublasCreate(&handle);
-    stat = GpuMatrixScalarMul(handle, n, scalar, d_a);
-    // Error check
-    if (stat != CUBLAS_STATUS_SUCCESS) {
-      std::cerr << "GPU Matrix Scalar Multiply Internal Failure" << std::endl;
-      cudaFree(d_a);
-      cublasDestroy(handle);
-      exit(1);
-    }
-    cudaDeviceSynchronize();
+
+    // Setup GPU memory
+    util_->SetupMem(&d_a, h_a, n);
+
+    GpuMatrixScalarMul(util_->GetBlasHandle(), n, scalar, d_a);
+
+    // Device sync
+    util_->SyncDev();
 
     // Transfer memories back, clear memories, and return result
-    gpuErrchk(cudaMemcpy(&h_c(0), d_a, n * sizeof(T),
-                         cudaMemcpyDeviceToHost));
-    cudaFree(d_a);
-    cublasDestroy(handle);
+    util_->SyncMem(d_a, &h_c(0, 0), n);
+
     return h_c;
   }
 
@@ -121,34 +106,26 @@ class GpuOperations {
       const T * h_b = &b(0);
       Matrix<T> h_c(m, n);
 
-      T * d_a;  gpuErrchk(cudaMalloc(&d_a, m * k * sizeof(T)));
-      T * d_b;  gpuErrchk(cudaMalloc(&d_b, k * n * sizeof(T)));
-      T * d_c;  gpuErrchk(cudaMalloc(&d_c, m * n * sizeof(T)));
+      T * d_a;
+      T * d_b;
+      T * d_c;
 
-      gpuErrchk(cudaMemcpy(d_a, h_a, m * k * sizeof(T),
-                           cudaMemcpyHostToDevice));
-      gpuErrchk(cudaMemcpy(d_b, h_b, k * n * sizeof(T),
-                           cudaMemcpyHostToDevice));
+      // Setup GPU memory
+      util_->SetupMem(&d_a, h_a, m * k);
+      util_->SetupMem(&d_b, h_b, k * n);
+      util_->SetupMem(&d_c, nullptr, m * n, false);
 
       // Set up and do cublas matrix multiply
-      cublasStatus_t stat;
-      cublasHandle_t  handle;
-      cublasCreate(&handle);
-      stat = GpuMatrixMatrixMul(handle, m, n, k, d_a, d_b, d_c);
+      GpuMatrixMatrixMul(util_->GetBlasHandle(), m, n, k, d_a, d_b, d_c);
 
-      // Error check
-      if (stat != CUBLAS_STATUS_SUCCESS) {
-        std::cerr << "GPU Matrix Matrix Multiply Internal Failure" << std::endl;
-        cudaFree(d_a); cudaFree(d_b); cudaFree(d_c);
-        cublasDestroy(handle);
-        exit(1);
-      }
-      cudaDeviceSynchronize();
+      // Device sync
+      util_->SyncDev();
+
       // Transfer memories back, clear memrory, and return result
-      gpuErrchk(cudaMemcpy(&h_c(0, 0), d_c, m * n * sizeof(T),
-                           cudaMemcpyDeviceToHost));
-      cudaFree(d_a); cudaFree(d_b); cudaFree(d_c);
-      cublasDestroy(handle);
+      util_->SyncMem(d_a, nullptr, 0, false);
+      util_->SyncMem(d_b, nullptr, 0, false);
+      util_->SyncMem(d_c, &h_c(0, 0), m * n);
+
       return h_c;
     } else {
       std::cerr << "Matricies in gpu matrix multiply's sizes aren't compatible"
@@ -182,36 +159,31 @@ class GpuOperations {
     const T * h_b = &b(0);
     Matrix<T> h_c(m, n);
 
-    T * d_a;  gpuErrchk(cudaMalloc(&d_a, m * n * sizeof(T)));
-    T * d_b;  gpuErrchk(cudaMalloc(&d_b, m * n * sizeof(T)));
-    T * d_c;  gpuErrchk(cudaMalloc(&d_c, m * n * sizeof(T)));
+    T * d_a;
+    T * d_b;
+    T * d_c;
 
-    gpuErrchk(cudaMemcpy(d_a, h_a, m * n * sizeof(T),
-                         cudaMemcpyHostToDevice));
-    gpuErrchk(cudaMemcpy(d_b, h_b, m * n * sizeof(T),
-                         cudaMemcpyHostToDevice));
+    // Setup GPU memory
+    util_->SetupMem(&d_a, h_a, m * n);
+    util_->SetupMem(&d_b, h_b, m * n);
+    util_->SetupMem(&d_c, nullptr, m * n, false);
 
-    cublasStatus_t stat;
-    cublasHandle_t handle;
-    cublasCreate(&handle);
-    stat = GpuMatrixAdd(handle,
-                       m, n,
-                       &alpha,
-                       d_a, lda,
-                       &beta,
-                       d_b, ldb,
-                       d_c, ldc);
-    if (stat != CUBLAS_STATUS_SUCCESS) {
-      std::cerr << "GPU Matrix Add Internal Failure" << std::endl;
-      cudaFree(d_a); cudaFree(d_b); cudaFree(d_c);
-      cublasDestroy(handle);
-      exit(1);
-    }
-    cudaDeviceSynchronize();
-    gpuErrchk(cudaMemcpy(&h_c(0, 0), d_c, m * n * sizeof(T),
-                         cudaMemcpyDeviceToHost));
-    cudaFree(d_a); cudaFree(d_b); cudaFree(d_c);
-    cublasDestroy(handle);
+    GpuMatrixAdd(util_->GetBlasHandle(),
+                 m, n,
+                 &alpha,
+                 d_a, lda,
+                 &beta,
+                 d_b, ldb,
+                 d_c, ldc);
+
+    // Device sync
+    util_->SyncDev();
+
+    // Transfer memories back, clear memrory, and return result
+    util_->SyncMem(d_a, nullptr, 0, false);
+    util_->SyncMem(d_b, nullptr, 0, false);
+    util_->SyncMem(d_c, &h_c(0, 0), m * n);
+
     return h_c;
   }
 
@@ -239,36 +211,31 @@ class GpuOperations {
       const T * h_b = &b(0);
       Matrix<T> h_c(m, n);
 
-      T * d_a;  gpuErrchk(cudaMalloc(&d_a, m * n * sizeof(T)));
-      T * d_b;  gpuErrchk(cudaMalloc(&d_b, m * n * sizeof(T)));
-      T * d_c;  gpuErrchk(cudaMalloc(&d_c, m * n * sizeof(T)));
+      T * d_a;
+      T * d_b;
+      T * d_c;
 
-      gpuErrchk(cudaMemcpy(d_a, h_a, m * n * sizeof(T),
-                           cudaMemcpyHostToDevice));
-      gpuErrchk(cudaMemcpy(d_b, h_b, m * n * sizeof(T),
-                           cudaMemcpyHostToDevice));
+      // Setup GPU memory
+      util_->SetupMem(&d_a, h_a, m * n);
+      util_->SetupMem(&d_b, h_b, m * n);
+      util_->SetupMem(&d_c, nullptr, m * n, false);
 
-      cublasStatus_t stat;
-      cublasHandle_t handle;
-      cublasCreate(&handle);
-      stat = GpuMatrixAdd(handle,
-                         m, n,
-                         &alpha,
-                         d_a, lda,
-                         &beta,
-                         d_b, ldb,
-                         d_c, ldc);
-      if (stat != CUBLAS_STATUS_SUCCESS) {
-        std::cerr << "GPU Matrix Add Internal Failure" << std::endl;
-        cudaFree(d_a); cudaFree(d_b); cudaFree(d_c);
-        cublasDestroy(handle);
-        exit(1);
-      }
-      cudaDeviceSynchronize();
-      gpuErrchk(cudaMemcpy(&h_c(0, 0), d_c, m * n * sizeof(T),
-                           cudaMemcpyDeviceToHost));
-      cudaFree(d_a); cudaFree(d_b); cudaFree(d_c);
-      cublasDestroy(handle);
+      GpuMatrixAdd(util_->GetBlasHandle(),
+                   m, n,
+                   &alpha,
+                   d_a, lda,
+                   &beta,
+                   d_b, ldb,
+                   d_c, ldc);
+
+      // Device sync
+      util_->SyncDev();
+
+      // Transfer memories back, clear memrory, and return result
+      util_->SyncMem(d_a, nullptr, 0, false);
+      util_->SyncMem(d_b, nullptr, 0, false);
+      util_->SyncMem(d_c, &h_c(0, 0), m * n);
+
       return h_c;
     } else {
       std::cerr << "Matricies in gpu matrix add's sizes aren't compatible"
@@ -317,35 +284,27 @@ class GpuOperations {
       const T * h_b = &b(0);
       Matrix<T> h_c(m, n);
 
-      T * d_a; gpuErrchk(cudaMalloc(&d_a, m * n * sizeof(T)));
-      T * d_b; gpuErrchk(cudaMalloc(&d_b, m * n * sizeof(T)));
-      T * d_c; gpuErrchk(cudaMalloc(&d_c, m * n * sizeof(T)));
+      T * d_a;
+      T * d_b;
+      T * d_c;
 
-      gpuErrchk(cudaMemcpy(d_a, h_a, m * n * sizeof(T),
-                           cudaMemcpyHostToDevice));
-      gpuErrchk(cudaMemcpy(d_b, h_b, m * n * sizeof(T),
-                           cudaMemcpyHostToDevice));
+      // Setup GPU memory
+      util_->SetupMem(&d_a, h_a, m * n);
+      util_->SetupMem(&d_b, h_b, m * n);
+      util_->SetupMem(&d_c, nullptr, m * n, false);
 
       // Set up and do cublas matrix subtract
-      cublasStatus_t stat;
-      cublasHandle_t handle;
-      cublasCreate(&handle);
-      stat = GpuMatrixMatrixSub(handle, m, n, &alpha, d_a, lda,
-                                &beta, d_b, ldb, d_c, ldc);
+      GpuMatrixMatrixSub(util_->GetBlasHandle(), m, n, &alpha, d_a, lda,
+                         &beta, d_b, ldb, d_c, ldc);
 
-      // Error Check
-      if (stat != CUBLAS_STATUS_SUCCESS) {
-        std::cerr << "GPU Matrix Subtract Internal Failure" << std::endl;
-        cudaFree(d_a); cudaFree(d_b); cudaFree(d_c);
-        cublasDestroy(handle);
-        exit(1);
-      }
-      cudaDeviceSynchronize();
-      // Transfer memory back and clear it
-      gpuErrchk(cudaMemcpy(&h_c(0, 0), d_c, m * n * sizeof(T),
-                           cudaMemcpyDeviceToHost));
-      cudaFree(d_a); cudaFree(d_b); cudaFree(d_c);
-      cublasDestroy(handle);
+      // Device sync
+      util_->SyncDev();
+
+      // Transfer memories back, clear memrory, and return result
+      util_->SyncMem(d_a, nullptr, 0, false);
+      util_->SyncMem(d_b, nullptr, 0, false);
+      util_->SyncMem(d_c, &h_c(0, 0), m * n);
+
       // Return result
       return h_c;
     }
@@ -375,50 +334,30 @@ class GpuOperations {
     T *d_a;
     int *d_ipiv;
     int *d_info;
-    gpuErrchk(cudaMalloc(&d_a, n * n * sizeof(T)));
-    gpuErrchk(cudaMalloc(&d_ipiv, n * sizeof(T)));
-    gpuErrchk(cudaMalloc(&d_info, sizeof(T)));
 
-    // Copy host memory over to device
-    gpuErrchk(cudaMemcpy(d_a, h_a, n * n * sizeof(T),
-                         cudaMemcpyHostToDevice));
+    // Setup GPU memory
+    util_->SetupMem(&d_a, h_a, n * n);
+    util_->SetupIntMem(&d_ipiv, nullptr, n, false);
+    util_->SetupIntMem(&d_info, nullptr, 1, false);
 
     // Setup cusolver parameters
-    cusolverDnHandle_t handle;
-    cusolverDnCreate(&handle);
-    cusolverStatus_t stat;
     int lda = n;
     int nrhs = n;
     int ldb = lda;
 
     // Setup workspace for LU decomposition
     int workspace_size;
-    stat = GpuGetLUDecompWorkspace(handle, n, n, d_a, lda, &workspace_size);
-    if (stat != CUSOLVER_STATUS_SUCCESS) {
-      std::cerr << "LU decomposition: Workspace allocation failed"
-                << std::endl;
-      cudaFree(d_a);
-      cudaFree(d_ipiv);
-      cudaFree(d_info);
-      exit(1);
-    }
+    GpuGetLUDecompWorkspace(util_->GetSolverHandle(),
+      n, n, d_a, lda, &workspace_size);
 
     T *workspace;
-    gpuErrchk(cudaMalloc(&workspace, workspace_size * sizeof(T)));
+    util_->SetupMem(&workspace, nullptr, workspace_size, false);
 
     // Do LU docomposition
-    stat = GpuLUDecomposition(handle, n, n, d_a, lda,
-                              workspace, d_ipiv, d_info);
-    if (stat != CUSOLVER_STATUS_SUCCESS) {
-      std::cerr << "LU decomposition: decomposition failed"
-                << std::endl;
-      cudaFree(d_a);
-      cudaFree(d_ipiv);
-      cudaFree(d_info);
-      cudaFree(workspace);
-      exit(1);
-    }
-    cudaFree(workspace);
+    GpuLUDecomposition(util_->GetSolverHandle(), n, n, d_a, lda,
+                       workspace, d_ipiv, d_info);
+
+    util_->SyncMem(workspace, nullptr, 0, false);
 
     // Create an identity matrix
     Matrix<T> b = Matrix<T>::Identity(n, n);
@@ -428,42 +367,26 @@ class GpuOperations {
 
     // Create device memory needed
     T *d_b;
-    gpuErrchk(cudaMalloc(&d_b, n * n * sizeof(T)));
-
-    // Copy host memory over to device
-    gpuErrchk(cudaMemcpy(d_b, h_b, n * n * sizeof(T),
-                         cudaMemcpyHostToDevice));
+    util_->SetupMem(&d_b, h_b, n * n);
 
     // Do lineaer solver
-    stat = GpuLinearSolver(handle, CUBLAS_OP_N, n, nrhs, d_a, lda, d_ipiv, d_b,
-                           ldb, d_info);
-    if (stat != CUSOLVER_STATUS_SUCCESS) {
-      std::cerr << "Linear solver failed"
-                << std::endl;
-      cudaFree(d_a);
-      cudaFree(d_ipiv);
-      cudaFree(d_info);
-      cudaFree(d_b);
-      exit(1);
-    }
+    GpuLinearSolver(util_->GetSolverHandle(),
+      CUBLAS_OP_N, n, nrhs, d_a, lda, d_ipiv, d_b,
+      ldb, d_info);
 
-    // Copy device result over to host
-    gpuErrchk(cudaMemcpy(h_b, d_b, n * n * sizeof(T),
-                         cudaMemcpyDeviceToHost));
+    // Device sync
+    util_->SyncDev();
 
-    // Synchonize and clean up
-    cudaDeviceSynchronize();
-    cudaFree(d_a);
-    cudaFree(d_ipiv);
-    cudaFree(d_info);
-    cudaFree(d_b);
-
-    // Destroy the handle
-    cusolverDnDestroy(handle);
+    // Transfer memories back, clear memrory, and return result
+    util_->SyncMem(d_a, nullptr, 0, false);
+    util_->SyncIntMem(d_ipiv, nullptr, 0, false);
+    util_->SyncIntMem(d_info, nullptr, 0, false);
+    util_->SyncMem(d_b, h_b, n * n);
 
     // Return the result
     return b;
   }
+
   static Vector<T> Norm(const Matrix<T> a, const int &p = 2,
                         const int &axis = 0) {
     int m = a.rows();
@@ -473,35 +396,21 @@ class GpuOperations {
     const T * h_a = &a(0);
 
     // Allocate and transfer memories
-    T * h_c = reinterpret_cast<T *>(malloc(sizeof(T)));
-    T * d_a;  gpuErrchk(cudaMalloc(&d_a, m * n * sizeof(T)));
-    T * d_t;  gpuErrchk(cudaMalloc(&d_t, m *     sizeof(T)));
-    gpuErrchk(cudaMemcpy(d_a, h_a, m * n * sizeof(T), cudaMemcpyHostToDevice));
+    T h_c;
+    T * d_a;
+    util_->SetupMem(&d_a, h_a, m * n);
 
     // Setup and do Frobenious Norm
-    cublasHandle_t  handle;
-    cublasCreate(&handle);
-    cublasStatus_t stat;
     int iter = 0;
     for (int i = 0; i < n; ++i) {
-      gpuErrchk(cudaMemcpy(d_t, d_a + i * m, m * sizeof(T),
-                           cudaMemcpyDeviceToDevice));
-      stat = GpuFrobeniusNorm(handle, m, incx, d_t, h_c);
-      // Error Check
-      if (stat != CUBLAS_STATUS_SUCCESS) {
-        std::cerr << "GPU Matrix Norm Internal Failure"
-                  << std::endl;
-        cudaFree(d_a); free(h_c);
-        cublasDestroy(handle);
-        exit(1);
-      }
-      cudaDeviceSynchronize();
-      c(iter) = *h_c;
+      GpuFrobeniusNorm(util_->GetBlasHandle(), m, incx, d_a + i * m, &h_c);
+      c(iter) = h_c;
       iter++;
     }
+
     // Free memories and return answer
-    cudaFree(d_a); free(h_c);
-    cublasDestroy(handle);
+    util_->SyncMem(d_a, nullptr, 0, false);
+
     return c;
   }
   static T Determinant(const Matrix<T> &a) {
@@ -511,52 +420,34 @@ class GpuOperations {
     T det;
 
     // Allocating and transfering memories
-    T *d_a;   gpuErrchk(cudaMalloc(&d_a, m * n * sizeof(T)));
-    int *devIpiv_h = reinterpret_cast<int *>(malloc(m * n * sizeof(int)));
-    int *devIpiv_d; gpuErrchk(cudaMalloc(&devIpiv_d, m * n * sizeof(int)));
-    cudaMemset(devIpiv_d, 0, m * n * sizeof(int));
+    T *d_a;
+    util_->SetupMem(&d_a, h_a, m * n);
+    int *devIpiv_h = new int[m * n];
+    int *devIpiv_d;
+    util_->SetupIntMem(&devIpiv_d, nullptr, m * n, false);
     int devInfo_h = 0;
-    int *devInfo_d;   gpuErrchk(cudaMalloc(&devInfo_d, sizeof(int)));
-    T *h_c = reinterpret_cast<T *>(malloc(m * n *sizeof(T)));
-    gpuErrchk(cudaMemcpy(d_a, h_a, m * n * sizeof(T), cudaMemcpyHostToDevice));
+    int *devInfo_d;
+    util_->SetupIntMem(&devInfo_d, nullptr, 1, false);
+    T *h_c = new T[m * n];
 
     // Setup and do get LU decomposition buffer
     int work_size = 0;
-    cusolverStatus_t stat;
-    cusolverDnHandle_t handle;
-    cusolverDnCreate(&handle);
-    stat = GpuLuWorkspace(handle, m, n, d_a, &work_size);
-
-    // Error check
-    if (stat != CUSOLVER_STATUS_SUCCESS) {
-      std::cout << "Initialization of determinant buffer failed." << std::endl;
-      cudaFree(d_a); cudaFree(devIpiv_d); free(devIpiv_h); free(h_c);
-      cudaFree(devInfo_d);
-      cusolverDnDestroy(handle);
-      exit(1);
-    }
+    GpuLuWorkspace(util_->GetSolverHandle(), m, n, d_a, &work_size);
 
     // Allocate LU decomposition workspace memory and do LU decomposistion
-    T *workspace;    gpuErrchk(cudaMalloc(&workspace, work_size * sizeof(T)));
-    stat = GpuDeterminant(handle, m, n, d_a, workspace, devIpiv_d, devInfo_d);
+    T *workspace;
+    util_->SetupMem(&workspace, nullptr, work_size, false);
+    GpuDeterminant(util_->GetSolverHandle(), m, n, d_a,
+      workspace, devIpiv_d, devInfo_d);
+    util_->SyncMem(workspace, nullptr, 0, false);
 
-    // Error check
-    gpuErrchk(cudaMemcpy(&devInfo_h, devInfo_d, sizeof(int),
-              cudaMemcpyDeviceToHost));
-    if (stat != CUSOLVER_STATUS_SUCCESS || devInfo_h != 0) {
-      std::cerr << "GPU Determinant Internal Failure" << std::endl;
-      cudaFree(d_a); cudaFree(devIpiv_d); free(devIpiv_h); free(h_c);
-      cudaFree(devInfo_d); cudaFree(workspace);
-      cusolverDnDestroy(handle);
-      exit(1);
-    }
-    cudaDeviceSynchronize();
+    // Device sync
+    util_->SyncDev();
 
-    // Transfer memories back to host
-    gpuErrchk(cudaMemcpy(devIpiv_h, devIpiv_d, m * n * sizeof(int),
-              cudaMemcpyDeviceToHost));
-    gpuErrchk(cudaMemcpy(h_c, d_a, m * n * sizeof(T),
-              cudaMemcpyDeviceToHost));
+    // Transfer memories back, clear memrory, and return result
+    util_->SyncMem(d_a, h_c, m * n);
+    util_->SyncIntMem(devIpiv_d, devIpiv_h, m * n);
+    util_->SyncIntMem(devInfo_d, &devInfo_h, 1);
 
     // Count number of swaps, if odd multiply determinant by -1
     int cnt = 0;
@@ -573,9 +464,8 @@ class GpuOperations {
     if (cnt % 2 != 0) det = det * -1;  // if odd multiply by -1
 
     // Free memories and return answer
-    cudaFree(d_a); cudaFree(devIpiv_d); free(devIpiv_h); free(h_c);
-    cudaFree(devInfo_d); cudaFree(workspace);
-    cusolverDnDestroy(handle);
+    delete []devIpiv_h;
+    delete []h_c;
     return det;
   }
 
@@ -610,32 +500,18 @@ class GpuOperations {
     int incx = 1;
     const T * h_a = &a(0);
 
-    T * h_c = reinterpret_cast<T *>(malloc(sizeof(T)));
+    T h_c;
     T * d_a;
-    gpuErrchk(cudaMalloc(&d_a, num_elem * sizeof(T)));
-    gpuErrchk(
-        cudaMemcpy(d_a, h_a, num_elem * sizeof(T), cudaMemcpyHostToDevice));
+    util_->SetupMem(&d_a, h_a, num_elem);
 
-    // Setup and do Frobenious Norm
-    cublasHandle_t  handle;
-    cublasCreate(&handle);
-    cublasStatus_t stat;
-    stat = GpuFrobeniusNorm(handle, num_elem, incx, d_a, h_c);
+    GpuFrobeniusNorm(util_->GetBlasHandle(), num_elem, incx, d_a, &h_c);
 
-    // Error Check
-    if (stat != CUBLAS_STATUS_SUCCESS) {
-      std::cerr << "GPU Vector Norm Internal Failure"
-                << std::endl;
-      cudaFree(d_a); free(h_c);
-      cublasDestroy(handle);
-      exit(1);
-    }
-    cudaDeviceSynchronize();
+    // Device sync
+    util_->SyncDev();
 
-    // Free memories and return answer
-    cudaFree(d_a);
-    cublasDestroy(handle);
-    return *h_c;
+    // Transfer memories back, clear memrory, and return result
+    util_->SyncMem(d_a, nullptr, 0, false);
+    return h_c;
   }
 
   static T SquaredNorm(const Vector<T> &a) {
@@ -650,30 +526,20 @@ class GpuOperations {
     const T * h_a = &a(0);
 
     // Traceocate and transfer memories
-    T * h_c = reinterpret_cast<T *>(malloc(sizeof(T)));
-    T * d_a;  gpuErrchk(cudaMalloc(&d_a, m * n * sizeof(T)));
-    gpuErrchk(cudaMemcpy(d_a, h_a, m * n * sizeof(T), cudaMemcpyHostToDevice));
+    T h_c;
+    T * d_a;
+    util_->SetupMem(&d_a, h_a, m * n);
 
     // Setup and do Frobenious Norm
-    cublasHandle_t  handle;
-    cublasCreate(&handle);
-    cublasStatus_t stat;
-    stat = GpuFrobeniusNorm(handle, n * m, incx, d_a, h_c);
+    GpuFrobeniusNorm(util_->GetBlasHandle(), n * m, incx, d_a, &h_c);
 
-    // Error Check
-    if (stat != CUBLAS_STATUS_SUCCESS) {
-      std::cerr << "GPU Matrix Frobenius Norm Internal Failure"
-                << std::endl;
-      cudaFree(d_a); free(h_c);
-      cublasDestroy(handle);
-      exit(1);
-    }
-    cudaDeviceSynchronize();
+    // Device sync
+    util_->SyncDev();
 
-    // Free memories and return answer
-    cudaFree(d_a);
-    cublasDestroy(handle);
-    return *h_c;
+    // Transfer memories back, clear memrory, and return result
+    util_->SyncMem(d_a, nullptr, 0, false);
+
+    return h_c;
   }
 
   /// Return the trace of a matrix
@@ -702,20 +568,11 @@ class GpuOperations {
     T *d_a;
     T *d_multiplier;
     T *d_result;
-    gpuErrchk(cudaMalloc(&d_a, m * sizeof(T)));
-    gpuErrchk(cudaMalloc(&d_multiplier, m * sizeof(T)));
-    gpuErrchk(cudaMalloc(&d_result, sizeof(T)));
-
-    // Copy host memory over to device
-    gpuErrchk(cudaMemcpy(d_a, h_a, m * sizeof(T),
-                         cudaMemcpyHostToDevice));
-    gpuErrchk(cudaMemcpy(d_multiplier, h_multiplier, m * sizeof(T),
-                         cudaMemcpyHostToDevice));
+    util_->SetupMem(&d_a, h_a, m);
+    util_->SetupMem(&d_multiplier, h_multiplier, m);
+    util_->SetupMem(&d_result, nullptr, 1, false);
 
     // Create parameters for cublas wraper function
-    cublasStatus_t stat;
-    cublasHandle_t handle;
-    cublasCreate(&handle);
     cublasOperation_t trans = CUBLAS_OP_T;
     int n = 1;
     T alpha = 1.0;
@@ -725,69 +582,47 @@ class GpuOperations {
     int incy = 1;
 
     // Do vector summation to obtain trace
-    stat = GpuMatrixVectorMul(handle, trans, m, n, &alpha,
+    GpuMatrixVectorMul(util_->GetBlasHandle(), trans, m, n, &alpha,
                        d_a, lda, d_multiplier, incx, &beta, d_result, incy);
 
-    // Error check
-    if (stat != CUBLAS_STATUS_SUCCESS) {
-      std::cerr << "GPU Trace Internal Failure" << std::endl;
-      cudaFree(d_a);
-      cudaFree(d_multiplier);
-      cudaFree(d_result);
-      cublasDestroy(handle);
-      exit(1);
-    }
+    // Device sync
+    util_->SyncDev();
 
-    // Copy device result over to host
-    gpuErrchk(cudaMemcpy(&h_result, d_result, sizeof(T),
-                         cudaMemcpyDeviceToHost));
+    // Transfer memories back, clear memrory, and return result
+    util_->SyncMem(d_a, nullptr, 0, false);
+    util_->SyncMem(d_multiplier, nullptr, 0, false);
+    util_->SyncMem(d_result, &h_result, 1);
 
-    // Synchonize and clean up
-    cudaDeviceSynchronize();
-    cudaFree(d_a);
-    cudaFree(d_multiplier);
-    cudaFree(d_result);
     delete []h_multiplier;
-
-    // Destroy the handle
-    cublasDestroy(handle);
 
     // Return the result
     return h_result;
   }
+
   static T DotProduct(const Vector<T> &a, const Vector<T> &b) {
     int n = a.rows();
 
     // Allocate and transfer memories
     const T * h_a = &a(0);
     const T * h_b = &b(0);
-    T * h_c = reinterpret_cast<T *>(malloc(sizeof(T)));
+    T h_c;
 
-    T * d_a;  gpuErrchk(cudaMalloc(&d_a, n * sizeof(T)));
-    T * d_b;  gpuErrchk(cudaMalloc(&d_b, n * sizeof(T)));
-
-    gpuErrchk(cudaMemcpy(d_a, h_a, n * sizeof(T), cudaMemcpyHostToDevice));
-    gpuErrchk(cudaMemcpy(d_b, h_b, n * sizeof(T), cudaMemcpyHostToDevice));
+    T * d_a;
+    T * d_b;
+    util_->SetupMem(&d_a, h_a, n);
+    util_->SetupMem(&d_b, h_b, n);
 
     // Setup and do dot product
-    cublasHandle_t  handle;
-    cublasCreate(&handle);
-    cublasStatus_t stat;
-    stat = GpuVectorVectorDot(handle, n, d_a, d_b, h_c);
+    GpuVectorVectorDot(util_->GetBlasHandle(), n, d_a, d_b, &h_c);
 
-    // Error Check
-    if (stat != CUBLAS_STATUS_SUCCESS) {
-      std::cerr << "GPU Vector Vector Dot Product Internal Failure"
-                << std::endl;
-      cudaFree(d_a); cudaFree(d_b);
-      cublasDestroy(handle);
-    }
-    cudaDeviceSynchronize();
+    // Device sync
+    util_->SyncDev();
 
-    // Free memories and return result
-    cudaFree(d_a); cudaFree(d_b);
-    cublasDestroy(handle);
-    return *h_c;
+    // Transfer memories back, clear memrory, and return result
+    util_->SyncMem(d_a, nullptr, 0, false);
+    util_->SyncMem(d_b, nullptr, 0, false);
+
+    return h_c;
   }
   static Matrix<T> OuterProduct(const Vector<T> &a, const Vector<T> &b) {
     if (a.cols() == b.cols()) {
@@ -800,35 +635,24 @@ class GpuOperations {
       const T * h_b = &b(0);
       Matrix<T> h_c(m, n);
 
-      T * d_a;  gpuErrchk(cudaMalloc(&d_a, m * k * sizeof(T)));
-      T * d_b;  gpuErrchk(cudaMalloc(&d_b, k * n * sizeof(T)));
-      T * d_c;  gpuErrchk(cudaMalloc(&d_c, m * n * sizeof(T)));
-
-      gpuErrchk(cudaMemcpy(d_a, h_a, m * k * sizeof(T),
-                           cudaMemcpyHostToDevice));
-      gpuErrchk(cudaMemcpy(d_b, h_b, k * n * sizeof(T),
-                           cudaMemcpyHostToDevice));
+      T * d_a;
+      T * d_b;
+      T * d_c;
+      util_->SetupMem(&d_a, h_a, m * k);
+      util_->SetupMem(&d_b, h_b, k * n);
+      util_->SetupMem(&d_c, nullptr, m * n, false);
 
       // Setup and do outer product multiply
-      cublasStatus_t stat;
-      cublasHandle_t  handle;
-      cublasCreate(&handle);
-      stat = GpuMatrixMatrixMul(handle, m, n, k, d_a, d_b, d_c);
+      GpuMatrixMatrixMul(util_->GetBlasHandle(), m, n, k, d_a, d_b, d_c);
 
-      // Error check
-      if (stat != CUBLAS_STATUS_SUCCESS) {
-        std::cerr << "GPU Outer Product Internal Failure" << std::endl;
-        cudaFree(d_a); cudaFree(d_b); cudaFree(d_c);
-        cublasDestroy(handle);
-        exit(1);
-      }
-      cudaDeviceSynchronize();
+      // Device sync
+      util_->SyncDev();
 
-      // Transfer results back, clear memories, return answer
-      gpuErrchk(cudaMemcpy(&h_c(0, 0), d_c, m * n * sizeof(T),
-                           cudaMemcpyDeviceToHost));
-      cudaFree(d_a); cudaFree(d_b); cudaFree(d_c);
-      cublasDestroy(handle);
+      // Transfer memories back, clear memrory, and return result
+      util_->SyncMem(d_a, nullptr, 0, false);
+      util_->SyncMem(d_b, nullptr, 0, false);
+      util_->SyncMem(d_c, &h_c(0, 0), m * n);
+
       return h_c;
     } else {
       std::cerr << "Vectors in gpu outer product's sizes aren't compatible"
@@ -837,6 +661,10 @@ class GpuOperations {
     }
   }
 };
+
+template <typename T>
+GpuUtil<T> *GpuOperations<T>::util_ = GpuUtil<T>::GetInstance();
+
 }  // namespace Nice
 #endif  // NEED_CUDA
 #endif  // CPP_INCLUDE_GPU_OPERATIONS_H_
