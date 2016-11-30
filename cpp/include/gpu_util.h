@@ -107,16 +107,43 @@ class GpuUtil {
     return blas_handle_;
   }
 
-  void SetupMem(T **dev, const T *host, int size) {
+  void SetupMem(T **dev, const T *host, int size, bool copy = true) {
     // Create memory
     CUDA_CALL(cudaMalloc(dev, size * sizeof(T)));
 
     // Copy memory over to device
-    CUDA_CALL(cudaMemcpy(*dev, host, size * sizeof(T), cudaMemcpyHostToDevice));
+    if (copy)
+      CUDA_CALL(cudaMemcpy(*dev, host, size * sizeof(T),
+        cudaMemcpyHostToDevice));
+    else
+      CUDA_CALL(cudaMemset(*dev, 0, size * sizeof(T)));
   }
-  void SyncMem(T *dev, T *host, int size) {
+  void SyncMem(T *dev, T *host, int size, bool copy = true) {
     // Copy memory over to device
-    CUDA_CALL(cudaMemcpy(host, dev, size * sizeof(T), cudaMemcpyDeviceToHost));   
+    if (copy)
+      CUDA_CALL(cudaMemcpy(host, dev, size * sizeof(T),
+        cudaMemcpyDeviceToHost));   
+
+    // Free device memory
+    CUDA_CALL(cudaFree(dev));
+  }
+
+  void SetupIntMem(int **dev, const int *host, int size, bool copy = true) {
+    // Create memory
+    CUDA_CALL(cudaMalloc(dev, size * sizeof(int)));
+
+    // Copy memory over to device
+    if (copy)
+      CUDA_CALL(cudaMemcpy(*dev, host, size * sizeof(int),
+        cudaMemcpyHostToDevice));
+    else
+      CUDA_CALL(cudaMemset(*dev, 0, size * sizeof(int)));
+  }
+  void SyncIntMem(int *dev, int *host, int size, bool copy = true) {
+    // Copy memory over to device
+    if (copy)
+      CUDA_CALL(cudaMemcpy(host, dev, size * sizeof(int),
+        cudaMemcpyDeviceToHost));   
 
     // Free device memory
     CUDA_CALL(cudaFree(dev));
