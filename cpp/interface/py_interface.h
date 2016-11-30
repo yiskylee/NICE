@@ -46,7 +46,6 @@ enum DataType {
   DOUBLE
 };
 
-
 // The numpy array is stored in row major
 using IMatrixMap = Eigen::Map< Eigen::Matrix<int, Eigen::Dynamic,
                                Eigen::Dynamic, Eigen::RowMajor> >;
@@ -54,6 +53,10 @@ using FMatrixMap = Eigen::Map< Eigen::Matrix<float, Eigen::Dynamic,
                                Eigen::Dynamic, Eigen::RowMajor> >;
 using DMatrixMap = Eigen::Map< Eigen::Matrix<double, Eigen::Dynamic,
                                Eigen::Dynamic, Eigen::RowMajor> >;
+template<typename T>
+using MatrixMap = Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic,
+                             Eigen::Dynamic, Eigen::RowMajor> >;
+
 
 class PyInterface {
  protected:

@@ -52,6 +52,7 @@
 #include "include/stop_watch.h"
 #include "include/kdac_profiler.h"
 #include "include/timer.h"
+#include "include/kdac_cuda.h"
 
 
 // Pass in a timer and a function, the time taken by that function is then
@@ -102,6 +103,7 @@ class KDAC {
       gamma_matrix_(),
       a_matrix_list_(),
       clustering_result_(),
+      verbose_(false),
       device_type_("cpu") {}
 
   ~KDAC() {}
@@ -140,7 +142,7 @@ class KDAC {
   }
 
   // Set lambda for HSIC
-  void SetLambda(float lambda) {
+  void SetLambda(double lambda) {
     lambda_ = lambda;
   }
 
@@ -308,8 +310,14 @@ class KDAC {
     int i = 0;
     while (!u_w_converge_) {
       profiler_.fit_loop.Start();
-      pre_u_matrix_ = u_matrix_;
-      pre_w_matrix_ = w_matrix_;
+      if (device_type_ == "cpu") {
+        pre_u_matrix_ = u_matrix_;
+        pre_w_matrix_ = w_matrix_;
+      }
+      if (device_type_ == "gpu") {
+        pre_u_matrix_d_ = u_matrix_d_;
+        pre_w_matrix_d_ = w_matrix_d_;
+      }
       PROFILE(OptimizeU(), profiler_.u);
       PROFILE(OptimizeW(), profiler_.w);
       u_converge_ = CheckConverged(u_matrix_, pre_u_matrix_, threshold_);
@@ -343,10 +351,10 @@ class KDAC {
   int q_;  // reduced dimension q
   int n_;  // number of samples in input data X
   int d_;  // input data X dimension d
-  float lambda_;  // Learning rate lambda
-  float alpha_;  // Alpha in W optimization
+  double lambda_;  // Learning rate lambda
+  double alpha_;  // Alpha in W optimization
   KernelType kernel_type_;  // The kernel type of the kernel matrix
-  float constant_;  // In Gaussian kernel, this is sigma;
+  double constant_;  // In Gaussian kernel, this is sigma;
   // In Polynomial kernel, this is the polynomial order
   // In Linear kernel, this is c as well
   bool u_converge_;  // If matrix U reaches convergence, false by default
@@ -354,37 +362,62 @@ class KDAC {
   bool u_w_converge_;  // If matrix U and W both converge, false by default
   T threshold_;  // To determine convergence
   Matrix<T> x_matrix_;  // Input matrix X (n by d)
+  T* x_matrix_d_; // Input matrix X (n by d) on device
   Matrix<T> w_matrix_;  // Transformation matrix W (d by q, q < d).
                         // Initialized to (d by d) of I
+  T* w_matrix_d_;
   Matrix<T> pre_w_matrix_;  // W matrix from last iteration,
   // to check convergence
+  T* pre_w_matrix_d_;
   Matrix<T> y_matrix_;  // Labeling matrix Y (n by (c0 + c1 + c2 + ..))
+  T* y_matrix_d_;
   Matrix<T> y_matrix_temp_;  // The matrix that holds the current Y_i
+  T* y_matrix_temp_d_;
   Matrix<T> y_matrix_tilde_;  // The kernel matrix for Y
+  T* y_matrix_tilde_d_;
   Matrix<T> d_matrix_;  // Diagonal degree matrix D (n by n)
+  T* d_matrix_d_;
   Matrix<T> d_matrix_to_the_minus_half_;  // D^(-1/2) matrix
+  T* d_matrix_to_the_minus_half_d_;
   Vector<T> d_ii_;  // The diagonal vector of the matrix D
+  T* d_ii_d_;
   Vector<T> d_i_;  // The diagonal vector of the matrix D^(-1/2)
+  T* d_i_d_;
   Matrix<T> didj_matrix_;  // The matrix whose element (i, j) equals to
   // di * dj - the ith and jth element from vector d_i_
+  T* didj_matrix_d_;
   Matrix<T> k_matrix_;  // Kernel matrix K (n by n)
+  T* k_matrix_d_;
   Matrix<T> k_matrix_y_;  // Kernel matrix for Y (n by n)
+  T* k_matrix_y_d_;
   Matrix<T> u_matrix_;  // Embedding matrix U (n by c)
+  T* u_matrix_d_;
   Matrix<T> pre_u_matrix_;  // The U from last iteration, to check convergence
+  T* pre_u_matrix_d_;
   Matrix<T> u_matrix_normalized_;  // Row-wise normalized U
+  T* u_matrix_normalized_d_;
   Matrix<T> l_matrix_;  // D^(-1/2) * K * D^(-1/2)
+  T* l_matrix_d_;
   Matrix<T> h_matrix_;  // Centering matrix (n by n)
+  T* h_matrix_d_;
   Matrix<T> gamma_matrix_;  // The gamma matrix used in gamma_ij in formula 5
+  T* gamma_matrix_d_;
   std::vector<Matrix<T>> a_matrix_list_;  // An n*n list that contains all of
   // the A_ij matrix
+  std::vector<T*> a_matrix_d_list_; // An n*n list that contains the device
+  // pointers for A_ij matrix
+
   Vector<T> clustering_result_;  // Current clustering result
+  T* clustering_result_d_;
   Matrix<T> waw_matrix_;
+  T* waw_matrix_d_;
   Matrix<T> waf_matrix_;
+  T* waf_matrix_d_;
   Matrix<T> faf_matrix_;
+  T* faf_matrix_d_;
 
   // A struct contains timers for different functions
   KDACProfiler profiler_;
-  int w_col_num_iters_;
 
   // Set to true for debug use
   bool verbose_;
@@ -394,12 +427,17 @@ class KDAC {
 
   // Initialization for generating the first clustering result
   void Init(const Matrix<T> &input_matrix) {
+
     x_matrix_ = input_matrix;
     n_ = input_matrix.rows();
     d_ = input_matrix.cols();
     // w_matrix_ is I initially
     w_matrix_ = Matrix<T>::Identity(d_, d_);
-//    num_iters_w_matrix_ = Vector<T>::Zero(q_);
+    if (device_type_ == "gpu") {
+      std::cout << "device is gpu" << std::endl;
+      x_matrix_d_ = CUDAMallocAndCpy(x_matrix_);
+      w_matrix_d_ = CUDAMallocAndCpy(w_matrix_);
+    }
   }
 
   // Initialization for generating alternative views when Y is already generated
@@ -442,10 +480,17 @@ class KDAC {
     u_converge_ = false;
     w_converge_ = false;
     u_w_converge_ = false;
+    if (device_type_ == "gpu") {
+      h_matrix_d_ = CUDAMallocAndCpy(h_matrix_);
+      y_matrix_temp_d_ = CUDAMallocAndCpy(y_matrix_temp_);
+      y_matrix_d_ = CUDAMallocAndCpy(y_matrix);
+      k_matrix_y_d_ = CUDAMallocAndCpy(k_matrix_y_);
+      y_matrix_tilde_d_ = CUDAMallocAndCpy(y_matrix_tilde_);
+      waw_matrix_d_ = CUDAMallocAndCpy(waw_matrix_);
+      waf_matrix_d_ = CUDAMallocAndCpy(waf_matrix_);
+      faf_matrix_d_ = CUDAMallocAndCpy(faf_matrix_);
+    }
   }
-
-
-
 
   void InitAMatrixList(void) {
     a_matrix_list_.resize(n_ * n_);
@@ -454,6 +499,15 @@ class KDAC {
         Vector<T> delta_x_ij = x_matrix_.row(i) - x_matrix_.row(j);
         Matrix<T> a_ij = CpuOperations<T>::OuterProduct(delta_x_ij, delta_x_ij);
         a_matrix_list_[i * n_ + j] = a_ij;
+      }
+    }
+    if (device_type_ == "gpu") {
+      a_matrix_d_list_.resize(n_ * n_);
+      for (int i = 0; i < n_; i++) {
+        for (int j = 0; j < n_; j++) {
+          a_matrix_d_list_[i * n_ + j] =
+              CUDAMallocAndCpy(a_matrix_list_[i * n_ + j]);
+        }
       }
     }
   }
@@ -674,7 +728,7 @@ class KDAC {
   }
 
   void LineSearch(const Vector<T> &gradient,
-                  Vector<T> *w_l, float *alpha, T *objective) {
+                  Vector<T> *w_l, double *alpha, T *objective) {
     *alpha = 1.0;
     float a1 = 0.1;
     float rho = 0.8;
@@ -764,13 +818,21 @@ class KDAC {
   void GenPhiCoeff(const Vector<T> &w_l, const Vector<T> &gradient) {
     // Three terms used to calculate phi of alpha
     // They only change if w_l or gradient change
-    for (int i = 0; i < n_; i++) {
-      for (int j = 0; j < n_; j++) {
-        Matrix<T> &a_matrix_ij = a_matrix_list_[i * n_ + j];
-        waw_matrix_(i, j) = w_l.transpose() * a_matrix_ij * w_l;
-        waf_matrix_(i, j) = w_l.transpose() * a_matrix_ij * gradient;
-        faf_matrix_(i, j) = gradient.transpose() * a_matrix_ij * gradient;
+    if (device_type_ == "cpu") {
+      for (int i = 0; i < n_; i++) {
+        for (int j = 0; j < n_; j++) {
+          Matrix<T> &a_matrix_ij = a_matrix_list_[i * n_ + j];
+          waw_matrix_(i, j) = w_l.transpose() * a_matrix_ij * w_l;
+          waf_matrix_(i, j) = w_l.transpose() * a_matrix_ij * gradient;
+          faf_matrix_(i, j) = gradient.transpose() * a_matrix_ij * gradient;
+        }
       }
+    } else if (device_type_ == "gpu") {
+      T* w_l_d = CUDAMallocAndCpy(w_l);
+      T* gradient_d = CUDAMallocAndCpy(gradient);
+//      GPUGenPhiCoeff(waw_matrix_d_, waf_matrix_d_, faf_matrix_d_,
+//                     w_l_d, gradient_d);
+      GPUGenPhiCoeff<T>(gradient_d);
     }
   }
 
