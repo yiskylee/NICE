@@ -78,15 +78,20 @@ T* CUDAMallocAndCpy(const Vector <T> &vec) {
   gpuErrchk(cudaMemcpy(d_vec, h_vec, n * sizeof(T), cudaMemcpyHostToDevice));
   return d_vec;
 }
-template
-float* CUDAMallocAndCpy<float>(const Vector<float> &vec);
-template
-double* CUDAMallocAndCpy<double>(const Vector<double> &vec);
+
+template <typename T>
+__global__ void GPUGenPhiCoeffKernel(T )
 
 template<typename T>
 void GPUGenPhiCoeff(T *a) {
   std::cout << "in GPUGenPhiCoeff" << std::endl;
+
 }
+
+template
+float* CUDAMallocAndCpy<float>(const Vector<float> &vec);
+template
+double* CUDAMallocAndCpy<double>(const Vector<double> &vec);
 template
 void GPUGenPhiCoeff<float>(float *a);
 template

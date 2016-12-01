@@ -69,8 +69,9 @@ BOOST_PYTHON_MODULE(Nice4Py) {
     .def("GetQ", &Nice::KDACInterface<float>::GetQ)
     .def("GetTimePerIter", &Nice::KDACInterface<float>::GetTimePerIter);
 
+  //Use double by default
   boost::python::class_<Nice::KDACInterface<double>>
-      ("KDACDOUBLE", boost::python::init<>())
+      ("KDAC", boost::python::init<>())
       .def("Fit", Fit1Double)
       .def("Fit", Fit2Double)
       .def("Fit", Fit3Double)

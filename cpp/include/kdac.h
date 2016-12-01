@@ -832,7 +832,8 @@ class KDAC {
       T* gradient_d = CUDAMallocAndCpy(gradient);
 //      GPUGenPhiCoeff(waw_matrix_d_, waf_matrix_d_, faf_matrix_d_,
 //                     w_l_d, gradient_d);
-      GPUGenPhiCoeff<T>(gradient_d);
+      GPUGenPhiCoeff<T>(gradient_d, w_l_d,
+                        waw_matrix_d_, waf_matrix_d_, faf_matrix_d_);
     }
   }
 
