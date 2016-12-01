@@ -44,6 +44,7 @@ class GpuSvdSolver {
   Matrix<T> u_;
   Matrix<T> v_;
   Vector<T> s_;
+  static GpuUtil<T> *util_;
 
  public:
   GpuSvdSolver() {}
@@ -53,8 +54,8 @@ class GpuSvdSolver {
     int N = A.cols();
     const T *h_A = &A(0);
     // --- Setting the device matrix and moving the host matrix to the device
-    T *d_A;   gpuErrchk(cudaMalloc(&d_A,      M * N * sizeof(T)));
-    gpuErrchk(cudaMemcpy(d_A, h_A, M * N * sizeof(T), cudaMemcpyHostToDevice));
+    T *d_A;
+    util_->SetupMem(&d_A, h_A, M * N);
 
     //--- host side SVD results space
     s_.resize(M, 1);
@@ -64,50 +65,36 @@ class GpuSvdSolver {
     // --- device side SVD workspace and matrices
     int work_size = 0;
     int devInfo_h = 0;
-    int *devInfo;   gpuErrchk(cudaMalloc(&devInfo,          sizeof(int)));
-    T *d_U;         gpuErrchk(cudaMalloc(&d_U,      M * M * sizeof(T)));
-    T *d_V;         gpuErrchk(cudaMalloc(&d_V,      N * N * sizeof(T)));
-    T *d_S;         gpuErrchk(cudaMalloc(&d_S,      N *     sizeof(T)));
-    cusolverStatus_t stat;
+    int *devInfo;
+    util_->SetupIntMem(&devInfo, nullptr, 1, false);
+    T *d_U;
+    T *d_V;
+    T *d_S;
 
-    // --- CUDA solver initialization
-    cusolverDnHandle_t solver_handle;
-    cusolverDnCreate(&solver_handle);
-    stat = cusolverDnSgesvd_bufferSize(solver_handle, M, N, &work_size);
-    if (stat != CUSOLVER_STATUS_SUCCESS) {
-      std::cout << "Initialization of cuSolver failed." << std::endl;
-      cudaFree(d_S); cudaFree(d_U); cudaFree(d_V);
-      cusolverDnDestroy(solver_handle);
-      exit(1);
-    }
-    T *work;    gpuErrchk(cudaMalloc(&work, work_size * sizeof(T)));
+    util_->SetupMem(&d_U, nullptr, M * M, false);
+    util_->SetupMem(&d_V, nullptr, N * N, false);
+    util_->SetupMem(&d_S, nullptr, N, false);
+
+    cusolverDnSgesvd_bufferSize(util_->GetSolverHandle(), M, N, &work_size);
+
+    T *work;
+    util_->SetupMem(&work, nullptr, work_size, false);
 
     // --- CUDA SVD execution
-    stat = GpuSvd(solver_handle, M, N,
-                 d_A, d_S, d_U, d_V,
-                 work, work_size, devInfo);
+    GpuSvd(util_->GetSolverHandle(), M, N,
+           d_A, d_S, d_U, d_V,
+           work, work_size, devInfo);
 
     // Error Check
-    gpuErrchk(cudaMemcpy(&devInfo_h, devInfo,
-              sizeof(int), cudaMemcpyDeviceToHost));
-    if (stat != CUSOLVER_STATUS_SUCCESS || devInfo_h != 0) {
-      std::cerr << "GPU SVD Solver Internal Failure" << std::endl;
-      cudaFree(d_S); cudaFree(d_U); cudaFree(d_V); cudaFree(work);
-      cusolverDnDestroy(solver_handle);
-      exit(1);
-    }
-    cudaDeviceSynchronize();
+    util_->SyncIntMem(devInfo, &devInfo_h, 1);
 
-        // --- Moving the results from device to host
-    gpuErrchk(cudaMemcpy(&s_(0, 0), d_S, N*sizeof(T),
-              cudaMemcpyDeviceToHost));
-    gpuErrchk(cudaMemcpy(&u_(0, 0), d_U, M*M*sizeof(T),
-              cudaMemcpyDeviceToHost));
-    gpuErrchk(cudaMemcpy(&v_(0, 0), d_V, N*N*sizeof(T),
-              cudaMemcpyDeviceToHost));
+    // Device sync
+    util_->SyncDev();
 
-    cudaFree(d_S); cudaFree(d_U); cudaFree(d_V); cudaFree(work);
-    cusolverDnDestroy(solver_handle);
+    // Transfer memories back, clear memrory, and return result
+    util_->SyncMem(d_S, &s_(0, 0), N);
+    util_->SyncMem(d_U, &u_(0, 0), M * M);
+    util_->SyncMem(d_V, &v_(0, 0), N * N);
   }
 
   Matrix<T> MatrixU() const              { return u_; }
@@ -116,6 +103,9 @@ class GpuSvdSolver {
 
   Vector<T> SingularValues() const       { return s_; }
 };
+
+template <typename T>
+GpuUtil<T> *GpuSvdSolver<T>::util_ = GpuUtil<T>::GetInstance();
 }  // namespace Nice
 
 #endif  // NEED_CUDA
