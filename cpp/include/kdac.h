@@ -321,7 +321,11 @@ class KDAC {
       profiler_.fit_loop.Stop();
       i++;
     }
+    if (verbose_)
+      std::cout << "U and W Converged" << std::endl;
     PROFILE(RunKMeans(), profiler_.kmeans);
+    if (verbose_)
+      std::cout << "Kmeans Done" << std::endl;
     profiler_.fit.Stop();
   }
 
@@ -570,6 +574,8 @@ class KDAC {
     // to normalize its rows
     u_matrix_ = solver.MatrixU().leftCols(c_);
     CheckFiniteOptimizeU();
+    if (verbose_)
+      std::cout << "W Optimized" << std::endl;
   }
 
   void CheckFiniteOptimizeU(void) {
@@ -671,6 +677,8 @@ class KDAC {
     profiler_.w_part5.SumRecords();
     profiler_.w_part6.SumRecords();
 //    profiler_.w_part7.SumRecords();
+    if (verbose_)
+      std::cout << "W Optimized" << std::endl;
   }
 
   void LineSearch(const Vector<T> &gradient,
