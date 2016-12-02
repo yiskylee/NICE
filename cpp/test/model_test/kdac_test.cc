@@ -62,6 +62,15 @@ class KDACTest : public ::testing::Test {
     return Nice::util::FromFile<T>(file_path);
   }
 
+  std::string GenFilePath(std::string data_type,
+                          int num_samples, int dim, int num_clusters) {
+    std::string root_dir("../test/data_for_test/kdac/");
+    std::string file_path = root_dir + data_type + "_" +
+        std::to_string(num_samples) + "_"
+        + std::to_string(dim) + "_" + std::to_string(num_clusters) + ".csv";
+    return file_path;
+  }
+
 };
 
 typedef ::testing::Types<float, int, long, double> AllTypes;
@@ -87,7 +96,6 @@ TYPED_TEST_CASE(KDACTest, FloatTypes);
   }\
   std::cout << std::endl;\
 
-
 #define EXPECT_MATRIX_ABS_EQ(a, ref, error)\
     EXPECT_EQ(a.rows(), ref.rows());\
     EXPECT_EQ(a.cols(), ref.cols());\
@@ -95,33 +103,62 @@ TYPED_TEST_CASE(KDACTest, FloatTypes);
       for (int j = 0; j < a.cols(); j++)\
         EXPECT_NEAR(std::abs(a(i, j)), std::abs(ref(i, j)), error);\
 
-TYPED_TEST(KDACTest, PredGaussian) {
+TYPED_TEST(KDACTest, GaussianTestVerbose) {
   int num_clusters = 3;
-  int num_samples_per_cluster = 10;
+  int num_samples_per_cluster = 30;
   int num_samples = num_clusters * num_samples_per_cluster;
   int dim = 6;
-  this->kdac_ ->SetQ(num_clusters);
-  this->kdac_ ->SetC(num_clusters);
-  this->kdac_ ->SetVerbose(true);
-  std::string root_dir("../test/data_for_test/kdac/");
-  std::string file_name = "data_gaussian_" + std::to_string(num_samples) + "_"
-  + std::to_string(dim) + "_" + std::to_string(num_clusters) + ".csv";
-//  Nice::Matrix<TypeParam> data_matrix = Nice::util::FromFile<TypeParam>(
-//      "../test/data_for_test/kdac/data_gaussian_150_6_3.csv", ",");
+  this->kdac_->SetQ(num_clusters);
+  this->kdac_->SetC(num_clusters);
+  this->kdac_->SetVerbose(true);
+  this->kdac_->SetKernel(Nice::kGaussianKernel, 1.0);
+//  std::string file_name = "data_gaussian_" + std::to_string(num_samples) + "_"
+//  + std::to_string(dim) + "_" + std::to_string(num_clusters) + ".csv";
+  std::string file_path = this->GenFilePath("data_gaussian",
+                                            num_samples, dim, num_clusters);
+  std::cout << file_path << std::endl;
   Nice::Matrix<TypeParam> data_matrix = Nice::util::FromFile<TypeParam>(
-      root_dir + file_name, ",");
-  Nice::Matrix<TypeParam> first_y =
+      file_path, ",");
+//  Nice::Matrix<TypeParam> data_matrix = Nice::util::FromFile<TypeParam>(
+//      root_dir + file_name, ",");
+  Nice::Matrix<TypeParam> existing_y =
       Nice::Matrix<TypeParam>::Zero(data_matrix.rows(), this->kdac_->GetC());
-
   for (int center = 0; center < num_clusters; center++) {
     for (int sample = 0; sample < num_samples_per_cluster; sample ++) {
-      first_y(center * num_samples_per_cluster + sample, center) =
+      existing_y(center * num_samples_per_cluster + sample, center) =
           static_cast<TypeParam>(1);
     }
   }
-  this->kdac_->SetKernel(Nice::kGaussianKernel, 1.0);
+  this->kdac_->Fit(data_matrix, existing_y);
+  PRINTV(this->kdac_->Predict(), num_samples_per_cluster);
+}
 
-  this->kdac_->Fit(data_matrix, first_y);
+TYPED_TEST(KDACTest, GaussianTest) {
+  int num_clusters = 3;
+  int num_samples_per_cluster = 30;
+  int num_samples = num_clusters * num_samples_per_cluster;
+  int dim = 6;
+  this->kdac_->SetQ(num_clusters);
+  this->kdac_->SetC(num_clusters);
+  this->kdac_->SetKernel(Nice::kGaussianKernel, 1.0);
+  //  std::string file_name = "data_gaussian_" + std::to_string(num_samples) + "_"
+  //  + std::to_string(dim) + "_" + std::to_string(num_clusters) + ".csv";
+  std::string file_path = this->GenFilePath("data_gaussian",
+                                            num_samples, dim, num_clusters);
+  std::cout << file_path << std::endl;
+  Nice::Matrix<TypeParam> data_matrix = Nice::util::FromFile<TypeParam>(
+      file_path, ",");
+  //  Nice::Matrix<TypeParam> data_matrix = Nice::util::FromFile<TypeParam>(
+  //      root_dir + file_name, ",");
+  Nice::Matrix<TypeParam> existing_y =
+      Nice::Matrix<TypeParam>::Zero(data_matrix.rows(), this->kdac_->GetC());
+  for (int center = 0; center < num_clusters; center++) {
+    for (int sample = 0; sample < num_samples_per_cluster; sample ++) {
+      existing_y(center * num_samples_per_cluster + sample, center) =
+        static_cast<TypeParam>(1);
+    }
+  }
+  this->kdac_->Fit(data_matrix, existing_y);
   PRINTV(this->kdac_->Predict(), num_samples_per_cluster);
 }
 

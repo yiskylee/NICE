@@ -549,8 +549,6 @@ class KDAC {
     // If this is the first round and second,
     // then we use the full X to initialize the
     // U matrix, Otherwise, we project X to subspace W (n * d to n * q)
-    if (verbose_)
-      std::cout << "Optimizing U" << std::endl;
     Matrix<T> projected_x_matrix = x_matrix_ * w_matrix_;
     CheckFinite(projected_x_matrix, "projected_x_matrix");
     // Generate the kernel matrix based on kernel type from projected X
@@ -575,7 +573,7 @@ class KDAC {
     u_matrix_ = solver.MatrixU().leftCols(c_);
     CheckFiniteOptimizeU();
     if (verbose_)
-      std::cout << "W Optimized" << std::endl;
+      std::cout << "U Optimized" << std::endl;
   }
 
   void CheckFiniteOptimizeU(void) {
@@ -594,8 +592,6 @@ class KDAC {
 
   void OptimizeW(void) {
     profiler_.w_part1.Start();
-    if (verbose_)
-      std::cout << "Optimizing W" << std::endl;
     // didj matrix contains the element (i, j) that equal to d_i * d_j
     didj_matrix_ = d_i_ * d_i_.transpose();
     // Generate the Gamma matrix in equation 5, which is a constant since
@@ -658,18 +654,16 @@ class KDAC {
         w_matrix_.col(l) = w_l;
         w_l_converged = CheckConverged(objective, pre_objective, threshold_);
         profiler_.w_part3.Record();
-        w_l_iter ++;
+        w_l_iter++;
       }
-//      std::cout << w_l_iter << "\t";
       profiler_.w_part2.Start();
-      if (verbose_)
-        std::cout << "Cost: " << objective << std::endl;
       UpdateGOfW(g_of_w, w_l);
       // TODO: Need to learn about if using Vector<T> &w_l = w_matrix_.col(l)
       CheckFiniteOptimizeW();
       profiler_.w_part2.Record();
+      if (verbose_)
+        std::cout << "Column " << l+1 << " cost: " << objective << " | ";
     }
-
     profiler_.w_part1.SumRecords();
     profiler_.w_part2.SumRecords();
     profiler_.w_part3.SumRecords();
