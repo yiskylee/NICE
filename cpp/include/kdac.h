@@ -322,14 +322,15 @@ class KDAC {
       PROFILE(OptimizeW(), profiler_.w);
       u_converge_ = CheckConverged(u_matrix_, pre_u_matrix_, threshold_);
       w_converge_ = CheckConverged(w_matrix_, pre_w_matrix_, threshold_);
-//      std::cout << i << " converge?" << std::endl;
-//      std::cout << "u: " << u_converge_ << std::endl;
-//      std::cout << "w: " << w_converge_ << std::endl;
       u_w_converge_ = u_converge_ && w_converge_;
       profiler_.fit_loop.Stop();
       i++;
     }
+    if (verbose_)
+      std::cout << "U and W Converged" << std::endl;
     PROFILE(RunKMeans(), profiler_.kmeans);
+    if (verbose_)
+      std::cout << "Kmeans Done" << std::endl;
     profiler_.fit.Stop();
   }
 
@@ -403,9 +404,9 @@ class KDAC {
   Matrix<T> gamma_matrix_;  // The gamma matrix used in gamma_ij in formula 5
   T* gamma_matrix_d_;
   std::vector<Matrix<T>> a_matrix_list_;  // An n*n list that contains all of
-  // the A_ij matrix
-  std::vector<T*> a_matrix_d_list_; // An n*n list that contains the device
-  // pointers for A_ij matrix
+  T* a_matrices_d_; // An n*n matrix each cell of which is a dxd matrix Aij
+  T* delta_ijs_d_; // An n*n matrix each cell of which is a row vector of
+  // X[i] - X[j]
 
   Vector<T> clustering_result_;  // Current clustering result
   T* clustering_result_d_;
@@ -425,9 +426,11 @@ class KDAC {
   // Set to "cpu" or "gpu"
   std::string device_type_;
 
+  // GPUUtil object to setup memory etc.
+  GpuUtil<T> *gpu_util;
+
   // Initialization for generating the first clustering result
   void Init(const Matrix<T> &input_matrix) {
-
     x_matrix_ = input_matrix;
     n_ = input_matrix.rows();
     d_ = input_matrix.cols();
@@ -473,6 +476,7 @@ class KDAC {
     // Generate Y tilde matrix in equation 5 from kernel matrix of Y
     y_matrix_tilde_ = h_matrix_ * k_matrix_y_ * h_matrix_;
     InitAMatrixList();
+    exit(-1);
     // Coefficients for calculating phi
     waw_matrix_ = Matrix<T>::Zero(n_, n_);
     waf_matrix_ = Matrix<T>::Zero(n_, n_);
@@ -502,13 +506,11 @@ class KDAC {
       }
     }
     if (device_type_ == "gpu") {
-      a_matrix_d_list_.resize(n_ * n_);
-      for (int i = 0; i < n_; i++) {
-        for (int j = 0; j < n_; j++) {
-          a_matrix_d_list_[i * n_ + j] =
-              CUDAMallocAndCpy(a_matrix_list_[i * n_ + j]);
-        }
-      }
+      size_t size_a = n_*n_*d_*d_ * sizeof(T);
+      size_t size_delta = n_*n_*d_ * sizeof(T);
+      gpu_util->SetupMem(&a_matrices_d_, nullptr, size_a, false);
+      gpu_util->SetupMem(&delta_ijs_d_, nullptr, size_delta, false);
+      GPUGenAMatrices(x_matrix_d_, a_matrices_d_, delta_ijs_d_, n_, d_);
     }
   }
 
@@ -599,8 +601,6 @@ class KDAC {
     // If this is the first round and second,
     // then we use the full X to initialize the
     // U matrix, Otherwise, we project X to subspace W (n * d to n * q)
-    if (verbose_)
-      std::cout << "Optimizing U" << std::endl;
     Matrix<T> projected_x_matrix = x_matrix_ * w_matrix_;
     CheckFinite(projected_x_matrix, "projected_x_matrix");
     // Generate the kernel matrix based on kernel type from projected X
@@ -624,6 +624,8 @@ class KDAC {
     // to normalize its rows
     u_matrix_ = solver.MatrixU().leftCols(c_);
     CheckFiniteOptimizeU();
+    if (verbose_)
+      std::cout << "U Optimized" << std::endl;
   }
 
   void CheckFiniteOptimizeU(void) {
@@ -642,8 +644,6 @@ class KDAC {
 
   void OptimizeW(void) {
     profiler_.w_part1.Start();
-    if (verbose_)
-      std::cout << "Optimizing W" << std::endl;
     // didj matrix contains the element (i, j) that equal to d_i * d_j
     didj_matrix_ = d_i_ * d_i_.transpose();
     // Generate the Gamma matrix in equation 5, which is a constant since
@@ -706,18 +706,15 @@ class KDAC {
         w_matrix_.col(l) = w_l;
         w_l_converged = CheckConverged(objective, pre_objective, threshold_);
         profiler_.w_part3.Record();
-        w_l_iter ++;
       }
-//      std::cout << w_l_iter << "\t";
       profiler_.w_part2.Start();
-      if (verbose_)
-        std::cout << "Cost: " << objective << std::endl;
       UpdateGOfW(g_of_w, w_l);
       // TODO: Need to learn about if using Vector<T> &w_l = w_matrix_.col(l)
       CheckFiniteOptimizeW();
       profiler_.w_part2.Record();
+      if (verbose_)
+        std::cout << "Column " << l+1 << " cost: " << objective << " | ";
     }
-
     profiler_.w_part1.SumRecords();
     profiler_.w_part2.SumRecords();
     profiler_.w_part3.SumRecords();
@@ -828,12 +825,16 @@ class KDAC {
         }
       }
     } else if (device_type_ == "gpu") {
-      T* w_l_d = CUDAMallocAndCpy(w_l);
-      T* gradient_d = CUDAMallocAndCpy(gradient);
-//      GPUGenPhiCoeff(waw_matrix_d_, waf_matrix_d_, faf_matrix_d_,
-//                     w_l_d, gradient_d);
-      GPUGenPhiCoeff<T>(gradient_d, w_l_d,
-                        waw_matrix_d_, waf_matrix_d_, faf_matrix_d_);
+//      T* w_l_d = CUDAMallocAndCpy(w_l);
+//      T* gradient_d = CUDAMallocAndCpy(gradient);
+//      T* d_a_matrices, d_delta_x_ijs;
+//      gpu_util -> SetupMem(&d_a_matrices, nullptr,
+//                           sizeof(T)*n_*n_*d_*d_, false);
+//      gpu_util -> SetupMem(&d_delta_x_ijs, nullptr,
+//                           sizeof(T)*n_*n_*d_, false);
+//      GPUGenPhiCoeff(x_matrix_d_, d_a_matrices, d_delta_x_ijs,
+//                     waw_matrix_d_, waf_matrix_d_, faf_matrix_d_,
+//                     w_l_d, gradient_d, n_, d_);
     }
   }
 

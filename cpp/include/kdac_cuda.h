@@ -50,8 +50,8 @@ T* CUDAMallocAndCpy(const Vector<T> &vec);
 //    T *w_l_d, T *gradient_d);
 //}
 
-template<typename T>
-void GPUGenPhiCoeff(T *a);
+template <typename T>
+void GPUGenAMatrices(T *x_matrix, T *a_matrices, T *delta_ijs, int n, int d);
 }
 #endif  // NEED_CUDA
 #endif  // CPP_INCLUDE_KDAC_IN_CUDA_H_
