@@ -92,10 +92,10 @@ __global__ void GPUGenAMatricesKernel
     delta_ij[k] = x_matrix[k * n + i] - x_matrix[k * n + j];
   }
   cublasHandle_t handle;
-  const double alpha = 1.0;
-  const double beta = 0.0;
+  const float alpha = 1.0;
+  const float beta = 0.0;
   // Each thread (i, j) generates a matrix Aij
-  cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N,
+  cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N,
                d, d, 1, &alpha,
                delta_ij, 1, delta_ij, 1, &beta, a_ij_matrix, d);
 }
@@ -110,19 +110,23 @@ void GPUGenAMatrices(T *x_matrix, T *a_matrices, T *delta_ijs,
   GPUGenAMatricesKernel<<<dim_grid, dim_block>>>(x_matrix, a_matrices,
       delta_ijs, n, d);
 }
-//template
-//void GPUGenAMatrices<float>(float *x_matrix,
-//                            float *a_matrices,
-//                            float *delta_ijs,
-//                            int n,
-//                            int d);
 
+// Explicit Instantiation
 template
-void GPUGenAMatrices<double>(double *x_matrix,
-                             double *a_matrices,
-                             double *delta_ijs,
-                             int n,
-                             int d);
+void GPUGenAMatrices<float>(float *x_matrix,
+                            float *a_matrices,
+                            float *delta_ijs,
+                            int n,
+                            int d);
+
+// Cannot instantiate it to double if I am using cublasSgemm
+// Only cublasDgemm is for double
+//template
+//void GPUGenAMatrices<double>(double *x_matrix,
+//                             double *a_matrices,
+//                             double *delta_ijs,
+//                             int n,
+//                             int d);
 //template <typename T>
 //__global__ void GPUGenPhiCoeffKernel(T *x_matrix,
 //                                     T *a_matrices,

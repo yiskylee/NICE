@@ -104,8 +104,8 @@ class KDAC {
       gamma_matrix_(),
       a_matrix_list_(),
       clustering_result_(),
-      device_type_("cpu"),
-      verbose_(false) {}
+      verbose_(false),
+      device_type_("cpu") {}
 
   ~KDAC() {}
   KDAC(const KDAC &rhs) {}
