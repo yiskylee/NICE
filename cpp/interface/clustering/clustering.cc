@@ -56,7 +56,7 @@ void (Nice::KDACInterface<double>::*Fit3Double)(PyObject *, int row_1, int col_1
 
 BOOST_PYTHON_MODULE(Nice4Py) {
   boost::python::class_<Nice::KDACInterface<float>>
-      ("KDACFLOAT", boost::python::init<>())
+      ("KDAC", boost::python::init<>())
     .def("Fit", Fit1Float)
     .def("Fit", Fit2Float)
     .def("Fit", Fit3Float)
@@ -71,7 +71,7 @@ BOOST_PYTHON_MODULE(Nice4Py) {
 
   //Use double by default
   boost::python::class_<Nice::KDACInterface<double>>
-      ("KDAC", boost::python::init<>())
+      ("KDACDOUBLE", boost::python::init<>())
       .def("Fit", Fit1Double)
       .def("Fit", Fit2Double)
       .def("Fit", Fit3Double)

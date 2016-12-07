@@ -39,6 +39,7 @@
 #include <valarray>
 #include <tgmath.h>
 #include <numeric>
+#include <cmath>
 #include "include/matrix.h"
 #include "include/vector.h"
 #include "include/cpu_operations.h"
@@ -103,8 +104,8 @@ class KDAC {
       gamma_matrix_(),
       a_matrix_list_(),
       clustering_result_(),
-      verbose_(false),
-      device_type_("cpu") {}
+      device_type_("cpu"),
+      verbose_(false) {}
 
   ~KDAC() {}
   KDAC(const KDAC &rhs) {}
@@ -142,7 +143,7 @@ class KDAC {
   }
 
   // Set lambda for HSIC
-  void SetLambda(double lambda) {
+  void SetLambda(float lambda) {
     lambda_ = lambda;
   }
 
@@ -352,10 +353,10 @@ class KDAC {
   int q_;  // reduced dimension q
   int n_;  // number of samples in input data X
   int d_;  // input data X dimension d
-  double lambda_;  // Learning rate lambda
-  double alpha_;  // Alpha in W optimization
+  float lambda_;  // Learning rate lambda
+  float alpha_;  // Alpha in W optimization
   KernelType kernel_type_;  // The kernel type of the kernel matrix
-  double constant_;  // In Gaussian kernel, this is sigma;
+  float constant_;  // In Gaussian kernel, this is sigma;
   // In Polynomial kernel, this is the polynomial order
   // In Linear kernel, this is c as well
   bool u_converge_;  // If matrix U reaches convergence, false by default
@@ -687,7 +688,6 @@ class KDAC {
 
       T objective = std::numeric_limits<T>::lowest();
       bool w_l_converged = false;
-      int w_l_iter = 0;
       profiler_.w_part1.Record();
       while (!w_l_converged) {
         profiler_.w_part2.Start();
@@ -725,7 +725,7 @@ class KDAC {
   }
 
   void LineSearch(const Vector<T> &gradient,
-                  Vector<T> *w_l, double *alpha, T *objective) {
+                  Vector<T> *w_l, float *alpha, T *objective) {
     *alpha = 1.0;
     float a1 = 0.1;
     float rho = 0.8;

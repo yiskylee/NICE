@@ -180,7 +180,11 @@ class KDACInterface {
     kdac_ -> Fit(input_1, input_2);
   }
   void Predict(PyObject *in, int row, int col) {
-    kdac_ -> Predict();
+    Py_buffer pybuf;
+    PyObject_GetBuffer(in, &pybuf, PyBUF_SIMPLE);
+    MatrixMap<T> output(nullptr, 0, 0);
+    new (&output) MatrixMap<T>(reinterpret_cast<T *>(pybuf.buf), row, col);
+    output = kdac_ -> Predict();
   }
   void GetU(PyObject *in, int row, int col) {
     Py_buffer pybuf;
