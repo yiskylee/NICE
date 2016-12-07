@@ -39,6 +39,7 @@
 #include <valarray>
 #include <tgmath.h>
 #include <numeric>
+#include <cmath>
 #include "include/matrix.h"
 #include "include/vector.h"
 #include "include/cpu_operations.h"
@@ -102,7 +103,8 @@ class KDAC {
       gamma_matrix_(),
       a_matrix_list_(),
       clustering_result_(),
-      device_type_("cpu") {}
+      device_type_("cpu"),
+      verbose_(false) {}
 
   ~KDAC() {}
   KDAC(const KDAC &rhs) {}
@@ -314,9 +316,6 @@ class KDAC {
       PROFILE(OptimizeW(), profiler_.w);
       u_converge_ = CheckConverged(u_matrix_, pre_u_matrix_, threshold_);
       w_converge_ = CheckConverged(w_matrix_, pre_w_matrix_, threshold_);
-//      std::cout << i << " converge?" << std::endl;
-//      std::cout << "u: " << u_converge_ << std::endl;
-//      std::cout << "w: " << w_converge_ << std::endl;
       u_w_converge_ = u_converge_ && w_converge_;
       profiler_.fit_loop.Stop();
       i++;
@@ -390,11 +389,12 @@ class KDAC {
   KDACProfiler profiler_;
   int w_col_num_iters_;
 
+  // Set to "cpu" or "gpu"
+  std::string device_type_;
+
   // Set to true for debug use
   bool verbose_;
 
-  // Set to "cpu" or "gpu"
-  std::string device_type_;
 
   // Initialization for generating the first clustering result
   void Init(const Matrix<T> &input_matrix) {
@@ -635,7 +635,6 @@ class KDAC {
 
       T objective = std::numeric_limits<T>::lowest();
       bool w_l_converged = false;
-      int w_l_iter = 0;
       profiler_.w_part1.Record();
       while (!w_l_converged) {
         profiler_.w_part2.Start();
@@ -654,7 +653,6 @@ class KDAC {
         w_matrix_.col(l) = w_l;
         w_l_converged = CheckConverged(objective, pre_objective, threshold_);
         profiler_.w_part3.Record();
-        w_l_iter++;
       }
       profiler_.w_part2.Start();
       UpdateGOfW(g_of_w, w_l);
@@ -807,8 +805,9 @@ class KDAC {
     return converged;
   }
 
-  bool CheckConverged(const T &scalar, const T &pre_scalar, const T &threshold) {
-    T change = (scalar - pre_scalar) / scalar;
+  bool CheckConverged(const T &scalar, const T &pre_scalar,
+                      const T &threshold) {
+    T change = std::abs(scalar - pre_scalar) / std::abs(pre_scalar);
     bool converged = (change < threshold);
     return converged;
   }

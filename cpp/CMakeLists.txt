@@ -96,6 +96,7 @@ if (CUDA_HAVE_GPU)
   # Find cusolver library
   find_library(CUDA_SOLVER_LIBRARY cusolver HINTS ${CUDA_TOOLKIT_ROOT_DIR}/lib64)
   find_library(CUDA_BLAS_LIBRARY   cublas   HINTS ${CUDA_TOOLKIT_ROOT_DIR}/lib64)
+  find_library(CUDADEVRT   cudadevrt   HINTS ${CUDA_TOOLKIT_ROOT_DIR}/lib64)
 
   # Add NICE library together with CUDA
   cuda_include_directories(${CUDA_INCLUDE_DIR})
@@ -106,7 +107,8 @@ if (CUDA_HAVE_GPU)
   target_link_libraries(${PROJECT_NAME} 
                         ${CUDA_SOLVER_LIBRARY} 
                         ${CUDA_BLAS_LIBRARY} 
-                        ${CUDA_LIBRARIES} 
+                        ${CUDADEVRT}
+                        ${CUDA_LIBRARIES}
                         ${MKL_LP64} 
                         ${MKL_CORE} 
                         ${MKL_THREAD}

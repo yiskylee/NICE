@@ -40,14 +40,33 @@ class KDACTest : public ::testing::Test {
   std::shared_ptr<Nice::KDAC<T>> kdac_;
   int c_;
   std::string base_dir_;
+  int num_clusters_;
+  int num_samples_per_cluster_;
+  int num_samples_;
+  int dim_;
+  std::string file_path_;
+  std::string data_type_;
+  Nice::Matrix<T> data_matrix_;
+  Nice::Matrix<T> existing_y_;
 
   virtual void SetUp() {
 //    data_matrix_ = Nice::util::FromFile<T>(
 //        "../test/data_for_test/kdac/data_400.csv", ",");
 //    c_ = 2;
+    num_clusters_ = 3;
+    num_samples_per_cluster_ = 30;
+    num_samples_ = num_clusters_ * num_samples_per_cluster_;
+    dim_ = 6;
     kdac_ = std::make_shared<Nice::KDAC<T>>();
     kdac_->SetC(c_);
-    base_dir_ = "../test/data_for_test/kdac";
+    kdac_->SetQ(num_clusters_);
+    kdac_->SetC(num_clusters_);
+    kdac_->SetKernel(Nice::kGaussianKernel, 1.0);
+    base_dir_ = "../test/data_for_test/kdac/";
+    data_type_ = "data_gaussian";
+    file_path_ = GenFilePath();
+    data_matrix_ = Nice::util::FromFile<T>(file_path_, ",");
+    existing_y_ = GenExistingY();
   }
 
   Nice::Matrix<T> ReadTestData(
@@ -62,12 +81,22 @@ class KDACTest : public ::testing::Test {
     return Nice::util::FromFile<T>(file_path);
   }
 
-  std::string GenFilePath(std::string data_type,
-                          int num_samples, int dim, int num_clusters) {
-    std::string root_dir("../test/data_for_test/kdac/");
-    std::string file_path = root_dir + data_type + "_" +
-        std::to_string(num_samples) + "_"
-        + std::to_string(dim) + "_" + std::to_string(num_clusters) + ".csv";
+  Nice::Matrix<T> GenExistingY(void) {
+    Nice::Matrix<T> existing_y =
+        Nice::Matrix<T>::Zero(num_samples_, num_clusters_);
+    for (int center = 0; center < num_clusters_; center++) {
+      for (int sample = 0; sample < num_samples_per_cluster_; sample++) {
+        existing_y(center * num_samples_per_cluster_ + sample, center) =
+            static_cast<T>(1);
+      }
+    }
+    return existing_y;
+  }
+
+  std::string GenFilePath(void) {
+    std::string file_path = base_dir_ + data_type_ + "_" +
+        std::to_string(num_samples_) + "_"
+        + std::to_string(dim_) + "_" + std::to_string(num_clusters_) + ".csv";
     return file_path;
   }
 
@@ -104,62 +133,62 @@ TYPED_TEST_CASE(KDACTest, FloatTypes);
         EXPECT_NEAR(std::abs(a(i, j)), std::abs(ref(i, j)), error);\
 
 TYPED_TEST(KDACTest, GaussianTestVerbose) {
-  int num_clusters = 3;
-  int num_samples_per_cluster = 30;
-  int num_samples = num_clusters * num_samples_per_cluster;
-  int dim = 6;
-  this->kdac_->SetQ(num_clusters);
-  this->kdac_->SetC(num_clusters);
   this->kdac_->SetVerbose(true);
-  this->kdac_->SetKernel(Nice::kGaussianKernel, 1.0);
+
 //  std::string file_name = "data_gaussian_" + std::to_string(num_samples) + "_"
 //  + std::to_string(dim) + "_" + std::to_string(num_clusters) + ".csv";
-  std::string file_path = this->GenFilePath("data_gaussian",
-                                            num_samples, dim, num_clusters);
-  std::cout << file_path << std::endl;
-  Nice::Matrix<TypeParam> data_matrix = Nice::util::FromFile<TypeParam>(
-      file_path, ",");
+//  std::string file_path = this->GenFilePath("data_gaussian",
+//                                            num_samples, dim, num_clusters);
+//  std::cout << file_path << std::endl;
 //  Nice::Matrix<TypeParam> data_matrix = Nice::util::FromFile<TypeParam>(
-//      root_dir + file_name, ",");
-  Nice::Matrix<TypeParam> existing_y =
-      Nice::Matrix<TypeParam>::Zero(data_matrix.rows(), this->kdac_->GetC());
-  for (int center = 0; center < num_clusters; center++) {
-    for (int sample = 0; sample < num_samples_per_cluster; sample ++) {
-      existing_y(center * num_samples_per_cluster + sample, center) =
-          static_cast<TypeParam>(1);
-    }
-  }
-  this->kdac_->Fit(data_matrix, existing_y);
-  PRINTV(this->kdac_->Predict(), num_samples_per_cluster);
+//      file_path, ",");
+////  Nice::Matrix<TypeParam> data_matrix = Nice::util::FromFile<TypeParam>(
+////      root_dir + file_name, ",");
+//  Nice::Matrix<TypeParam> existing_y =
+//      Nice::Matrix<TypeParam>::Zero(data_matrix.rows(), this->kdac_->GetC());
+//  for (int center = 0; center < num_clusters; center++) {
+//    for (int sample = 0; sample < num_samples_per_cluster; sample ++) {
+//      existing_y(center * num_samples_per_cluster + sample, center) =
+//          static_cast<TypeParam>(1);
+//    }
+//  }
+  this->kdac_->Fit(this->data_matrix_, this->existing_y_);
+  PRINTV(this->kdac_->Predict(), this->num_samples_per_cluster_);
 }
 
 TYPED_TEST(KDACTest, GaussianTest) {
-  int num_clusters = 3;
-  int num_samples_per_cluster = 30;
-  int num_samples = num_clusters * num_samples_per_cluster;
-  int dim = 6;
-  this->kdac_->SetQ(num_clusters);
-  this->kdac_->SetC(num_clusters);
-  this->kdac_->SetKernel(Nice::kGaussianKernel, 1.0);
-  //  std::string file_name = "data_gaussian_" + std::to_string(num_samples) + "_"
-  //  + std::to_string(dim) + "_" + std::to_string(num_clusters) + ".csv";
-  std::string file_path = this->GenFilePath("data_gaussian",
-                                            num_samples, dim, num_clusters);
-  std::cout << file_path << std::endl;
-  Nice::Matrix<TypeParam> data_matrix = Nice::util::FromFile<TypeParam>(
-      file_path, ",");
-  //  Nice::Matrix<TypeParam> data_matrix = Nice::util::FromFile<TypeParam>(
-  //      root_dir + file_name, ",");
-  Nice::Matrix<TypeParam> existing_y =
-      Nice::Matrix<TypeParam>::Zero(data_matrix.rows(), this->kdac_->GetC());
-  for (int center = 0; center < num_clusters; center++) {
-    for (int sample = 0; sample < num_samples_per_cluster; sample ++) {
-      existing_y(center * num_samples_per_cluster + sample, center) =
-        static_cast<TypeParam>(1);
-    }
-  }
-  this->kdac_->Fit(data_matrix, existing_y);
-  PRINTV(this->kdac_->Predict(), num_samples_per_cluster);
+//  int num_clusters = 3;
+//  int num_samples_per_cluster = 30;
+//  int num_samples = num_clusters * num_samples_per_cluster;
+//  int dim = 6;
+//  this->kdac_->SetQ(num_clusters);
+//  this->kdac_->SetC(num_clusters);
+//  this->kdac_->SetKernel(Nice::kGaussianKernel, 1.0);
+//  //  std::string file_name = "data_gaussian_" + std::to_string(num_samples) + "_"
+//  //  + std::to_string(dim) + "_" + std::to_string(num_clusters) + ".csv";
+//  std::string file_path = this->GenFilePath("data_gaussian",
+//                                            num_samples, dim, num_clusters);
+//  std::cout << file_path << std::endl;
+//  Nice::Matrix<TypeParam> data_matrix = Nice::util::FromFile<TypeParam>(
+//      file_path, ",");
+//  //  Nice::Matrix<TypeParam> data_matrix = Nice::util::FromFile<TypeParam>(
+//  //      root_dir + file_name, ",");
+//  Nice::Matrix<TypeParam> existing_y =
+//      Nice::Matrix<TypeParam>::Zero(data_matrix.rows(), this->kdac_->GetC());
+//  for (int center = 0; center < num_clusters; center++) {
+//    for (int sample = 0; sample < num_samples_per_cluster; sample ++) {
+//      existing_y(center * num_samples_per_cluster + sample, center) =
+//        static_cast<TypeParam>(1);
+//    }
+//  }
+//  this->kdac_->Fit(data_matrix, existing_y);
+//  PRINTV(this->kdac_->Predict(), num_samples_per_cluster);
+  this->kdac_->Fit(this->data_matrix_, this->existing_y_);
+  PRINTV(this->kdac_->Predict(), this->num_samples_per_cluster_);
+}
+
+TYPED_TEST(KDACTest, GenPhiCoeffTest) {
+
 }
 
 TYPED_TEST(KDACTest, WlRef) {
