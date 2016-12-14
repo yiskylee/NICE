@@ -308,31 +308,31 @@ class KDAC {
     // Following the pseudo code in Algorithm 1 in the paper
     profiler_.fit.Start();
     PROFILE(Init(input_matrix, y_matrix), profiler_.init);
-    int i = 0;
-    while (!u_w_converge_) {
-      profiler_.fit_loop.Start();
-      if (device_type_ == "cpu") {
-        pre_u_matrix_ = u_matrix_;
-        pre_w_matrix_ = w_matrix_;
-      }
-      if (device_type_ == "gpu") {
-        pre_u_matrix_d_ = u_matrix_d_;
-        pre_w_matrix_d_ = w_matrix_d_;
-      }
-      PROFILE(OptimizeU(), profiler_.u);
-      PROFILE(OptimizeW(), profiler_.w);
-      u_converge_ = CheckConverged(u_matrix_, pre_u_matrix_, threshold_);
-      w_converge_ = CheckConverged(w_matrix_, pre_w_matrix_, threshold_);
-      u_w_converge_ = u_converge_ && w_converge_;
-      profiler_.fit_loop.Stop();
-      i++;
-    }
-    if (verbose_)
-      std::cout << "U and W Converged" << std::endl;
-    PROFILE(RunKMeans(), profiler_.kmeans);
-    if (verbose_)
-      std::cout << "Kmeans Done" << std::endl;
-    profiler_.fit.Stop();
+//    int i = 0;
+//    while (!u_w_converge_) {
+//      profiler_.fit_loop.Start();
+//      if (device_type_ == "cpu") {
+//        pre_u_matrix_ = u_matrix_;
+//        pre_w_matrix_ = w_matrix_;
+//      }
+//      if (device_type_ == "gpu") {
+//        pre_u_matrix_d_ = u_matrix_d_;
+//        pre_w_matrix_d_ = w_matrix_d_;
+//      }
+//      PROFILE(OptimizeU(), profiler_.u);
+//      PROFILE(OptimizeW(), profiler_.w);
+//      u_converge_ = CheckConverged(u_matrix_, pre_u_matrix_, threshold_);
+//      w_converge_ = CheckConverged(w_matrix_, pre_w_matrix_, threshold_);
+//      u_w_converge_ = u_converge_ && w_converge_;
+//      profiler_.fit_loop.Stop();
+//      i++;
+//    }
+//    if (verbose_)
+//      std::cout << "U and W Converged" << std::endl;
+//    PROFILE(RunKMeans(), profiler_.kmeans);
+//    if (verbose_)
+//      std::cout << "Kmeans Done" << std::endl;
+//    profiler_.fit.Stop();
   }
 
   /// Running Predict() after Fit() returns
@@ -408,6 +408,7 @@ class KDAC {
   T* a_matrices_d_; // An n*n matrix each cell of which is a dxd matrix Aij
   T* delta_ijs_d_; // An n*n matrix each cell of which is a row vector of
   // X[i] - X[j]
+  T* delta_ijs1_d_;
 
   Vector<T> clustering_result_;  // Current clustering result
   T* clustering_result_d_;
@@ -428,7 +429,7 @@ class KDAC {
   std::string device_type_;
 
   // GPUUtil object to setup memory etc.
-  GpuUtil<T> *gpu_util;
+  GpuUtil<T> *gpu_util_;
 
   // Initialization for generating the first clustering result
   void Init(const Matrix<T> &input_matrix) {
@@ -438,9 +439,10 @@ class KDAC {
     // w_matrix_ is I initially
     w_matrix_ = Matrix<T>::Identity(d_, d_);
     if (device_type_ == "gpu") {
-      std::cout << "device is gpu" << std::endl;
-      x_matrix_d_ = CUDAMallocAndCpy(x_matrix_);
-      w_matrix_d_ = CUDAMallocAndCpy(w_matrix_);
+//      x_matrix_d_ = CUDAMallocAndCpy(x_matrix_);
+//      w_matrix_d_ = CUDAMallocAndCpy(w_matrix_);
+      gpu_util_->SetupMem(&x_matrix_d_, &x_matrix_(0), n_*d_);
+      gpu_util_->SetupMem(&w_matrix_d_, &w_matrix_(0), n_*d_);
     }
   }
 
@@ -462,6 +464,7 @@ class KDAC {
     u_converge_ = false;
     w_converge_ = false;
     u_w_converge_ = false;
+    gpu_util_ = GpuUtil<T>::GetInstance();
   }
 
   // Initialization for generating alternative views with a given Y
@@ -477,24 +480,23 @@ class KDAC {
     // Generate Y tilde matrix in equation 5 from kernel matrix of Y
     y_matrix_tilde_ = h_matrix_ * k_matrix_y_ * h_matrix_;
     InitAMatrixList();
-    exit(-1);
     // Coefficients for calculating phi
-    waw_matrix_ = Matrix<T>::Zero(n_, n_);
-    waf_matrix_ = Matrix<T>::Zero(n_, n_);
-    faf_matrix_ = Matrix<T>::Zero(n_, n_);
-    u_converge_ = false;
-    w_converge_ = false;
-    u_w_converge_ = false;
-    if (device_type_ == "gpu") {
-      h_matrix_d_ = CUDAMallocAndCpy(h_matrix_);
-      y_matrix_temp_d_ = CUDAMallocAndCpy(y_matrix_temp_);
-      y_matrix_d_ = CUDAMallocAndCpy(y_matrix);
-      k_matrix_y_d_ = CUDAMallocAndCpy(k_matrix_y_);
-      y_matrix_tilde_d_ = CUDAMallocAndCpy(y_matrix_tilde_);
-      waw_matrix_d_ = CUDAMallocAndCpy(waw_matrix_);
-      waf_matrix_d_ = CUDAMallocAndCpy(waf_matrix_);
-      faf_matrix_d_ = CUDAMallocAndCpy(faf_matrix_);
-    }
+//    waw_matrix_ = Matrix<T>::Zero(n_, n_);
+//    waf_matrix_ = Matrix<T>::Zero(n_, n_);
+//    faf_matrix_ = Matrix<T>::Zero(n_, n_);
+//    u_converge_ = false;
+//    w_converge_ = false;
+//    u_w_converge_ = false;
+//    if (device_type_ == "gpu") {
+//      h_matrix_d_ = CUDAMallocAndCpy(h_matrix_);
+//      y_matrix_temp_d_ = CUDAMallocAndCpy(y_matrix_temp_);
+//      y_matrix_d_ = CUDAMallocAndCpy(y_matrix);
+//      k_matrix_y_d_ = CUDAMallocAndCpy(k_matrix_y_);
+//      y_matrix_tilde_d_ = CUDAMallocAndCpy(y_matrix_tilde_);
+//      waw_matrix_d_ = CUDAMallocAndCpy(waw_matrix_);
+//      waf_matrix_d_ = CUDAMallocAndCpy(waf_matrix_);
+//      faf_matrix_d_ = CUDAMallocAndCpy(faf_matrix_);
+//    }
   }
 
   void InitAMatrixList(void) {
@@ -507,13 +509,16 @@ class KDAC {
       }
     }
     if (device_type_ == "gpu") {
-      size_t size_a = n_*n_*d_*d_ * sizeof(T);
-      size_t size_delta = n_*n_*d_ * sizeof(T);
-      gpu_util->SetupMem(&a_matrices_d_, nullptr, size_a, false);
-      gpu_util->SetupMem(&delta_ijs_d_, nullptr, size_delta, false);
-      GPUGenAMatrices(x_matrix_d_, a_matrices_d_, delta_ijs_d_, n_, d_);
+      size_t size_a = n_*n_*d_*d_;
+      T *a_matrices = new T[size_a];
+      gpu_util_->SetupMem(&a_matrices_d_, a_matrices, size_a, false);
+      GPUGenAMatrices(x_matrix_d_, a_matrices_d_, n_, d_);
+      gpu_util_->SyncMem(a_matrices_d_, a_matrices, size_a);
     }
   }
+
+
+
 
   // Check if q is not bigger than c
   void CheckQD() {

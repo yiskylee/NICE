@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.9)
-if (${CMAKE_VERSION} VERSION_GREATER 3.5)
-  cmake_policy(SET CMP0046 OLD)
-endif()
+#if (${CMAKE_VERSION} VERSION_GREATER 3.5)
+#  cmake_policy(SET CMP0046 OLD)
+#endif()
 set(PROJECT_NAME Nice)
 project(Nice)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
@@ -91,27 +91,24 @@ if (CUDA_HAVE_GPU)
   include(FindCUDA)
 
   # Set NVCC flags
-  set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -std=c++11 -O3 -gencode arch=compute_50,code=sm_50 -rdc=true)
+  set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -std=c++11 -O3 -gencode arch=compute_50,code=sm_50 -rdc=true -Xcompiler -fPIC)
+  set(CUDA_SEPARABLE_COMPILATION OFF)
 
 
   # Find cusolver library
   find_library(CUDA_SOLVER_LIBRARY cusolver HINTS ${CUDA_TOOLKIT_ROOT_DIR}/lib64)
   find_library(CUDA_BLAS_LIBRARY   cublas   HINTS ${CUDA_TOOLKIT_ROOT_DIR}/lib64)
+  find_library(CUBLAS_DEVICE cublas_device   HINTS ${CUDA_TOOLKIT_ROOT_DIR}/lib64)
   find_library(CUDADEVRT   cudadevrt   HINTS ${CUDA_TOOLKIT_ROOT_DIR}/lib64)
   find_library(CUDART   cudart   HINTS ${CUDA_TOOLKIT_ROOT_DIR}/lib64)
 
-  message(STATUS "CUDADEVRT: ", ${CUDADEVRT})
-  message(STATUS "CUDART: ", ${CUDART})
-
   # Add NICE library together with CUDA
   cuda_include_directories(${CUDA_INCLUDE_DIR})
-  cuda_add_library(${PROJECT_NAME} SHARED ${SOURCES})
-  add_dependencies(${PROJECT_NAME} ${CUDA_SOLVER_LIBRARY})
-  add_dependencies(${PROJECT_NAME} ${CUDA_BLAS_LIBRARY})
-  add_dependencies(${PROJECT_NAME} ${CUDA_LIBRARIES})
+  cuda_add_library(${PROJECT_NAME} STATIC ${SOURCES})
   target_link_libraries(${PROJECT_NAME}
                         ${CUDA_SOLVER_LIBRARY}
                         ${CUDA_BLAS_LIBRARY}
+                        ${CUBLAS_DEVICE}
                         ${CUDADEVRT}
                         ${CUDART}
                         ${CUDA_LIBRARIES}
@@ -191,4 +188,6 @@ if (enable-test)
 endif()
 
 # Build Python interface
-add_subdirectory(interface)
+if (enable-interface)
+  add_subdirectory(interface)
+endif()

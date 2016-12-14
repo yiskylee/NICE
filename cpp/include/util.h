@@ -22,6 +22,10 @@
 
 #ifndef CPP_INCLUDE_UTIL_H_
 #define CPP_INCLUDE_UTIL_H_
+// Position for Column-Major index
+#define IDXC(i,j,ld) (((j)*(ld))+(i))
+// Position for Row-Major index
+#define IDXR(i,j,ld) (((i)*(ld))+(j))
 
 #include <cstdlib>
 #include <string>
@@ -242,7 +246,19 @@ static T reciprocal(T x) {
   return T(1) / x;
 }
 
-
+template <typename T>
+void PrintMatrix(T* matrix, int row, int col, bool row_major = true) {
+  for (int i = 0; i < row; i++) {
+    for (int j = 0; j < col; j++) {
+      if (row_major)
+        std::cout << matrix[IDXR(i, j, col)] << "\t";
+      else
+        std::cout << matrix[IDXC(i, j, row)] << "\t";
+    }
+    std::cout << std::endl;
+  }
+  std::cout << std::endl;
+}
 
 }  // namespace util
 

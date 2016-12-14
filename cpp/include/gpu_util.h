@@ -22,9 +22,6 @@
 #ifndef CPP_INCLUDE_GPU_UTIL_H_
 #define CPP_INCLUDE_GPU_UTIL_H_
 
-#define NEED_CUDA
-#ifdef NEED_CUDA
-
 #include <cuda_runtime_api.h>
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
@@ -43,7 +40,7 @@ namespace Nice {
 do {\
   cudaError_t ret = x;\
   if (ret != cudaSuccess) {\
-    std::cout << "CUDA Error at " << __FILE__ << __LINE__ << std::endl;\
+    std::cout << "CUDA Error at " << __FILE__ << " " << __LINE__ << std::endl;\
     std::cout << cudaGetErrorString(ret) << std::endl;\
     exit(EXIT_FAILURE);\
   }\
@@ -120,6 +117,7 @@ class GpuUtil {
     else
       CUDA_CALL(cudaMemset(*dev, 0, size * sizeof(T)));
   }
+
   void SyncMem(T *dev, T *host, int size, bool copy = true) {
     // Copy memory over to device
     if (copy)
@@ -141,6 +139,7 @@ class GpuUtil {
     else
       CUDA_CALL(cudaMemset(*dev, 0, size * sizeof(int)));
   }
+
   void SyncIntMem(int *dev, int *host, int size, bool copy = true) {
     // Copy memory over to device
     if (copy)
@@ -370,5 +369,4 @@ void GpuFrobeniusNorm(cublasHandle_t handle,
                                 double * c);
 }  // namespace Nice
 
-#endif  // NEED_CUDA
 #endif  // CPP_INCLUDE_GPU_UTIL_H_

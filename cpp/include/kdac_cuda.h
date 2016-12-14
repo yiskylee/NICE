@@ -22,8 +22,6 @@
 
 #ifndef CPP_INCLUDE_KDAC_IN_CUDA_H_
 #define CPP_INCLUDE_KDAC_IN_CUDA_H_
-#define NEED_CUDA
-#ifdef NEED_CUDA
 
 #include "include/matrix.h"
 #include "include/vector.h"
@@ -41,17 +39,16 @@
 
 namespace Nice {
 template<typename T>
-T* CUDAMallocAndCpy(const Matrix<T> &mat);
+T *CUDAMallocAndCpy(const Matrix<T> &mat);
 
-template <typename T>
-T* CUDAMallocAndCpy(const Vector<T> &vec);
+template<typename T>
+T *CUDAMallocAndCpy(const Vector<T> &vec);
 //template<typename T>
 //void GPUGenPhiCoeff(T *waw_matrix_d_, T *waf_matrix_d_, T *faf_matrix_d_,
 //    T *w_l_d, T *gradient_d);
 //}
 
-template <typename T>
-void GPUGenAMatrices(T *x_matrix, T *a_matrices, T *delta_ijs, int n, int d);
+template<typename T>
+void GPUGenAMatrices(T *x_matrix_d, T *a_matrices_d, int n, int d);
 }
-#endif  // NEED_CUDA
 #endif  // CPP_INCLUDE_KDAC_IN_CUDA_H_

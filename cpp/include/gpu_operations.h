@@ -23,9 +23,6 @@
 #ifndef CPP_INCLUDE_GPU_OPERATIONS_H_
 #define CPP_INCLUDE_GPU_OPERATIONS_H_
 
-#define NEED_CUDA
-#ifdef NEED_CUDA
-
 #include <stdlib.h>
 #include <time.h>
 #include <cuda_runtime.h>
@@ -667,6 +664,5 @@ template <typename T>
 GpuUtil<T> *GpuOperations<T>::util_ = GpuUtil<T>::GetInstance();
 
 }  // namespace Nice
-#endif  // NEED_CUDA
 #endif  // CPP_INCLUDE_GPU_OPERATIONS_H_
 

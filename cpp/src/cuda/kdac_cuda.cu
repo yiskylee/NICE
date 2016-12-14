@@ -20,13 +20,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#define NEED_CUDA
-#ifdef NEED_CUDA
-
 #include "include/kdac_cuda.h"
 #include "include/matrix.h"
 #include "include/vector.h"
 #include "include/gpu_util.h"
+#include "include/util.h"
 #include <stdlib.h>
 #include <time.h>
 #include <cuda_runtime.h>
@@ -42,7 +40,7 @@ namespace Nice {
 
 template <typename T>
 T* CUDAMallocAndCpy(const Matrix<T> &mat) {
-  GpuUtil<T> *util;
+  GpuUtil<T> *util = GpuUtil<T>::GetInstance();
   int n = mat.cols() * mat.rows();
   const T *h_mat = &mat(0);
   T *d_mat;
@@ -59,7 +57,7 @@ double* CUDAMallocAndCpy<double>(const Matrix<double> &mat);
 
 template <typename T>
 T* CUDAMallocAndCpy(const Vector <T> &vec) {
-  GpuUtil<T> *util;
+  GpuUtil<T> *util = GpuUtil<T>::GetInstance();
   int n = vec.size();
   const T *h_vec = &vec(0);
   T *d_vec;
@@ -73,11 +71,14 @@ float* CUDAMallocAndCpy<float>(const Vector<float> &vec);
 template
 double* CUDAMallocAndCpy<double>(const Vector<double> &vec);
 
-
+// Position for Column-Major index
+#define IDXC(i,j,ld) (((j)*(ld))+(i))
+// Position for Row-Major index
+#define IDXR(i,j,ld) (((i)*(ld))+(j))
 
 template <typename T>
 __global__ void GPUGenAMatricesKernel
-    (T *x_matrix, T *a_matrices, T *delta_ijs, int n, int d) {
+    (T *x_matrix_d, T *a_matrices_d, T *all_delta_ijs_d, int n, int d) {
 
   int i = blockIdx.y * blockDim.y + threadIdx.y;
   int j = blockIdx.x * blockDim.x + threadIdx.x;
@@ -85,37 +86,77 @@ __global__ void GPUGenAMatricesKernel
   // d x d matrix. No matter what orientation (row or column) the
   // d x d matrix is, to find the starting location of the (i, j)
   // matrix, we just need to use the following to do so
-  T *a_ij_matrix = a_matrices + (i * n + j) * d * d;
-  T *delta_ij = delta_ijs + (i * n + j) * d;
-  // x_matrix is column major
-  for (int k = 0; k < d; k++) {
-    delta_ij[k] = x_matrix[k * n + i] - x_matrix[k * n + j];
+  if (i < n && j < n) {
+    T *a_ij_matrix = a_matrices_d + IDXR(i, j, n) * (d * d);
+    T *delta_ij = all_delta_ijs_d + IDXR(i, j, n) * d;
+
+    // x_matrix_d is column major
+    for (int k = 0; k < d; k++) {
+      delta_ij[k] = x_matrix_d[IDXC(i, k, n)] - x_matrix_d[IDXC(j, k, n)];
+    }
+
+    cublasHandle_t handle;
+    cublasCreate(&handle);
+    const float alpha = 1.0;
+    const float beta = 0.0;
+
+//  Each thread (i, j) generates a matrix Aij
+    cublasSgemm(handle,
+                CUBLAS_OP_N,
+                CUBLAS_OP_N,
+                d, d, 1,
+                &alpha, delta_ij, d,
+                delta_ij, 1,
+                &beta, a_ij_matrix, d);
   }
-  cublasHandle_t handle;
-  const float alpha = 1.0;
-  const float beta = 0.0;
-  // Each thread (i, j) generates a matrix Aij
-  cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N,
-               d, d, 1, &alpha,
-               delta_ij, 1, delta_ij, 1, &beta, a_ij_matrix, d);
-}
 
-
-template<typename T>
-void GPUGenAMatrices(T *x_matrix, T *a_matrices, T *delta_ijs,
-                     int n, int d) {
-  int block_size = 16;
-  dim3 dim_block(block_size, block_size);
-  dim3 dim_grid( (n-1) / block_size + 1, (n-1) / block_size + 1);
-  GPUGenAMatricesKernel<<<dim_grid, dim_block>>>(x_matrix, a_matrices,
-      delta_ijs, n, d);
+////  cublasStatus_t cublasSgemm(cublasHandle_t handle,
+////                             cublasOperation_t transa,
+////                             cublasOperation_t transb,
+////                             int m, int n, int k,
+////                             const float *alpha, const float *A, int lda,
+////                             const float *B, int ldb,
+////                             const float *beta, float *C, int ldc)
 }
 
 // Explicit Instantiation
 template
-void GPUGenAMatrices<float>(float *x_matrix,
-                            float *a_matrices,
-                            float *delta_ijs,
+__global__ void GPUGenAMatricesKernel<float>(float *x_matrix_d,
+                            float *a_matrices_d,
+                            float *all_delta_ijs_d,
+                            int n,
+                            int d);
+
+
+
+template<typename T>
+void GPUGenAMatrices(T *x_matrix_d, T *a_matrices_d, int n, int d) {
+
+  GpuUtil<T> *gpu_util = GpuUtil<T>::GetInstance();
+  int size_delta_ijs = n * n * d;
+//  T *all_delta_ijs = new T[size_delta_ijs];
+  T *all_delta_ijs_d;
+  gpu_util -> SetupMem(&all_delta_ijs_d, nullptr, size_delta_ijs, false);
+  int block_size = 16;
+  dim3 dim_block(block_size, block_size);
+  dim3 dim_grid( (n-1) / block_size + 1, (n-1) / block_size + 1);
+  GPUGenAMatricesKernel<<<dim_grid, dim_block>>>(x_matrix_d, a_matrices_d,
+      all_delta_ijs_d, n, d);
+//  gpu_util->SyncMem(all_delta_ijs_d, all_delta_ijs, size_delta_ijs);
+//  for (int i = 0; i < n; i++) {
+//    for (int j = 0; j < n; j++) {
+//      T *delta_ij = all_delta_ijs + IDXR(i, j, n) * d;
+//      std::cout << "delta (" << (i + 1) << ", " << (j + 1) << "): "
+//                << std::endl;
+//      util::PrintMatrix<T>(delta_ij, d, 1, false);
+//    }
+//  }
+}
+
+// Explicit Instantiation
+template
+void GPUGenAMatrices<float>(float *x_matrix_d,
+                            float *a_matrices_d,
                             int n,
                             int d);
 
@@ -184,4 +225,3 @@ void GPUGenAMatrices<float>(float *x_matrix,
 //                            int n,
 //                            int d);
 }
-#endif  // NEED_CUDAs
