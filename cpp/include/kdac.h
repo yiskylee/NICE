@@ -31,7 +31,6 @@
 
 #ifndef CPP_INCLUDE_KDAC_H
 #define CPP_INCLUDE_KDAC_H
-
 #include <functional>
 #include <vector>
 #include <cmath>
@@ -308,31 +307,29 @@ class KDAC {
     // Following the pseudo code in Algorithm 1 in the paper
     profiler_.fit.Start();
     PROFILE(Init(input_matrix, y_matrix), profiler_.init);
-//    int i = 0;
-//    while (!u_w_converge_) {
-//      profiler_.fit_loop.Start();
-//      if (device_type_ == "cpu") {
-//        pre_u_matrix_ = u_matrix_;
-//        pre_w_matrix_ = w_matrix_;
-//      }
+    while (!u_w_converge_) {
+      profiler_.fit_loop.Start();
+      if (device_type_ == "cpu") {
+        pre_u_matrix_ = u_matrix_;
+        pre_w_matrix_ = w_matrix_;
+      }
 //      if (device_type_ == "gpu") {
 //        pre_u_matrix_d_ = u_matrix_d_;
 //        pre_w_matrix_d_ = w_matrix_d_;
 //      }
-//      PROFILE(OptimizeU(), profiler_.u);
-//      PROFILE(OptimizeW(), profiler_.w);
-//      u_converge_ = CheckConverged(u_matrix_, pre_u_matrix_, threshold_);
-//      w_converge_ = CheckConverged(w_matrix_, pre_w_matrix_, threshold_);
-//      u_w_converge_ = u_converge_ && w_converge_;
-//      profiler_.fit_loop.Stop();
-//      i++;
-//    }
-//    if (verbose_)
-//      std::cout << "U and W Converged" << std::endl;
-//    PROFILE(RunKMeans(), profiler_.kmeans);
-//    if (verbose_)
-//      std::cout << "Kmeans Done" << std::endl;
-//    profiler_.fit.Stop();
+      PROFILE(OptimizeU(), profiler_.u);
+      PROFILE(OptimizeW(), profiler_.w);
+      u_converge_ = CheckConverged(u_matrix_, pre_u_matrix_, threshold_);
+      w_converge_ = CheckConverged(w_matrix_, pre_w_matrix_, threshold_);
+      u_w_converge_ = u_converge_ && w_converge_;
+      profiler_.fit_loop.Stop();
+    }
+    if (verbose_)
+      std::cout << "U and W Converged" << std::endl;
+    PROFILE(RunKMeans(), profiler_.kmeans);
+    if (verbose_)
+      std::cout << "Kmeans Done" << std::endl;
+    profiler_.fit.Stop();
   }
 
   /// Running Predict() after Fit() returns
@@ -406,9 +403,9 @@ class KDAC {
   T* gamma_matrix_d_;
   std::vector<Matrix<T>> a_matrix_list_;  // An n*n list that contains all of
   T* a_matrices_d_; // An n*n matrix each cell of which is a dxd matrix Aij
+  T* temp_d_;
   T* delta_ijs_d_; // An n*n matrix each cell of which is a row vector of
   // X[i] - X[j]
-  T* delta_ijs1_d_;
 
   Vector<T> clustering_result_;  // Current clustering result
   T* clustering_result_d_;
@@ -418,6 +415,11 @@ class KDAC {
   T* waf_matrix_d_;
   Matrix<T> faf_matrix_;
   T* faf_matrix_d_;
+  // Device memory for each column (1 x d) in W,
+  T* w_l_d_;
+  // Device memory for gradient (1 x d) for each column in W
+  T* gradient_d_;
+
 
   // A struct contains timers for different functions
   KDACProfiler profiler_;
@@ -481,25 +483,31 @@ class KDAC {
     y_matrix_tilde_ = h_matrix_ * k_matrix_y_ * h_matrix_;
     InitAMatrixList();
     // Coefficients for calculating phi
-//    waw_matrix_ = Matrix<T>::Zero(n_, n_);
-//    waf_matrix_ = Matrix<T>::Zero(n_, n_);
-//    faf_matrix_ = Matrix<T>::Zero(n_, n_);
-//    u_converge_ = false;
-//    w_converge_ = false;
-//    u_w_converge_ = false;
-//    if (device_type_ == "gpu") {
+    waw_matrix_ = Matrix<T>::Zero(n_, n_);
+    waf_matrix_ = Matrix<T>::Zero(n_, n_);
+    faf_matrix_ = Matrix<T>::Zero(n_, n_);
+    u_converge_ = false;
+    w_converge_ = false;
+    u_w_converge_ = false;
+    if (device_type_ == "gpu") {
+//      CUDA_CALL(cudaMalloc(&h_matrix_d_, n_*n_*sizeof(T)));
+      gpu_util_ -> SetupMem(&waw_matrix_d_, nullptr, n_*n_, false);
+      gpu_util_ -> SetupMem(&waf_matrix_d_, nullptr, n_*n_, false);
+      gpu_util_ -> SetupMem(&faf_matrix_d_, nullptr, n_*n_, false);
+      gpu_util_ -> SetupMem(&w_l_d_, nullptr, d_, false);
+      gpu_util_ -> SetupMem(&gradient_d_, nullptr, d_, false);
+      gpu_util_ -> SetupMem(&temp_d_, nullptr, n_ * n_ * d_, false);
+//      GPUGenYTildeMatrix();
 //      h_matrix_d_ = CUDAMallocAndCpy(h_matrix_);
 //      y_matrix_temp_d_ = CUDAMallocAndCpy(y_matrix_temp_);
 //      y_matrix_d_ = CUDAMallocAndCpy(y_matrix);
 //      k_matrix_y_d_ = CUDAMallocAndCpy(k_matrix_y_);
 //      y_matrix_tilde_d_ = CUDAMallocAndCpy(y_matrix_tilde_);
-//      waw_matrix_d_ = CUDAMallocAndCpy(waw_matrix_);
-//      waf_matrix_d_ = CUDAMallocAndCpy(waf_matrix_);
-//      faf_matrix_d_ = CUDAMallocAndCpy(faf_matrix_);
-//    }
+    }
   }
 
   void InitAMatrixList(void) {
+    profiler_.init_a_cpu.Start();
     a_matrix_list_.resize(n_ * n_);
     for (int i = 0; i < n_; i++) {
       for (int j = 0; j < n_; j++) {
@@ -508,17 +516,23 @@ class KDAC {
         a_matrix_list_[i * n_ + j] = a_ij;
       }
     }
+    profiler_.init_a_cpu.Stop();
+    profiler_.init_a_gpu.Start();
     if (device_type_ == "gpu") {
-      size_t size_a = n_*n_*d_*d_;
-      T *a_matrices = new T[size_a];
-      gpu_util_->SetupMem(&a_matrices_d_, a_matrices, size_a, false);
-      GPUGenAMatrices(x_matrix_d_, a_matrices_d_, n_, d_);
-      gpu_util_->SyncMem(a_matrices_d_, a_matrices, size_a);
+      std::cout << "Before Gen A Matrices" << std::endl;
+      int size_a = n_*n_*d_*d_ * sizeof(T);
+      CUDA_CALL(cudaMalloc(&a_matrices_d_, size_a));
+      GPUGenAMatrices(x_matrix_d_, n_, d_, a_matrices_d_);
+      std::cout << "Gen A Matrices Done" << std::endl;
+      for (int i = 0; i < n_; i++)
+        for (int j = 0; j < n_; j++)
+          gpu_util_ -> ValidateGPUResult(
+              a_matrices_d_+IDXR(i, j, n_)*(d_*d_),
+              a_matrix_list_[IDXR(i, j, n_)],
+              d_, d_, "Aij matrix");
     }
+    profiler_.init_a_gpu.Stop();
   }
-
-
-
 
   // Check if q is not bigger than c
   void CheckQD() {
@@ -687,7 +701,7 @@ class KDAC {
       } else {
         w_l = GenOrthonormal(w_matrix_.leftCols(l), w_matrix_.col(l));
       }
-      w_matrix_.col(l) = w_l;
+//      w_matrix_.col(l) = w_l;
       // Search for the w_l that maximizes formula 5
       // The initial objective is set to the lowest number
 
@@ -820,26 +834,35 @@ class KDAC {
   void GenPhiCoeff(const Vector<T> &w_l, const Vector<T> &gradient) {
     // Three terms used to calculate phi of alpha
     // They only change if w_l or gradient change
-    if (device_type_ == "cpu") {
-      for (int i = 0; i < n_; i++) {
-        for (int j = 0; j < n_; j++) {
-          Matrix<T> &a_matrix_ij = a_matrix_list_[i * n_ + j];
-          waw_matrix_(i, j) = w_l.transpose() * a_matrix_ij * w_l;
-          waf_matrix_(i, j) = w_l.transpose() * a_matrix_ij * gradient;
-          faf_matrix_(i, j) = gradient.transpose() * a_matrix_ij * gradient;
-        }
+    for (int i = 0; i < n_; i++) {
+      for (int j = 0; j < n_; j++) {
+        Matrix<T> &a_matrix_ij = a_matrix_list_[i * n_ + j];
+        waw_matrix_(i, j) = w_l.transpose() * a_matrix_ij * w_l;
+        waf_matrix_(i, j) = w_l.transpose() * a_matrix_ij * gradient;
+        faf_matrix_(i, j) = gradient.transpose() * a_matrix_ij * gradient;
       }
-    } else if (device_type_ == "gpu") {
-//      T* w_l_d = CUDAMallocAndCpy(w_l);
-//      T* gradient_d = CUDAMallocAndCpy(gradient);
-//      T* d_a_matrices, d_delta_x_ijs;
-//      gpu_util -> SetupMem(&d_a_matrices, nullptr,
-//                           sizeof(T)*n_*n_*d_*d_, false);
-//      gpu_util -> SetupMem(&d_delta_x_ijs, nullptr,
-//                           sizeof(T)*n_*n_*d_, false);
-//      GPUGenPhiCoeff(x_matrix_d_, d_a_matrices, d_delta_x_ijs,
-//                     waw_matrix_d_, waf_matrix_d_, faf_matrix_d_,
-//                     w_l_d, gradient_d, n_, d_);
+    }
+    if (device_type_ == "gpu") {
+      CUDA_CALL(cudaMemcpy(w_l_d_, &w_l(0), d_ * sizeof(T),
+        cudaMemcpyHostToDevice));
+      CUDA_CALL(cudaMemcpy(gradient_d_, &gradient(0), d_ * sizeof(T),
+        cudaMemcpyHostToDevice));
+      GPUGenPhiCoeff(w_l_d_,
+                     gradient_d_,
+                     a_matrices_d_,
+                     n_,
+                     d_,
+                     temp_d_,
+                     waw_matrix_d_,
+                     waf_matrix_d_,
+                     faf_matrix_d_);
+      gpu_util_ -> ValidateGPUResult(waw_matrix_d_, waw_matrix_,
+                                     n_, n_, "waw_matrix");
+      gpu_util_ -> ValidateGPUResult(waf_matrix_d_, waf_matrix_,
+                                     n_, n_, "waf_matrix");
+      gpu_util_ -> ValidateGPUResult(faf_matrix_d_, faf_matrix_,
+                                     n_, n_, "faf_matrix");
+
     }
   }
 

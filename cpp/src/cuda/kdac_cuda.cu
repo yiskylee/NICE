@@ -21,64 +21,20 @@
 // SOFTWARE.
 
 #include "include/kdac_cuda.h"
-#include "include/matrix.h"
-#include "include/vector.h"
 #include "include/gpu_util.h"
-#include "include/util.h"
-#include <stdlib.h>
-#include <time.h>
-#include <cuda_runtime.h>
-#include <device_launch_parameters.h>
-#include <cuda_runtime_api.h>
-#include <cublas_v2.h>
-#include <cusolverDn.h>
-#include <unistd.h>
-#include <stdexcept>
-#include <ctime>
+#include "../../include/gpu_util.h"
 
 namespace Nice {
 
 template <typename T>
-T* CUDAMallocAndCpy(const Matrix<T> &mat) {
-  GpuUtil<T> *util = GpuUtil<T>::GetInstance();
-  int n = mat.cols() * mat.rows();
-  const T *h_mat = &mat(0);
-  T *d_mat;
-  util -> SetupMem(&d_mat, h_mat, n);
-  std::cout << "allocating " << n * sizeof(T) << " bytes." << std::endl;
-  return d_mat;
-}
-// Template explicit instantiation
-template
-float* CUDAMallocAndCpy<float>(const Matrix<float> &mat);
-template
-double* CUDAMallocAndCpy<double>(const Matrix<double> &mat);
-
-
-template <typename T>
-T* CUDAMallocAndCpy(const Vector <T> &vec) {
-  GpuUtil<T> *util = GpuUtil<T>::GetInstance();
-  int n = vec.size();
-  const T *h_vec = &vec(0);
-  T *d_vec;
-  util -> SetupMem(&d_vec, h_vec, n);
-  std::cout << "allocating " << n * sizeof(T) << " bytes." << std::endl;
-  return d_vec;
-}
-
-template
-float* CUDAMallocAndCpy<float>(const Vector<float> &vec);
-template
-double* CUDAMallocAndCpy<double>(const Vector<double> &vec);
-
-// Position for Column-Major index
-#define IDXC(i,j,ld) (((j)*(ld))+(i))
-// Position for Row-Major index
-#define IDXR(i,j,ld) (((i)*(ld))+(j))
-
-template <typename T>
-__global__ void GPUGenAMatricesKernel
-    (T *x_matrix_d, T *a_matrices_d, T *all_delta_ijs_d, int n, int d) {
+__global__ void GPUGenAMatricesKernel(const T *x_matrix_d,
+                                      const int n,
+                                      const int d,
+                                      const float *alpha_d,
+                                      const float *beta_d,
+                                      T *a_matrices_d,
+                                      T *all_delta_ijs_d,
+                                      cublasStatus_t *return_status) {
 
   int i = blockIdx.y * blockDim.y + threadIdx.y;
   int j = blockIdx.x * blockDim.x + threadIdx.x;
@@ -96,132 +52,229 @@ __global__ void GPUGenAMatricesKernel
     }
 
     cublasHandle_t handle;
-    cublasCreate(&handle);
-    const float alpha = 1.0;
-    const float beta = 0.0;
+    cublasStatus_t status = cublasCreate(&handle);
+    if (status != CUBLAS_STATUS_SUCCESS) {
+      *(return_status + IDXR(i, j, n)) = status;
+      return;
+    }
 
 //  Each thread (i, j) generates a matrix Aij
-    cublasSgemm(handle,
-                CUBLAS_OP_N,
-                CUBLAS_OP_N,
-                d, d, 1,
-                &alpha, delta_ij, d,
-                delta_ij, 1,
-                &beta, a_ij_matrix, d);
+    status =
+        cublasSgemm(handle,
+                    CUBLAS_OP_N, CUBLAS_OP_N,
+                    d, d, 1,
+                    alpha_d,
+                    delta_ij, d,
+                    delta_ij, 1,
+                    beta_d,
+                    a_ij_matrix, d);
+    cublasDestroy(handle);
+    *(return_status + IDXR(i, j, n)) = status;
   }
-
-////  cublasStatus_t cublasSgemm(cublasHandle_t handle,
-////                             cublasOperation_t transa,
-////                             cublasOperation_t transb,
-////                             int m, int n, int k,
-////                             const float *alpha, const float *A, int lda,
-////                             const float *B, int ldb,
-////                             const float *beta, float *C, int ldc)
 }
 
-// Explicit Instantiation
-template
-__global__ void GPUGenAMatricesKernel<float>(float *x_matrix_d,
-                            float *a_matrices_d,
-                            float *all_delta_ijs_d,
-                            int n,
-                            int d);
+template <typename T>
+__global__ void GPUGenPhiCoeffKernel(const T *w_l_d,
+                                     const T *gradient_d,
+                                     const T *a_matrices_d,
+                                     const int n,
+                                     const int d,
+                                     const float *alpha_d,
+                                     const float *beta_d,
+                                     const int *incx_d,
+                                     const int *incy_d,
+                                     T *waw_matrix_d,
+                                     T *waf_matrix_d,
+                                     T *faf_matrix_d,
+                                     T *temp_d,
+                                     cublasStatus_t *return_status) {
 
+  int i = blockIdx.y * blockDim.y + threadIdx.y;
+  int j = blockIdx.x * blockDim.x + threadIdx.x;
+  if ((i < n) && (j < n)) {
+    cublasHandle_t handle;
+    cublasStatus_t status = cublasCreate(&handle);
+    if (status != CUBLAS_STATUS_SUCCESS) {
+      *(return_status + IDXR(i, j, n)) = status;
+      return;
+    }
+    const T *a_ij_matrix = a_matrices_d + IDXR(i, j, n) * (d * d);
+    T *temp_ij = temp_d + IDXR(i, j, n) * d;
 
+    // Calculate waw
+//    status = cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N,
+//                1, d, d,
+//                &alpha,
+//                w_l_d, 1,
+//                a_ij_matrix, d,
+//                &beta,
+//                temp_ij, 1);
+
+    status = cublasSgemv(handle, CUBLAS_OP_N,
+                         d, d,
+                         alpha_d,
+                         a_ij_matrix, d,
+                         w_l_d, *incx_d,
+                         beta_d,
+                         temp_ij, *incy_d);
+
+    cublasSdot(handle, d,
+               temp_ij, *incx_d,
+               w_l_d, *incy_d,
+               &waw_matrix_d[IDXC(i, j, n)]);
+
+    // Calculate waf
+    // temp_ij is the intermediate result of w_l.transpose() * a_matrix_ij
+    // So here we are only going to use cublasSdot and reuse temp_ij
+    cublasSdot(handle, d,
+               temp_ij, *incx_d,
+               gradient_d, *incy_d,
+               &waf_matrix_d[IDXC(i, j, n)]);
+
+    // Calculate faf
+    cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N,
+                1, d, d,
+                alpha_d,
+                gradient_d, 1,
+                a_ij_matrix, d,
+                beta_d,
+                temp_ij, 1);
+
+    cublasSdot(handle, d,
+               temp_ij, *incx_d,
+               gradient_d, *incy_d,
+               &faf_matrix_d[IDXC(i, j, n)]);
+
+    cublasDestroy(handle);
+    *(return_status + IDXR(i, j, n)) = status;
+  }
+}
 
 template<typename T>
-void GPUGenAMatrices(T *x_matrix_d, T *a_matrices_d, int n, int d) {
+void GPUGenAMatrices(const T *x_matrix_d,
+                     const int n,
+                     const int d,
+                     T *a_matrices_d) {
 
-  GpuUtil<T> *gpu_util = GpuUtil<T>::GetInstance();
-  int size_delta_ijs = n * n * d;
-//  T *all_delta_ijs = new T[size_delta_ijs];
+  // Setup cublas params alpha, beta, incx and incy
+  CUBLASParams params = {1.0, // alpha
+                           0.0, // beta
+                           1,   // incx
+                           1    // incy
+                          };
+  CUBLASParams *params_d;
+  CUDA_CALL(cudaMalloc((void**)&params_d, sizeof(CUBLASParams)));
+  CUDA_CALL(cudaMemcpy(params_d, &params, sizeof(CUBLASParams),
+                       cudaMemcpyHostToDevice));
+
+  // Intermediate data: n delta_ijs
   T *all_delta_ijs_d;
-  gpu_util -> SetupMem(&all_delta_ijs_d, nullptr, size_delta_ijs, false);
+  CUDA_CALL(cudaMalloc(&all_delta_ijs_d, n * n * d * sizeof(T)));
+
+  // n * n cublas return status from calling inside a kernel
+  cublasStatus_t *statuses_d;
+  cublasStatus_t *statuses = new cublasStatus_t[n*n];
+  CUDA_CALL(cudaMalloc((void**)&statuses_d, sizeof(cublasStatus_t)*n*n));
+
   int block_size = 16;
   dim3 dim_block(block_size, block_size);
   dim3 dim_grid( (n-1) / block_size + 1, (n-1) / block_size + 1);
-  GPUGenAMatricesKernel<<<dim_grid, dim_block>>>(x_matrix_d, a_matrices_d,
-      all_delta_ijs_d, n, d);
-//  gpu_util->SyncMem(all_delta_ijs_d, all_delta_ijs, size_delta_ijs);
-//  for (int i = 0; i < n; i++) {
-//    for (int j = 0; j < n; j++) {
-//      T *delta_ij = all_delta_ijs + IDXR(i, j, n) * d;
-//      std::cout << "delta (" << (i + 1) << ", " << (j + 1) << "): "
-//                << std::endl;
-//      util::PrintMatrix<T>(delta_ij, d, 1, false);
-//    }
-//  }
+  GPUGenAMatricesKernel<<<dim_grid, dim_block>>>(x_matrix_d,
+                                                 n,
+                                                 d,
+                                                 &(params_d->alpha),
+                                                 &(params_d->beta),
+                                                 a_matrices_d,
+                                                 all_delta_ijs_d,
+                                                 statuses_d);
+
+  // Check if error happens in kernel launch
+  CUDA_CALL(cudaGetLastError());
+
+  CUDA_CALL(cudaMemcpy(statuses, statuses_d, sizeof(cublasStatus_t)*n*n,
+                       cudaMemcpyDeviceToHost));
+  for (int i = 0; i < n*n; i++)
+    CUBLAS_CALL(statuses[i]);
+
+  // Free parameters, intermediate delta and parameters
+  CUDA_CALL(cudaFree(all_delta_ijs_d));
+  CUDA_CALL(cudaFree(statuses_d));
+  CUDA_CALL(cudaFree(params_d));
 }
 
 // Explicit Instantiation
 template
-void GPUGenAMatrices<float>(float *x_matrix_d,
-                            float *a_matrices_d,
-                            int n,
-                            int d);
+void GPUGenAMatrices<float>(const float*,
+                            const int,
+                            const int,
+                            float*);
 
-// Cannot instantiate it to double if I am using cublasSgemm
-// Only cublasDgemm is for double
-//template
-//void GPUGenAMatrices<double>(double *x_matrix,
-//                             double *a_matrices,
-//                             double *delta_ijs,
-//                             int n,
-//                             int d);
-//template <typename T>
-//__global__ void GPUGenPhiCoeffKernel(T *x_matrix,
-//                                     T *a_matrices,
-//                                     T *delta_x_ijs,
-//                                     T *waw_matrix,
-//                                     T *waf_matrix,
-//                                     T *faf_matrix,
-//                                     T *w_l,
-//                                     T *gradient,
-//                                     int n,
-//                                     int d) {
-//  int i = blockIdx.y * blockDim.y + threadIdx.y;
-//  int j = blockIdx.x * blockDim.x + threadIdx.x;
-//  // This is to index an n x n matrix where each cell is a
-//  // d x d matrix. No matter what orientation (row or column) the
-//  // d x d matrix is, to find the starting location of the (i, j)
-//  // matrix, we just need to use the following to do so
-//  T *a_ij_matrix = a_matrices + (i * n + j) * d * d;
-//  T *delta_x_ij = delta_x_ijs + (i * n + j) * d;
-//  GenAMatrix(x_matrix, a_matrices, a_ij_matrix, delta_x_ij, i, j, n, d);
-//}
-//
-//template<typename T>
-//void GPUGenPhiCoeff(T *x_matrix, T *a_matrices, T *waw_matrix, T *waf_matrix,
-//                    T *faf_matrix, T *w_l, T *gradient, int n, int d) {
-//  std::cout << "in GPUGenPhiCoeff" << std::endl;
-//
-//  int block_size = 16;
-//  dim3 dim_block(block_size, block_size);
-//  dim3 dim_grid( (n-1) / block_size + 1, (n-1) / block_size + 1);
-//  GPUGenPhiCoeffKernel<<<dim_grid, dim_block>>>(x_matrix, waw_matrix,
-//      waf_matrix, faf_matrix, w_l, gradient, n d);
-//}
-//
-//template
-//void GPUGenPhiCoeff<float>(float *x_matrix,
-//                           float *a_matrices,
-//                           float *delta_x_ijs,
-//                           float *waw_matrix,
-//                           float *waf_matrix,
-//                           float *faf_matrix,
-//                           float *w_l,
-//                           float *gradient,
-//                           int n,
-//                           int d);
-//template
-//void GPUGenPhiCoeff<double>(double *x_matrix,
-//                            double *a_matrices,
-//                            double *delta_x_ijs,
-//                            double *waw_matrix,
-//                            double *waf_matrix,
-//                            double *faf_matrix,
-//                            double *w_l,
-//                            double *gradient,
-//                            int n,
-//                            int d);
+template <typename T>
+void GPUGenPhiCoeff(const T *w_l_d,
+                    const T *gradient_d,
+                    const T *a_matrices_d,
+                    const int n,
+                    const int d,
+                    T *temp_d,
+                    T *waw_matrix_d,
+                    T *waf_matrix_d,
+                    T *faf_matrix_d) {
+  // Setup cublas params alpha, beta, incx and incy
+  CUBLASParams params = {1.0, // alpha
+                         0.0, // beta
+                         1,   // incx
+                         1   // incy
+  };
+  CUBLASParams *params_d;
+  CUDA_CALL(cudaMalloc((void**)&params_d, sizeof(CUBLASParams)));
+  CUDA_CALL(cudaMemcpy(params_d, &params, sizeof(CUBLASParams),
+                       cudaMemcpyHostToDevice));
+
+  // n * n cublas return status from calling inside a kernel
+  cublasStatus_t *statuses_d;
+  cublasStatus_t *statuses = new cublasStatus_t[n*n];
+  CUDA_CALL(cudaMalloc((void**)&statuses_d, sizeof(cublasStatus_t)*n*n));
+
+
+  int block_size = 16;
+  dim3 dim_block(block_size, block_size);
+  dim3 dim_grid( (n-1) / block_size + 1, (n-1) / block_size + 1);
+  GPUGenPhiCoeffKernel<<<dim_grid, dim_block>>>(w_l_d,
+                                                gradient_d,
+                                                a_matrices_d,
+                                                n,
+                                                d,
+                                                &(params_d->alpha),
+                                                &(params_d->beta),
+                                                &(params_d->incx),
+                                                &(params_d->incy),
+                                                waw_matrix_d,
+                                                waf_matrix_d,
+                                                faf_matrix_d,
+                                                temp_d,
+                                                statuses_d);
+
+  // Check if error happens in kernel launch
+  CUDA_CALL(cudaGetLastError());
+
+  CUDA_CALL(cudaMemcpy(statuses, statuses_d, sizeof(cublasStatus_t)*n*n,
+                       cudaMemcpyDeviceToHost));
+  for (int i = 0; i < n*n; i++)
+    CUBLAS_CALL(statuses[i]);
+
+  // Free parameters, intermediate delta and parameters
+  CUDA_CALL(cudaFree(statuses_d));
+  CUDA_CALL(cudaFree(params_d));
+}
+
+template
+void GPUGenPhiCoeff<float>(const float*,
+                           const float*,
+                           const float*,
+                           const int n,
+                           const int d,
+                           float*,
+                           float*,
+                           float*,
+                           float*);
 }

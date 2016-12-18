@@ -38,17 +38,22 @@
 #include <ctime>
 
 namespace Nice {
-template<typename T>
-T *CUDAMallocAndCpy(const Matrix<T> &mat);
+template <typename T>
+void GPUGenPhiCoeff(const T *w_l_d,
+                    const T *gradient_d,
+                    const T *a_matrices_d,
+                    const int n,
+                    const int d,
+                    T *temp_d,
+                    T *waw_matrix_d,
+                    T *waf_matrix_d,
+                    T *faf_matrix_d);
 
 template<typename T>
-T *CUDAMallocAndCpy(const Vector<T> &vec);
-//template<typename T>
-//void GPUGenPhiCoeff(T *waw_matrix_d_, T *waf_matrix_d_, T *faf_matrix_d_,
-//    T *w_l_d, T *gradient_d);
-//}
+void GPUGenAMatrices(const T *x_matrix_d,
+                     const int n,
+                     const int d,
+                     T *a_matrices_d);
 
-template<typename T>
-void GPUGenAMatrices(T *x_matrix_d, T *a_matrices_d, int n, int d);
 }
 #endif  // CPP_INCLUDE_KDAC_IN_CUDA_H_

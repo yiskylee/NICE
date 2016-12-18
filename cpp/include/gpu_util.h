@@ -27,6 +27,9 @@
 #include <device_launch_parameters.h>
 #include <cusolverDn.h>
 #include <cublas_v2.h>
+#include "include/matrix.h"
+#include "Eigen/Core"
+#include "Eigen/Dense"
 
 #include <iostream>
 #include <memory>
@@ -36,6 +39,18 @@ namespace Nice {
 //
 // Helper macros
 //
+// Position for Column-Major index
+#define IDXC(i,j,ld) (((j)*(ld))+(i))
+// Position for Row-Major index
+#define IDXR(i,j,ld) (((i)*(ld))+(j))
+
+struct CUBLASParams {
+  float alpha;
+  float beta;
+  int incx;
+  int incy;
+};
+
 #define CUDA_CALL(x) \
 do {\
   cudaError_t ret = x;\
@@ -128,6 +143,24 @@ class GpuUtil {
     CUDA_CALL(cudaFree(dev));
   }
 
+  Matrix<T> DevBufferToEigen(T *dev, int row, int col) {
+    T *host = new T[row * col];
+    CUDA_CALL(cudaMemcpy(host, dev, row * col * sizeof(T),
+              cudaMemcpyDeviceToHost));
+    return Eigen::Map<Matrix<T>>(host, row, col);
+  }
+
+  void ValidateGPUResult(T *dev,
+                         const Matrix<T> matrix_cpu,
+                         int row, int col, std::string matrix_name) {
+    Matrix<T> matrix_gpu = DevBufferToEigen(dev, row, col);
+    if ( !matrix_cpu.isApprox(matrix_gpu) ) {
+      std::cout << matrix_name << " not validated.\n";
+      exit(1);
+    }
+  }
+
+
   void SetupIntMem(int **dev, const int *host, int size, bool copy = true) {
     // Create memory
     CUDA_CALL(cudaMalloc(dev, size * sizeof(int)));
@@ -153,6 +186,7 @@ class GpuUtil {
   void SyncDev() {
     CUDA_CALL(cudaDeviceSynchronize());
   }
+
 };
 
 template <typename T>

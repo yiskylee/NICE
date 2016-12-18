@@ -24,7 +24,7 @@ endif()
 if(${APPLE})
   add_definitions(-Wall -ansi -Wno-deprecated -pthread -std=c++11)
 endif()
-message(STATUS "Eigen path: " ${EIGEN_INCLUDE_DIRS})
+
 set(COMMON_INCLUDES ${PROJECT_SOURCE_DIR})
 include_directories(${EIGEN_INCLUDE_DIRS})
 include_directories(${COMMON_INCLUDES}) 
@@ -91,7 +91,7 @@ if (CUDA_HAVE_GPU)
   include(FindCUDA)
 
   # Set NVCC flags
-  set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -std=c++11 -O3 -gencode arch=compute_50,code=sm_50 -rdc=true -Xcompiler -fPIC)
+  set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -std=c++11 -O3 -gencode arch=compute_35,code=sm_35 -rdc=true -Xcompiler -fPIC)
   set(CUDA_SEPARABLE_COMPILATION OFF)
 
 

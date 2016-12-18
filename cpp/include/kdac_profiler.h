@@ -44,6 +44,8 @@ struct KDACProfiler {
   Timer w_part7;
   Timer w_part8;
   Timer init;
+  Timer init_a_gpu;
+  Timer init_a_cpu;
   Timer kmeans;
 };
 } // namespace Nice

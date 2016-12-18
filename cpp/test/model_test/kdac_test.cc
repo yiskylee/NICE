@@ -27,6 +27,7 @@
 #include "gtest/gtest.h"
 #include "include/cpu_operations.h"
 #include "include/kdac.h"
+#include "include/kdac_profiler.h"
 #include "include/util.h"
 #include "include/matrix.h"
 #include "include/vector.h"
@@ -48,6 +49,7 @@ class KDACTest : public ::testing::Test {
   std::string data_type_;
   Nice::Matrix<T> data_matrix_;
   Nice::Matrix<T> existing_y_;
+
 
   virtual void SetUp() {
 //    data_matrix_ = Nice::util::FromFile<T>(
@@ -135,6 +137,11 @@ TYPED_TEST(KDACTest, GPUGaussianTestVerbose) {
   this->kdac_->SetVerbose(true);
   this->kdac_->SetDevice("gpu");
   this->kdac_->Fit(this->data_matrix_, this->existing_y_);
+  Nice::KDACProfiler profiler = this->kdac_->GetProfiler();
+  std::cout << "Init A on CPU: " <<
+    profiler.init_a_cpu.GetTotalTime() << std::endl;
+  std::cout << "Init A on GPU: " <<
+    profiler.init_a_gpu.GetTotalTime() << std::endl;
   PRINTV(this->kdac_->Predict(), this->num_samples_per_cluster_);
 }
 
