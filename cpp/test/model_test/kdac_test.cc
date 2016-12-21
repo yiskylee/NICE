@@ -55,7 +55,7 @@ class KDACTest : public ::testing::Test {
 //    data_matrix_ = Nice::util::FromFile<T>(
 //        "../test/data_for_test/kdac/data_400.csv", ",");
     num_clusters_ = 3;
-    num_samples_per_cluster_ = 10;
+    num_samples_per_cluster_ = 1000;
     num_samples_ = num_clusters_ * num_samples_per_cluster_;
     dim_ = 6;
     kdac_ = std::make_shared<Nice::KDAC<T>>();
@@ -142,6 +142,10 @@ TYPED_TEST(KDACTest, GPUGaussianTestVerbose) {
     profiler.init_a_cpu.GetTotalTime() << std::endl;
   std::cout << "Init A on GPU: " <<
     profiler.init_a_gpu.GetTotalTime() << std::endl;
+//  std::cout << "GenPhiCoeff on CPU: " <<
+//    profiler.coeff_cpu.GetTotalTime() << std::endl;
+//  std::cout << "GenPhiCoeff on GPU: " <<
+//    profiler.coeff_gpu.GetTotalTime() << std::endl;
   PRINTV(this->kdac_->Predict(), this->num_samples_per_cluster_);
 }
 
@@ -150,20 +154,20 @@ TYPED_TEST(KDACTest, GaussianTestVerbose) {
   this->kdac_->Fit(this->data_matrix_, this->existing_y_);
   PRINTV(this->kdac_->Predict(), this->num_samples_per_cluster_);
 }
-
-TYPED_TEST(KDACTest, GaussianTest) {
-  this->kdac_->Fit(this->data_matrix_, this->existing_y_);
-  PRINTV(this->kdac_->Predict(), this->num_samples_per_cluster_);
-}
-
-TYPED_TEST(KDACTest, WlRef) {
-  Nice::Matrix<TypeParam> w_matrix(3,3);
-  for (int i = 0; i < 3; i++)
-    for (int j = 0; j < 3; j++)
-      w_matrix(i, j) = i * 3 + j;
-  std::cout << w_matrix << std::endl;
-  Nice::Vector<TypeParam> w_l = w_matrix.col(0);
-  w_l(0) = 88;
-  std::cout << w_l << std::endl;
-  std::cout << w_matrix << std::endl;
-}
+//
+//TYPED_TEST(KDACTest, GaussianTest) {
+//  this->kdac_->Fit(this->data_matrix_, this->existing_y_);
+//  PRINTV(this->kdac_->Predict(), this->num_samples_per_cluster_);
+//}
+//
+//TYPED_TEST(KDACTest, WlRef) {
+//  Nice::Matrix<TypeParam> w_matrix(3,3);
+//  for (int i = 0; i < 3; i++)
+//    for (int j = 0; j < 3; j++)
+//      w_matrix(i, j) = i * 3 + j;
+//  std::cout << w_matrix << std::endl;
+//  Nice::Vector<TypeParam> w_l = w_matrix.col(0);
+//  w_l(0) = 88;
+//  std::cout << w_l << std::endl;
+//  std::cout << w_matrix << std::endl;
+//}

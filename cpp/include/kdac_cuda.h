@@ -42,18 +42,39 @@ template <typename T>
 void GPUGenPhiCoeff(const T *w_l_d,
                     const T *gradient_d,
                     const T *a_matrices_d,
+                    const CUBLASParams *params_d,
                     const int n,
                     const int d,
                     T *temp_d,
                     T *waw_matrix_d,
                     T *waf_matrix_d,
-                    T *faf_matrix_d);
+                    T *faf_matrix_d,
+                    cublasStatus_t *statuses,
+                    cublasStatus_t *statuses_d);
 
 template<typename T>
 void GPUGenAMatrices(const T *x_matrix_d,
+                     const CUBLASParams *params_d,
                      const int n,
                      const int d,
-                     T *a_matrices_d);
+                     T *delta_ijs_d,
+                     T *a_matrices_d,
+                     cublasStatus_t *statuses,
+                     cublasStatus_t *statuses_d);
 
+template<typename T>
+void GPUGenPhi(const T alpha,
+               const T sqrt_one_minus_alpha,
+               const T denom,
+               const T *waw_matrix_d,
+               const T *waf_matrix_d,
+               const T *faf_matrix_d,
+               const T *gamma_matrix_d,
+               const int n,
+               const int d,
+               const bool w_l_changed,
+               T *phi_of_alphas_in_d,
+               T *phi_of_zeros_in_d,
+               T *phi_of_zero_primes_in_d);
 }
 #endif  // CPP_INCLUDE_KDAC_IN_CUDA_H_

@@ -46,6 +46,10 @@ struct KDACProfiler {
   Timer init;
   Timer init_a_gpu;
   Timer init_a_cpu;
+  Timer coeff_gpu;
+  Timer coeff_cpu;
+  Timer phi_gpu;
+  Timer phi_cpu;
   Timer kmeans;
 };
 } // namespace Nice

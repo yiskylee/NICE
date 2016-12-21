@@ -1,7 +1,4 @@
 cmake_minimum_required(VERSION 2.8.9)
-#if (${CMAKE_VERSION} VERSION_GREATER 3.5)
-#  cmake_policy(SET CMP0046 OLD)
-#endif()
 set(PROJECT_NAME Nice)
 project(Nice)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
@@ -29,6 +26,15 @@ set(COMMON_INCLUDES ${PROJECT_SOURCE_DIR})
 include_directories(${EIGEN_INCLUDE_DIRS})
 include_directories(${COMMON_INCLUDES}) 
 
+# This is a Hack for Clion to know where eigen is
+include_directories(build/eigen/src/eigen)
+
+get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
+foreach(dir ${dirs})
+  message(STATUS "include dir='${dir}'")
+endforeach()
+
+
 
 set(enable-mkl)
 option (enable-mkl "Compile NICE library with MKL" OFF)
@@ -41,7 +47,6 @@ if (enable-mkl AND EXISTS ${MKL_ROOT})
   find_library(MKL_LP64 mkl_intel_lp64 HINTS ${MKL_ROOT}/lib/intel64)
   find_library(MKL_CORE mkl_core HINTS ${MKL_ROOT}/lib/intel64)
   find_library(MKL_THREAD mkl_intel_thread HINTS ${MKL_ROOT}/lib/intel64)
-
   get_filename_component(INTEL_DIR ${MKL_ROOT} PATH)
   find_library(INTEL_OMP iomp5 HINTS ${INTEL_DIR}/compilers_and_libraries/linux/lib/intel64_lin)
 endif()
@@ -74,15 +79,16 @@ else()
   set(CUDA_HAVE_GPU FALSE CACHE BOOL "Whether CUDA-capable GPU is present")
 endif()
 
-# Buld NICE library with/without CUDA
+### Buld NICE library with/without CUDA
 if (CUDA_HAVE_GPU)
-
-  # Print messge to indicate that CUDA exists
+#   Print messge to indicate that CUDA exists
   message(STATUS "GPU device exists")
-
   # Set source files
   file(GLOB_RECURSE SOURCES RELATIVE ${CMAKE_SOURCE_DIR} src/*.cc src/*.cu)
-  message(STATUS "Source files: " ${SOURCES})
+  foreach(src ${SOURCES})
+    message(STATUS "source file='${src}'")
+  endforeach()
+#  message(STATUS "Source files: " ${SOURCES})
 
   # Add definition
   add_definitions(-DNEED_CUDA)
@@ -150,8 +156,8 @@ if (enable-test)
 
   # Add source files according to machine setup
   if (CUDA_HAVE_GPU)
-    file(GLOB_RECURSE TEST_SRC_FILES RELATIVE 
-         ${PROJECT_SOURCE_DIR} 
+    file(GLOB_RECURSE TEST_SRC_FILES RELATIVE
+         ${PROJECT_SOURCE_DIR}
          test/cpu_operations_test/*.cc
          test/util_test/*.cc
          test/cpu_solver_test/*.cc
@@ -160,8 +166,8 @@ if (enable-test)
          test/model_test/*.cc
          )
   else()
-    file(GLOB_RECURSE TEST_SRC_FILES RELATIVE 
-         ${PROJECT_SOURCE_DIR} 
+    file(GLOB_RECURSE TEST_SRC_FILES RELATIVE
+         ${PROJECT_SOURCE_DIR}
          test/cpu_operations_test/*.cc
          test/util_test/*.cc
          test/cpu_solver_test/*.cc
@@ -180,7 +186,7 @@ if (enable-test)
   target_link_libraries(${PROJECT_TEST_NAME}
       ${GTEST_LIBS_DIR}/libgtest.a
       ${GTEST_LIBS_DIR}/libgtest_main.a
-      ${PROJECT_NAME} 
+      ${PROJECT_NAME}
       ${CMAKE_THREAD_LIBS_INIT})
 
   # Add test

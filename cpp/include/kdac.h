@@ -34,7 +34,6 @@
 #include <functional>
 #include <vector>
 #include <cmath>
-#include <X11/Xlib.h>
 #include <valarray>
 #include <tgmath.h>
 #include <numeric>
@@ -53,6 +52,7 @@
 #include "include/kdac_profiler.h"
 #include "include/timer.h"
 #include "include/kdac_cuda.h"
+#include "include/gpu_util.h"
 
 
 // Pass in a timer and a function, the time taken by that function is then
@@ -106,7 +106,18 @@ class KDAC {
       verbose_(false),
       device_type_("cpu") {}
 
-  ~KDAC() {}
+  ~KDAC() {
+    // Free parameters, intermediate delta and parameters
+    CUDA_CALL(cudaFree(statuses_d_));
+    CUDA_CALL(cudaFree(params_d_));
+    CUDA_CALL(cudaFree(waw_matrix_d_));
+    CUDA_CALL(cudaFree(waf_matrix_d_));
+    CUDA_CALL(cudaFree(faf_matrix_d_));
+    CUDA_CALL(cudaFree(w_l_d_));
+    CUDA_CALL(cudaFree(gradient_d_));
+    CUDA_CALL(cudaFree(temp_d_));
+
+  }
   KDAC(const KDAC &rhs) {}
   KDAC &operator=(const KDAC &rhs) {}
 
@@ -313,6 +324,8 @@ class KDAC {
         pre_u_matrix_ = u_matrix_;
         pre_w_matrix_ = w_matrix_;
       }
+      pre_u_matrix_ = u_matrix_;
+      pre_w_matrix_ = w_matrix_;
 //      if (device_type_ == "gpu") {
 //        pre_u_matrix_d_ = u_matrix_d_;
 //        pre_w_matrix_d_ = w_matrix_d_;
@@ -399,7 +412,8 @@ class KDAC {
   T* l_matrix_d_;
   Matrix<T> h_matrix_;  // Centering matrix (n by n)
   T* h_matrix_d_;
-  Matrix<T> gamma_matrix_;  // The gamma matrix used in gamma_ij in formula 5
+  Matrix<T> gamma_matrix_;  // The nxn gamma matrix used in gamma_ij
+  // in formula 5
   T* gamma_matrix_d_;
   std::vector<Matrix<T>> a_matrix_list_;  // An n*n list that contains all of
   T* a_matrices_d_; // An n*n matrix each cell of which is a dxd matrix Aij
@@ -419,6 +433,15 @@ class KDAC {
   T* w_l_d_;
   // Device memory for gradient (1 x d) for each column in W
   T* gradient_d_;
+  // Cublas parameters struct
+  CUBLASParams params_;
+  CUBLASParams *params_d_;
+
+  // n * n cublas return status from calling inside a kernel
+  cublasStatus_t *statuses_;
+  cublasStatus_t *statuses_d_;
+
+  T *phi_of_alphas_d_, *phi_of_zeros_d_, *phi_of_zero_primes_d_;
 
 
   // A struct contains timers for different functions
@@ -441,10 +464,34 @@ class KDAC {
     // w_matrix_ is I initially
     w_matrix_ = Matrix<T>::Identity(d_, d_);
     if (device_type_ == "gpu") {
-//      x_matrix_d_ = CUDAMallocAndCpy(x_matrix_);
-//      w_matrix_d_ = CUDAMallocAndCpy(w_matrix_);
       gpu_util_->SetupMem(&x_matrix_d_, &x_matrix_(0), n_*d_);
       gpu_util_->SetupMem(&w_matrix_d_, &w_matrix_(0), n_*d_);
+      gpu_util_ -> SetupMem(&waw_matrix_d_, nullptr, n_*n_, false);
+      gpu_util_ -> SetupMem(&waf_matrix_d_, nullptr, n_*n_, false);
+      gpu_util_ -> SetupMem(&faf_matrix_d_, nullptr, n_*n_, false);
+      gpu_util_ -> SetupMem(&w_l_d_, nullptr, d_, false);
+      gpu_util_ -> SetupMem(&gradient_d_, nullptr, d_, false);
+      gpu_util_ -> SetupMem(&temp_d_, nullptr, n_ * n_ * d_, false);
+      gpu_util_ -> SetupMem(&delta_ijs_d_, nullptr, n_ * n_ * d_, false);
+      gpu_util_ -> SetupMem(&a_matrices_d_, nullptr,
+                            n_ * n_ * d_ * d_,false);
+      // Setup cublas params alpha, beta, incx and incy
+      params_.alpha = 1.0;
+      params_.beta = 0.0;
+      params_.incx = 1;
+      params_.incy = 1;
+      CUDA_CALL(cudaMalloc((void**)&params_d_, sizeof(CUBLASParams)));
+      CUDA_CALL(cudaMemcpy(params_d_, &params_, sizeof(CUBLASParams),
+                           cudaMemcpyHostToDevice));
+
+      statuses_ = new cublasStatus_t[n_*n_];
+      CUDA_CALL(cudaMalloc((void**)&statuses_d_,
+                           sizeof(cublasStatus_t)*n_*n_));
+
+      gpu_util_ -> SetupMem(&gamma_matrix_d_, nullptr, n_*n_, false);
+      gpu_util_ -> SetupMem(&phi_of_alphas_d_, nullptr, n_*n_, false);
+      gpu_util_ -> SetupMem(&phi_of_zeros_d_, nullptr, n_*n_, false);
+      gpu_util_ -> SetupMem(&phi_of_zero_primes_d_, nullptr, n_*n_, false);
     }
   }
 
@@ -489,21 +536,6 @@ class KDAC {
     u_converge_ = false;
     w_converge_ = false;
     u_w_converge_ = false;
-    if (device_type_ == "gpu") {
-//      CUDA_CALL(cudaMalloc(&h_matrix_d_, n_*n_*sizeof(T)));
-      gpu_util_ -> SetupMem(&waw_matrix_d_, nullptr, n_*n_, false);
-      gpu_util_ -> SetupMem(&waf_matrix_d_, nullptr, n_*n_, false);
-      gpu_util_ -> SetupMem(&faf_matrix_d_, nullptr, n_*n_, false);
-      gpu_util_ -> SetupMem(&w_l_d_, nullptr, d_, false);
-      gpu_util_ -> SetupMem(&gradient_d_, nullptr, d_, false);
-      gpu_util_ -> SetupMem(&temp_d_, nullptr, n_ * n_ * d_, false);
-//      GPUGenYTildeMatrix();
-//      h_matrix_d_ = CUDAMallocAndCpy(h_matrix_);
-//      y_matrix_temp_d_ = CUDAMallocAndCpy(y_matrix_temp_);
-//      y_matrix_d_ = CUDAMallocAndCpy(y_matrix);
-//      k_matrix_y_d_ = CUDAMallocAndCpy(k_matrix_y_);
-//      y_matrix_tilde_d_ = CUDAMallocAndCpy(y_matrix_tilde_);
-    }
   }
 
   void InitAMatrixList(void) {
@@ -519,17 +551,22 @@ class KDAC {
     profiler_.init_a_cpu.Stop();
     profiler_.init_a_gpu.Start();
     if (device_type_ == "gpu") {
-      std::cout << "Before Gen A Matrices" << std::endl;
-      int size_a = n_*n_*d_*d_ * sizeof(T);
-      CUDA_CALL(cudaMalloc(&a_matrices_d_, size_a));
-      GPUGenAMatrices(x_matrix_d_, n_, d_, a_matrices_d_);
-      std::cout << "Gen A Matrices Done" << std::endl;
-      for (int i = 0; i < n_; i++)
-        for (int j = 0; j < n_; j++)
-          gpu_util_ -> ValidateGPUResult(
-              a_matrices_d_+IDXR(i, j, n_)*(d_*d_),
-              a_matrix_list_[IDXR(i, j, n_)],
-              d_, d_, "Aij matrix");
+
+      GPUGenAMatrices(x_matrix_d_,
+                      params_d_,
+                      n_,
+                      d_,
+                      delta_ijs_d_,
+                      a_matrices_d_,
+                      statuses_,
+                      statuses_d_);
+//      std::cout << "Gen A Matrices Done" << std::endl;
+//      for (int i = 0; i < n_; i++)
+//        for (int j = 0; j < n_; j++)
+//          gpu_util_ -> ValidateGPUResult(
+//              a_matrices_d_+IDXR(i, j, n_)*(d_*d_),
+//              a_matrix_list_[IDXR(i, j, n_)],
+//              d_, d_, "Aij matrix");
     }
     profiler_.init_a_gpu.Stop();
   }
@@ -674,6 +711,12 @@ class KDAC {
     // u*ut and didj matrix has the same size
     gamma_matrix_ = ((u_matrix_ * u_matrix_.transpose()).array() /
         didj_matrix_.array()).matrix() - lambda_ * y_matrix_tilde_;
+    if (device_type_ == "gpu") {
+      profiler_.phi_gpu.Start();
+      CUDA_CALL(cudaMemcpy(gamma_matrix_d_, &gamma_matrix_(0),
+                           n_ * n_ * sizeof(T), cudaMemcpyHostToDevice));
+      profiler_.phi_gpu.Record();
+    }
     // After gamma_matrix is generated, we are optimizing gamma * kij as in 5
     // g_of_w is g(w_l) that is multiplied by g(w_(l+1)) in each iteration
     // of changing l.
@@ -740,6 +783,9 @@ class KDAC {
     profiler_.w_part4.SumRecords();
     profiler_.w_part5.SumRecords();
     profiler_.w_part6.SumRecords();
+    profiler_.coeff_cpu.SumRecords();
+    profiler_.coeff_gpu.SumRecords();
+    exit(1);
 //    profiler_.w_part7.SumRecords();
   }
 
@@ -800,6 +846,7 @@ class KDAC {
       float alpha_square = pow(alpha, 2);
       float sqrt_one_minus_alpha = pow((1 - alpha_square), 0.5);
       float denom = -1 / (2 * pow(constant_, 2));
+
       *phi_of_alpha = 0;
 
       if (w_l_changed) {
@@ -808,6 +855,7 @@ class KDAC {
         *phi_of_zero_prime = 0;
       }
 
+      profiler_.phi_cpu.Start();
       for (int i = 0; i < n_; i++) {
         for (int j = 0; j < n_; j++) {
           T waw = waw_matrix_(i, j);
@@ -828,12 +876,76 @@ class KDAC {
 //          }
         }
       }
+      profiler_.phi_cpu.Stop();
+      printf("phi(alpha) on cpu: %f\n", *phi_of_alpha);
+      if (device_type_ == "gpu") {
+        profiler_.phi_gpu.Start();
+        GPUGenPhi(alpha,
+                  sqrt_one_minus_alpha,
+                  denom,
+                  waw_matrix_d_,
+                  waf_matrix_d_,
+                  faf_matrix_d_,
+                  gamma_matrix_d_,
+                  n_,
+                  d_,
+                  w_l_changed,
+                  phi_of_alphas_d_,
+                  phi_of_zeros_d_,
+                  phi_of_zero_primes_d_);
+        profiler_.phi_gpu.Record();
+
+
+
+//        Matrix<T> phi_of_alphas_h =
+//            gpu_util_ -> DevBufferToEigen(phi_of_alphas_d_,
+//                                          n_*n_,
+//                                          1);
+//        if (phi_of_alphas_h.sum() - *phi_of_alpha > threshold_) {
+//          std::cout << "phi(alpha) not equal: "
+//                    << phi_of_alphas_h.sum()
+//                    << " " << *phi_of_alpha << std::endl;
+//          exit(1);
+//        }
+//
+//        if (w_l_changed) {
+//          Matrix<T> phi_of_zeros_h =
+//              gpu_util_ -> DevBufferToEigen(phi_of_zeros_d_,
+//                                            n_*n_,
+//                                            1);
+//          Matrix<T> phi_of_zero_primes_h =
+//              gpu_util_ -> DevBufferToEigen(phi_of_zero_primes_d_,
+//                                            n_*n_,
+//                                            1);
+//          if (phi_of_zeros_h.sum() - *phi_of_zero > threshold_) {
+//            std::cout << "phi(0) not equal: "
+//                      << phi_of_zeros_h.sum()
+//                      << " " << *phi_of_zero << std::endl;
+//            exit(1);
+//          }
+//          if (phi_of_zero_primes_h.sum() - *phi_of_zero_prime > threshold_) {
+//            std::cout << "phi(0)' not equal: "
+//                      << phi_of_zero_primes_h.sum()
+//                      << " " << *phi_of_zero_prime << std::endl;
+//            exit(1);
+//          }
+//        }
+      }
+      profiler_.phi_gpu.SumRecords();
+      if (verbose_) {
+        std::cout << "\nphi cpu time: "
+                  << profiler_.phi_cpu.GetTotalTime() << std::endl;
+        std::cout << "\nphi gpu time: "
+                  << profiler_.phi_gpu.GetTotalTime() << std::endl;
+      }
+
     }
   }
 
   void GenPhiCoeff(const Vector<T> &w_l, const Vector<T> &gradient) {
     // Three terms used to calculate phi of alpha
     // They only change if w_l or gradient change
+    profiler_.coeff_cpu.Start();
     for (int i = 0; i < n_; i++) {
       for (int j = 0; j < n_; j++) {
         Matrix<T> &a_matrix_ij = a_matrix_list_[i * n_ + j];
@@ -842,7 +954,9 @@ class KDAC {
         faf_matrix_(i, j) = gradient.transpose() * a_matrix_ij * gradient;
       }
     }
+    profiler_.coeff_cpu.Stop();
     if (device_type_ == "gpu") {
+      profiler_.coeff_gpu.Start();
       CUDA_CALL(cudaMemcpy(w_l_d_, &w_l(0), d_ * sizeof(T),
         cudaMemcpyHostToDevice));
       CUDA_CALL(cudaMemcpy(gradient_d_, &gradient(0), d_ * sizeof(T),
@@ -850,19 +964,29 @@ class KDAC {
       GPUGenPhiCoeff(w_l_d_,
                      gradient_d_,
                      a_matrices_d_,
+                     params_d_,
                      n_,
                      d_,
                      temp_d_,
                      waw_matrix_d_,
                      waf_matrix_d_,
-                     faf_matrix_d_);
+                     faf_matrix_d_,
+                     statuses_,
+                     statuses_d_);
+      profiler_.coeff_gpu.Stop();
+      if (verbose_) {
+        std::cout << "\ncoeff cpu time: "
+                  << profiler_.coeff_cpu.GetTotalTime() << std::endl;
+        std::cout << "\ncoeff gpu time: "
+                  << profiler_.coeff_gpu.GetTotalTime() << std::endl;
+      }
+
       gpu_util_ -> ValidateGPUResult(waw_matrix_d_, waw_matrix_,
                                      n_, n_, "waw_matrix");
       gpu_util_ -> ValidateGPUResult(waf_matrix_d_, waf_matrix_,
                                      n_, n_, "waf_matrix");
       gpu_util_ -> ValidateGPUResult(faf_matrix_d_, faf_matrix_,
                                      n_, n_, "faf_matrix");
-
     }
   }
 
