@@ -25,6 +25,7 @@
 #include <cuda_runtime_api.h>
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
+#include <cuda_profiler_api.h>
 #include <cusolverDn.h>
 #include <cublas_v2.h>
 #include "include/matrix.h"
@@ -148,6 +149,18 @@ class GpuUtil {
     CUDA_CALL(cudaMemcpy(host, dev, row * col * sizeof(T),
               cudaMemcpyDeviceToHost));
     return Eigen::Map<Matrix<T>>(host, row, col);
+  }
+
+  void ValidateCPUResult(T *host,
+                         const Matrix<T> matrix_cpu,
+                         int row, int col, std::string matrix_name) {
+    Matrix<T> matrix_gpu = Eigen::Map<Matrix<T>>(host, row, col);
+    if ( !matrix_cpu.isApprox(matrix_gpu) ) {
+      std::cout << matrix_name << " not validated.\n";
+      std::cout << "cpu: " << std::endl << matrix_cpu.block(0,0,4,4) << std::endl;
+      std::cout << "gpu: " << std::endl << matrix_gpu.block(0,0,4,4) << std::endl;
+//      exit(1);
+    }
   }
 
   void ValidateGPUResult(T *dev,

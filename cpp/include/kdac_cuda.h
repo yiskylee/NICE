@@ -42,25 +42,22 @@ template <typename T>
 void GPUGenPhiCoeff(const T *w_l_d,
                     const T *gradient_d,
                     const T *a_matrices_d,
-                    const CUBLASParams *params_d,
+                    const CUBLASParams &params,
                     const int n,
                     const int d,
-                    T *temp_d,
-                    T *waw_matrix_d,
-                    T *waf_matrix_d,
-                    T *faf_matrix_d,
-                    cublasStatus_t *statuses,
-                    cublasStatus_t *statuses_d);
+                    T *a_mul_w_d,
+                    T *a_mul_grad_d,
+                    T *waw_matrix,
+                    T *waf_matrix,
+                    T *faf_matrix);
 
 template<typename T>
 void GPUGenAMatrices(const T *x_matrix_d,
-                     const CUBLASParams *params_d,
+                     const CUBLASParams &params,
                      const int n,
                      const int d,
                      T *delta_ijs_d,
-                     T *a_matrices_d,
-                     cublasStatus_t *statuses,
-                     cublasStatus_t *statuses_d);
+                     T *a_matrices_d);
 
 template<typename T>
 void GPUGenPhi(const T alpha,

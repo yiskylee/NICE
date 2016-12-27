@@ -22,19 +22,15 @@
 
 #include "include/kdac_cuda.h"
 #include "include/gpu_util.h"
-#include "../../../../../../../../usr/local/cuda/include/driver_types.h"
+#include "../../include/gpu_util.h"
 
 namespace Nice {
 
 template <typename T>
-__global__ void GPUGenAMatricesKernel(const T *x_matrix_d,
+__global__ void GPUGenDeltaKernel(const T *x_matrix_d,
                                       const int n,
                                       const int d,
-                                      const float *alpha_d,
-                                      const float *beta_d,
-                                      T *a_matrices_d,
-                                      T *all_delta_ijs_d,
-                                      cublasStatus_t *return_status) {
+                                      T *all_delta_ijs_d) {
 
   int i = blockIdx.y * blockDim.y + threadIdx.y;
   int j = blockIdx.x * blockDim.x + threadIdx.x;
@@ -43,33 +39,10 @@ __global__ void GPUGenAMatricesKernel(const T *x_matrix_d,
   // d x d matrix is, to find the starting location of the (i, j)
   // matrix, we just need to use the following to do so
   if (i < n && j < n) {
-    T *a_ij_matrix = a_matrices_d + IDXR(i, j, n) * (d * d);
     T *delta_ij = all_delta_ijs_d + IDXR(i, j, n) * d;
-
     // x_matrix_d is column major
-    for (int k = 0; k < d; k++) {
+    for (int k = 0; k < d; k++)
       delta_ij[k] = x_matrix_d[IDXC(i, k, n)] - x_matrix_d[IDXC(j, k, n)];
-    }
-
-    cublasHandle_t handle;
-    cublasStatus_t status = cublasCreate(&handle);
-    if (status != CUBLAS_STATUS_SUCCESS) {
-      *(return_status + IDXR(i, j, n)) = status;
-      return;
-    }
-
-//  Each thread (i, j) generates a matrix Aij
-    status =
-        cublasSgemm(handle,
-                    CUBLAS_OP_N, CUBLAS_OP_N,
-                    d, d, 1,
-                    alpha_d,
-                    delta_ij, d,
-                    delta_ij, 1,
-                    beta_d,
-                    a_ij_matrix, d);
-    cublasDestroy(handle);
-    *(return_status + IDXR(i, j, n)) = status;
   }
 }
 
@@ -352,97 +325,127 @@ __global__ void reduce_kernel(T *g_idata, T *g_odata, unsigned int n) {
 
 template<typename T>
 void GPUGenAMatrices(const T *x_matrix_d,
-                     const CUBLASParams *params_d,
+                     const CUBLASParams &params,
                      const int n,
                      const int d,
                      T *delta_ijs_d,
-                     T *a_matrices_d,
-                     cublasStatus_t *statuses,
-                     cublasStatus_t *statuses_d) {
+                     T *a_matrices_d) {
 
   int block_size = 16;
   dim3 dim_block(block_size, block_size);
-  dim3 dim_grid( (n-1) / block_size + 1, (n-1) / block_size + 1);
-  GPUGenAMatricesKernel<<<dim_grid, dim_block>>>(x_matrix_d,
+  dim3 dim_grid((n - 1) / block_size + 1, (n - 1) / block_size + 1);
+  GPUGenDeltaKernel <<< dim_grid, dim_block >>> (x_matrix_d,
                                                  n,
                                                  d,
-                                                 &(params_d->alpha),
-                                                 &(params_d->beta),
-                                                 a_matrices_d,
-                                                 delta_ijs_d,
-                                                 statuses_d);
-  // Check if error happens in kernel launch
-  CUDA_CALL(cudaGetLastError());
-  CUDA_CALL(cudaMemcpy(statuses, statuses_d, sizeof(cublasStatus_t)*n*n,
-                       cudaMemcpyDeviceToHost));
-  for (int i = 0; i < n*n; i++)
-    CUBLAS_CALL(statuses[i]);
+                                                 delta_ijs_d);
+  int num_streams = n * n;
+  cudaStream_t *streams = new cudaStream_t[num_streams];
+  cublasHandle_t handle;
+  CUBLAS_CALL(cublasCreate(&handle));
+  for (int i = 0; i < num_streams; i++)
+    CUDA_CALL(cudaStreamCreate(&streams[i]));
+
+  for (int i = 0; i < n; i++) {
+    for (int j = 0; j < n; j++) {
+      T *a_ij_matrix = a_matrices_d + IDXR(i, j, n) * (d * d);
+      const T *delta_ij = delta_ijs_d + IDXR(i, j, n) * d;
+      CUBLAS_CALL(cublasSetStream(handle, streams[i * n + j]));
+      CUBLAS_CALL(cublasSgemm(handle,
+                              CUBLAS_OP_N, CUBLAS_OP_N,
+                              d, d, 1,
+                              &(params.alpha),
+                              delta_ij, d,
+                              delta_ij, 1,
+                              &(params.beta),
+                              a_ij_matrix, d));
+    }
+  }
+  for (int i = 0; i < num_streams; i++)
+    CUDA_CALL(cudaStreamDestroy(streams[i]));
+  CUBLAS_CALL(cublasDestroy(handle));
 }
 
 // Explicit Instantiation
 template
 void GPUGenAMatrices<float>(const float *x_matrix_d,
-                            const CUBLASParams *params_d,
+                            const CUBLASParams &params,
                             const int n,
                             const int d,
                             float *delta_ijs_d,
-                            float *a_matrices_d,
-                            cublasStatus_t *statuses,
-                            cublasStatus_t *statuses_d);
+                            float *a_matrices_d);
 
 template <typename T>
 void GPUGenPhiCoeff(const T *w_l_d,
                     const T *gradient_d,
                     const T *a_matrices_d,
-                    const CUBLASParams *params_d,
+                    const CUBLASParams &params,
                     const int n,
                     const int d,
-                    T *temp_d,
-                    T *waw_matrix_d,
-                    T *waf_matrix_d,
-                    T *faf_matrix_d,
-                    cublasStatus_t *statuses,
-                    cublasStatus_t *statuses_d) {
+                    T *a_mul_w_d,
+                    T *a_mul_grad_d,
+                    T *waw_matrix,
+                    T *waf_matrix,
+                    T *faf_matrix) {
 
-  int block_size = 16;
-  dim3 dim_block(block_size, block_size);
-  dim3 dim_grid( (n-1) / block_size + 1, (n-1) / block_size + 1);
-  GPUGenPhiCoeffKernel<<<dim_grid, dim_block>>>(w_l_d,
-                                                gradient_d,
-                                                a_matrices_d,
-                                                n,
-                                                d,
-                                                &(params_d->alpha),
-                                                &(params_d->beta),
-                                                &(params_d->incx),
-                                                &(params_d->incy),
-                                                waw_matrix_d,
-                                                waf_matrix_d,
-                                                faf_matrix_d,
-                                                temp_d,
-                                                statuses_d);
-
-  // Check if error happens in kernel launch
-  CUDA_CALL(cudaGetLastError());
-  CUDA_CALL(cudaMemcpy(statuses, statuses_d, sizeof(cublasStatus_t)*n*n,
-                       cudaMemcpyDeviceToHost));
-  for (int i = 0; i < n*n; i++)
-    CUBLAS_CALL(statuses[i]);
+  int num_streams = n * n;
+  cudaStream_t *streams = new cudaStream_t [num_streams];
+  cublasHandle_t handle;
+  CUBLAS_CALL(cublasCreate(&handle));
+  for (int i = 0; i < num_streams; i++)
+    CUDA_CALL(cudaStreamCreate(&streams[i]));
+  for (int i = 0; i < n; i++) {
+    for (int j = 0; j < n; j++) {
+      const T *a_ij_matrix = a_matrices_d + IDXR(i, j, n) * (d * d);
+      T *a_mul_w_ij = a_mul_w_d + IDXR(i, j, n) * d;
+      T *a_mul_grad_ij = a_mul_grad_d + IDXR(i, j, n) * d;
+      CUBLAS_CALL(cublasSetStream(handle, streams[i * n + j]));
+      CUBLAS_CALL(cublasSgemv(handle, CUBLAS_OP_N,
+                              d, d,
+                              &(params.alpha),
+                              a_ij_matrix, d,
+                              w_l_d, params.incx,
+                              &(params.beta),
+                              a_mul_w_ij, params.incy));
+//      CUBLAS_CALL(cublasSdot(handle, d,
+//                             a_mul_w_ij, params.incx,
+//                             w_l_d, params.incy,
+//                             &waw_matrix[IDXC(i, j, n)]));
+//      CUBLAS_CALL(cublasSdot(handle, d,
+//                             a_mul_w_ij, params.incx,
+//                             gradient_d, params.incy,
+//                             &waf_matrix[IDXC(i, j, n)]));
+      CUBLAS_CALL(cublasSgemv(handle, CUBLAS_OP_N,
+                              d, d,
+                              &(params.alpha),
+                              a_ij_matrix, d,
+                              gradient_d, params.incx,
+                              &(params.beta),
+                              a_mul_grad_ij, params.incy));
+//      CUBLAS_CALL(cublasSdot(handle, d,
+//                             a_mul_grad_ij, params.incx,
+//                             gradient_d, params.incy,
+//                             &faf_matrix[IDXC(i, j, n)]));
+    }
+  }
+  CUDA_CALL(cudaMemset(a_mul_w_d, 0, n*n*d*sizeof(T)));
+  CUDA_CALL(cudaMemset(a_mul_grad_d, 0, n*n*d*sizeof(T)));
+  for (int i = 0; i < num_streams; i++)
+    CUDA_CALL(cudaStreamDestroy(streams[i]));
+  CUBLAS_CALL(cublasDestroy(handle));
 }
 
 template
 void GPUGenPhiCoeff<float>(const float *w_l_d,
                            const float *gradient_d,
                            const float *a_matrices_d,
-                           const CUBLASParams *params_d,
+                           const CUBLASParams &params,
                            const int n,
                            const int d,
-                           float *temp_d,
-                           float *waw_matrix_d,
-                           float *waf_matrix_d,
-                           float *faf_matrix_d,
-                           cublasStatus_t *statuses,
-                           cublasStatus_t *statuses_d);
+                           float *a_mul_w_d,
+                           float *a_mul_grad_d,
+                           float *waw_matrix,
+                           float *waf_matrix,
+                           float *faf_matrix);
 
 unsigned int nextPow2(unsigned int x)
 {
@@ -493,6 +496,9 @@ bool isPow2(unsigned int x) {
 template <typename T>
 void reduce(int num_elements, int num_threads, int num_blocks,
             T *input_data_d, T *output_data_d) {
+
+
+
   dim3 dim_block(num_threads, 1, 1);
   dim3 dim_grid(num_blocks, 1, 1);
 
@@ -647,42 +653,61 @@ void GPUGenPhi(const T alpha,
 
   // Each block generates a partial sum
   T *phi_of_alphas_out_d = 0;
-  T *phi_of_zeros_out_d = 0;
-  T *phi_of_zero_primes_out_d = 0;
   CUDA_CALL(cudaMalloc((void**) &phi_of_alphas_out_d,
                        num_blocks * sizeof(T)));
-  CUDA_CALL(cudaMalloc((void**) &phi_of_zeros_out_d,
-                       num_blocks * sizeof(T)));
-  CUDA_CALL(cudaMalloc((void**) &phi_of_zero_primes_out_d,
-                       num_blocks * sizeof(T)));
-
   reduce<T>(num_elems, num_threads, num_blocks,
             phi_of_alphas_in_d, phi_of_alphas_out_d);
   CUDA_CALL(cudaGetLastError());
-
-  int s = num_blocks;
-  while (s > 1) {
-    num_blocks = 0;
-    num_threads = 0;
-    GetNumBlocksAndThreads(s, max_blocks, max_threads,
-                           num_blocks, num_threads);
-    reduce<T>(s, num_threads, num_blocks,
-              phi_of_alphas_out_d, phi_of_alphas_out_d);
-    s = (s + (num_threads*2-1)) / (num_threads*2);
-  }
+  T *phi_of_alphas_out_h = new T[n * n];
+  CUDA_CALL(cudaMemcpy(phi_of_alphas_out_h, phi_of_alphas_out_d,
+                       num_blocks * sizeof(T), cudaMemcpyDeviceToHost));
   T phi_of_alpha = 0;
-  CUDA_CALL(cudaMemcpy(&phi_of_alpha, phi_of_alphas_out_d, sizeof(T),
-                       cudaMemcpyDeviceToHost));
-  printf("phi(alpha) on gpu: %f\n", phi_of_alpha);
+  for (int i = 0; i < num_blocks; i++)
+    phi_of_alpha += phi_of_alphas_out_h[i];
+//  printf("phi(alpha) on gpu: %f\n", phi_of_alpha);
+  CUDA_CALL(cudaFree(phi_of_alphas_out_d));
+  delete [] phi_of_alphas_out_h;
+
+  if (w_l_changed) {
+    T *phi_of_zeros_out_d = 0;
+    T *phi_of_zero_primes_out_d = 0;
+    CUDA_CALL(cudaMalloc((void**) &phi_of_zeros_out_d,
+                         num_blocks * sizeof(T)));
+    CUDA_CALL(cudaMalloc((void**) &phi_of_zero_primes_out_d,
+                         num_blocks * sizeof(T)));
+    reduce<T>(num_elems, num_threads, num_blocks,
+              phi_of_zeros_in_d, phi_of_zeros_out_d);
+    CUDA_CALL(cudaGetLastError());
+    reduce<T>(num_elems, num_threads, num_blocks,
+              phi_of_zero_primes_in_d, phi_of_zero_primes_out_d);
+    CUDA_CALL(cudaGetLastError());
+    T *phi_of_zeros_out_h = new T[n * n];
+    T *phi_of_zero_primes_out_h = new T[n * n];
+    CUDA_CALL(cudaMemcpy(phi_of_zeros_out_h, phi_of_zeros_out_d,
+                         num_blocks * sizeof(T), cudaMemcpyDeviceToHost));
+    CUDA_CALL(cudaMemcpy(phi_of_zero_primes_out_h, phi_of_zero_primes_out_d,
+                         num_blocks * sizeof(T), cudaMemcpyDeviceToHost));
+    T phi_of_zero = 0;
+    T phi_of_zero_prime = 0;
+    for (int i = 0; i < num_blocks; i++) {
+      phi_of_zero += phi_of_zeros_out_h[i];
+      phi_of_zero_prime += phi_of_zero_primes_out_h[i];
+    }
+//    printf("phi(0) on gpu: %f\n", phi_of_zero);
+//    printf("phi(0)' on gpu: %f\n", phi_of_zero_prime);
+    CUDA_CALL(cudaFree(phi_of_zeros_out_d));
+    CUDA_CALL(cudaFree(phi_of_zero_primes_out_d));
+    delete [] phi_of_zeros_out_h;
+    delete [] phi_of_zero_primes_out_h;
+  }
 //  if (w_l_changed) {
 //    reduce<T>(num_elems, num_threads, num_blocks,
 //              phi_of_zeros_in_d, phi_of_zeros_out_d);
 //    reduce<T>(num_elems, num_threads, num_blocks,
 //              phi_of_zero_primes_in_d, phi_of_zero_primes_out_d);
 //  }
-  CUDA_CALL(cudaFree(phi_of_alphas_out_d));
-  CUDA_CALL(cudaFree(phi_of_zeros_out_d));
-  CUDA_CALL(cudaFree(phi_of_zero_primes_out_d));
+
+
 }
 
 

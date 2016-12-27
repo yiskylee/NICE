@@ -55,9 +55,9 @@ class KDACTest : public ::testing::Test {
 //    data_matrix_ = Nice::util::FromFile<T>(
 //        "../test/data_for_test/kdac/data_400.csv", ",");
     num_clusters_ = 3;
-    num_samples_per_cluster_ = 1000;
+    num_samples_per_cluster_ = 2;
     num_samples_ = num_clusters_ * num_samples_per_cluster_;
-    dim_ = 6;
+    dim_ = 100;
     kdac_ = std::make_shared<Nice::KDAC<T>>();
     kdac_->SetQ(num_clusters_);
     kdac_->SetC(num_clusters_);
@@ -146,14 +146,14 @@ TYPED_TEST(KDACTest, GPUGaussianTestVerbose) {
 //    profiler.coeff_cpu.GetTotalTime() << std::endl;
 //  std::cout << "GenPhiCoeff on GPU: " <<
 //    profiler.coeff_gpu.GetTotalTime() << std::endl;
-  PRINTV(this->kdac_->Predict(), this->num_samples_per_cluster_);
+//  PRINTV(this->kdac_->Predict(), this->num_samples_per_cluster_);
 }
-
-TYPED_TEST(KDACTest, GaussianTestVerbose) {
-  this->kdac_->SetVerbose(true);
-  this->kdac_->Fit(this->data_matrix_, this->existing_y_);
-  PRINTV(this->kdac_->Predict(), this->num_samples_per_cluster_);
-}
+//
+//TYPED_TEST(KDACTest, GaussianTestVerbose) {
+//  this->kdac_->SetVerbose(true);
+//  this->kdac_->Fit(this->data_matrix_, this->existing_y_);
+////  PRINTV(this->kdac_->Predict(), this->num_samples_per_cluster_);
+//}
 //
 //TYPED_TEST(KDACTest, GaussianTest) {
 //  this->kdac_->Fit(this->data_matrix_, this->existing_y_);
