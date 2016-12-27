@@ -30,6 +30,8 @@
 #include <algorithm>
 #include <sstream>
 #include <vector>
+#include <cmath>
+
 
 #include "include/matrix.h"
 #include "include/vector.h"
@@ -237,6 +239,11 @@ void ToFile(const Vector<T> a,
 template<typename T>
 static T reciprocal(T x) {
   return T(1) / x;
+}
+
+template<typename T>
+static T exp(T x) {
+  return std::exp(x);
 }
 
 }  // namespace util
