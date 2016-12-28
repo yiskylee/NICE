@@ -55,9 +55,9 @@ class KDACTest : public ::testing::Test {
 //    data_matrix_ = Nice::util::FromFile<T>(
 //        "../test/data_for_test/kdac/data_400.csv", ",");
     num_clusters_ = 3;
-    num_samples_per_cluster_ = 2;
+    num_samples_per_cluster_ = 10;
     num_samples_ = num_clusters_ * num_samples_per_cluster_;
-    dim_ = 100;
+    dim_ = 6;
     kdac_ = std::make_shared<Nice::KDAC<T>>();
     kdac_->SetQ(num_clusters_);
     kdac_->SetC(num_clusters_);

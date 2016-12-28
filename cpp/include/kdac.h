@@ -318,6 +318,7 @@ class KDAC {
     // Following the pseudo code in Algorithm 1 in the paper
     profiler_.fit.Start();
     PROFILE(Init(input_matrix, y_matrix), profiler_.init);
+    return;
     while (!u_w_converge_) {
       profiler_.fit_loop.Start();
       if (device_type_ == "cpu") {
@@ -421,8 +422,6 @@ class KDAC {
   T* a_matrices_d_; // An n*n matrix each cell of which is a dxd matrix Aij
   T* a_mul_w_d_; // Intermediate result of Aij * w
   T* a_mul_grad_d_;  // Intermediate result of Aij * grad_f
-  T* delta_ijs_d_; // An n*n matrix each cell of which is a row vector of
-  // X[i] - X[j]
 
   Vector<T> clustering_result_;  // Current clustering result
   T* clustering_result_d_;
@@ -471,7 +470,6 @@ class KDAC {
       gpu_util_ -> SetupMem(&gradient_d_, nullptr, d_, false);
       gpu_util_ -> SetupMem(&a_mul_w_d_, nullptr, n_ * n_ * d_, false);
       gpu_util_ -> SetupMem(&a_mul_grad_d_, nullptr, n_ * n_ * d_, false);
-      gpu_util_ -> SetupMem(&delta_ijs_d_, nullptr, n_ * n_ * d_, false);
       gpu_util_ -> SetupMem(&a_matrices_d_, nullptr,
                             n_ * n_ * d_ * d_,false);
       // Setup cublas params alpha, beta, incx and incy
@@ -521,6 +519,7 @@ class KDAC {
     // Generate Y tilde matrix in equation 5 from kernel matrix of Y
     y_matrix_tilde_ = h_matrix_ * k_matrix_y_ * h_matrix_;
     InitAMatrixList();
+    return;
     // Coefficients for calculating phi
     waw_matrix_ = Matrix<T>::Zero(n_, n_);
     waf_matrix_ = Matrix<T>::Zero(n_, n_);
@@ -541,23 +540,25 @@ class KDAC {
       }
     }
     profiler_.init_a_cpu.Stop();
-    profiler_.init_a_gpu.Start();
-    if (device_type_ == "gpu") {
+
+    if (device_type_ == "gpu" && d_ > 16) {
+      profiler_.init_a_gpu.Start();
       GPUGenAMatrices(x_matrix_d_,
-                      params_,
                       n_,
                       d_,
-                      delta_ijs_d_,
                       a_matrices_d_);
-      std::cout << "Gen A Matrices Done" << std::endl;
-//      for (int i = 0; i < n_; i++)
-//        for (int j = 0; j < n_; j++)
-//          gpu_util_ -> ValidateGPUResult(
-//              a_matrices_d_+IDXR(i, j, n_)*(d_*d_),
-//              a_matrix_list_[IDXR(i, j, n_)],
-//              d_, d_, "Aij matrix");
+      profiler_.init_a_gpu.Stop();
+      std::cout << "GPU Gen A Matrices Done" << std::endl;
+      for (int i = 0; i < n_; i++) {
+        for (int j = 0; j < n_; j++) {
+            gpu_util_->ValidateGPUResult(
+                a_matrices_d_ + IDXR(i, j, n_) * (d_ * d_),
+                a_matrix_list_[IDXR(i, j, n_)],
+                d_, d_, "Aij matrix");
+          }
+        }
     }
-    profiler_.init_a_gpu.Stop();
+
   }
 
   // Check if q is not bigger than c

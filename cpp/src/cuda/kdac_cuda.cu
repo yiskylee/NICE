@@ -22,9 +22,18 @@
 
 #include "include/kdac_cuda.h"
 #include "include/gpu_util.h"
-#include "../../include/gpu_util.h"
 
 namespace Nice {
+
+unsigned int nextPow2(unsigned int x) {
+  --x;
+  x |= x >> 1;
+  x |= x >> 2;
+  x |= x >> 4;
+  x |= x >> 8;
+  x |= x >> 16;
+  return ++x;
+}
 
 template <typename T>
 __global__ void GPUGenDeltaKernel(const T *x_matrix_d,
@@ -43,6 +52,27 @@ __global__ void GPUGenDeltaKernel(const T *x_matrix_d,
     // x_matrix_d is column major
     for (int k = 0; k < d; k++)
       delta_ij[k] = x_matrix_d[IDXC(i, k, n)] - x_matrix_d[IDXC(j, k, n)];
+  }
+}
+
+template <typename T>
+__global__ void GPUGenAMatricesKernel(const T *x_matrix_d,
+                                      const int n,
+                                      const int d,
+                                      T *a_matrices_d) {
+  T *delta_ij = SharedMemory<T>();
+  int tx = threadIdx.x;
+  int i = blockIdx.y;
+  int j = blockIdx.x;
+
+  if (tx < d) {
+    T *a_ij = a_matrices_d + IDXR(i, j, n) * (d * d);
+    delta_ij[tx] = x_matrix_d[IDXC(i, tx, n)] - x_matrix_d[IDXC(j, tx, n)];
+    syncthreads();
+    // thread tx calculates a whole row tx of the output matrix a_ij
+    for (int col = 0; col < d; col++)
+      a_ij[IDXC(tx, col, d)] = delta_ij[col] * delta_ij[tx];
+
   }
 }
 
@@ -189,23 +219,6 @@ __global__ void GPUGenPhiTransposeKernel(const T alpha,
   }
 }
 
-// Utility class used to avoid linker errors with extern
-// unsized shared memory arrays with templated type
-template<typename T>
-struct SharedMemory
-{
-  __device__ inline operator       T *()
-  {
-    extern __shared__ int __smem[];
-    return (T *)__smem;
-  }
-
-  __device__ inline operator const T *() const
-  {
-    extern __shared__ int __smem[];
-    return (T *)__smem;
-  }
-};
 
 
 // From CUDA SDK
@@ -325,53 +338,25 @@ __global__ void reduce_kernel(T *g_idata, T *g_odata, unsigned int n) {
 
 template<typename T>
 void GPUGenAMatrices(const T *x_matrix_d,
-                     const CUBLASParams &params,
                      const int n,
                      const int d,
-                     T *delta_ijs_d,
                      T *a_matrices_d) {
 
-  int block_size = 16;
-  dim3 dim_block(block_size, block_size);
-  dim3 dim_grid((n - 1) / block_size + 1, (n - 1) / block_size + 1);
-  GPUGenDeltaKernel <<< dim_grid, dim_block >>> (x_matrix_d,
-                                                 n,
-                                                 d,
-                                                 delta_ijs_d);
-  int num_streams = n * n;
-  cudaStream_t *streams = new cudaStream_t[num_streams];
-  cublasHandle_t handle;
-  CUBLAS_CALL(cublasCreate(&handle));
-  for (int i = 0; i < num_streams; i++)
-    CUDA_CALL(cudaStreamCreate(&streams[i]));
+  int block_size = nextPow2(d);
+  int shared_mem_size = d * sizeof(T);
 
-  for (int i = 0; i < n; i++) {
-    for (int j = 0; j < n; j++) {
-      T *a_ij_matrix = a_matrices_d + IDXR(i, j, n) * (d * d);
-      const T *delta_ij = delta_ijs_d + IDXR(i, j, n) * d;
-      CUBLAS_CALL(cublasSetStream(handle, streams[i * n + j]));
-      CUBLAS_CALL(cublasSgemm(handle,
-                              CUBLAS_OP_N, CUBLAS_OP_N,
-                              d, d, 1,
-                              &(params.alpha),
-                              delta_ij, d,
-                              delta_ij, 1,
-                              &(params.beta),
-                              a_ij_matrix, d));
-    }
-  }
-  for (int i = 0; i < num_streams; i++)
-    CUDA_CALL(cudaStreamDestroy(streams[i]));
-  CUBLAS_CALL(cublasDestroy(handle));
+  dim3 dim_block(block_size, 1);
+  dim3 dim_grid(n, n);
+  GPUGenAMatricesKernel
+      <<<dim_grid, dim_block, shared_mem_size>>>
+      (x_matrix_d, n, d, a_matrices_d);
 }
 
 // Explicit Instantiation
 template
 void GPUGenAMatrices<float>(const float *x_matrix_d,
-                            const CUBLASParams &params,
                             const int n,
                             const int d,
-                            float *delta_ijs_d,
                             float *a_matrices_d);
 
 template <typename T>
@@ -447,16 +432,6 @@ void GPUGenPhiCoeff<float>(const float *w_l_d,
                            float *waf_matrix,
                            float *faf_matrix);
 
-unsigned int nextPow2(unsigned int x)
-{
-  --x;
-  x |= x >> 1;
-  x |= x >> 2;
-  x |= x >> 4;
-  x |= x >> 8;
-  x |= x >> 16;
-  return ++x;
-}
 
 void GetNumBlocksAndThreads(int num_elements,
                             int max_blocks,

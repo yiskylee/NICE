@@ -20,8 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef CPP_INCLUDE_KDAC_IN_CUDA_H_
-#define CPP_INCLUDE_KDAC_IN_CUDA_H_
+#ifndef CPP_INCLUDE_KDAC_CUDA_H_
+#define CPP_INCLUDE_KDAC_CUDA_H_
 
 #include "include/matrix.h"
 #include "include/vector.h"
@@ -53,10 +53,8 @@ void GPUGenPhiCoeff(const T *w_l_d,
 
 template<typename T>
 void GPUGenAMatrices(const T *x_matrix_d,
-                     const CUBLASParams &params,
                      const int n,
                      const int d,
-                     T *delta_ijs_d,
                      T *a_matrices_d);
 
 template<typename T>
@@ -73,5 +71,8 @@ void GPUGenPhi(const T alpha,
                T *phi_of_alphas_in_d,
                T *phi_of_zeros_in_d,
                T *phi_of_zero_primes_in_d);
+
+unsigned int nextPow2(unsigned int x);
+
 }
-#endif  // CPP_INCLUDE_KDAC_IN_CUDA_H_
+#endif  // CPP_INCLUDE_KDAC_CUDA_H_

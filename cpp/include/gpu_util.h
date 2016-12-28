@@ -45,6 +45,26 @@ namespace Nice {
 // Position for Row-Major index
 #define IDXR(i,j,ld) (((i)*(ld))+(j))
 
+// Utility class used to avoid linker errors with extern
+// unsized shared memory arrays with templated type
+template<typename T>
+struct SharedMemory
+{
+  __device__ inline operator       T *()
+  {
+    extern __shared__ int __smem[];
+    return (T *)__smem;
+  }
+
+  __device__ inline operator const T *() const
+  {
+    extern __shared__ int __smem[];
+    return (T *)__smem;
+  }
+};
+
+
+
 struct CUBLASParams {
   float alpha;
   float beta;
@@ -169,6 +189,13 @@ class GpuUtil {
     Matrix<T> matrix_gpu = DevBufferToEigen(dev, row, col);
     if ( !matrix_cpu.isApprox(matrix_gpu) ) {
       std::cout << matrix_name << " not validated.\n";
+      for(int i = 0; i < matrix_cpu.rows(); i++) {
+        for (int j = 0; j < matrix_cpu.cols(); j++) {
+          if ( fabs(matrix_cpu(i, j) - matrix_gpu(i, j)) > 0.01) {
+            std::cout << i << ", " << j << ": " << matrix_cpu(i, j) << " " << matrix_gpu(i, j) << std::endl;
+          }
+        }
+      }
       exit(1);
     }
   }
