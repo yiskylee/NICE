@@ -42,14 +42,11 @@ template <typename T>
 void GPUGenPhiCoeff(const T *w_l_d,
                     const T *gradient_d,
                     const T *a_matrices_d,
-                    const CUBLASParams &params,
                     const int n,
                     const int d,
-                    T *a_mul_w_d,
-                    T *a_mul_grad_d,
-                    T *waw_matrix,
-                    T *waf_matrix,
-                    T *faf_matrix);
+                    T *waw_matrix_d,
+                    T *waf_matrix_d,
+                    T *faf_matrix_d);
 
 template<typename T>
 void GPUGenAMatrices(const T *x_matrix_d,
@@ -73,6 +70,14 @@ void GPUGenPhi(const T alpha,
                T *phi_of_zero_primes_in_d);
 
 unsigned int nextPow2(unsigned int x);
+
+bool isPow2(unsigned int x);
+
+void GetNumBlocksAndThreads(int num_elements,
+                            int max_blocks,
+                            int max_threads,
+                            int &blocks,
+                            int &threads);
 
 }
 #endif  // CPP_INCLUDE_KDAC_CUDA_H_
