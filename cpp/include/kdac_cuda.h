@@ -38,46 +38,10 @@
 #include <ctime>
 
 namespace Nice {
-template <typename T>
-void GPUGenPhiCoeff(const T *w_l_d,
-                    const T *gradient_d,
-                    const T *a_matrices_d,
-                    const int n,
-                    const int d,
-                    T *waw_matrix_d,
-                    T *waf_matrix_d,
-                    T *faf_matrix_d);
-
-template<typename T>
-void GPUGenAMatrices(const T *x_matrix_d,
-                     const int n,
-                     const int d,
-                     T *a_matrices_d);
-
-template<typename T>
-void GPUGenPhi(const T alpha,
-               const T sqrt_one_minus_alpha,
-               const T denom,
-               const T *waw_matrix_d,
-               const T *waf_matrix_d,
-               const T *faf_matrix_d,
-               const T *gamma_matrix_d,
-               const int n,
-               const int d,
-               const bool w_l_changed,
-               T *phi_of_alphas_in_d,
-               T *phi_of_zeros_in_d,
-               T *phi_of_zero_primes_in_d);
 
 unsigned int nextPow2(unsigned int x);
 
 bool isPow2(unsigned int x);
-
-void GetNumBlocksAndThreads(int num_elements,
-                            int max_blocks,
-                            int max_threads,
-                            int &blocks,
-                            int &threads);
 
 }
 #endif  // CPP_INCLUDE_KDAC_CUDA_H_

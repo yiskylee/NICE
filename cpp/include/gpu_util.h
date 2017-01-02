@@ -183,6 +183,14 @@ class GpuUtil {
     }
   }
 
+  void ValidateCPUScalarResult(T host, T dev, std::string scalar_name) {
+    if ( fabs(host - dev) > 0.01) {
+      std::cout << scalar_name << " not validated.\n";
+      std::cout << "cpu: " << host << std::endl;
+      std::cout << "gpu: " << dev << std::endl;
+    }
+  }
+
   void ValidateGPUResult(T *dev,
                          const Matrix<T> matrix_cpu,
                          int row, int col, std::string matrix_name) {

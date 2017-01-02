@@ -28,6 +28,7 @@ include_directories(${COMMON_INCLUDES})
 
 # This is a Hack for Clion to know where eigen is
 include_directories(build/eigen/src/eigen)
+include_directories(./)
 
 get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
 foreach(dir ${dirs})
