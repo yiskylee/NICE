@@ -1,0 +1,218 @@
+Running main() from gtest_main.cc
+[==========] Running 2 tests from 1 test case.
+[----------] Global test environment set-up.
+[----------] 2 tests from KDACTest/0, where TypeParam = float
+[ RUN      ] KDACTest/0.GPUGaussianTestVerbose
+file_path: ../test/data_for_test/kdac/data_gaussian_30_100_3.csv
+GPU Gen A Matrices Done
+U Optimized
+Column 1 cost: -130.69171 | Column 2 cost: -116.27523 | Column 3 cost: 1.6654053 | W Optimized
+
+U Optimized
+Column 1 cost: 50.270767 | Column 2 cost: 64.600822 | Column 3 cost: 106.85027 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.28157 | Column 2 cost: 64.610001 | Column 3 cost: 106.85689 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.292366 | Column 2 cost: 64.619225 | Column 3 cost: 106.86359 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.302879 | Column 2 cost: 64.628143 | Column 3 cost: 106.87001 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.313786 | Column 2 cost: 64.63755 | Column 3 cost: 106.87684 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.324665 | Column 2 cost: 64.646904 | Column 3 cost: 106.88357 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.335247 | Column 2 cost: 64.655884 | Column 3 cost: 106.89007 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.345917 | Column 2 cost: 64.665031 | Column 3 cost: 106.8967 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.356632 | Column 2 cost: 64.674149 | Column 3 cost: 106.90328 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.367393 | Column 2 cost: 64.683449 | Column 3 cost: 106.91 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.378197 | Column 2 cost: 64.692642 | Column 3 cost: 106.91663 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.389072 | Column 2 cost: 64.701912 | Column 3 cost: 106.92341 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.399654 | Column 2 cost: 64.71093 | Column 3 cost: 106.92999 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.410442 | Column 2 cost: 64.720139 | Column 3 cost: 106.9366 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.421223 | Column 2 cost: 64.729408 | Column 3 cost: 106.94328 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.431843 | Column 2 cost: 64.73848 | Column 3 cost: 106.94987 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.442657 | Column 2 cost: 64.747681 | Column 3 cost: 106.9565 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.453438 | Column 2 cost: 64.756943 | Column 3 cost: 106.96319 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.464245 | Column 2 cost: 64.766251 | Column 3 cost: 106.96991 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.475086 | Column 2 cost: 64.775482 | Column 3 cost: 106.97658 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.485703 | Column 2 cost: 64.784538 | Column 3 cost: 106.98315 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.496601 | Column 2 cost: 64.793922 | Column 3 cost: 106.98991 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.507298 | Column 2 cost: 64.803047 | Column 3 cost: 106.99656 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.518032 | Column 2 cost: 64.812233 | Column 3 cost: 107.0032 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.528706 | Column 2 cost: 64.821304 | Column 3 cost: 107.00972 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.539433 | Column 2 cost: 64.83049 | Column 3 cost: 107.01639 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.55027 | Column 2 cost: 64.839813 | Column 3 cost: 107.02312 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.561039 | Column 2 cost: 64.849022 | Column 3 cost: 107.02979 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.57198 | Column 2 cost: 64.858398 | Column 3 cost: 107.03653 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.582569 | Column 2 cost: 64.867386 | Column 3 cost: 107.04306 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.593418 | Column 2 cost: 64.876671 | Column 3 cost: 107.04978 | W Optimized
+U Converged | W Converged
+U and W Converged
+Kmeans Done
+Init A on CPU: 9.9619141
+Init A on GPU: 0.10180664
+GenPhiCoeff on CPU: 1103.4468
+GenPhiCoeff on GPU: 8.4394531
+GenPhi on CPU: 374.49609
+GenPhi on GPU: 260.3457
+[       OK ] KDACTest/0.GPUGaussianTestVerbose (2906 ms)
+[ RUN      ] KDACTest/0.CPUGaussianTestVerbose
+file_path: ../test/data_for_test/kdac/data_gaussian_30_100_3.csv
+U Optimized
+Column 1 cost: -130.69157 | Column 2 cost: -116.27523 | Column 3 cost: 1.6653999 | W Optimized
+
+U Optimized
+Column 1 cost: 50.270786 | Column 2 cost: 64.6008 | Column 3 cost: 106.8502 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.281574 | Column 2 cost: 64.609947 | Column 3 cost: 106.85691 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.292381 | Column 2 cost: 64.619179 | Column 3 cost: 106.86359 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.302834 | Column 2 cost: 64.628105 | Column 3 cost: 106.87 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.313782 | Column 2 cost: 64.637604 | Column 3 cost: 106.87682 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.32465 | Column 2 cost: 64.646935 | Column 3 cost: 106.88353 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.335239 | Column 2 cost: 64.655846 | Column 3 cost: 106.89002 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.34589 | Column 2 cost: 64.664978 | Column 3 cost: 106.89664 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.35664 | Column 2 cost: 64.674126 | Column 3 cost: 106.90337 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.367416 | Column 2 cost: 64.683411 | Column 3 cost: 106.90997 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.378208 | Column 2 cost: 64.692619 | Column 3 cost: 106.9166 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.38905 | Column 2 cost: 64.701851 | Column 3 cost: 106.92342 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.399681 | Column 2 cost: 64.710876 | Column 3 cost: 106.93005 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.410435 | Column 2 cost: 64.720146 | Column 3 cost: 106.93658 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.421204 | Column 2 cost: 64.729401 | Column 3 cost: 106.94322 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.431839 | Column 2 cost: 64.738503 | Column 3 cost: 106.94986 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.442635 | Column 2 cost: 64.747658 | Column 3 cost: 106.95653 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.453438 | Column 2 cost: 64.756958 | Column 3 cost: 106.96322 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.464256 | Column 2 cost: 64.766266 | Column 3 cost: 106.96992 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.475063 | Column 2 cost: 64.775536 | Column 3 cost: 106.97662 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.485718 | Column 2 cost: 64.784546 | Column 3 cost: 106.98312 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.496628 | Column 2 cost: 64.793877 | Column 3 cost: 106.98994 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.507294 | Column 2 cost: 64.803139 | Column 3 cost: 106.9966 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.518032 | Column 2 cost: 64.812263 | Column 3 cost: 107.00322 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.528683 | Column 2 cost: 64.821243 | Column 3 cost: 107.00976 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.539406 | Column 2 cost: 64.830505 | Column 3 cost: 107.01642 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.550289 | Column 2 cost: 64.839828 | Column 3 cost: 107.02307 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.561035 | Column 2 cost: 64.848976 | Column 3 cost: 107.0298 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.571987 | Column 2 cost: 64.858475 | Column 3 cost: 107.03652 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.582558 | Column 2 cost: 64.867432 | Column 3 cost: 107.04305 | W Optimized
+W Converged
+U Optimized
+Column 1 cost: 50.593395 | Column 2 cost: 64.876709 | Column 3 cost: 107.04976 | W Optimized
+U Converged | W Converged
+U and W Converged
+Kmeans Done
+[       OK ] KDACTest/0.CPUGaussianTestVerbose (2140 ms)
+[----------] 2 tests from KDACTest/0 (5046 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test case ran. (5046 ms total)
+[  PASSED  ] 2 tests.

@@ -20,14 +20,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "include/kdac_cuda.h"
-#include "include/kdac.h"
+#include "include/kdac_gpu.h"
 #include "include/gpu_util.h"
 
 // Hack to cope with Clion
 #include "../../include/gpu_util.h"
-#include "../../include/kdac_cuda.h"
-#include "../../include/kdac.h"
 #include "../../../../../../../../usr/local/cuda/include/driver_types.h"
 
 namespace Nice {
@@ -87,7 +84,7 @@ __global__ void GPUGenAMatricesKernel(const T *x_matrix_d,
 }
 
 template <typename T>
-__global__ void GPUGenPhiCoeffKernel(const T *w_l_d,
+__global__ void GenPhiCoeffKernel(const T *w_l_d,
                                      const T *gradient_d,
                                      const T *a_matrices_d,
                                      const int n,
@@ -162,7 +159,7 @@ __global__ void GPUGenPhiCoeffKernel(const T *w_l_d,
 }
 
 template <typename T>
-__global__ void GPUGenPhiKernel(const T alpha,
+__global__ void GenPhiKernel(const T alpha,
                                 const T sqrt_one_minus_alpha,
                                 const T denom,
                                 const T *waw_matrix_d,
@@ -233,28 +230,44 @@ __global__ void GPUGenPhiKernel(const T alpha,
 
 
 template<typename T>
-void KDAC<T>::GPUGenAMatrices() {
-
+void KDACGPU<T>::GenAMatrices() {
+  profiler_.gen_a.Start();
+  a_matrices_list_.resize(n_ * n_);
+  a_matrices_h_ = new T [n_ * n_ * d_ * d_];
+  gpu_util_->SetupMem(&a_matrices_d_, nullptr, n_ * n_ * d_ * d_, false);
   unsigned int block_size = nextPow2(d_);
   int shared_mem_size = d_ * sizeof(T) * 2;
-
   dim3 dim_block(block_size, 1);
   dim3 dim_grid(n_, n_);
   GPUGenAMatricesKernel
       <<<dim_grid, dim_block, shared_mem_size>>>
       (x_matrix_d_, n_, d_, a_matrices_d_);
+  CUDA_CALL(cudaMemcpy(a_matrices_h_, a_matrices_d_, n_*n_*d_*d_*sizeof(T),
+                       cudaMemcpyDeviceToHost));
+  for (int i = 0; i < n_; i++)
+    for (int j = 0; j < n_; j++)
+      a_matrices_list_[IDXR(i, j, n_)] = Eigen::Map<Matrix<T>>
+        (a_matrices_h_ + IDXR(i, j, n_) * (d_ * d_), d_, d_);
+  std::cout << "GPU Gen A Matrices Done" << std::endl;
+  profiler_.gen_a.Record();
 }
 
 template
-void KDAC<float>::GPUGenAMatrices();
+void KDACGPU<float>::GenAMatrices();
 
 template <typename T>
-void KDAC<T>::GPUGenPhiCoeff() {
+void KDACGPU<T>::GenPhiCoeff(const Vector<T> &w_l, const Vector<T> &gradient) {
+  // Three terms used to calculate phi of alpha
+  // They only change if w_l or gradient change
+  CUDA_CALL(cudaMemcpy(w_l_d_, &w_l(0), d_ * sizeof(T),
+                       cudaMemcpyHostToDevice));
+  CUDA_CALL(cudaMemcpy(gradient_d_, &gradient(0), d_ * sizeof(T),
+                       cudaMemcpyHostToDevice));
   int block_size = (isPow2(d_)) ? d_ : nextPow2(d_);
   int shared_mem_size = 5 * block_size * sizeof(T);
   dim3 dim_block(block_size, 1);
   dim3 dim_grid(n_, n_);
-  GPUGenPhiCoeffKernel
+  GenPhiCoeffKernel
       <<<dim_grid, dim_block, shared_mem_size>>>
       (w_l_d_, gradient_d_, a_matrices_d_, n_, d_,
           waw_matrix_d_, waf_matrix_d_, faf_matrix_d_);
@@ -262,63 +275,88 @@ void KDAC<T>::GPUGenPhiCoeff() {
 }
 
 template
-void KDAC<float>::GPUGenPhiCoeff();
+void KDACGPU<float>::GenPhiCoeff(const Vector<float> &w_l,
+                                 const Vector<float> &gradient);
 
 
-
+// Generate phi(alpha), phi(0) and phi'(0) for LineSearch
+// If this is the first time to generate phi(), then w_l_changed is true
+// Or if the w_l is negated because phi'(0) is negative,
+// then w_l_changed is true
+// If w_l_changed is true, generate phi(0) and phi'(0), otherwise
+// when we are only computing phi(alpha) with a different alpha in the loop
+// of the LineSearch, the w_l_changed is false and we do not generate
+// new waw, waf and faf
 template<typename T>
-void KDAC<T>::GPUGenPhi(const T sqrt_one_minus_alpha,
-               const T denom,
-               const bool w_l_changed) {
-  int block_dim_x = 16;
-  int block_dim_y = 16;
-  dim3 dim_block(block_dim_x, block_dim_y);
-  // If matrix is n x m, then I need an m x n grid for contiguous
-  // memory access
-  dim3 dim_grid( (n_-1) / block_dim_x + 1, (n_-1) / block_dim_y + 1);
-  int num_blocks = ((n_-1) / block_dim_x + 1) * ((n_-1) / block_dim_y + 1);
-  int shared_mem_size = 3 * block_dim_x * block_dim_y * sizeof(T);
-  phi_of_alpha_gpu_ = 0;
-  if (w_l_changed) {
-    phi_of_zero_gpu_ = 0;
-    phi_of_zero_prime_gpu_ = 0;
-  }
+void KDACGPU<T>::GenPhi(const Vector<T> &w_l,
+                        const Vector<T> &gradient,
+                        bool w_l_changed) {
 
-  GPUGenPhiKernel<<<dim_grid, dim_block, shared_mem_size>>>(alpha_,
-                                           sqrt_one_minus_alpha,
-                                           denom,
-                                           waw_matrix_d_,
-                                           waf_matrix_d_,
-                                           faf_matrix_d_,
-                                           gamma_matrix_d_,
-                                           n_,
-                                           d_,
-                                           w_l_changed,
-                                           phi_of_alphas_d_,
-                                           phi_of_zeros_d_,
-                                           phi_of_zero_primes_d_);
+  if (kernel_type_ == kGaussianKernel) {
+    T alpha_square = pow(alpha_, 2);
+    T sqrt_one_minus_alpha = pow((1 - alpha_square), 0.5);
+    T denom = -1 / (2 * pow(constant_, 2));
 
-  // Check if error happens in kernel launch
-  CUDA_CALL(cudaGetLastError());
+    profiler_.gen_phi.Start();
+    phi_of_alpha_ = 0;
 
-  CUDA_CALL(cudaMemcpy(phi_of_alphas_h_, phi_of_alphas_d_,
-                       num_blocks * sizeof(T), cudaMemcpyDeviceToHost));
-  for (int i = 0; i < num_blocks; i++)
-    phi_of_alpha_gpu_ += phi_of_alphas_h_[i];
-  if (w_l_changed) {
-    CUDA_CALL(cudaMemcpy(phi_of_zeros_h_, phi_of_zeros_d_,
+    if (w_l_changed) {
+      GenPhiCoeff(w_l, gradient);
+      phi_of_zero_ = 0;
+      phi_of_zero_prime_ = 0;
+    }
+
+
+    int block_dim_x = 16;
+    int block_dim_y = 16;
+    dim3 dim_block(block_dim_x, block_dim_y);
+    // If matrix is n x m, then I need an m x n grid for contiguous
+    // memory access
+    dim3 dim_grid((n_ - 1) / block_dim_x + 1, (n_ - 1) / block_dim_y + 1);
+    int num_blocks =
+        ((n_ - 1) / block_dim_x + 1) * ((n_ - 1) / block_dim_y + 1);
+    int shared_mem_size = 3 * block_dim_x * block_dim_y * sizeof(T);
+
+    GenPhiKernel << < dim_grid, dim_block, shared_mem_size >> > (alpha_,
+        sqrt_one_minus_alpha,
+        denom,
+        waw_matrix_d_,
+        waf_matrix_d_,
+        faf_matrix_d_,
+        gamma_matrix_d_,
+        n_,
+        d_,
+        w_l_changed,
+        phi_of_alphas_d_,
+        phi_of_zeros_d_,
+        phi_of_zero_primes_d_);
+
+    // Check if error happens in kernel launch
+    CUDA_CALL(cudaGetLastError());
+
+    CUDA_CALL(cudaMemcpy(phi_of_alphas_h_, phi_of_alphas_d_,
                          num_blocks * sizeof(T), cudaMemcpyDeviceToHost));
-    CUDA_CALL(cudaMemcpy(phi_of_zero_primes_h_, phi_of_zero_primes_d_,
-                         num_blocks * sizeof(T), cudaMemcpyDeviceToHost));
-  }
-  for (int i = 0; i < num_blocks; i++) {
-    phi_of_zero_gpu_ += phi_of_zeros_h_[i];
-    phi_of_zero_prime_gpu_ += phi_of_zero_primes_h_[i];
+
+    for (int i = 0; i < num_blocks; i++) {
+      phi_of_alpha_ += phi_of_alphas_h_[i];
+    }
+    if (w_l_changed) {
+      CUDA_CALL(cudaMemcpy(phi_of_zeros_h_, phi_of_zeros_d_,
+                           num_blocks * sizeof(T), cudaMemcpyDeviceToHost));
+      CUDA_CALL(cudaMemcpy(phi_of_zero_primes_h_, phi_of_zero_primes_d_,
+                           num_blocks * sizeof(T), cudaMemcpyDeviceToHost));
+      for (int i = 0; i < num_blocks; i++) {
+        phi_of_zero_ += phi_of_zeros_h_[i];
+        phi_of_zero_prime_ += phi_of_zero_primes_h_[i];
+      }
+    }
+    profiler_.gen_phi.Record();
   }
 }
 
 template
-void KDAC<float>::GPUGenPhi(const float sqrt_one_minus_alpha,
-                      const float denom,
-                      const bool w_l_changed);
+void KDACGPU<float>::GenPhi(const Vector<float> &w_l,
+                        const Vector<float> &gradient,
+                        bool w_l_changed);
+
 }  // Namespace NICE

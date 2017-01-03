@@ -29,6 +29,7 @@
 #include <cusolverDn.h>
 #include <cublas_v2.h>
 #include "include/matrix.h"
+#include "include/vector.h"
 #include "Eigen/Core"
 #include "Eigen/Dense"
 
@@ -183,11 +184,35 @@ class GpuUtil {
     }
   }
 
+  void ValidateCPUResult(T *host,
+                         const Vector<T> vector_cpu,
+                         int row, std::string vector_name) {
+    Matrix<T> vector_gpu = Eigen::Map<Vector<T>>(host, row);
+    if ( !vector_cpu.isApprox(vector_gpu) ) {
+      std::cout << vector_name << " not validated.\n";
+      std::cout << "cpu: " << std::endl << vector_cpu.head(4) << std::endl;
+      std::cout << "gpu: " << std::endl << vector_gpu.head(4) << std::endl;
+//      exit(1);
+    }
+  }
+
+  void ValidateCPUResult(const Vector<T> vector_gpu,
+                         const Vector<T> vector_cpu,
+                         int row, std::string vector_name) {
+    if ( !vector_cpu.isApprox(vector_gpu) ) {
+      std::cout << vector_name << " not validated.\n";
+      std::cout << "cpu: " << std::endl << vector_cpu.head(4) << std::endl;
+      std::cout << "gpu: " << std::endl << vector_gpu.head(4) << std::endl;
+//      exit(1);
+    }
+  }
+
   void ValidateCPUScalarResult(T host, T dev, std::string scalar_name) {
-    if ( fabs(host - dev) > 0.01) {
+    if ( fabs(host - dev) / fabs(host) > 0.01) {
       std::cout << scalar_name << " not validated.\n";
       std::cout << "cpu: " << host << std::endl;
       std::cout << "gpu: " << dev << std::endl;
+      exit(1);
     }
   }
 

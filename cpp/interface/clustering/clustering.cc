@@ -55,6 +55,7 @@ void (Nice::KDACInterface<double>::*Fit3Double)(PyObject *, int row_1, int col_1
 = &Nice::KDACInterface<double>::Fit;
 
 BOOST_PYTHON_MODULE(Nice4Py) {
+  //Use float by default
   boost::python::class_<Nice::KDACInterface<float>>
       ("KDAC", boost::python::init<>())
     .def("Fit", Fit1Float)
@@ -69,7 +70,7 @@ BOOST_PYTHON_MODULE(Nice4Py) {
     .def("GetQ", &Nice::KDACInterface<float>::GetQ)
     .def("GetTimePerIter", &Nice::KDACInterface<float>::GetTimePerIter);
 
-  //Use double by default
+
   boost::python::class_<Nice::KDACInterface<double>>
       ("KDACDOUBLE", boost::python::init<>())
       .def("Fit", Fit1Double)
@@ -83,6 +84,7 @@ BOOST_PYTHON_MODULE(Nice4Py) {
       .def("GetN", &Nice::KDACInterface<double>::GetN)
       .def("GetQ", &Nice::KDACInterface<double>::GetQ)
       .def("GetTimePerIter", &Nice::KDACInterface<double>::GetTimePerIter);
+
 }
 
 // Explicit Instantiation

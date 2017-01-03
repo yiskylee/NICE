@@ -26,6 +26,12 @@
 #define IDXC(i,j,ld) (((j)*(ld))+(i))
 // Position for Row-Major index
 #define IDXR(i,j,ld) (((i)*(ld))+(j))
+// Pass in a timer and a function, the time taken by that function is then
+// recorded in the timer
+#define PROFILE(func, timer)\
+  timer.Start();\
+  func;\
+  timer.Stop();\
 
 #include <cstdlib>
 #include <string>

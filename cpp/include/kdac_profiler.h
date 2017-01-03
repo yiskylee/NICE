@@ -31,25 +31,12 @@
 namespace Nice {
 // A profiler includes one timer for a function or a partition of code
 struct KDACProfiler {
+  Timer init;
   Timer fit;
-  Timer fit_loop;
   Timer u;
   Timer w;
-  Timer w_part1;
-  Timer w_part2;
-  Timer w_part3;
-  Timer w_part4;
-  Timer w_part5;
-  Timer w_part6;
-  Timer w_part7;
-  Timer w_part8;
-  Timer init;
-  Timer init_a_gpu;
-  Timer init_a_cpu;
-  Timer coeff_gpu;
-  Timer coeff_cpu;
-  Timer phi_gpu;
-  Timer phi_cpu;
+  Timer gen_a;
+  Timer gen_phi;
   Timer kmeans;
 };
 } // namespace Nice

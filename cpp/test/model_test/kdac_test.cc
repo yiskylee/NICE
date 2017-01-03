@@ -27,7 +27,7 @@
 #include "gtest/gtest.h"
 #include "include/cpu_operations.h"
 #include "include/kdac.h"
-#include "include/kdac_profiler.h"
+#include "include/kdac_gpu.h"
 #include "include/util.h"
 #include "include/matrix.h"
 #include "include/vector.h"
@@ -39,6 +39,7 @@ class KDACTest : public ::testing::Test {
  protected:
 //  Nice::Matrix<T> data_matrix_;
   std::shared_ptr<Nice::KDAC<T>> kdac_;
+  std::shared_ptr<Nice::KDACGPU<T>> kdac_gpu_;
   int c_;
   std::string base_dir_;
   int num_clusters_;
@@ -55,13 +56,21 @@ class KDACTest : public ::testing::Test {
 //    data_matrix_ = Nice::util::FromFile<T>(
 //        "../test/data_for_test/kdac/data_400.csv", ",");
     num_clusters_ = 3;
-    num_samples_per_cluster_ = 100;
+    num_samples_per_cluster_ = 10;
     num_samples_ = num_clusters_ * num_samples_per_cluster_;
     dim_ = 100;
+
     kdac_ = std::make_shared<Nice::KDAC<T>>();
     kdac_->SetQ(num_clusters_);
     kdac_->SetC(num_clusters_);
     kdac_->SetKernel(Nice::kGaussianKernel, 1.0);
+
+    kdac_gpu_ = std::make_shared<Nice::KDACGPU<T>>();
+    kdac_gpu_->SetQ(num_clusters_);
+    kdac_gpu_->SetC(num_clusters_);
+    kdac_gpu_->SetKernel(Nice::kGaussianKernel, 1.0);
+
+
     base_dir_ = "../test/data_for_test/kdac/";
     data_type_ = "data_gaussian";
     file_path_ = GenFilePath();
@@ -133,24 +142,25 @@ TYPED_TEST_CASE(KDACTest, FloatTypes);
       for (int j = 0; j < a.cols(); j++)\
         EXPECT_NEAR(std::abs(a(i, j)), std::abs(ref(i, j)), error);\
 
-TYPED_TEST(KDACTest, GPUGaussianTestVerbose) {
+TYPED_TEST(KDACTest, CPUGaussianVerbose) {
   this->kdac_->SetVerbose(true);
-  this->kdac_->SetDevice("gpu");
   this->kdac_->Fit(this->data_matrix_, this->existing_y_);
   Nice::KDACProfiler profiler = this->kdac_->GetProfiler();
   std::cout << "Init A on CPU: " <<
-    profiler.init_a_cpu.GetTotalTime() << std::endl;
-  std::cout << "Init A on GPU: " <<
-    profiler.init_a_gpu.GetTotalTime() << std::endl;
-  std::cout << "GenPhiCoeff on CPU: " <<
-    profiler.coeff_cpu.GetTotalTime() << std::endl;
-  std::cout << "GenPhiCoeff on GPU: " <<
-    profiler.coeff_gpu.GetTotalTime() << std::endl;
+    profiler.gen_a.GetTotalTime() << std::endl;
   std::cout << "GenPhi on CPU: " <<
-    profiler.phi_cpu.GetTotalTime() << std::endl;
-  std::cout << "GenPhi on GPU: " <<
-    profiler.phi_gpu.GetTotalTime() << std::endl;
+    profiler.gen_phi.GetTotalTime() << std::endl;
 //  PRINTV(this->kdac_->Predict(), this->num_samples_per_cluster_);
+}
+
+TYPED_TEST(KDACTest, GPUGaussianVerbose) {
+  this->kdac_gpu_->SetVerbose(true);
+  this->kdac_gpu_->Fit(this->data_matrix_, this->existing_y_);
+  Nice::KDACProfiler profiler = this->kdac_gpu_->GetProfiler();
+  std::cout << "Init A on GPU: " <<
+    profiler.gen_a.GetTotalTime() << std::endl;
+  std::cout << "GenPhi on GPU: " <<
+    profiler.gen_phi.GetTotalTime() << std::endl;
 }
 //
 //TYPED_TEST(KDACTest, GaussianTestVerbose) {

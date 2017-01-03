@@ -29,13 +29,7 @@ include_directories(${COMMON_INCLUDES})
 # This is a Hack for Clion to know where eigen is
 include_directories(build/eigen/src/eigen)
 include_directories(./)
-
-get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
-foreach(dir ${dirs})
-  message(STATUS "include dir='${dir}'")
-endforeach()
-
-
+include_directories(build/gtest/src/googletest/googletest/include)
 
 set(enable-mkl)
 option (enable-mkl "Compile NICE library with MKL" OFF)
@@ -86,10 +80,6 @@ if (CUDA_HAVE_GPU)
   message(STATUS "GPU device exists")
   # Set source files
   file(GLOB_RECURSE SOURCES RELATIVE ${CMAKE_SOURCE_DIR} src/*.cc src/*.cu)
-  foreach(src ${SOURCES})
-    message(STATUS "source file='${src}'")
-  endforeach()
-#  message(STATUS "Source files: " ${SOURCES})
 
   # Add definition
   add_definitions(-DNEED_CUDA)
@@ -98,16 +88,19 @@ if (CUDA_HAVE_GPU)
   include(FindCUDA)
 
   # Set NVCC flags
-  set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -std=c++11 -O3 -gencode arch=compute_35,code=sm_35 -rdc=true -Xcompiler -fPIC)
-  set(CUDA_SEPARABLE_COMPILATION OFF)
+  set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -std=c++11 -O3
+#          -gencode arch=compute_20,code=sm_20
+#          -gencode arch=compute_30,code=sm_30
+          -gencode arch=compute_35,code=sm_35
+#          -gencode arch=compute_37,code=sm_37
+#          -gencode arch=compute_50,code=sm_50
+#          -gencode arch=compute_52,code=sm_52
+          )
 
 
   # Find cusolver library
   find_library(CUDA_SOLVER_LIBRARY cusolver HINTS ${CUDA_TOOLKIT_ROOT_DIR}/lib64)
   find_library(CUDA_BLAS_LIBRARY   cublas   HINTS ${CUDA_TOOLKIT_ROOT_DIR}/lib64)
-  find_library(CUBLAS_DEVICE cublas_device   HINTS ${CUDA_TOOLKIT_ROOT_DIR}/lib64)
-  find_library(CUDADEVRT   cudadevrt   HINTS ${CUDA_TOOLKIT_ROOT_DIR}/lib64)
-  find_library(CUDART   cudart   HINTS ${CUDA_TOOLKIT_ROOT_DIR}/lib64)
 
   # Add NICE library together with CUDA
   cuda_include_directories(${CUDA_INCLUDE_DIR})
@@ -115,9 +108,6 @@ if (CUDA_HAVE_GPU)
   target_link_libraries(${PROJECT_NAME}
                         ${CUDA_SOLVER_LIBRARY}
                         ${CUDA_BLAS_LIBRARY}
-                        ${CUBLAS_DEVICE}
-                        ${CUDADEVRT}
-                        ${CUDART}
                         ${CUDA_LIBRARIES}
                         ${MKL_LP64}
                         ${MKL_CORE}
@@ -127,11 +117,10 @@ if (CUDA_HAVE_GPU)
 
 else()
 
-  message(STATUS "GPU device not exists")
+  message(STATUS "GPU device does not exist")
 
   # Set source files
   file(GLOB_RECURSE SOURCES RELATIVE ${CMAKE_SOURCE_DIR} src/*.cc)
-  message(STATUS "Source files: " ${SOURCES})
 
   # Add NICE library
   add_library(${PROJECT_NAME} SHARED ${SOURCES})
@@ -175,8 +164,6 @@ if (enable-test)
          test/model_test/*.cc
          )
   endif()
-  message(STATUS "Test case source files: " ${TEST_SRC_FILES})
-
   add_executable(${PROJECT_TEST_NAME} ${TEST_SRC_FILES})
 
   add_dependencies(${PROJECT_TEST_NAME} googletest)
