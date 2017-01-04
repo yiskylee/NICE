@@ -26,8 +26,9 @@
 #include "Eigen/Dense"
 #include "gtest/gtest.h"
 #include "include/cpu_operations.h"
-#include "include/kdac.h"
+#include "include/kdac_cpu.h"
 #include "include/kdac_gpu.h"
+#include "../../build/gtest/src/googletest/googletest/include/gtest/gtest.h"
 #include "include/util.h"
 #include "include/matrix.h"
 #include "include/vector.h"
@@ -38,7 +39,7 @@ template<typename T>
 class KDACTest : public ::testing::Test {
  protected:
 //  Nice::Matrix<T> data_matrix_;
-  std::shared_ptr<Nice::KDAC<T>> kdac_;
+  std::shared_ptr<Nice::KDACCPU<T>> kdac_;
   std::shared_ptr<Nice::KDACGPU<T>> kdac_gpu_;
   int c_;
   std::string base_dir_;
@@ -53,23 +54,26 @@ class KDACTest : public ::testing::Test {
 
 
   virtual void SetUp() {
-//    data_matrix_ = Nice::util::FromFile<T>(
-//        "../test/data_for_test/kdac/data_400.csv", ",");
-    num_clusters_ = 3;
-    num_samples_per_cluster_ = 10;
+  }
+
+  void SetupInputData(int num_clusters, int num_samples_per_cluster, int dim,
+                      std::string device_type) {
+    num_clusters_ = num_clusters;
+    num_samples_per_cluster_ = num_samples_per_cluster;
     num_samples_ = num_clusters_ * num_samples_per_cluster_;
-    dim_ = 100;
+    dim_ = dim;
 
-    kdac_ = std::make_shared<Nice::KDAC<T>>();
-    kdac_->SetQ(num_clusters_);
-    kdac_->SetC(num_clusters_);
-    kdac_->SetKernel(Nice::kGaussianKernel, 1.0);
-
-    kdac_gpu_ = std::make_shared<Nice::KDACGPU<T>>();
-    kdac_gpu_->SetQ(num_clusters_);
-    kdac_gpu_->SetC(num_clusters_);
-    kdac_gpu_->SetKernel(Nice::kGaussianKernel, 1.0);
-
+    if (device_type == "cpu") {
+      kdac_ = std::make_shared<Nice::KDACCPU<T>>();
+      kdac_->SetQ(num_clusters_);
+      kdac_->SetC(num_clusters_);
+      kdac_->SetKernel(Nice::kGaussianKernel, 1.0);
+    } else if (device_type == "gpu") {
+      kdac_gpu_ = std::make_shared<Nice::KDACGPU<T>>();
+      kdac_gpu_->SetQ(num_clusters_);
+      kdac_gpu_->SetC(num_clusters_);
+      kdac_gpu_->SetKernel(Nice::kGaussianKernel, 1.0);
+    }
 
     base_dir_ = "../test/data_for_test/kdac/";
     data_type_ = "data_gaussian";
@@ -142,8 +146,8 @@ TYPED_TEST_CASE(KDACTest, FloatTypes);
       for (int j = 0; j < a.cols(); j++)\
         EXPECT_NEAR(std::abs(a(i, j)), std::abs(ref(i, j)), error);\
 
-TYPED_TEST(KDACTest, CPUGaussianVerbose) {
-  this->kdac_->SetVerbose(true);
+TYPED_TEST(KDACTest, CPU3_100_10) {
+  this->SetupInputData(3, 100, 10, "cpu");
   this->kdac_->Fit(this->data_matrix_, this->existing_y_);
   Nice::KDACProfiler profiler = this->kdac_->GetProfiler();
   std::cout << "Init A on CPU: " <<
@@ -153,8 +157,8 @@ TYPED_TEST(KDACTest, CPUGaussianVerbose) {
 //  PRINTV(this->kdac_->Predict(), this->num_samples_per_cluster_);
 }
 
-TYPED_TEST(KDACTest, GPUGaussianVerbose) {
-  this->kdac_gpu_->SetVerbose(true);
+TYPED_TEST(KDACTest, GPU3_100_10) {
+  this->SetupInputData(3, 100, 10, "gpu");
   this->kdac_gpu_->Fit(this->data_matrix_, this->existing_y_);
   Nice::KDACProfiler profiler = this->kdac_gpu_->GetProfiler();
   std::cout << "Init A on GPU: " <<

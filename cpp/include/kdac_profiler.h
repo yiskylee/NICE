@@ -38,6 +38,15 @@ struct KDACProfiler {
   Timer gen_a;
   Timer gen_phi;
   Timer kmeans;
+  Timer w_part1;
+  Timer w_part2;
+  Timer w_part3;
+  Timer w_part4;
+  Timer w_part5;
+  Timer w_part6;
+  Timer w_part7;
+  Timer w_part8;
+
 };
 } // namespace Nice
 #endif  // CPP_INCLUDE_KDAC_PROFILER_H

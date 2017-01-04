@@ -12,7 +12,7 @@ set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_MACOSX_RPATH 1)
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 if(CMAKE_COMPILER_IS_GNUCXX)
-  add_definitions(-Wall -ansi -Wno-deprecated -pthread -std=c++11)
+  add_definitions(-Wall -ansi -Wno-deprecated -pthread -fPIC -std=c++11)
   #  add_definitions(-Wall -ansi -Wno-deprecated -std=c++11)
 endif()
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
@@ -27,9 +27,9 @@ include_directories(${EIGEN_INCLUDE_DIRS})
 include_directories(${COMMON_INCLUDES}) 
 
 # This is a Hack for Clion to know where eigen is
-include_directories(build/eigen/src/eigen)
+include_directories(./build/eigen/src/eigen)
 include_directories(./)
-include_directories(build/gtest/src/googletest/googletest/include)
+include_directories(./build/gtest/src/googletest/googletest/include)
 
 set(enable-mkl)
 option (enable-mkl "Compile NICE library with MKL" OFF)
@@ -91,9 +91,9 @@ if (CUDA_HAVE_GPU)
   set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -std=c++11 -O3
 #          -gencode arch=compute_20,code=sm_20
 #          -gencode arch=compute_30,code=sm_30
-          -gencode arch=compute_35,code=sm_35
+#          -gencode arch=compute_35,code=sm_35
 #          -gencode arch=compute_37,code=sm_37
-#          -gencode arch=compute_50,code=sm_50
+          -gencode arch=compute_50,code=sm_50
 #          -gencode arch=compute_52,code=sm_52
           )
 
@@ -101,13 +101,17 @@ if (CUDA_HAVE_GPU)
   # Find cusolver library
   find_library(CUDA_SOLVER_LIBRARY cusolver HINTS ${CUDA_TOOLKIT_ROOT_DIR}/lib64)
   find_library(CUDA_BLAS_LIBRARY   cublas   HINTS ${CUDA_TOOLKIT_ROOT_DIR}/lib64)
+  find_library(CUDADEVRT   cudadevrt   HINTS ${CUDA_TOOLKIT_ROOT_DIR}/lib64)
+  find_library(CUDART   cudart   HINTS ${CUDA_TOOLKIT_ROOT_DIR}/lib64)
 
   # Add NICE library together with CUDA
   cuda_include_directories(${CUDA_INCLUDE_DIR})
-  cuda_add_library(${PROJECT_NAME} STATIC ${SOURCES})
+  cuda_add_library(${PROJECT_NAME} SHARED ${SOURCES})
   target_link_libraries(${PROJECT_NAME}
                         ${CUDA_SOLVER_LIBRARY}
                         ${CUDA_BLAS_LIBRARY}
+                        ${CUDADEVRT}
+                        ${CUDART}
                         ${CUDA_LIBRARIES}
                         ${MKL_LP64}
                         ${MKL_CORE}
@@ -138,6 +142,7 @@ add_dependencies(${PROJECT_NAME} eigen)
 # Test
 option (enable-test "Compile all Nice unit tests" ON)
 
+
 if (enable-test)
   include(gtest)
   enable_testing()
@@ -165,9 +170,8 @@ if (enable-test)
          )
   endif()
   add_executable(${PROJECT_TEST_NAME} ${TEST_SRC_FILES})
-
-  add_dependencies(${PROJECT_TEST_NAME} googletest)
-  add_dependencies(${PROJECT_TEST_NAME} eigen)
+#  add_dependencies(${PROJECT_TEST_NAME} googletest)
+#  add_dependencies(${PROJECT_TEST_NAME} eigen)
   add_dependencies(${PROJECT_TEST_NAME} ${PROJECT_NAME})
 
   # Link libraries

@@ -8,7 +8,7 @@ GTEST_INC = ${NICE_DIR}/build/gtest/src/googletest/googletest/include/
 EIGEN_INC = ${NICE_DIR}/build/eigen/src/eigen
 DLIB = ${NICE_DIR}/dlib/build
 CCSOURCES = ${NICE_DIR}/test/model_test/kdac_test.cc ${NICE_DIR}/src/util/gpu_util.cc
-CUSOURCES = ${NICE_DIR}/src/cuda/kdac_cuda.cu
+CUSOURCES = ${NICE_DIR}/src/cuda/kdac_gpu.cu
 ARCH = -gencode archi=compute_35,code=sm_35
 BINARY = ./test_kdac.out
 NVCCFLAGS = -arch=sm_50 -g -O3 -std=c++11

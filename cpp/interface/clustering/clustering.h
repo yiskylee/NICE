@@ -36,18 +36,22 @@
 #include "include/vector.h"
 #include "include/cpu_operations.h"
 #include "include/gpu_operations.h"
-#include "include/kdac.h"
+#include "include/kdac_cpu.h"
+#include "include/kdac_gpu.h"
 #include "include/util.h"
 #include "include/kdac_profiler.h"
 #include "interface/py_interface.h"
+#include "../../include/kdac_profiler.h"
 
 namespace Nice {
 template<typename T>
-//class KDACInterface : public PyInterface{
 class KDACInterface {
  public:
-  KDACInterface() {
-    kdac_ = std::make_shared<Nice::KDAC<T>>();
+  KDACInterface(std::string device_type) {
+    if (device_type == "cpu")
+      kdac_ = std::make_shared<Nice::KDACCPU<T>>();
+    else if (device_type == "gpu")
+      kdac_ = std::make_shared<Nice::KDACGPU<T>>();
   }
   void SetupParams(const boost::python::dict &params) {
     // Obtain parameters from python
@@ -98,19 +102,6 @@ class KDACInterface {
         kdac_ -> SetVerbose(verbose);
         continue;
       }
-      if (strcmp("device", boost::python::extract<char *>(key_list[i])) == 0) {
-        if (strcmp("cpu",
-                   boost::python::extract<char *>(params["device"])) == 0) {
-          std::string device = "cpu";
-          kdac_ -> SetDevice(device);
-        }
-        if (strcmp("gpu",
-                   boost::python::extract<char *>(params["device"])) == 0) {
-          std::string device = "gpu";
-          kdac_ -> SetDevice(device);
-        }
-        continue;
-      }
     }
     if (has_kernel && has_sigma)
       kdac_ -> SetKernel(kernel, sigma);
@@ -123,6 +114,8 @@ class KDACInterface {
     profile["kmeans"] = profiler.kmeans.GetTotalTime();
     profile["fit"] = profiler.fit.GetTotalTime();
     profile["num_iters"] = profiler.u.GetNumIters();
+    profile["gen_a"] = profiler.gen_a.GetTotalTime();
+    profile["gen_phi"] = profiler.gen_phi.GetTotalTime();
   }
   void GetTimePerIter(PyObject *time_per_iter,
                       int num_iters, std::string stat_name) {
@@ -136,34 +129,20 @@ class KDACInterface {
       output = profiler.u.GetTimePerIter();
     else if (stat_name == "w_time_per_iter")
       output = profiler.w.GetTimePerIter();
-    else if (stat_name == "w_part1")
-      output = profiler.w_part1.GetTimePerIter();
-    else if (stat_name == "w_part2")
-      output = profiler.w_part2.GetTimePerIter();
-    else if (stat_name == "w_part3")
-      output = profiler.w_part3.GetTimePerIter();
-    else if (stat_name == "w_part4")
-      output = profiler.w_part4.GetTimePerIter();
-    else if (stat_name == "w_part5")
-      output = profiler.w_part5.GetTimePerIter();
-    else if (stat_name == "w_part6")
-      output = profiler.w_part6.GetTimePerIter();
-    else if (stat_name == "w_part7")
-      output = profiler.w_part7.GetTimePerIter();
-    else if (stat_name == "w_part8")
-      output = profiler.w_part8.GetTimePerIter();
+    else if (stat_name == "gen_phi_time_per_iter")
+      output = profiler.gen_phi.GetTimePerIter();
   }
-  void Fit(PyObject *in, int row, int col) {
-    // Get the python object buffer
-    Py_buffer pybuf;
-    PyObject_GetBuffer(in, &pybuf, PyBUF_SIMPLE);
-    MatrixMap<T> input(nullptr, 0, 0);
-    new (&input) MatrixMap<T>(reinterpret_cast<T *>(pybuf.buf), row, col);
-    kdac_ -> Fit(input);
-  }
-  void Fit() {
-    kdac_ -> Fit();
-  }
+//  void Fit(PyObject *in, int row, int col) {
+//    // Get the python object buffer
+//    Py_buffer pybuf;
+//    PyObject_GetBuffer(in, &pybuf, PyBUF_SIMPLE);
+//    MatrixMap<T> input(nullptr, 0, 0);
+//    new (&input) MatrixMap<T>(reinterpret_cast<T *>(pybuf.buf), row, col);
+//    kdac_ -> Fit(input);
+//  }
+//  void Fit() {
+//    kdac_ -> Fit();
+//  }
   void Fit(PyObject *in_1, int row_1, int col_1,
            PyObject *in_2, int row_2, int col_2) {
     // Get the python object buffer
@@ -210,9 +189,25 @@ class KDACInterface {
     return kdac_ -> GetQ();
   }
 
- private:
+ protected:
   std::shared_ptr<Nice::KDAC<T>> kdac_;
 };
+
+//template <typename T>
+//class KDACGPUInterface: public KDACInterface<T> {
+// public:
+//  KDACGPUInterface() {
+//    this->kdac_ = std::make_shared<Nice::KDACGPU<T>>();
+//  }
+//};
+//
+//template <typename T>
+//class KDACCPUInterface: public KDACInterface<T> {
+// public:
+//  KDACCPUInterface() {
+//    this->kdac_ = std::make_shared<Nice::KDACCPU<T>>();
+//  }
+//};
 
 }  // namespace Nice
 

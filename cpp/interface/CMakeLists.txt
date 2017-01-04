@@ -6,7 +6,13 @@ find_package(PythonInterp)
 find_package(PythonLibs)
 find_package(Boost COMPONENTS python)
 include_directories(${Boost_INCLUDE_DIRS} 
-                    ${PYTHON_INCLUDE_DIRS})
+                    ${PYTHON_INCLUDE_DIRS}
+                    clustering/)
+
+get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
+foreach(dir ${dirs})
+  message(STATUS "dir='${dir}'")
+endforeach()
 
 # Set source files
 file(GLOB_RECURSE 

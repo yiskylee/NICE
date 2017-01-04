@@ -43,7 +43,7 @@
 
 #include "include/matrix.h"
 #include "include/vector.h"
-#include "include/stop_watch.h"
+//#include "include/cpu_operations.h"
 
 namespace Nice {
 
@@ -265,6 +265,79 @@ void PrintMatrix(T* matrix, int row, int col, bool row_major = true) {
   }
   std::cout << std::endl;
 }
+
+template <typename T>
+void Print(const Vector<T> &vector, std::string name) {
+//    std::cout.precision(2);
+//    std::cout << std::scientific;
+  std::cout << name << std::endl;
+  for (int i = 0; i < vector.rows(); i++) {
+    std::cout << vector(i) << " ";
+  }
+  std::cout << std::endl;
+}
+
+template <typename T>
+void Print(const Matrix<T> &matrix, std::string name) {
+//    std::cout.precision(2);
+//    std::cout << std::scientific;
+  std::cout << name << std::endl;
+  std::cout << matrix << " ";
+  std::cout << std::endl;
+}
+
+template <typename T>
+void Print(const T &scalar, std::string name) {
+//    std::cout.precision(2);
+//    std::cout << std::scientific;
+  std::cout << name << std::endl;
+  std::cout << scalar << std::endl;
+}
+
+template <typename T>
+bool CheckConverged(const Matrix<T> &matrix, const Matrix<T> &pre_matrix,
+                    const T &threshold) {
+  if ( (matrix.rows() != pre_matrix.rows()) ||
+      (matrix.cols() != pre_matrix.cols()) )
+    return false;
+  T change = (matrix - pre_matrix).norm() / pre_matrix.norm();
+  bool converged = (change < threshold);
+  return converged;
+}
+
+template <typename T>
+bool CheckConverged(const Vector<T> &vector, const Vector<T> &pre_vector,
+                    const T &threshold) {
+  if ( vector.rows() != pre_vector.rows() )
+    return false;
+  T change = (vector - pre_vector).norm() / pre_vector.norm();
+  bool converged = (change < threshold);
+  return converged;
+}
+
+template <typename T>
+bool CheckConverged(const T &scalar, const T &pre_scalar, const T &threshold) {
+  T change = (scalar - pre_scalar) / scalar;
+  bool converged = (change < threshold);
+  return converged;
+}
+
+template <typename T>
+void CheckFinite(const Matrix<T> &matrix, std::string name) {
+  if (!matrix.allFinite()) {
+    std::cout << name << " not finite: " << std::endl << matrix << std::endl;
+    exit(1);
+  }
+}
+
+template <typename T>
+void CheckFinite(const Vector<T> &vector, std::string name) {
+  if (!vector.allFinite()) {
+    std::cout << name << " not finite: " << std::endl << vector << std::endl;
+    exit(1);
+  }
+}
+
 
 }  // namespace util
 
