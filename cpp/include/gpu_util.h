@@ -32,7 +32,6 @@
 #include "include/vector.h"
 #include "Eigen/Core"
 #include "Eigen/Dense"
-
 #include <iostream>
 #include <memory>
 
@@ -171,6 +170,14 @@ class GpuUtil {
               cudaMemcpyDeviceToHost));
     return Eigen::Map<Matrix<T>>(host, row, col);
   }
+
+  Vector<T> DevBufferToEigen(T *dev, int n) {
+    T *host = new T[n];
+    CUDA_CALL(cudaMemcpy(host, dev, n * sizeof(T),
+                         cudaMemcpyDeviceToHost));
+    return Eigen::Map<Vector<T>>(host, n);
+  }
+
 
   void ValidateCPUResult(T *host,
                          const Matrix<T> matrix_cpu,

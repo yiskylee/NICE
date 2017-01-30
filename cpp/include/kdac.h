@@ -88,6 +88,7 @@ class KDAC {
       h_matrix_(),
       gamma_matrix_(),
       a_matrices_list_(),
+      g_of_w_(),
       clustering_result_(),
       verbose_(false) {}
 
@@ -276,6 +277,7 @@ class KDAC {
   Matrix<T> l_matrix_;  // D^(-1/2) * K * D^(-1/2)
   Matrix<T> h_matrix_;  // Centering matrix (n by n)
   Matrix<T> gamma_matrix_;  // The nxn gamma matrix used in gamma_ij
+  Matrix<T> g_of_w_;  // g(w) for updating gradient
   // in formula 5
   std::vector<Matrix<T>> a_matrices_list_;  // An n*n list that contains all of
   Vector<T> clustering_result_;  // Current clustering result
@@ -314,6 +316,18 @@ class KDAC {
     // u*ut and didj matrix has the same size
     gamma_matrix_ = ((u_matrix_ * u_matrix_.transpose()).array() /
         didj_matrix_.array()).matrix() - lambda_ * y_matrix_tilde_;
+  }
+
+  void GenGofW(void) {
+    // After gamma_matrix is generated, we are optimizing gamma * kij as in 5
+    // g_of_w is g(w_l) that is multiplied by g(w_(l+1)) in each iteration
+    // of changing l.
+    // Note that here the g_of_w is a n*n matrix because it contains A_ij
+    // g_of_w(i, j) corresponding to exp(-w_T * A_ij * w / 2sigma^2)
+    // When l = 0, g_of_w is 1
+    // when l = 1, g_of_w is 1 .* g(w_1)
+    // when l = 2, g_of_w is 1 .* g(w_1) .* g(w_2)...
+    g_of_w_ = Matrix<T>::Constant(this->n_, this->n_, 1);
   }
 
   /// Generates a degree matrix D from an input kernel matrix
@@ -362,41 +376,9 @@ class KDAC {
     }
   }
 
-  void UpdateGOfW(Matrix<T> &g_of_w, const Vector<T> &w_l) {
-    for (int i = 0; i < n_; i++) {
-      for (int j = 0; j < n_; j++) {
-        if (kernel_type_ == kGaussianKernel) {
-          g_of_w(i, j) = g_of_w(i, j) *
-              static_cast<T>(-w_l.transpose() * a_matrices_list_[i * n_ + j] *
-                  w_l) / static_cast<T>(2 * pow(constant_, 2));
-        }
-      }
-    }
-  }
 
 
 
-
-  Vector<T> GenWGradient(const Matrix<T> &g_of_w, const Vector<T> &w_l) {
-    Vector<T> w_gradient = Vector<T>::Zero(d_);
-    if (kernel_type_ == kGaussianKernel) {
-      for (int i = 0; i < n_; i++) {
-        for (int j = 0; j < n_; j++) {
-          Matrix<T> &a_matrix_ij = a_matrices_list_[i * n_ + j];
-          T exp_term = exp(static_cast<T>(-w_l.transpose() * a_matrix_ij * w_l)
-                               / (2.0 * pow(constant_, 2)));
-          w_gradient += -gamma_matrix_(i, j) * g_of_w(i, j) * exp_term *
-              a_matrix_ij * w_l / pow(constant_, 2);
-//          w_gradient += -gamma_matrix_(i, j) * g_of_w(i, j) *
-//              exp( (-w_l.transpose() * a_matrix_ij * w_l) /
-//                  (2 * pow(constant_, 2)) ) * a_matrix_ij * w_l;
-
-        }
-      }
-
-    }
-    return w_gradient;
-  }
 
   void OptimizeU(void) {
     // If this is the first round and second,
@@ -429,15 +411,7 @@ class KDAC {
   }
 
   virtual void OptimizeW(void) {
-    // After gamma_matrix is generated, we are optimizing gamma * kij as in 5
-    // g_of_w is g(w_l) that is multiplied by g(w_(l+1)) in each iteration
-    // of changing l.
-    // Note that here the g_of_w is a n*n matrix because it contains A_ij
-    // g_of_w(i, j) corresponding to exp(-w_T * A_ij * w / 2sigma^2)
-    // When l = 0, g_of_w is 1
-    // when l = 1, g_of_w is 1 .* g(w_1)
-    // when l = 2, g_of_w is 1 .* g(w_1) .* g(w_2)...
-    Matrix<T> g_of_w = Matrix<T>::Constant(n_, n_, 1);
+
     // If w_matrix is still I (d x d), now it is time to change it to d x q
     if (w_matrix_.cols() == d_)
       w_matrix_ = Matrix<T>::Identity(d_, q_);
@@ -454,7 +428,6 @@ class KDAC {
       } else {
         w_l = GenOrthonormal(w_matrix_.leftCols(l), w_matrix_.col(l));
       }
-//      w_matrix_.col(l) = w_l;
       // Search for the w_l that maximizes formula 5
       // The initial objective is set to the lowest number
 
@@ -465,16 +438,20 @@ class KDAC {
         T pre_objective = objective;
         // Calculate the w gradient in equation 13, then find the gradient
         // that is vertical to the space spanned by w_0 to w_l
-        Vector<T> grad_f = GenWGradient(g_of_w, w_l);
+        Vector<T> grad_f = GenWGradient(w_l);
+        util::Print(grad_f.head(4), "grad_f");
         grad_f_vertical =
             GenOrthonormal(w_matrix_.leftCols(l + 1), grad_f);
         LineSearch(grad_f_vertical, &w_l, &objective);
         w_l = sqrt(1.0 - pow(alpha_, 2)) * w_l +
             alpha_ * grad_f_vertical;
+        util::Print(w_l.head(4), "w_l");
         w_matrix_.col(l) = w_l;
-        w_l_converged = util::CheckConverged(objective, pre_objective, threshold_);
+        w_l_converged = util::CheckConverged(objective,
+                                             pre_objective,
+                                             threshold_);
       }
-      UpdateGOfW(g_of_w, w_l);
+      UpdateGOfW(w_l);
       // TODO: Need to learn about if using Vector<T> &w_l = w_matrix_.col(l)
       CheckFiniteOptimizeW();
       if (verbose_)
@@ -508,8 +485,6 @@ class KDAC {
       *objective = phi_of_alpha_;
     }
   }
-
-
 
   void CheckFiniteOptimizeU(void) {
 
@@ -546,11 +521,34 @@ class KDAC {
 
   virtual void GenAMatrices(void) = 0;
 
+  virtual void UpdateGOfW(const Vector<T> &w_l) = 0;
+
   virtual void GenPhi(const Vector<T> &w_l,
               const Vector<T> &gradient,
               bool w_l_changed) = 0;
 
   virtual void GenPhiCoeff(const Vector<T> &w_l, const Vector<T> &gradient) = 0;
+  virtual Vector<T> GenWGradient(const Vector<T> &w_l) = 0;
+
+//  Vector<T> GenWGradient(const Matrix<T> &g_of_w, const Vector<T> &w_l) {
+//    Vector<T> w_gradient = Vector<T>::Zero(this->d_);
+//    if (this->kernel_type_ == kGaussianKernel) {
+//      for (int i = 0; i < this->n_; i++) {
+//        for (int j = 0; j < this->n_; j++) {
+//          Matrix<T> &a_matrix_ij = this->a_matrices_list_[i * this->n_ + j];
+//          T exp_term = exp(static_cast<T>(-w_l.transpose() * a_matrix_ij * w_l)
+//                               / (2.0 * pow(this->constant_, 2)));
+//          w_gradient += -(this->gamma_matrix_(i, j)) * g_of_w(i, j)
+//              * exp_term * a_matrix_ij * w_l / pow(this->constant_, 2);
+////          w_gradient += -gamma_matrix_(i, j) * g_of_w(i, j) *
+////              exp( (-w_l.transpose() * a_matrix_ij * w_l) /
+////                  (2 * pow(this->constant_, 2)) ) * a_matrix_ij * w_l;
+//
+//        }
+//      }
+//    }
+//    return w_gradient;
+//  }
 
 
 };

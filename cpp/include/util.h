@@ -40,6 +40,7 @@
 #include <algorithm>
 #include <sstream>
 #include <vector>
+#include <math.h>
 
 #include "include/matrix.h"
 #include "include/vector.h"
@@ -268,8 +269,6 @@ void PrintMatrix(T* matrix, int row, int col, bool row_major = true) {
 
 template <typename T>
 void Print(const Vector<T> &vector, std::string name) {
-//    std::cout.precision(2);
-//    std::cout << std::scientific;
   std::cout << name << std::endl;
   for (int i = 0; i < vector.rows(); i++) {
     std::cout << vector(i) << " ";
@@ -279,8 +278,6 @@ void Print(const Vector<T> &vector, std::string name) {
 
 template <typename T>
 void Print(const Matrix<T> &matrix, std::string name) {
-//    std::cout.precision(2);
-//    std::cout << std::scientific;
   std::cout << name << std::endl;
   std::cout << matrix << " ";
   std::cout << std::endl;
@@ -288,8 +285,6 @@ void Print(const Matrix<T> &matrix, std::string name) {
 
 template <typename T>
 void Print(const T &scalar, std::string name) {
-//    std::cout.precision(2);
-//    std::cout << std::scientific;
   std::cout << name << std::endl;
   std::cout << scalar << std::endl;
 }
@@ -317,7 +312,7 @@ bool CheckConverged(const Vector<T> &vector, const Vector<T> &pre_vector,
 
 template <typename T>
 bool CheckConverged(const T &scalar, const T &pre_scalar, const T &threshold) {
-  T change = (scalar - pre_scalar) / scalar;
+  T change = fabs(scalar - pre_scalar) / fabs(scalar);
   bool converged = (change < threshold);
   return converged;
 }

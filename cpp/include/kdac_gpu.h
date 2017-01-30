@@ -36,21 +36,17 @@
 #include "include/kdac.h"
 #include "include/gpu_util.h"
 
-
-
 namespace Nice {
 template<typename T>
 class KDACGPU: public KDAC<T> {
  public:
   /// This is the default constructor for KDACGPU
   /// Number of clusters c and reduced dimension q will be both set to 2
-  KDACGPU() {
-
-  }
+  KDACGPU() :
+      block_limit_(256){}
 
   ~KDACGPU() {
     // Free parameters, intermediate delta and parameters
-    std::cout << "KDACGPU Destructor\n";
     CUDA_CALL(cudaFree(x_matrix_d_));
     CUDA_CALL(cudaFree(waw_matrix_d_));
     CUDA_CALL(cudaFree(waf_matrix_d_));
@@ -72,6 +68,8 @@ class KDACGPU: public KDAC<T> {
   void GenPhi(const Vector<T> &w_l,
               const Vector<T> &gradient,
               bool w_l_changed);
+  Vector<T> GenWGradient(const Vector<T> &w_l);
+  void UpdateGOfW(const Vector<T> &w_l);
 
  private:
   T* x_matrix_d_; // Input matrix X (n by d) on device
@@ -87,31 +85,38 @@ class KDACGPU: public KDAC<T> {
   T* gradient_d_;
   T *phi_of_alphas_d_, *phi_of_zeros_d_, *phi_of_zero_primes_d_;
   T *phi_of_alphas_h_, *phi_of_zeros_h_, *phi_of_zero_primes_h_;
+  T *g_of_w_d_;
+  T *gradient_fs_d_, *gradient_fs_h_;
   // GPUUtil object to setup memory etc.
   GpuUtil<T> *gpu_util_;
+  unsigned int block_limit_;
 
   // Initialization for generating alternative views with a given Y
   void Init(const Matrix<T> &input_matrix, const Matrix<T> &y_matrix) {
     KDAC<T>::Init(input_matrix, y_matrix);
+    int n = this->n_;
+    int d = this->d_;
     this->profiler_.gen_phi.Start();
     gpu_util_->SetupMem(&x_matrix_d_,
-                        &(this->x_matrix_(0)), this->n_ * this->d_);
-    gpu_util_->SetupMem(&waw_matrix_d_, nullptr, this->n_ * this->n_, false);
-    gpu_util_->SetupMem(&waf_matrix_d_, nullptr, this->n_ * this->n_, false);
-    gpu_util_->SetupMem(&faf_matrix_d_, nullptr, this->n_ * this->n_, false);
-    gpu_util_->SetupMem(&w_l_d_, nullptr, this->d_, false);
-    gpu_util_->SetupMem(&gradient_d_, nullptr, this->d_, false);
-    gpu_util_->SetupMem(&gamma_matrix_d_, nullptr, this->n_ * this->n_, false);
-    int num_blocks = ((this->n_ - 1) / 16 + 1) * ((this->n_ - 1) / 16 + 1);
+                        &(this->x_matrix_(0)), n * d);
+    gpu_util_->SetupMem(&waw_matrix_d_, nullptr, n * n, false);
+    gpu_util_->SetupMem(&waf_matrix_d_, nullptr, n * n, false);
+    gpu_util_->SetupMem(&faf_matrix_d_, nullptr, n * n, false);
+    gpu_util_->SetupMem(&w_l_d_, nullptr, d, false);
+    gpu_util_->SetupMem(&gradient_d_, nullptr, d, false);
+    gpu_util_->SetupMem(&gamma_matrix_d_, nullptr, n * n, false);
+    gpu_util_->SetupMem(&g_of_w_d_, nullptr, n * n, false);
+    gpu_util_->SetupMem(&gradient_fs_d_, nullptr,
+                        n * n * d, false);
+    int num_blocks = ((n - 1) / 16 + 1) * ((n - 1) / 16 + 1);
     gpu_util_->SetupMem(&phi_of_alphas_d_, nullptr, num_blocks, false);
     gpu_util_->SetupMem(&phi_of_zeros_d_, nullptr, num_blocks, false);
     gpu_util_->SetupMem(&phi_of_zero_primes_d_, nullptr, num_blocks, false);
     phi_of_alphas_h_ = new T[num_blocks];
     phi_of_zeros_h_ = new T[num_blocks];
     phi_of_zero_primes_h_ = new T[num_blocks];
+    gradient_fs_h_ = new T[n * n * d];
     this->profiler_.gen_phi.Record();
-    GenAMatrices();
-
   }
 
   void OptimizeW(void) {
@@ -119,10 +124,12 @@ class KDACGPU: public KDAC<T> {
     CUDA_CALL(cudaMemcpy(gamma_matrix_d_, &(this->gamma_matrix_)(0),
                          this->n_ * this->n_ * sizeof(T),
                          cudaMemcpyHostToDevice));
+    KDAC<T>::GenGofW();
+    CUDA_CALL(cudaMemcpy(g_of_w_d_, &(this->g_of_w_)(0),
+                         this->n_ * this->n_ * sizeof(T),
+                         cudaMemcpyHostToDevice));
     KDAC<T>::OptimizeW();
   }
-
-
 };
 }  // namespace NICE
 

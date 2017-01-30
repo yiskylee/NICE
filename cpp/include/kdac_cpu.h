@@ -66,6 +66,7 @@ class KDACCPU: public KDAC<T> {
 
   void OptimizeW(void) {
     KDAC<T>::GenGammaMatrix();
+    KDAC<T>::GenGofW();
     KDAC<T>::OptimizeW();
   }
 
@@ -141,6 +142,38 @@ class KDACCPU: public KDAC<T> {
     }
   }
 
+  Vector<T> GenWGradient(const Vector<T> &w_l) {
+    Vector<T> w_gradient = Vector<T>::Zero(this->d_);
+    if (this->kernel_type_ == kGaussianKernel) {
+      for (int i = 0; i < this->n_; i++) {
+        for (int j = 0; j < this->n_; j++) {
+          Matrix<T> &a_matrix_ij = this->a_matrices_list_[i * this->n_ + j];
+          T exp_term = exp(static_cast<T>(-w_l.transpose() * a_matrix_ij * w_l)
+                               / (2.0 * pow(this->constant_, 2)));
+          w_gradient += -(this->gamma_matrix_(i, j)) * (this->g_of_w_(i, j))
+              * exp_term * a_matrix_ij * w_l / pow(this->constant_, 2);
+//          w_gradient += -gamma_matrix_(i, j) * g_of_w(i, j) *
+//              exp( (-w_l.transpose() * a_matrix_ij * w_l) /
+//                  (2 * pow(this->constant_, 2)) ) * a_matrix_ij * w_l;
+
+        }
+      }
+    }
+    return w_gradient;
+  }
+
+  void UpdateGOfW(const Vector<T> &w_l) {
+    for (int i = 0; i < this->n_; i++) {
+      for (int j = 0; j < this->n_; j++) {
+        if (this->kernel_type_ == kGaussianKernel) {
+          this->g_of_w_(i, j) = this->g_of_w_(i, j) *
+              static_cast<T>(-w_l.transpose() *
+                  this->a_matrices_list_[i * this->n_ + j] *
+                  w_l) / static_cast<T>(2 * pow(this->constant_, 2));
+        }
+      }
+    }
+  }
 };
 }  // namespace NICE
 
