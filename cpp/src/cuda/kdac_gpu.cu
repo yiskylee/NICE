@@ -61,7 +61,7 @@ __device__ void mv(T *mat_s,
 }
 
 template <typename T>
-__device__ void reduce_sum(T *data_s, int n) {
+__device__ T reduce_sum(T *data_s, int n) {
   T sum = 0;
   int block_size = blockDim.x;
   int tx = threadIdx.x;
@@ -117,6 +117,7 @@ __device__ void reduce_sum(T *data_s, int n) {
   if (tx == 0)
     data_s[tx] = sum;
   __syncthreads();
+  return data_s[0];
 }
 
 
@@ -129,22 +130,17 @@ __device__ void GenAij(const T *x_matrix_d,
   int tx = threadIdx.x;
   int i = blockIdx.y;
   int j = blockIdx.x;
+  int block_size = blockDim.x;
 
-  while (tx < d) {
-    delta_ij_d[tx] = x_matrix_d[IDXC(i, tx, n)] -
-        x_matrix_d[IDXC(j, tx, n)];
-    tx += blockDim.x;
+  for (int k = tx; k < d; k += block_size)
+    delta_ij_d[k] = x_matrix_d[IDXC(i, k, n)] - x_matrix_d[IDXC(j, k, n)];
     __syncthreads();
-  }
 
-  tx = threadIdx.x;
-
-  while (tx < d) {
+  for (int k = tx; k < d; k += block_size)
     for (int col = 0; col < d; col++)
       // thread tx calculates a whole row tx of the output matrix a_ij
-      a_ij_d[IDXC(tx, col, d)] = delta_ij_d[col] * delta_ij_d[tx];
-    tx += blockDim.x;
-  }
+      a_ij_d[IDXC(k, col, d)] = delta_ij_d[col] * delta_ij_d[k];
+  __syncthreads();
 }
 
 template<typename T>
@@ -363,48 +359,91 @@ __global__ void GenWGradientKernel(const T *x_matrix_d,
                                    const int n,
                                    const int d,
                                    T *gradient_fs_d) {
+
   T *vec_s = SharedMemory<T>();
-  // Memory to store a_ij * w_l
-  T *aw_s = (T *) vec_s;
-  // exp_term_s first store neg_waw_s, and then parallelly sum it
-  // to store the dot product result
-  T *exp_term_s = (T *) &vec_s[d];
-  T *w_s = (T *) &vec_s[2 * d];
-  T *a_ij_s = (T *) &vec_s[3 * d];
-  T *delta_ij_s = (T *) &vec_s[3 * d + d * d];
-
-  GenAij(x_matrix_d, n, d, a_ij_s, delta_ij_s);
-
+  T *delta_ij_s = (T *) vec_s;
+  T *delta_w_s = (T *) &vec_s[d];
+  T *a_w_s = (T *) &vec_s[2*d];
   int i = blockIdx.y;
   int j = blockIdx.x;
   int tx = threadIdx.x;
   int block_size = blockDim.x;
 
-  T *gradient_f_ij = gradient_fs_d + IDXR(i, j, n) * d;
 
-  // Copy data from global memory to shared memory
+
   for (int k = tx; k < d; k += block_size) {
-    aw_s[k] = 0.0;
-    exp_term_s[k] = 0.0;
-    w_s[k] = w_l_d[k];
+    delta_ij_s[k] = x_matrix_d[IDXC(i, k, n)] - x_matrix_d[IDXC(j, k, n)];
+    // Dot product for delta' * w
+    delta_w_s[k] = delta_ij_s[k] * w_l_d[k];
   }
   __syncthreads();
-  // Matrix vector multiplication
-  mv(a_ij_s, w_s, d, d, aw_s);
 
-  // Dot Product
+  T delta_w = reduce_sum(delta_w_s, d);
+  T waw = delta_w * delta_w;
+
   for (int k = tx; k < d; k += block_size)
-    exp_term_s[k] = aw_s[k] * (-w_s[k]);
+    a_w_s[k] = delta_ij_s[k] * delta_w;
   __syncthreads();
 
-  // Reudction for dot product, result stored in exp_term_s[0]
-  reduce_sum(exp_term_s, d);
-  T exp_term = expf(exp_term_s[0] / (2 * constant * constant));
+  T sigma_sq = constant * constant;
 
   int index_ij = IDXC(i, j, n);
+  T gamma_ij = gamma_matrix_d[index_ij];
+  T g_of_w_ij = g_of_w_d[index_ij];
+  T exp_term = expf(-waw / (2 * sigma_sq));
+  T coeff = -gamma_ij * g_of_w_ij * exp_term / sigma_sq;
+  T *gradient_f_ij = gradient_fs_d + IDXR(i, j, n) * d;
   for (int k = tx; k < d; k += block_size)
-    gradient_f_ij[k] = -gamma_matrix_d[index_ij] * g_of_w_d[index_ij] *
-        exp_term * aw_s[k] / (constant * constant);
+    gradient_f_ij[k] = coeff * a_w_s[k];
+
+//  T *vec_s = SharedMemory<T>();
+//  // Memory to store a_ij * w_l
+//  T *aw_s = (T *) vec_s;
+//  // exp_term_s first store neg_waw_s, and then parallelly sum it
+//  // to store the dot product result
+//  T *exp_term_s = (T *) &vec_s[d];
+//  T *w_s = (T *) &vec_s[2 * d];
+//  T *a_ij_s = (T *) &vec_s[3 * d];
+//  T *delta_ij_s = (T *) &vec_s[3 * d + d * d];
+//
+////  GenAij(x_matrix_d, n, d, a_ij_s, delta_ij_s);
+//
+//
+//  int i = blockIdx.y;
+//  int j = blockIdx.x;
+//  int tx = threadIdx.x;
+//  int block_size = blockDim.x;
+//
+//  T *gradient_f_ij = gradient_fs_d + IDXR(i, j, n) * d;
+//
+//  // Copy data from global memory to shared memory
+//  for (int k = tx; k < d; k += block_size) {
+//    delta_ij_s[tx] = x_matrix_d[IDXC(i, tx, n)] - x_matrix_d[IDXC(j, tx, n)];
+//    aw_s[k] = 0.0;
+//    exp_term_s[k] = 0.0;
+//    w_s[k] = w_l_d[k];
+//  }
+//  __syncthreads();
+//
+//
+//
+//
+//  // Matrix vector multiplication
+//  mv(a_ij_s, w_s, d, d, aw_s);
+//
+//  // Dot Product
+//  for (int k = tx; k < d; k += block_size)
+//    exp_term_s[k] = aw_s[k] * (-w_s[k]);
+//  __syncthreads();
+//
+//  // Reudction for dot product, result stored in exp_term_s[0]
+//  reduce_sum(exp_term_s, d);
+//  T exp_term = expf(exp_term_s[0] / (2 * constant * constant));
+//
+//  int index_ij = IDXC(i, j, n);
+//  for (int k = tx; k < d; k += block_size)
+//    gradient_f_ij[k] = -gamma_matrix_d[index_ij] * g_of_w_d[index_ij] *
+//        exp_term * aw_s[k] / (constant * constant);
 }
 
 template<typename T>
@@ -542,8 +581,6 @@ Vector <T> KDACGPU<T>::GenWGradient(const Vector <T> &w_l) {
                               nextPow2((d+1)/2) : block_limit_;
 
     int shared_mem_size = 3 * d * sizeof(T);
-    shared_mem_size += d * d * sizeof(T);
-    shared_mem_size += d * sizeof(T);
 
     dim3 dim_block(block_size, 1);
     dim3 dim_grid(n, n);
