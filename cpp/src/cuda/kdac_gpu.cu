@@ -191,38 +191,6 @@ __global__ void UpdateGOfWKernel(const T *x_matrix_d,
 }
 
 template<typename T>
-__global__ void GenAMatricesKernel(const T *x_matrix_d,
-                                   const int n,
-                                   const int d,
-                                   T *a_matrices_d) {
-  int i = blockIdx.y;
-  int j = blockIdx.x;
-  T *delta_ij_d = SharedMemory<T>();
-  T *a_ij_d = a_matrices_d + IDXR(i, j, n) * (d * d);
-  GenAij(x_matrix_d, n, d, a_ij_d, delta_ij_d);
-//  int tx = threadIdx.x;
-//  int i = blockIdx.y;
-//  int j = blockIdx.x;
-//
-//  while (tx < d) {
-//    delta_ij_d[tx] = x_matrix_d[IDXC(i, tx, n)] -
-//        x_matrix_d[IDXC(j, tx, n)];
-//    tx += blockDim.x;
-//    __syncthreads();
-//  }
-//
-//  tx = threadIdx.x;
-//  T *a_ij_d = a_matrices_d + IDXR(i, j, n) * (d * d);
-//
-//  while (tx < d) {
-//    for (int col = 0; col < d; col++)
-//      // thread tx calculates a whole row tx of the output matrix a_ij_d
-//      a_ij_d[IDXC(tx, col, d)] = delta_ij_d[col] * delta_ij_d[tx];
-//    tx += blockDim.x;
-//  }
-}
-
-template<typename T>
 __global__ void GenPhiCoeffKernel(const T *x_matrix_d,
                                   const T *w_l_d,
                                   const T *gradient_d,

@@ -439,17 +439,13 @@ class KDAC {
         // Calculate the w gradient in equation 13, then find the gradient
         // that is vertical to the space spanned by w_0 to w_l
         Vector<T> grad_f = GenWGradient(w_l);
-        util::Print(grad_f.head(4), "grad_f");
         grad_f_vertical =
             GenOrthonormal(w_matrix_.leftCols(l + 1), grad_f);
         LineSearch(grad_f_vertical, &w_l, &objective);
-        w_l = sqrt(1.0 - pow(alpha_, 2)) * w_l +
-            alpha_ * grad_f_vertical;
-        util::Print(w_l.head(4), "w_l");
+        w_l = sqrt(1.0 - pow(alpha_, 2)) * w_l + alpha_ * grad_f_vertical;
         w_matrix_.col(l) = w_l;
-        w_l_converged = util::CheckConverged(objective,
-                                             pre_objective,
-                                             threshold_);
+        w_l_converged =
+            util::CheckConverged(objective, pre_objective, threshold_);
       }
       UpdateGOfW(w_l);
       // TODO: Need to learn about if using Vector<T> &w_l = w_matrix_.col(l)
@@ -518,8 +514,6 @@ class KDAC {
     // Generate Y tilde matrix in equation 5 from kernel matrix of Y
     y_matrix_tilde_ = h_matrix_ * k_matrix_y_ * h_matrix_;
   }
-
-  virtual void GenAMatrices(void) = 0;
 
   virtual void UpdateGOfW(const Vector<T> &w_l) = 0;
 

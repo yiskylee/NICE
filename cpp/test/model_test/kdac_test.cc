@@ -192,84 +192,24 @@ TYPED_TEST(KDACTest, GPU3_100_64) {
             profiler.gen_phi.GetTotalTime() << std::endl;
 }
 
-TYPED_TEST(KDACTest, CPU3_100_80) {
-  this->SetupInputData(3, 100, 80, "cpu");
+TYPED_TEST(KDACTest, CPU3_10_600) {
+  this->SetupInputData(3, 10, 600, "cpu");
   this->kdac_->SetVerbose(true);
   this->kdac_->Fit(this->data_matrix_, this->existing_y_);
   Nice::KDACProfiler profiler = this->kdac_->GetProfiler();
-  std::cout << "Init A on CPU: " <<
-            profiler.gen_a.GetTotalTime() << std::endl;
   std::cout << "GenPhi on CPU: " <<
             profiler.gen_phi.GetTotalTime() << std::endl;
+  std::cout << "Fit on CPU: " <<
+            profiler.fit.GetTotalTime() << std::endl;
 }
 
-TYPED_TEST(KDACTest, GPU3_100_80) {
-  this->SetupInputData(3, 100, 80, "gpu");
+TYPED_TEST(KDACTest, GPU3_10_600) {
+  this->SetupInputData(3, 10, 600, "gpu");
   this->kdac_gpu_->SetVerbose(true);
   this->kdac_gpu_->Fit(this->data_matrix_, this->existing_y_);
   Nice::KDACProfiler profiler = this->kdac_gpu_->GetProfiler();
-  std::cout << "Init A on GPU: " <<
-            profiler.gen_a.GetTotalTime() << std::endl;
   std::cout << "GenPhi on GPU: " <<
             profiler.gen_phi.GetTotalTime() << std::endl;
+  std::cout << "Fit on GPU: " <<
+            profiler.fit.GetTotalTime() << std::endl;
 }
-
-TYPED_TEST(KDACTest, CPU3_1_6) {
-  this->SetupInputData(3, 1, 6, "cpu");
-  this->kdac_->SetVerbose(true);
-  this->kdac_->Fit(this->data_matrix_, this->existing_y_);
-  Nice::KDACProfiler profiler = this->kdac_->GetProfiler();
-  std::cout << "Init A on CPU: " <<
-            profiler.gen_a.GetTotalTime() << std::endl;
-  std::cout << "GenPhi on CPU: " <<
-            profiler.gen_phi.GetTotalTime() << std::endl;
-}
-
-TYPED_TEST(KDACTest, GPU3_1_6) {
-  this->SetupInputData(3, 1, 6, "gpu");
-  this->kdac_gpu_->SetVerbose(true);
-  this->kdac_gpu_->Fit(this->data_matrix_, this->existing_y_);
-  Nice::KDACProfiler profiler = this->kdac_gpu_->GetProfiler();
-  std::cout << "Init A on GPU: " <<
-            profiler.gen_a.GetTotalTime() << std::endl;
-  std::cout << "GenPhi on GPU: " <<
-            profiler.gen_phi.GetTotalTime() << std::endl;
-}
-
-TYPED_TEST(KDACTest, GPU3_1_7) {
-  this->SetupInputData(3, 1, 7, "gpu");
-  this->kdac_gpu_->SetVerbose(true);
-  this->kdac_gpu_->Fit(this->data_matrix_, this->existing_y_);
-  Nice::KDACProfiler profiler = this->kdac_gpu_->GetProfiler();
-  std::cout << "Init A on GPU: " <<
-            profiler.gen_a.GetTotalTime() << std::endl;
-  std::cout << "GenPhi on GPU: " <<
-            profiler.gen_phi.GetTotalTime() << std::endl;
-}
-
-
-
-
-//
-//TYPED_TEST(KDACTest, GaussianTestVerbose) {
-//  this->kdac_->SetVerbose(true);
-//  this->kdac_->Fit(this->data_matrix_, this->existing_y_);
-////  PRINTV(this->kdac_->Predict(), this->num_samples_per_cluster_);
-//}
-//
-//TYPED_TEST(KDACTest, GaussianTest) {
-//  this->kdac_->Fit(this->data_matrix_, this->existing_y_);
-//  PRINTV(this->kdac_->Predict(), this->num_samples_per_cluster_);
-//}
-//
-//TYPED_TEST(KDACTest, WlRef) {
-//  Nice::Matrix<TypeParam> w_matrix(3,3);
-//  for (int i = 0; i < 3; i++)
-//    for (int j = 0; j < 3; j++)
-//      w_matrix(i, j) = i * 3 + j;
-//  std::cout << w_matrix << std::endl;
-//  Nice::Vector<TypeParam> w_l = w_matrix.col(0);
-//  w_l(0) = 88;
-//  std::cout << w_l << std::endl;
-//  std::cout << w_matrix << std::endl;
-//}

@@ -64,7 +64,6 @@ class KDACGPU: public KDAC<T> {
   KDACGPU(const KDACGPU &rhs) {}
 
   void GenPhiCoeff(const Vector<T> &w_l, const Vector<T> &gradient);
-  void GenAMatrices();
   void GenPhi(const Vector<T> &w_l,
               const Vector<T> &gradient,
               bool w_l_changed);
