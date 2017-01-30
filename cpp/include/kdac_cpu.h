@@ -166,10 +166,10 @@ class KDACCPU: public KDAC<T> {
     for (int i = 0; i < this->n_; i++) {
       for (int j = 0; j < this->n_; j++) {
         if (this->kernel_type_ == kGaussianKernel) {
-          this->g_of_w_(i, j) = this->g_of_w_(i, j) *
+          this->g_of_w_(i, j) = this->g_of_w_(i, j) * exp(
               static_cast<T>(-w_l.transpose() *
                   this->a_matrices_list_[i * this->n_ + j] *
-                  w_l) / static_cast<T>(2 * pow(this->constant_, 2));
+                  w_l) / static_cast<T>(2 * pow(this->constant_, 2)));
         }
       }
     }
