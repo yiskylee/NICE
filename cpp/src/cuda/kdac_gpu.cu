@@ -28,6 +28,7 @@
 #include "../../include/gpu_util.h"
 #include "../../../../../../../../usr/local/cuda/include/driver_types.h"
 #include "../../include/kdac_gpu.h"
+#include "../../include/kernel_types.h"
 
 namespace Nice {
 
@@ -63,8 +64,8 @@ __device__ void mv(T *mat_s,
 template <typename T>
 __device__ T reduce_sum(T *data_s, int n) {
   T sum = 0;
-  int block_size = blockDim.x;
-  int tx = threadIdx.x;
+  int block_size = blockDim.x * blockDim.y;
+  int tx = threadIdx.y * blockDim.x + threadIdx.x;
 
   for (int k = tx; k < n; k += block_size)
     sum += data_s[k];
@@ -272,18 +273,21 @@ __global__ void GenPhiKernel(const T alpha,
 
   int i = blockIdx.y * blockDim.y + threadIdx.y;
   int j = blockIdx.x * blockDim.x + threadIdx.x;
-
-  T *mat_s = SharedMemory<T>();
-  T *phi_of_alphas_s = (T *) mat_s;
-  T *phi_of_zeros_s = (T *) &mat_s[blockDim.x * blockDim.y];
-  T *phi_of_zero_primes_s = (T *) &mat_s[2 * blockDim.x * blockDim.y];
-  int tid_local = IDXR(threadIdx.y, threadIdx.x, blockDim.x);
+  int block_size = blockDim.x * blockDim.y;
+  int tid = IDXR(threadIdx.y, threadIdx.x, blockDim.x);
   int bid = IDXR(blockIdx.y, blockIdx.x, gridDim.x);
 
-  phi_of_alphas_s[tid_local] = 0.0;
+
+  T *phi_of_alphas_s = SharedMemory<T>();
+  T *phi_of_zeros_s = 0;
+  T *phi_of_zero_primes_s = 0;
+
+  phi_of_alphas_s[tid] = 0.0;
   if (w_l_changed) {
-    phi_of_zeros_s[tid_local] = 0.0;
-    phi_of_zero_primes_s[tid_local] = 0.0;
+    phi_of_zeros_s = SharedMemory<T>() + block_size;
+    phi_of_zero_primes_s = SharedMemory<T>() + 2*block_size;
+    phi_of_zeros_s[tid] = 0.0;
+    phi_of_zero_primes_s[tid] = 0.0;
   }
   __syncthreads();
 
@@ -294,33 +298,51 @@ __global__ void GenPhiKernel(const T alpha,
     T gammaij = gamma_matrix_d[IDXC(j, i, n)];
     T kij = expf(denom * ((faf - waw) * (alpha * alpha) +
         2 * waf * sqrt_one_minus_alpha * alpha + waw));
-    phi_of_alphas_s[tid_local] = gammaij * kij;
+    phi_of_alphas_s[tid] = gammaij * kij;
     if (w_l_changed) {
       T kij = expf(denom * waw);
-      phi_of_zeros_s[tid_local] = gammaij * kij;
-      phi_of_zero_primes_s[tid_local] = gammaij * denom * 2 * waf * kij;
+      phi_of_zeros_s[tid] = gammaij * kij;
+      phi_of_zero_primes_s[tid] = gammaij * denom * 2 * waf * kij;
 //    phi_of_alphas_d[IDXC(j, i, n)] = gammaij * kij;
     }
     __syncthreads();
-    for (unsigned int s = (blockDim.x * blockDim.y / 2); s > 0; s >>= 1) {
-      if (tid_local < s) {
-        phi_of_alphas_s[tid_local] += phi_of_alphas_s[tid_local + s];
-        if (w_l_changed) {
-          phi_of_zeros_s[tid_local] += phi_of_zeros_s[tid_local + s];
-          phi_of_zero_primes_s[tid_local] +=
-              phi_of_zero_primes_s[tid_local + s];
-        }
-      }
-      __syncthreads();
+
+    T phi_of_alpha = reduce_sum(phi_of_alphas_s, block_size);
+    T phi_of_zero = 0;
+    T phi_of_zero_prime = 0;
+
+    if (w_l_changed) {
+      phi_of_zero = reduce_sum(phi_of_zeros_s, block_size);
+      phi_of_zero_prime = reduce_sum(phi_of_zero_primes_s, block_size);
     }
 
-    if (tid_local == 0) {
-      phi_of_alphas_d[bid] = phi_of_alphas_s[tid_local];
+    if (tid == 0) {
+      phi_of_alphas_d[bid] = phi_of_alpha;
       if (w_l_changed) {
-        phi_of_zeros_d[bid] = phi_of_zeros_s[tid_local];
-        phi_of_zero_primes_d[bid] = phi_of_zero_primes_s[tid_local];
+        phi_of_zeros_d[bid] = phi_of_zero;
+        phi_of_zero_primes_d[bid] = phi_of_zero_prime;
       }
     }
+
+
+//    for (unsigned int s = (blockDim.x * blockDim.y / 2); s > 0; s >>= 1) {
+//      if (tid < s) {
+//        phi_of_alphas_s[tid] += phi_of_alphas_s[tid + s];
+//        if (w_l_changed) {
+//          phi_of_zeros_s[tid] += phi_of_zeros_s[tid + s];
+//          phi_of_zero_primes_s[tid] +=
+//              phi_of_zero_primes_s[tid + s];
+//        }
+//      }
+//      __syncthreads();
+//    }
+//    if (tid == 0) {
+//      phi_of_alphas_d[bid] = phi_of_alphas_s[tid];
+//      if (w_l_changed) {
+//        phi_of_zeros_d[bid] = phi_of_zeros_s[tid];
+//        phi_of_zero_primes_d[bid] = phi_of_zero_primes_s[tid];
+//      }
+//    }
   }
 }
 
@@ -436,9 +458,14 @@ void KDACGPU<T>::GenPhi(const Vector <T> &w_l,
     // memory access
     dim3 dim_grid((n - 1) / block_dim_x + 1,
                   (n - 1) / block_dim_y + 1);
+    int block_size = block_dim_x * block_dim_y;
     int num_blocks =
         ((n - 1) / block_dim_x + 1) * ((n - 1) / block_dim_y + 1);
-    int shared_mem_size = 3 * block_dim_x * block_dim_y * sizeof(T);
+    int shared_mem_size;
+    if (w_l_changed)
+      shared_mem_size = 3 * block_size * sizeof(T);
+    else
+      shared_mem_size = block_size * sizeof(T);
 
     GenPhiKernel << < dim_grid, dim_block, shared_mem_size >> >
         (this->alpha_,
