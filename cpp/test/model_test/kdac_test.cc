@@ -39,9 +39,9 @@ template<typename T>
 class KDACTest : public ::testing::Test {
  protected:
 //  Nice::Matrix<T> data_matrix_;
-  std::shared_ptr<Nice::KDACCPU<T>> kdac_;
-  std::shared_ptr<Nice::KDACGPU<T>> kdac_gpu_;
+  std::shared_ptr<Nice::KDAC<T>> kdac_;
   int c_;
+  std::string device_type_;
   std::string base_dir_;
   int num_clusters_;
   int num_samples_per_cluster_;
@@ -63,25 +63,34 @@ class KDACTest : public ::testing::Test {
     num_samples_per_cluster_ = num_samples_per_cluster;
     num_samples_ = num_clusters_ * num_samples_per_cluster_;
     dim_ = dim;
+    device_type_ = device_type;
 
-    if (device_type == "cpu") {
+    if (device_type_ == "cpu")
       kdac_ = std::make_shared<Nice::KDACCPU<T>>();
-      kdac_->SetQ(num_clusters_);
-      kdac_->SetC(num_clusters_);
-      kdac_->SetKernel(Nice::kGaussianKernel, 1.0);
-    } else if (device_type == "gpu") {
-      kdac_gpu_ = std::make_shared<Nice::KDACGPU<T>>();
-      kdac_gpu_->SetQ(num_clusters_);
-      kdac_gpu_->SetC(num_clusters_);
-      kdac_gpu_->SetKernel(Nice::kGaussianKernel, 1.0);
-    }
+    else if (device_type_ == "gpu")
+      kdac_ = std::make_shared<Nice::KDACGPU<T>>();
 
+    kdac_->SetQ(num_clusters_);
+    kdac_->SetC(num_clusters_);
+    kdac_->SetKernel(Nice::kGaussianKernel, 1.0);
     base_dir_ = "../test/data_for_test/kdac/";
     data_type_ = "data_gaussian";
     file_path_ = GenFilePath();
     std::cout << "file_path: " << file_path_ << std::endl;
     data_matrix_ = Nice::util::FromFile<T>(file_path_, ",");
     existing_y_ = GenExistingY();
+  }
+
+  void Output() {
+    Nice::KDACProfiler profiler = kdac_->GetProfiler();
+    std::cout << "GenPhi: "
+              << profiler.gen_phi.GetTotalTime() << std::endl;
+    std::cout << "GenGradient: "
+              << profiler.gen_grad.GetTotalTime() << std::endl;
+    std::cout << "Update g(w): "
+              << profiler.update_g_of_w.GetTotalTime() << std::endl;
+    std::cout << "Fit: "
+              << profiler.fit.GetTotalTime() << std::endl;
   }
 
   Nice::Matrix<T> ReadTestData(
@@ -147,69 +156,46 @@ TYPED_TEST_CASE(KDACTest, FloatTypes);
       for (int j = 0; j < a.cols(); j++)\
         EXPECT_NEAR(std::abs(a(i, j)), std::abs(ref(i, j)), error);\
 
-TYPED_TEST(KDACTest, CPU3_100_10) {
-  this->SetupInputData(3, 100, 10, "cpu");
-  this->kdac_->SetVerbose(true);
-  this->kdac_->Fit(this->data_matrix_, this->existing_y_);
-  Nice::KDACProfiler profiler = this->kdac_->GetProfiler();
-  std::cout << "Init A on CPU: " <<
-    profiler.gen_a.GetTotalTime() << std::endl;
-  std::cout << "GenPhi on CPU: " <<
-    profiler.gen_phi.GetTotalTime() << std::endl;
-//  PRINTV(this->kdac_->Predict(), this->num_samples_per_cluster_);
-}
 
-TYPED_TEST(KDACTest, GPU3_100_10) {
-  this->SetupInputData(3, 100, 10, "gpu");
-  this->kdac_gpu_->SetVerbose(true);
-  this->kdac_gpu_->Fit(this->data_matrix_, this->existing_y_);
-  Nice::KDACProfiler profiler = this->kdac_gpu_->GetProfiler();
-  std::cout << "Init A on GPU: " <<
-    profiler.gen_a.GetTotalTime() << std::endl;
-  std::cout << "GenPhi on GPU: " <<
-    profiler.gen_phi.GetTotalTime() << std::endl;
-}
-
-TYPED_TEST(KDACTest, CPU3_100_80) {
-  this->SetupInputData(3, 100, 80, "cpu");
-  this->kdac_->SetVerbose(true);
-  this->kdac_->Fit(this->data_matrix_, this->existing_y_);
-  Nice::KDACProfiler profiler = this->kdac_->GetProfiler();
-  std::cout << "GenPhi on CPU: " <<
-            profiler.gen_phi.GetTotalTime() << std::endl;
-  std::cout << "Fit on CPU: " <<
-            profiler.fit.GetTotalTime() << std::endl;
-}
-
-TYPED_TEST(KDACTest, GPU3_100_80) {
-  this->SetupInputData(3, 100, 80, "gpu");
-  this->kdac_gpu_->SetVerbose(true);
-  this->kdac_gpu_->Fit(this->data_matrix_, this->existing_y_);
-  Nice::KDACProfiler profiler = this->kdac_gpu_->GetProfiler();
-  std::cout << "GenPhi on GPU: " <<
-            profiler.gen_phi.GetTotalTime() << std::endl;
-  std::cout << "Fit on GPU: " <<
-            profiler.fit.GetTotalTime() << std::endl;
-}
 
 TYPED_TEST(KDACTest, CPU3_10_600) {
   this->SetupInputData(3, 10, 600, "cpu");
   this->kdac_->SetVerbose(true);
   this->kdac_->Fit(this->data_matrix_, this->existing_y_);
-  Nice::KDACProfiler profiler = this->kdac_->GetProfiler();
-  std::cout << "GenPhi on CPU: " <<
-            profiler.gen_phi.GetTotalTime() << std::endl;
-  std::cout << "Fit on CPU: " <<
-            profiler.fit.GetTotalTime() << std::endl;
+  this->Output();
 }
 
 TYPED_TEST(KDACTest, GPU3_10_600) {
   this->SetupInputData(3, 10, 600, "gpu");
-  this->kdac_gpu_->SetVerbose(true);
-  this->kdac_gpu_->Fit(this->data_matrix_, this->existing_y_);
-  Nice::KDACProfiler profiler = this->kdac_gpu_->GetProfiler();
-  std::cout << "GenPhi on GPU: " <<
-            profiler.gen_phi.GetTotalTime() << std::endl;
-  std::cout << "Fit on GPU: " <<
-            profiler.fit.GetTotalTime() << std::endl;
+  this->kdac_->SetVerbose(true);
+  this->kdac_->Fit(this->data_matrix_, this->existing_y_);
+  this->Output();
+}
+
+TYPED_TEST(KDACTest, CPU3_20_600) {
+  this->SetupInputData(3, 20, 600, "cpu");
+  this->kdac_->SetVerbose(true);
+  this->kdac_->Fit(this->data_matrix_, this->existing_y_);
+  this->Output();
+}
+
+TYPED_TEST(KDACTest, GPU3_20_600) {
+  this->SetupInputData(3, 20, 600, "gpu");
+  this->kdac_->SetVerbose(true);
+  this->kdac_->Fit(this->data_matrix_, this->existing_y_);
+  this->Output();
+}
+
+TYPED_TEST(KDACTest, CPU3_30_600) {
+  this->SetupInputData(3, 30, 600, "cpu");
+  this->kdac_->SetVerbose(true);
+  this->kdac_->Fit(this->data_matrix_, this->existing_y_);
+  this->Output();
+}
+
+TYPED_TEST(KDACTest, GPU3_30_600) {
+  this->SetupInputData(3, 30, 600, "gpu");
+  this->kdac_->SetVerbose(true);
+  this->kdac_->Fit(this->data_matrix_, this->existing_y_);
+  this->Output();
 }

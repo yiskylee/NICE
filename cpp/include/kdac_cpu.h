@@ -79,10 +79,16 @@ class KDACCPU: public KDAC<T> {
     // They only change if w_l or gradient change
     for (int i = 0; i < this->n_; i++) {
       for (int j = 0; j < this->n_; j++) {
-        Matrix<T> a_matrix_ij = GenAij(i, j);
-        waw_matrix_(i, j) = w_l.transpose() * a_matrix_ij * w_l;
-        waf_matrix_(i, j) = w_l.transpose() * a_matrix_ij * gradient;
-        faf_matrix_(i, j) = gradient.transpose() * a_matrix_ij * gradient;
+        Vector<T> delta_x_ij =
+            this->x_matrix_.row(i) - this->x_matrix_.row(j);
+        T delta_w = w_l.transpose() * delta_x_ij;
+        T delta_f = delta_x_ij.transpose() * gradient;
+        waw_matrix_(i, j) = delta_w * delta_w;
+        waf_matrix_(i, j) = delta_w * delta_f;
+        faf_matrix_(i, j) = delta_f * delta_f;
+//        waw_matrix_(i, j) = w_l.transpose() * a_matrix_ij * w_l;
+//        waf_matrix_(i, j) = w_l.transpose() * a_matrix_ij * gradient;
+//        faf_matrix_(i, j) = gradient.transpose() * a_matrix_ij * gradient;
       }
     }
   }
@@ -110,6 +116,22 @@ class KDACCPU: public KDAC<T> {
         this->phi_of_zero_ = 0;
         this->phi_of_zero_prime_ = 0;
       }
+//      Matrix<T> kij_matrix =
+//          denom * ( (faf_matrix_ - waw_matrix_) * alpha_square +
+//              2 * waf_matrix_ * sqrt_one_minus_alpha * this->alpha_ +
+//              waw_matrix_);
+//      this->phi_of_alpha_ =
+//          (kij_matrix.array().exp() * this->gamma_matrix_.array()).
+//              matrix().sum();
+//      if (w_l_changed) {
+//        Matrix<T> kij_matrix = denom * waw_matrix_.array().exp().matrix();
+//        this->phi_of_zero_ =
+//            (kij_matrix.array() * this->gamma_matrix_.array()).
+//            matrix().sum();
+//        this->phi_of_zero_prime_ = (kij_matrix.array() * waf_matrix_.array() *
+//            this->gamma_matrix_.array() * 2 * denom).
+//            matrix().sum();
+//      }
       for (int i = 0; i < this->n_; i++) {
         for (int j = 0; j < this->n_; j++) {
           T waw = waw_matrix_(i, j);
@@ -131,37 +153,48 @@ class KDACCPU: public KDAC<T> {
   }
 
   Vector<T> GenWGradient(const Vector<T> &w_l) {
+    this->profiler_.gen_grad.Start();
     Vector<T> w_gradient = Vector<T>::Zero(this->d_);
+    float sigma_sq = pow(this->constant_, 2);
     if (this->kernel_type_ == kGaussianKernel) {
       for (int i = 0; i < this->n_; i++) {
         for (int j = 0; j < this->n_; j++) {
-          Matrix<T> a_matrix_ij = GenAij(i, j);
-          T exp_term = exp(static_cast<T>(-w_l.transpose() * a_matrix_ij * w_l)
-                               / (2.0 * pow(this->constant_, 2)));
-          w_gradient += -(this->gamma_matrix_(i, j)) * (this->g_of_w_(i, j))
-              * exp_term * a_matrix_ij * w_l / pow(this->constant_, 2);
-//          w_gradient += -gamma_matrix_(i, j) * g_of_w(i, j) *
-//              exp( (-w_l.transpose() * a_matrix_ij * w_l) /
-//                  (2 * pow(this->constant_, 2)) ) * a_matrix_ij * w_l;
-
+          Vector<T> delta_x_ij =
+              this->x_matrix_.row(i) - this->x_matrix_.row(j);
+          T delta_w = w_l.transpose() * delta_x_ij;
+          T waw = delta_w * delta_w;
+          T exp_term = exp(-waw / (2.0 * sigma_sq));
+          T gamma = this->gamma_matrix_(i, j);
+          T g_of_w = this->g_of_w_(i, j);
+          w_gradient += -exp_term * gamma * g_of_w / sigma_sq *
+              delta_w * delta_x_ij;
+//          T exp_term = exp(static_cast<T>(-w_l.transpose() * a_matrix_ij * w_l)
+//                               / (2.0 * pow(this->constant_, 2)));
+//          w_gradient += -(this->gamma_matrix_(i, j)) * (this->g_of_w_(i, j))
+//              * exp_term * a_matrix_ij * w_l / pow(this->constant_, 2);
         }
       }
     }
+    this->profiler_.gen_grad.Record();
     return w_gradient;
   }
 
   void UpdateGOfW(const Vector<T> &w_l) {
+    this->profiler_.update_g_of_w.Start();
+    float sigma_sq = pow(this->constant_, 2);
     for (int i = 0; i < this->n_; i++) {
       for (int j = 0; j < this->n_; j++) {
         if (this->kernel_type_ == kGaussianKernel) {
-          Matrix<T> a_matrix_ij = GenAij(i, j);
-          this->g_of_w_(i, j) = this->g_of_w_(i, j) * exp(
-              static_cast<T>(-w_l.transpose() *
-                  a_matrix_ij *
-                  w_l) / static_cast<T>(2 * pow(this->constant_, 2)));
+          Vector<T> delta_x_ij =
+              this->x_matrix_.row(i) - this->x_matrix_.row(j);
+          T delta_w = w_l.transpose() * delta_x_ij;
+          T waw = delta_w * delta_w;
+          T exp_term = exp(-waw / (2.0 * sigma_sq));
+          this->g_of_w_(i, j) *= exp_term;
         }
       }
     }
+    this->profiler_.update_g_of_w.Record();
   }
 };
 }  // namespace NICE

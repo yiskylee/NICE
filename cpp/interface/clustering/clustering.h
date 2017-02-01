@@ -114,8 +114,9 @@ class KDACInterface {
     profile["kmeans"] = profiler.kmeans.GetTotalTime();
     profile["fit"] = profiler.fit.GetTotalTime();
     profile["num_iters"] = profiler.u.GetNumIters();
-    profile["gen_a"] = profiler.gen_a.GetTotalTime();
     profile["gen_phi"] = profiler.gen_phi.GetTotalTime();
+    profile["gen_grad"] = profiler.gen_grad.GetTotalTime();
+    profile["update_g_of_w"] = profiler.update_g_of_w.GetTotalTime();
   }
   void GetTimePerIter(PyObject *time_per_iter,
                       int num_iters, std::string stat_name) {
@@ -131,6 +132,10 @@ class KDACInterface {
       output = profiler.w.GetTimePerIter();
     else if (stat_name == "gen_phi_time_per_iter")
       output = profiler.gen_phi.GetTimePerIter();
+    else if (stat_name == "gen_grad_time_per_iter")
+      output = profiler.gen_grad.GetTimePerIter();
+    else if (stat_name == "update_g_of_w_per_iter")
+      output = profiler.update_g_of_w.GetTimePerIter();
   }
 //  void Fit(PyObject *in, int row, int col) {
 //    // Get the python object buffer

@@ -213,8 +213,7 @@ class KDAC {
         if (u_converge_)
           std::cout << "U Converged | ";
         if (w_converge_)
-          std::cout << "W Converged";
-        std::cout << std::endl;
+          std::cout << "W Converged" << std::endl;
       }
     }
     if (verbose_)
@@ -223,7 +222,6 @@ class KDAC {
     if (verbose_)
       std::cout << "Kmeans Done" << std::endl;
     profiler_.fit.Stop();
-    profiler_.gen_a.SumRecords();
   }
 
   /// Running Predict() after Fit() returns
@@ -375,18 +373,30 @@ class KDAC {
     }
   }
 
-
-
-
-
-  void OptimizeU(void) {
+  void GenKernelMatrix() {
     // If this is the first round and second,
     // then we use the full X to initialize the
     // U matrix, Otherwise, we project X to subspace W (n * d to n * q)
-    Matrix<T> projected_x_matrix = x_matrix_ * w_matrix_;
     // Generate the kernel matrix based on kernel type from projected X
-    k_matrix_ = CpuOperations<T>::GenKernelMatrix(
-        projected_x_matrix, kernel_type_, constant_);
+    Matrix<T> projected_x_matrix = x_matrix_ * w_matrix_;
+    util::CheckFinite(projected_x_matrix, "proj");
+    std::cout << "max in proj: " << projected_x_matrix.array().maxCoeff() << std::endl;
+    if (kernel_type_ == kGaussianKernel) {
+      float sigma_sq = constant_ * constant_;
+      for (int i = 0; i < n_; i++)
+        for (int j = 0; j < n_; j++) {
+          Vector<T> delta_ij =
+              projected_x_matrix.row(i) - projected_x_matrix.row(j);
+          T i_j_dist = delta_ij.norm();
+          k_matrix_(i, j) = exp(-i_j_dist / (2 * sigma_sq));
+        }
+    }
+  }
+
+  void OptimizeU(void) {
+
+    GenKernelMatrix();
+
     // Generate degree matrix from the kernel matrix
     // d_i is the diagonal vector of degree matrix D
     // This is a reference to how to directly generate D^(-1/2)
@@ -398,7 +408,6 @@ class KDAC {
     GenDegreeMatrix();
     l_matrix_ = d_matrix_to_the_minus_half_ *
         k_matrix_ * d_matrix_to_the_minus_half_;
-
     SvdSolver<T> solver;
     solver.Compute(l_matrix_);
     // Generate a u matrix from SVD solver and then use Normalize
@@ -437,14 +446,14 @@ class KDAC {
         T pre_objective = objective;
         // Calculate the w gradient in equation 13, then find the gradient
         // that is vertical to the space spanned by w_0 to w_l
-        util::Print(g_of_w_.block(0,0,4,4), "g_of_w");
+//        util::Print(g_of_w_.block(0,0,4,4), "g_of_w");
         Vector<T> grad_f = GenWGradient(w_l);
-        util::Print(grad_f.head(4), "grad_f");
+//        util::Print(grad_f.head(4), "grad_f");
         grad_f_vertical =
             GenOrthonormal(w_matrix_.leftCols(l + 1), grad_f);
         LineSearch(grad_f_vertical, &w_l, &objective);
         w_l = sqrt(1.0 - pow(alpha_, 2)) * w_l + alpha_ * grad_f_vertical;
-        util::Print(w_l.head(4), "w_l");
+//        util::Print(w_l.head(4), "w_l");
         w_matrix_.col(l) = w_l;
         w_l_converged =
             util::CheckConverged(objective, pre_objective, threshold_);
@@ -458,6 +467,8 @@ class KDAC {
     if (verbose_)
       std::cout << "W Optimized" << std::endl;
     profiler_.gen_phi.SumRecords();
+    profiler_.gen_grad.SumRecords();
+    profiler_.update_g_of_w.SumRecords();
   }
 
   void LineSearch(const Vector<T> &gradient,
@@ -476,7 +487,7 @@ class KDAC {
         GenPhi(*w_l, gradient, true);
       }
       while (phi_of_alpha_ < phi_of_zero_ + alpha_ * a1 * phi_of_zero_prime_
-          || alpha_ > 1e-10) {
+          || alpha_ * a1 * phi_of_zero_prime_ > 1e-20) {
         alpha_ = alpha_ * rho;
         GenPhi(*w_l, gradient, false);
       }
@@ -505,12 +516,16 @@ class KDAC {
     n_ = input_matrix.rows();
     d_ = input_matrix.cols();
     CheckQD();
+    util::CheckFinite(x_matrix_, "Input");
+    std::cout << "max in input: " << x_matrix_.array().maxCoeff() << std::endl;
 
     w_matrix_ = Matrix<T>::Identity(d_, d_);
     h_matrix_ = Matrix<T>::Identity(n_, n_)
         - Matrix<T>::Constant(n_, n_, 1) / static_cast<T>(n_);
     y_matrix_temp_ = Matrix<T>::Zero(n_, c_);
     y_matrix_ = y_matrix;
+    // kernel matrix
+    k_matrix_ = Matrix<T>::Zero(n_, n_);
     // Generate the kernel for the label matrix Y: K_y
     k_matrix_y_ = y_matrix_ * y_matrix_.transpose();
     // Generate Y tilde matrix in equation 5 from kernel matrix of Y
