@@ -22,6 +22,16 @@
 
 #ifndef CPP_INCLUDE_UTIL_H_
 #define CPP_INCLUDE_UTIL_H_
+// Position for Column-Major index
+#define IDXC(i,j,ld) (((j)*(ld))+(i))
+// Position for Row-Major index
+#define IDXR(i,j,ld) (((i)*(ld))+(j))
+// Pass in a timer and a function, the time taken by that function is then
+// recorded in the timer
+#define PROFILE(func, timer)\
+  timer.Start();\
+  func;\
+  timer.Stop();\
 
 #include <cstdlib>
 #include <string>
@@ -30,10 +40,11 @@
 #include <algorithm>
 #include <sstream>
 #include <vector>
+#include <math.h>
 
 #include "include/matrix.h"
 #include "include/vector.h"
-#include "include/stop_watch.h"
+//#include "include/cpu_operations.h"
 
 namespace Nice {
 
@@ -242,6 +253,85 @@ static T reciprocal(T x) {
   return T(1) / x;
 }
 
+template <typename T>
+void PrintMatrix(T* matrix, int row, int col, bool row_major = true) {
+  for (int i = 0; i < row; i++) {
+    for (int j = 0; j < col; j++) {
+      if (row_major)
+        std::cout << matrix[IDXR(i, j, col)] << "\t";
+      else
+        std::cout << matrix[IDXC(i, j, row)] << "\t";
+    }
+    std::cout << std::endl;
+  }
+  std::cout << std::endl;
+}
+
+template <typename T>
+void Print(const Vector<T> &vector, std::string name) {
+  std::cout << name << std::endl;
+  for (int i = 0; i < vector.rows(); i++) {
+    std::cout << vector(i) << " ";
+  }
+  std::cout << std::endl;
+}
+
+template <typename T>
+void Print(const Matrix<T> &matrix, std::string name) {
+  std::cout << name << std::endl;
+  std::cout << matrix << " ";
+  std::cout << std::endl;
+}
+
+template <typename T>
+void Print(const T &scalar, std::string name) {
+  std::cout << name << std::endl;
+  std::cout << scalar << std::endl;
+}
+
+template <typename T>
+bool CheckConverged(const Matrix<T> &matrix, const Matrix<T> &pre_matrix,
+                    const T &threshold) {
+  if ( (matrix.rows() != pre_matrix.rows()) ||
+      (matrix.cols() != pre_matrix.cols()) )
+    return false;
+  T change = (matrix - pre_matrix).norm() / pre_matrix.norm();
+  bool converged = (change < threshold);
+  return converged;
+}
+
+template <typename T>
+bool CheckConverged(const Vector<T> &vector, const Vector<T> &pre_vector,
+                    const T &threshold) {
+  if ( vector.rows() != pre_vector.rows() )
+    return false;
+  T change = (vector - pre_vector).norm() / pre_vector.norm();
+  bool converged = (change < threshold);
+  return converged;
+}
+
+template <typename T>
+bool CheckConverged(const T &scalar, const T &pre_scalar, const T &threshold) {
+  T change = fabs(scalar - pre_scalar) / fabs(scalar);
+  bool converged = (change < threshold);
+  return converged;
+}
+
+template <typename T>
+void CheckFinite(const Matrix<T> &matrix, std::string name) {
+  if (!matrix.allFinite()) {
+    std::cout << name << " not finite: " << std::endl << matrix << std::endl;
+    exit(1);
+  }
+}
+
+template <typename T>
+void CheckFinite(const Vector<T> &vector, std::string name) {
+  if (!vector.allFinite()) {
+    std::cout << name << " not finite: " << std::endl << vector << std::endl;
+    exit(1);
+  }
+}
 
 
 }  // namespace util
