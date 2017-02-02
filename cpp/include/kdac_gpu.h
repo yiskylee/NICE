@@ -59,7 +59,6 @@ class KDACGPU: public KDAC<T> {
     delete [] phi_of_alphas_h_;
     delete [] phi_of_zeros_h_;
     delete [] phi_of_zero_primes_h_;
-    delete [] a_matrices_h_;
   }
   KDACGPU(const KDACGPU &rhs) {}
 
@@ -73,8 +72,6 @@ class KDACGPU: public KDAC<T> {
  private:
   T* x_matrix_d_; // Input matrix X (n by d) on device
   T* gamma_matrix_d_;
-  T* a_matrices_d_; // An n*n matrix each cell of which is a dxd matrix Aij
-  T* a_matrices_h_;
   T* waw_matrix_d_;
   T* waf_matrix_d_;
   T* faf_matrix_d_;

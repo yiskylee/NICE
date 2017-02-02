@@ -95,6 +95,8 @@ if (CUDA_HAVE_GPU)
 #          -gencode arch=compute_37,code=sm_37
           -gencode arch=compute_50,code=sm_50
 #          -gencode arch=compute_52,code=sm_52
+          -fopenmp
+          -fgomp
           )
 
 
@@ -105,9 +107,6 @@ if (CUDA_HAVE_GPU)
   # Add NICE library together with CUDA
   cuda_include_directories(${CUDA_INCLUDE_DIR})
   cuda_add_library(${PROJECT_NAME} SHARED ${SOURCES})
-  add_dependencies(${PROJECT_NAME} ${CUDA_SOLVER_LIBRARY})
-  add_dependencies(${PROJECT_NAME} ${CUDA_BLAS_LIBRARY})
-  add_dependencies(${PROJECT_NAME} ${CUDA_LIBRARIES})
   target_link_libraries(${PROJECT_NAME} 
                         ${CUDA_SOLVER_LIBRARY} 
                         ${CUDA_BLAS_LIBRARY} 
@@ -116,7 +115,7 @@ if (CUDA_HAVE_GPU)
                         ${MKL_CORE} 
                         ${MKL_THREAD}
                         ${INTEL_OMP}
-                        pthread m dl)
+                        pthread m dl gomp)
 
 else()
 

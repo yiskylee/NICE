@@ -136,13 +136,22 @@ class KDAC {
 
   Matrix<T> GetY(void) { return y_matrix_; }
 
-  std::vector<Matrix<T>> GetAList(void) { return a_matrices_list_; }
-
   Matrix<T> GetYTilde(void) { return y_matrix_tilde_; }
 
   Matrix<T> GetGamma(void) { return gamma_matrix_; }
 
   KDACProfiler GetProfiler(void) { return profiler_; }
+
+  void OutputProgress() {
+    if (u_converge_ && !w_converge_)
+      std::cout << "U Converged | W Not Converged" << std::endl;
+    else if (!u_converge_ && w_converge_)
+      std::cout << "U Not Converged | W Converged" << std::endl;
+    else if (!u_converge_ && !w_converge_)
+      std::cout << "U Not Converged | W Not Converged" << std::endl;
+    else
+      std::cout << "U Converged | W Converged" << std::endl;
+  }
 
   /// This function creates the first clustering result
   /// \param input_matrix
@@ -156,6 +165,11 @@ class KDAC {
     n_ = input_matrix.rows();
     d_ = input_matrix.cols();
     CheckQD();
+    w_matrix_ = Matrix<T>::Identity(d_, d_);
+    h_matrix_ = Matrix<T>::Identity(n_, n_)
+        - Matrix<T>::Constant(n_, n_, 1) / static_cast<T>(n_);
+    // kernel matrix
+    k_matrix_ = Matrix<T>::Zero(n_, n_);
     // When there is no Y, it is the the first round when the second term
     // lambda * HSIC is zero, we do not need to optimize W, and we directly
     // go to kmeans where Y_0 is generated. And both u and v are converged.
@@ -167,9 +181,7 @@ class KDAC {
   // Fit() with an empty param list can only be run when the X and Y already
   // exist from the previous round of computation
   void Fit(void) {
-    u_converge_ = false;
-    w_converge_ = false;
-    u_w_converge_ = false;
+    Init(x_matrix_, y_matrix_);
     while (!u_w_converge_) {
       pre_u_matrix_ = u_matrix_;
       pre_w_matrix_ = w_matrix_;
@@ -178,8 +190,12 @@ class KDAC {
       u_converge_ = util::CheckConverged(u_matrix_, pre_u_matrix_, threshold_);
       w_converge_ = util::CheckConverged(w_matrix_, pre_w_matrix_, threshold_);
       u_w_converge_ = u_converge_ && w_converge_;
+      if (verbose_)
+        OutputProgress();
     }
     RunKMeans();
+    if (verbose_)
+      std::cout << "Kmeans Done" << std::endl;
   }
 
   /// This function creates an alternative clustering result
@@ -209,15 +225,9 @@ class KDAC {
       u_converge_ = util::CheckConverged(u_matrix_, pre_u_matrix_, threshold_);
       w_converge_ = util::CheckConverged(w_matrix_, pre_w_matrix_, threshold_);
       u_w_converge_ = u_converge_ && w_converge_;
-      if (verbose_) {
-        if (u_converge_)
-          std::cout << "U Converged | ";
-        if (w_converge_)
-          std::cout << "W Converged" << std::endl;
-      }
+      if (verbose_)
+        OutputProgress();
     }
-    if (verbose_)
-      std::cout << "U and W Converged" << std::endl;
     PROFILE(RunKMeans(), profiler_.kmeans);
     if (verbose_)
       std::cout << "Kmeans Done" << std::endl;
@@ -276,7 +286,6 @@ class KDAC {
   Matrix<T> gamma_matrix_;  // The nxn gamma matrix used in gamma_ij
   Matrix<T> g_of_w_;  // g(w) for updating gradient
   // in formula 5
-  std::vector<Matrix<T>> a_matrices_list_;  // An n*n list that contains all of
   Vector<T> clustering_result_;  // Current clustering result
   T phi_of_alpha_, phi_of_zero_, phi_of_zero_prime_;
   // A struct contains timers for different functions
@@ -379,8 +388,6 @@ class KDAC {
     // U matrix, Otherwise, we project X to subspace W (n * d to n * q)
     // Generate the kernel matrix based on kernel type from projected X
     Matrix<T> projected_x_matrix = x_matrix_ * w_matrix_;
-    util::CheckFinite(projected_x_matrix, "proj");
-    std::cout << "max in proj: " << projected_x_matrix.array().maxCoeff() << std::endl;
     if (kernel_type_ == kGaussianKernel) {
       float sigma_sq = constant_ * constant_;
       for (int i = 0; i < n_; i++)
@@ -394,9 +401,7 @@ class KDAC {
   }
 
   void OptimizeU(void) {
-
     GenKernelMatrix();
-
     // Generate degree matrix from the kernel matrix
     // d_i is the diagonal vector of degree matrix D
     // This is a reference to how to directly generate D^(-1/2)
@@ -476,9 +481,6 @@ class KDAC {
     alpha_ = 1.0;
     float a1 = 0.1;
     float rho = 0.8;
-    phi_of_alpha_ = 0;
-    phi_of_zero_ = 0;
-    phi_of_zero_prime_ = 0;
 
     if (kernel_type_ == kGaussianKernel) {
       GenPhi(*w_l, gradient, true);
@@ -486,8 +488,7 @@ class KDAC {
         *w_l = -(*w_l);
         GenPhi(*w_l, gradient, true);
       }
-      while (phi_of_alpha_ < phi_of_zero_ + alpha_ * a1 * phi_of_zero_prime_
-          || alpha_ * a1 * phi_of_zero_prime_ > 1e-20) {
+      while ((phi_of_alpha_ < phi_of_zero_ + alpha_ * a1 * phi_of_zero_prime_)) {
         alpha_ = alpha_ * rho;
         GenPhi(*w_l, gradient, false);
       }
@@ -516,9 +517,6 @@ class KDAC {
     n_ = input_matrix.rows();
     d_ = input_matrix.cols();
     CheckQD();
-    util::CheckFinite(x_matrix_, "Input");
-    std::cout << "max in input: " << x_matrix_.array().maxCoeff() << std::endl;
-
     w_matrix_ = Matrix<T>::Identity(d_, d_);
     h_matrix_ = Matrix<T>::Identity(n_, n_)
         - Matrix<T>::Constant(n_, n_, 1) / static_cast<T>(n_);
@@ -530,6 +528,9 @@ class KDAC {
     k_matrix_y_ = y_matrix_ * y_matrix_.transpose();
     // Generate Y tilde matrix in equation 5 from kernel matrix of Y
     y_matrix_tilde_ = h_matrix_ * k_matrix_y_ * h_matrix_;
+    u_converge_ = false;
+    w_converge_ = false;
+    u_w_converge_ = false;
   }
 
   virtual void UpdateGOfW(const Vector<T> &w_l) = 0;

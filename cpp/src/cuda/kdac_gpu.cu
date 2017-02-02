@@ -444,7 +444,6 @@ void KDACGPU<T>::GenPhi(const Vector <T> &w_l,
     float denom = -1 / (2 * pow(this->constant_, 2));
 
     this->phi_of_alpha_ = 0;
-
     if (w_l_changed) {
       GenPhiCoeff(w_l, gradient);
       this->phi_of_zero_ = 0;
@@ -581,8 +580,8 @@ void KDACGPU<T>::UpdateGOfW(const Vector<T> &w_l) {
          d,
          g_of_w_d_);
     CUDA_CALL(cudaGetLastError());
-    this->profiler_.update_g_of_w.Record();
   }
+  this->profiler_.update_g_of_w.Record();
 }
 
 template

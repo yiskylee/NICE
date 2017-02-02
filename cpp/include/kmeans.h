@@ -57,7 +57,7 @@ class KMeans {
     assignments_ = Vector<T>::Zero(num_samples);
     for (long i = 0; i < num_samples; i++) {
 //      std::cout << samples[i] << std::endl;
-      assignments_[i] = km(samples[i]);
+      assignments_(i) = km(samples[i]);
     }
   }
 

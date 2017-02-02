@@ -47,8 +47,10 @@ class KDACTest : public ::testing::Test {
   int num_samples_per_cluster_;
   int num_samples_;
   int dim_;
-  std::string file_path_;
+  std::string data_file_path_;
+  std::string label_file_path_;
   std::string data_type_;
+  std::string label_type_;
   Nice::Matrix<T> data_matrix_;
   Nice::Matrix<T> existing_y_;
 
@@ -75,10 +77,12 @@ class KDACTest : public ::testing::Test {
     kdac_->SetKernel(Nice::kGaussianKernel, 1.0);
     base_dir_ = "../test/data_for_test/kdac/";
     data_type_ = "data_gaussian";
-    file_path_ = GenFilePath();
-    std::cout << "file_path: " << file_path_ << std::endl;
-    data_matrix_ = Nice::util::FromFile<T>(file_path_, ",");
-    existing_y_ = GenExistingY();
+    label_type_ = "y1_gaussian";
+    GenFilePath();
+    std::cout << "data_file_path: " << data_file_path_ << std::endl;
+    data_matrix_ = Nice::util::FromFile<T>(data_file_path_, ",");
+    std::cout << "label_file_path: " << label_file_path_ << std::endl;
+    existing_y_ = Nice::util::FromFile<T>(label_file_path_, ",");
   }
 
   void Output() {
@@ -117,11 +121,11 @@ class KDACTest : public ::testing::Test {
     return existing_y;
   }
 
-  std::string GenFilePath(void) {
-    std::string file_path = base_dir_ + data_type_ + "_" +
-        std::to_string(num_samples_) + "_"
+  void GenFilePath(void) {
+    std::string suffix = "_" + std::to_string(num_samples_) + "_"
         + std::to_string(dim_) + "_" + std::to_string(num_clusters_) + ".csv";
-    return file_path;
+    data_file_path_ = base_dir_ + data_type_ + suffix;
+    label_file_path_ = base_dir_ + label_type_ + suffix;
   }
 
 };

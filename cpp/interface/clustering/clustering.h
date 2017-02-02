@@ -40,10 +40,24 @@
 #include "include/kdac_gpu.h"
 #include "include/util.h"
 #include "include/kdac_profiler.h"
-#include "interface/py_interface.h"
 #include "../../include/kdac_profiler.h"
 
 namespace Nice {
+// The numpy array is stored in row major
+using IMatrixMap = Eigen::Map< Eigen::Matrix<int, Eigen::Dynamic,
+                                             Eigen::Dynamic, Eigen::RowMajor> >;
+using FMatrixMap = Eigen::Map< Eigen::Matrix<float, Eigen::Dynamic,
+                                             Eigen::Dynamic, Eigen::RowMajor> >;
+using DMatrixMap = Eigen::Map< Eigen::Matrix<double, Eigen::Dynamic,
+                                             Eigen::Dynamic, Eigen::RowMajor> >;
+
+template<typename T>
+using MatrixMap = Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic,
+                                           Eigen::Dynamic, Eigen::RowMajor> >;
+template<typename T>
+using VectorMap = Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic,
+                                           1, Eigen::ColMajor>>;
+
 template<typename T>
 class KDACInterface {
  public:
@@ -53,6 +67,9 @@ class KDACInterface {
     else if (device_type == "gpu")
       kdac_ = std::make_shared<Nice::KDACGPU<T>>();
   }
+
+  ~KDACInterface() {}
+
   void SetupParams(const boost::python::dict &params) {
     // Obtain parameters from python
     boost::python::list key_list = params.keys();
@@ -118,71 +135,74 @@ class KDACInterface {
     profile["gen_grad"] = profiler.gen_grad.GetTotalTime();
     profile["update_g_of_w"] = profiler.update_g_of_w.GetTotalTime();
   }
-  void GetTimePerIter(PyObject *time_per_iter,
+  void GetTimePerIter(PyObject *time_per_iter_obj,
                       int num_iters, std::string stat_name) {
+    Py_buffer time_per_iter_buf;
     KDACProfiler profiler;
-    Py_buffer pybuf;
-    PyObject_GetBuffer(time_per_iter, &pybuf, PyBUF_SIMPLE);
-    DMatrixMap output(reinterpret_cast<double *>(pybuf.buf),
+    PyObject_GetBuffer(time_per_iter_obj, &time_per_iter_buf, PyBUF_SIMPLE);
+    DMatrixMap time_per_iter(reinterpret_cast<double *>(time_per_iter_buf.buf),
                       num_iters, 1);
     profiler = kdac_ -> GetProfiler();
     if (stat_name == "u_time_per_iter")
-      output = profiler.u.GetTimePerIter();
+      time_per_iter = profiler.u.GetTimePerIter();
     else if (stat_name == "w_time_per_iter")
-      output = profiler.w.GetTimePerIter();
+      time_per_iter = profiler.w.GetTimePerIter();
     else if (stat_name == "gen_phi_time_per_iter")
-      output = profiler.gen_phi.GetTimePerIter();
+      time_per_iter = profiler.gen_phi.GetTimePerIter();
     else if (stat_name == "gen_grad_time_per_iter")
-      output = profiler.gen_grad.GetTimePerIter();
-    else if (stat_name == "update_g_of_w_per_iter")
-      output = profiler.update_g_of_w.GetTimePerIter();
+      time_per_iter = profiler.gen_grad.GetTimePerIter();
+    PyBuffer_Release(&time_per_iter_buf);
   }
-//  void Fit(PyObject *in, int row, int col) {
-//    // Get the python object buffer
-//    Py_buffer pybuf;
-//    PyObject_GetBuffer(in, &pybuf, PyBUF_SIMPLE);
-//    MatrixMap<T> input(nullptr, 0, 0);
-//    new (&input) MatrixMap<T>(reinterpret_cast<T *>(pybuf.buf), row, col);
-//    kdac_ -> Fit(input);
-//  }
-//  void Fit() {
-//    kdac_ -> Fit();
-//  }
-  void Fit(PyObject *in_1, int row_1, int col_1,
-           PyObject *in_2, int row_2, int col_2) {
+  void Fit(PyObject *input_obj, int row, int col) {
     // Get the python object buffer
-    Py_buffer pybuf_1;
-    PyObject_GetBuffer(in_1, &pybuf_1, PyBUF_SIMPLE);
-    Py_buffer pybuf_2;
-    PyObject_GetBuffer(in_2, &pybuf_2, PyBUF_SIMPLE);
-    MatrixMap<T> input_1(nullptr, 0, 0);
-    MatrixMap<T> input_2(nullptr, 0, 0);
-    new (&input_1)
-        MatrixMap<T>(reinterpret_cast<T *>(pybuf_1.buf), row_1, col_1);
-    new (&input_2)
-        MatrixMap<T>(reinterpret_cast<T *>(pybuf_2.buf), row_2, col_2);
-    kdac_ -> Fit(input_1, input_2);
+    Py_buffer input_buf;
+    PyObject_GetBuffer(input_obj, &input_buf, PyBUF_SIMPLE);
+    MatrixMap<T> input(reinterpret_cast<T *>(input_buf.buf), row, col);
+    kdac_ -> Fit(input);
+    PyBuffer_Release(&input_buf);
   }
-  void Predict(PyObject *in, int row, int col) {
-    Py_buffer pybuf;
-    PyObject_GetBuffer(in, &pybuf, PyBUF_SIMPLE);
-    MatrixMap<T> output(nullptr, 0, 0);
-    new (&output) MatrixMap<T>(reinterpret_cast<T *>(pybuf.buf), row, col);
-    output = kdac_ -> Predict();
+  void Fit() {
+    kdac_ -> Fit();
   }
-  void GetU(PyObject *in, int row, int col) {
-    Py_buffer pybuf;
-    PyObject_GetBuffer(in, &pybuf, PyBUF_SIMPLE);
-    MatrixMap<T> output(nullptr, 0, 0);
-    new (&output) MatrixMap<T>(reinterpret_cast<T *>(pybuf.buf), row, col);
-    output = kdac_ -> GetU();
+  void Fit(PyObject *input_obj, int row_1, int col_1,
+           PyObject *label_obj, int row_2, int col_2) {
+    Py_buffer input_buf;
+    Py_buffer label_buf;
+    // Get the python object buffer
+    PyObject_GetBuffer(input_obj, &input_buf, PyBUF_SIMPLE);
+    PyObject_GetBuffer(label_obj, &label_buf, PyBUF_SIMPLE);
+//    MatrixMap<T> input(nullptr, 0, 0);
+//    MatrixMap<T> label(nullptr, 0, 0);
+//    new (&input)
+//        MatrixMap<T>(reinterpret_cast<T *>(input_buf.buf), row_1, col_1);
+//    new (&label)
+//        MatrixMap<T>(reinterpret_cast<T *>(label_buf.buf), row_2, col_2);
+    MatrixMap<T> input(reinterpret_cast<T *>(input_buf.buf), row_1, col_1);
+    MatrixMap<T> label(reinterpret_cast<T *>(label_buf.buf), row_2, col_2);
+    kdac_ -> Fit(input, label);
+    PyBuffer_Release(&input_buf);
+    PyBuffer_Release(&label_buf);
   }
-  void GetW(PyObject *in, int row, int col) {
-    Py_buffer pybuf;
-    PyObject_GetBuffer(in, &pybuf, PyBUF_SIMPLE);
-    MatrixMap<T> output(nullptr, 0, 0);
-    new (&output) MatrixMap<T>(reinterpret_cast<T *>(pybuf.buf), row, col);
-    output = kdac_ -> GetW();
+
+  void Predict(PyObject *clustering_results_obj, int row, int col) {
+    Py_buffer clustering_results_buf;
+    PyObject_GetBuffer(clustering_results_obj, &clustering_results_buf, PyBUF_SIMPLE);
+    VectorMap<T> clustering_results(
+        reinterpret_cast<T *>(clustering_results_buf.buf), row);
+    clustering_results = kdac_ -> Predict();
+    PyBuffer_Release(&clustering_results_buf);
+  }
+  void GetU(PyObject *u_obj, int row, int col) {
+    Py_buffer u_buf;
+    PyObject_GetBuffer(u_obj, &u_buf, PyBUF_SIMPLE);
+    MatrixMap<T> u(reinterpret_cast<T *>(u_buf.buf), row, col);
+    u = kdac_ -> GetU();
+  }
+  void GetW(PyObject *w_obj, int row, int col) {
+    Py_buffer w_buf;
+    PyObject_GetBuffer(w_obj, &w_buf, PyBUF_SIMPLE);
+    MatrixMap<T> w(reinterpret_cast<T *>(w_buf.buf), row, col);
+    w = kdac_ -> GetW();
   }
   int GetD() {
     return kdac_ -> GetD();

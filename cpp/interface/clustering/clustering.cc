@@ -59,14 +59,28 @@
 //                                         PyObject *, int row_2, int col_2)
 //= &Nice::KDACCPUInterface<double>::Fit;
 
+void (Nice::KDACInterface<float>::*Fit0Arg)()
+= &Nice::KDACInterface<float>::Fit;
+void (Nice::KDACInterface<float>::*Fit1Arg)(PyObject *, int, int)
+= &Nice::KDACInterface<float>::Fit;
+void (Nice::KDACInterface<float>::*Fit2Arg)(PyObject *, int, int,
+                                            PyObject *, int, int)
+    = &Nice::KDACInterface<float>::Fit;
+
+
 BOOST_PYTHON_MODULE(Nice4Py) {
     boost::python::class_<Nice::KDACInterface<float>>
         ("KDAC", boost::python::init<std::string>())
-        .def("Fit", &Nice::KDACInterface<float>::Fit)
+        .def("Fit", Fit0Arg)
+        .def("Fit", Fit1Arg)
+        .def("Fit", Fit2Arg)
         .def("SetupParams", &Nice::KDACInterface<float>::SetupParams)
         .def("Predict", &Nice::KDACInterface<float>::Predict)
         .def("GetProfiler", &Nice::KDACInterface<float>::GetProfiler)
-        .def("GetTimePerIter", &Nice::KDACInterface<float>::GetTimePerIter);
+        .def("GetTimePerIter", &Nice::KDACInterface<float>::GetTimePerIter)
+        .def("GetQ", &Nice::KDACInterface<float>::GetQ)
+        .def("GetD", &Nice::KDACInterface<float>::GetD)
+        .def("GetN", &Nice::KDACInterface<float>::GetN);
 }
 //  //Use float by default
 //  boost::python::class_<Nice::KDACCPUInterface<float>>
