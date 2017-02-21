@@ -20,8 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef CPP_INTERFACE_CLUSTERING_CLUSTERING_H_
-#define CPP_INTERFACE_CLUSTERING_CLUSTERING_H_
+#ifndef CPP_INTERFACE_CLUSTERING_KDAC_INTERFACE_H_
+#define CPP_INTERFACE_CLUSTERING_KDAC_INTERFACE_H_
 
 #include <boost/python.hpp>
 
@@ -40,16 +40,15 @@
 #include "include/kdac_gpu.h"
 #include "include/util.h"
 #include "include/kdac_profiler.h"
-#include "../../include/kdac_profiler.h"
 
 namespace Nice {
 // The numpy array is stored in row major
-using IMatrixMap = Eigen::Map< Eigen::Matrix<int, Eigen::Dynamic,
-                                             Eigen::Dynamic, Eigen::RowMajor> >;
-using FMatrixMap = Eigen::Map< Eigen::Matrix<float, Eigen::Dynamic,
-                                             Eigen::Dynamic, Eigen::RowMajor> >;
-using DMatrixMap = Eigen::Map< Eigen::Matrix<double, Eigen::Dynamic,
-                                             Eigen::Dynamic, Eigen::RowMajor> >;
+//using IMatrixMap = Eigen::Map< Eigen::Matrix<int, Eigen::Dynamic,
+//                                             Eigen::Dynamic, Eigen::RowMajor> >;
+//using FMatrixMap = Eigen::Map< Eigen::Matrix<float, Eigen::Dynamic,
+//                                             Eigen::Dynamic, Eigen::RowMajor> >;
+//using DMatrixMap = Eigen::Map< Eigen::Matrix<double, Eigen::Dynamic,
+//                                             Eigen::Dynamic, Eigen::RowMajor> >;
 
 template<typename T>
 using MatrixMap = Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic,
@@ -213,6 +212,9 @@ class KDACInterface {
   int GetQ() {
     return kdac_ -> GetQ();
   }
+  void DiscardLastRun() {
+    kdac_ -> DiscardLastRun();
+  }
 
  protected:
   std::shared_ptr<Nice::KDAC<T>> kdac_;
@@ -236,4 +238,4 @@ class KDACInterface {
 
 }  // namespace Nice
 
-#endif  // CPP_INTERFACE_CLUSTERING_CLUSTERING_H_
+#endif  // CPP_INTERFACE_CLUSTERING_KDAC_INTERFACE_H_

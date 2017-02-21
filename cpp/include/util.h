@@ -295,7 +295,8 @@ bool CheckConverged(const Matrix<T> &matrix, const Matrix<T> &pre_matrix,
   if ( (matrix.rows() != pre_matrix.rows()) ||
       (matrix.cols() != pre_matrix.cols()) )
     return false;
-  T change = (matrix - pre_matrix).norm() / pre_matrix.norm();
+  T change = static_cast<T>((matrix - pre_matrix).norm()) /
+      static_cast<T>(pre_matrix.norm());
   bool converged = (change < threshold);
   return converged;
 }
@@ -305,7 +306,8 @@ bool CheckConverged(const Vector<T> &vector, const Vector<T> &pre_vector,
                     const T &threshold) {
   if ( vector.rows() != pre_vector.rows() )
     return false;
-  T change = (vector - pre_vector).norm() / pre_vector.norm();
+  T change = static_cast<T>((vector - pre_vector).norm()) /
+      static_cast<T>(pre_vector.norm());
   bool converged = (change < threshold);
   return converged;
 }

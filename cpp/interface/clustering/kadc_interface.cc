@@ -31,8 +31,7 @@
 #include "include/cpu_operations.h"
 #include "include/gpu_operations.h"
 #include "include/timer.h"
-#include "interface/clustering/clustering.h"
-#include "clustering.h"
+#include "interface/clustering/kadc_interface.h"
 
 //void (Nice::KDACCPUInterface<float>::*Fit1Float)(PyObject *, int row, int col)
 //  = &Nice::KDACCPUInterface<float>::Fit;
@@ -80,7 +79,9 @@ BOOST_PYTHON_MODULE(Nice4Py) {
         .def("GetTimePerIter", &Nice::KDACInterface<float>::GetTimePerIter)
         .def("GetQ", &Nice::KDACInterface<float>::GetQ)
         .def("GetD", &Nice::KDACInterface<float>::GetD)
-        .def("GetN", &Nice::KDACInterface<float>::GetN);
+        .def("GetN", &Nice::KDACInterface<float>::GetN)
+        .def("DiscardLastRun", &Nice::KDACInterface<float>::DiscardLastRun);
+//  boost::python::class_<Nice::CpuOperationsInterface<float>::GenKernelMatrix
 }
 //  //Use float by default
 //  boost::python::class_<Nice::KDACCPUInterface<float>>

@@ -13,3 +13,4 @@ python
 .idea
 matlab
 data_for_test/
+cmake-build-debug

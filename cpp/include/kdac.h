@@ -112,6 +112,8 @@ class KDAC {
 
   void SetVerbose(bool verbose) { verbose_ = verbose; }
 
+  void SetDebug(bool debug) { debug_ = debug; }
+
   int GetD(void) { return d_; }
 
   int GetN(void) { return n_; }
@@ -177,6 +179,12 @@ class KDAC {
     RunKMeans();
   }
 
+  /// This function can be used when the user is not satisfied with
+  /// the previous clustering results and want to discard the result from
+  /// the last run so she can re-run Fit with new parameters
+  void DiscardLastRun() {
+    y_matrix_ = y_matrix_.leftCols(y_matrix_.cols() - c_);
+  }
 
   // Fit() with an empty param list can only be run when the X and Y already
   // exist from the previous round of computation
@@ -292,6 +300,7 @@ class KDAC {
   KDACProfiler profiler_;
   // Set to true for debug use
   bool verbose_;
+  bool debug_;
 
 
   Vector<T> GenOrthogonal(const Matrix<T> &space,
@@ -372,13 +381,13 @@ class KDAC {
         y_matrix_(i, clustering_result_(i)) = 1;
     } else {
       // When this is to calculate Y_i and append it to Y_[0~i-1]
+      y_matrix_temp_ = Matrix<T>::Zero(n_, c_);
       for (int i = 0; i < n_; i++)
         y_matrix_temp_(i, clustering_result_(i)) = 1;
       Matrix<T> y_matrix_new(n_, y_matrix_.cols() + c_);
       y_matrix_new << y_matrix_, y_matrix_temp_;
       y_matrix_ = y_matrix_new;
       // Reset the y_matrix_temp holder to zero
-      y_matrix_temp_.setZero();
     }
   }
 
@@ -520,7 +529,6 @@ class KDAC {
     w_matrix_ = Matrix<T>::Identity(d_, d_);
     h_matrix_ = Matrix<T>::Identity(n_, n_)
         - Matrix<T>::Constant(n_, n_, 1) / static_cast<T>(n_);
-    y_matrix_temp_ = Matrix<T>::Zero(n_, c_);
     y_matrix_ = y_matrix;
     // kernel matrix
     k_matrix_ = Matrix<T>::Zero(n_, n_);
