@@ -47,8 +47,8 @@ namespace Nice {
 //                                             Eigen::Dynamic, Eigen::RowMajor> >;
 //using FMatrixMap = Eigen::Map< Eigen::Matrix<float, Eigen::Dynamic,
 //                                             Eigen::Dynamic, Eigen::RowMajor> >;
-//using DMatrixMap = Eigen::Map< Eigen::Matrix<double, Eigen::Dynamic,
-//                                             Eigen::Dynamic, Eigen::RowMajor> >;
+using DMatrixMap = Eigen::Map< Eigen::Matrix<double, Eigen::Dynamic,
+                                             Eigen::Dynamic, Eigen::RowMajor> >;
 
 template<typename T>
 using MatrixMap = Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic,
@@ -196,13 +196,23 @@ class KDACInterface {
     PyObject_GetBuffer(u_obj, &u_buf, PyBUF_SIMPLE);
     MatrixMap<T> u(reinterpret_cast<T *>(u_buf.buf), row, col);
     u = kdac_ -> GetU();
+    PyBuffer_Release(&u_buf);
   }
   void GetW(PyObject *w_obj, int row, int col) {
     Py_buffer w_buf;
     PyObject_GetBuffer(w_obj, &w_buf, PyBUF_SIMPLE);
     MatrixMap<T> w(reinterpret_cast<T *>(w_buf.buf), row, col);
     w = kdac_ -> GetW();
+    PyBuffer_Release(&w_buf);
   }
+  void GetK(PyObject *k_obj, int row) {
+    Py_buffer k_buf;
+    PyObject_GetBuffer(k_obj, &k_buf, PyBUF_SIMPLE);
+    MatrixMap<T> k(reinterpret_cast<T *>(k_buf.buf), row, row);
+    k = kdac_ -> GetK();
+    PyBuffer_Release(&k_buf);
+  }
+
   int GetD() {
     return kdac_ -> GetD();
   }

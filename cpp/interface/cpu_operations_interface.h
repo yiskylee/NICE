@@ -28,7 +28,7 @@
 #include "Eigen/Core"
 #include "Eigen/Dense"
 #include "include/cpu_operations.h"
-
+#include "include/kernel_types.h"
 
 namespace Nice {
 
@@ -36,7 +36,7 @@ template<typename T>
 using MatrixMap = Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic,
                                            Eigen::Dynamic, Eigen::RowMajor> >;
 template<typename T>
-class CPUOperationInterface {
+class CPUOperationsInterface {
  public:
   static void GenKernelMatrix(PyObject *input_obj, int row, int col,
                               std::string kernel_type,
@@ -48,10 +48,10 @@ class CPUOperationInterface {
     MatrixMap <T> input(reinterpret_cast<T *>(input_buf.buf), row, col);
     MatrixMap <T> kernel_matrix(reinterpret_cast<T *>
                                 (kernel_matrix_buf.buf), row, row);
-    if (kernel_type == "gaussian") {
+    if (kernel_type == "Gaussian") {
       kernel_matrix =
-          CpuOperations::GenKernelMatrix(input,
-                                         Nice::kGaussianKernel,
+          CpuOperations<T>::GenKernelMatrix(input,
+                                         kGaussianKernel,
                                          constant);
       PyBuffer_Release(&input_buf);
       PyBuffer_Release(&kernel_matrix_buf);

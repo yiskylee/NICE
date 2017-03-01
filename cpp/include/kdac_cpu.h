@@ -54,6 +54,14 @@ class KDACCPU: public KDAC<T> {
   Matrix<T> waf_matrix_;
   Matrix<T> faf_matrix_;
 
+  void Init(const Matrix<T> &input_matrix) {
+    KDAC<T>::Init(input_matrix);
+    // Coefficients for calculating phi
+    waw_matrix_ = Matrix<T>::Zero(this->n_, this->n_);
+    waf_matrix_ = Matrix<T>::Zero(this->n_, this->n_);
+    faf_matrix_ = Matrix<T>::Zero(this->n_, this->n_);
+  }
+
   // Initialization for generating alternative views with a given Y
   void Init(const Matrix<T> &input_matrix, const Matrix<T> &y_matrix) {
     KDAC<T>::Init(input_matrix, y_matrix);
@@ -62,6 +70,8 @@ class KDACCPU: public KDAC<T> {
     waf_matrix_ = Matrix<T>::Zero(this->n_, this->n_);
     faf_matrix_ = Matrix<T>::Zero(this->n_, this->n_);
   }
+
+
 
   void OptimizeW(void) {
     KDAC<T>::GenGammaMatrix();

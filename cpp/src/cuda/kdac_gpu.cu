@@ -544,14 +544,18 @@ Vector <T> KDACGPU<T>::GenWGradient(const Vector <T> &w_l) {
                          n * n * d * sizeof(T),
                          cudaMemcpyDeviceToHost));
 
+
     for (int i = 0; i < n; i++) {
       for (int j = 0; j < n; j++) {
         T *gradient_f_ij = gradient_fs_h_ + IDXR(i, j, n) * d;
-        w_gradient += Eigen::Map < Vector < T >> (gradient_f_ij, d);
+        Vector<T> grad_temp = Eigen::Map < Vector < T >> (gradient_f_ij, d);
+        util::CheckFinite(grad_temp, "grad_temp_"+std::to_string(i));
+        w_gradient = w_gradient + grad_temp;
       }
     }
   }
   this->profiler_.gen_grad.Record();
+  util::CheckFinite(w_gradient, "w_gradient");
   return w_gradient;
 }
 
