@@ -147,12 +147,6 @@ class KDACGPU: public KDAC<T> {
     this->profiler_.gen_phi.Record();
   }
 
-  void Init() {
-    KDAC<T>::Init();
-
-  }
-
-
   void OptimizeW(void) {
     KDAC<T>::GenGammaMatrix();
     CUDA_CALL(cudaMemcpy(gamma_matrix_d_, &(this->gamma_matrix_)(0),

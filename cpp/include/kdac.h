@@ -89,7 +89,8 @@ class KDAC {
       gamma_matrix_(),
       g_of_w_(),
       clustering_result_(),
-      verbose_(false) {}
+      verbose_(false),
+      debug_(false) {}
 
   ~KDAC() {}
   KDAC(const KDAC &rhs) {}
@@ -191,7 +192,13 @@ class KDAC {
   /// the previous clustering results and want to discard the result from
   /// the last run so she can re-run Fit with new parameters
   void DiscardLastRun() {
-    y_matrix_ = y_matrix_.leftCols(y_matrix_.cols() - c_);
+    if (debug_)
+      util::Print(y_matrix_, "y_matrix_before");
+    Matrix<T> y_matrix_new = Matrix<T>::Zero(n_, y_matrix_.cols() - c_);
+    y_matrix_new = y_matrix_.leftCols(y_matrix_.cols() - c_);
+    y_matrix_ = y_matrix_new;
+    if (debug_)
+      util::Print(y_matrix_, "y_matrix_after");
   }
 
   // Fit() with an empty param list can only be run when the X and Y already
@@ -327,7 +334,9 @@ class KDAC {
 
   Vector<T> GenOrthonormal(const Matrix<T> &space,
                            const Vector<T> &vector) {
+    util::CheckFinite(space, "space");
     Vector<T> ortho_vector = GenOrthogonal(space, vector);
+    util::CheckFinite(ortho_vector, "ortho_vector");
     return ortho_vector.array() / ortho_vector.norm();
   }
 
@@ -536,6 +545,16 @@ class KDAC {
     util::CheckFinite(w_matrix_, "W");
   }
 
+  // Initialization when Fit() is called, only need to update w and y_tilde
+  void Init() {
+    w_matrix_ = Matrix<T>::Identity(d_, d_);
+    k_matrix_y_ = y_matrix_ * y_matrix_.transpose();
+    y_matrix_tilde_ = h_matrix_ * k_matrix_y_ * h_matrix_;
+    u_converge_ = false;
+    w_converge_ = false;
+    u_w_converge_ = false;
+  }
+
   // Initialization for generating alternative views with a given Y
   virtual void Init(const Matrix<T> &input_matrix,
                     const Matrix<T> &y_matrix) {
@@ -552,16 +571,6 @@ class KDAC {
     // Generate the kernel for the label matrix Y: K_y
     k_matrix_y_ = y_matrix_ * y_matrix_.transpose();
     // Generate Y tilde matrix in equation 5 from kernel matrix of Y
-    y_matrix_tilde_ = h_matrix_ * k_matrix_y_ * h_matrix_;
-    u_converge_ = false;
-    w_converge_ = false;
-    u_w_converge_ = false;
-  }
-
-  // Initialization when Fit() is called, only need to update w and y_tilde
-  virtual void Init() {
-    w_matrix_ = Matrix<T>::Identity(d_, d_);
-    k_matrix_y_ = y_matrix_ * y_matrix_.transpose();
     y_matrix_tilde_ = h_matrix_ * k_matrix_y_ * h_matrix_;
     u_converge_ = false;
     w_converge_ = false;
