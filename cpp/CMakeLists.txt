@@ -185,5 +185,5 @@ endif()
 
 # Build Python interface
 if (enable-interface)
-add_subdirectory(interface)
+	add_subdirectory(interface)
 endif()

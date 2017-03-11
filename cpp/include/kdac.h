@@ -67,7 +67,8 @@ class KDAC {
       u_converge_(false),
       w_converge_(false),
       u_w_converge_(false),
-      threshold_(0.01),
+      threshold1_(0.01),
+      threshold2_(0.01),
       x_matrix_(),
       w_matrix_(),
       pre_w_matrix_(),
@@ -167,12 +168,14 @@ class KDAC {
   /// It only generates the clustering result but does not returns it
   /// Users can use Predict() to get the clustering result returned
   void Fit(const Matrix<T> &input_matrix) {
-    Init(input_matrix);
+    profiler_.fit.Start();
+    PROFILE(Init(input_matrix), profiler_.init);
     // When there is no Y, it is the the first round when the second term
     // lambda * HSIC is zero, we do not need to optimize W, and we directly
     // go to kmeans where Y_0 is generated. And both u and v are converged.
-    OptimizeU();
-    RunKMeans();
+    PROFILE(OptimizeU(), profiler_.u);
+    PROFILE(RunKMeans(), profiler_.kmeans);
+    profiler_.fit.Stop();
   }
 
   // Used only in Fit(const Matrix<T> &input_matrix)
@@ -205,21 +208,23 @@ class KDAC {
   // exist from the previous round of computation
   void Fit(void) {
     // Only changes w_matrix and y_tilde matrix
-    Init();
+    profiler_.fit.Start();
+    PROFILE(Init(), profiler_.init);
     while (!u_w_converge_) {
       pre_u_matrix_ = u_matrix_;
       pre_w_matrix_ = w_matrix_;
-      OptimizeU();
-      OptimizeW();
-      u_converge_ = util::CheckConverged(u_matrix_, pre_u_matrix_, threshold_);
-      w_converge_ = util::CheckConverged(w_matrix_, pre_w_matrix_, threshold_);
+      PROFILE(OptimizeU(), profiler_.u);
+      PROFILE(OptimizeW(), profiler_.w);
+      u_converge_ = util::CheckConverged(u_matrix_, pre_u_matrix_, threshold2_);
+      w_converge_ = util::CheckConverged(w_matrix_, pre_w_matrix_, threshold2_);
       u_w_converge_ = u_converge_ && w_converge_;
       if (verbose_)
         OutputProgress();
     }
-    RunKMeans();
+    PROFILE(RunKMeans(), profiler_.kmeans);
     if (verbose_)
       std::cout << "Kmeans Done" << std::endl;
+    profiler_.fit.Stop();
   }
 
   /// This function creates an alternative clustering result
@@ -246,8 +251,8 @@ class KDAC {
       pre_w_matrix_ = w_matrix_;
       PROFILE(OptimizeU(), profiler_.u);
       PROFILE(OptimizeW(), profiler_.w);
-      u_converge_ = util::CheckConverged(u_matrix_, pre_u_matrix_, threshold_);
-      w_converge_ = util::CheckConverged(w_matrix_, pre_w_matrix_, threshold_);
+      u_converge_ = util::CheckConverged(u_matrix_, pre_u_matrix_, threshold2_);
+      w_converge_ = util::CheckConverged(w_matrix_, pre_w_matrix_, threshold2_);
       u_w_converge_ = u_converge_ && w_converge_;
       if (verbose_)
         OutputProgress();
@@ -287,7 +292,8 @@ class KDAC {
   bool u_converge_;  // If matrix U reaches convergence, false by default
   bool w_converge_;  // If matrix W reaches convergence, false by default
   bool u_w_converge_;  // If matrix U and W both converge, false by default
-  T threshold_;  // To determine convergence
+  T threshold1_;  // threshold for column convergence
+  T threshold2_;  // threshold for matrix convergence
   Matrix<T> x_matrix_;  // Input matrix X (n by d)
   Matrix<T> w_matrix_;  // Transformation matrix W (d by q, q < d).
   // Initialized to (d by d) of I
@@ -496,7 +502,7 @@ class KDAC {
         util::CheckFinite(w_l, "w_l");
         w_matrix_.col(l) = w_l;
         w_l_converged =
-            util::CheckConverged(objective, pre_objective, threshold_);
+            util::CheckConverged(objective, pre_objective, threshold1_);
       }
       UpdateGOfW(w_l);
       // TODO: Need to learn about if using Vector<T> &w_l = w_matrix_.col(l)
