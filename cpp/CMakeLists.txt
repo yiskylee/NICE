@@ -95,8 +95,7 @@ if (CUDA_HAVE_GPU)
 #          -gencode arch=compute_37,code=sm_37
           -gencode arch=compute_50,code=sm_50
 #          -gencode arch=compute_52,code=sm_52
-          -fopenmp
-          -fgomp
+#          -fgomp
           )
 
 
@@ -167,6 +166,7 @@ if (enable-test)
          )
   endif()
   add_executable(${PROJECT_TEST_NAME} ${TEST_SRC_FILES})
+  add_dependencies(${PROJECT_TEST_NAME} googletest)
   add_dependencies(${PROJECT_TEST_NAME} ${PROJECT_NAME})
 
   # Link libraries

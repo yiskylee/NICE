@@ -26,6 +26,7 @@
 #include "include/matrix.h"
 #include "include/vector.h"
 #include <vector>
+#include "dlib/clustering.h"
 
 
 namespace Nice {
@@ -62,8 +63,9 @@ class KMeans {
     }
   }
 
-  void Fit2(const Matrix<T> &input_data, int k) {
+  void Fit(const Matrix<T> &input_data, int k) {
     K = k;
+    ClusterCenters.resize(input_data.rows(), K);
     Cluster(input_data);
   }
 
@@ -90,11 +92,11 @@ class KMeans {
   
     if(InitMethod == RANDOM)
     {
-      RandomInit();
+      RandomInit(input_data);
     }
     else if(InitMethod == KMEANSPP) // http://en.wikipedia.org/wiki/K-means%2B%2B
     {
-      KMeansPPInit();
+      KMeansPPInit(input_data);
     }
     else if(InitMethod == MANUAL)
     {
@@ -106,7 +108,7 @@ class KMeans {
     }
   
     // We must store the labels at the previous iteration to determine whether any labels changed at each iteration.
-    Vector<T> oldLabels(input_data.cols(), 0); // initialize to all zeros
+    Vector<T> oldLabels = Vector<T>::Zero(input_data.cols()); // initialize to all zeros
   
     // Initialize the labels array
     Labels.resize(input_data.cols());
@@ -128,12 +130,12 @@ class KMeans {
       oldLabels = Labels;
       iter++;
     }while(changed);
-      //}while(iter < 100); // You could use this stopping criteria to make kmeans run for a specified number of iterations
+    //}while(iter < 100); // You could use this stopping criteria to make kmeans run for a specified number of iterations
   
     std::cout << "KMeans finished in " << iter << " iterations." << std::endl;
   }
   
-  std::vector<unsigned int> GetIndicesWithLabel(const unsigned int label) const
+  std::vector<unsigned int> GetIndicesWithLabel(const T label) const
   {
     std::vector<unsigned int> pointsWithLabel;
     for(unsigned int i = 0; i < Labels.size(); i++)
@@ -147,7 +149,7 @@ class KMeans {
     return pointsWithLabel;
   }
   
-  Matrix<T> GetPointsWithLabel(const Matrix<T> &input_data, const unsigned int label) const
+  Matrix<T> GetPointsWithLabel(const Matrix<T> &input_data, const T label) const
   {
     std::vector<unsigned int> indicesWithLabel = GetIndicesWithLabel(label);
   
@@ -177,7 +179,7 @@ class KMeans {
     //Helpers::Output(weights);
     
     // Sum
-    double sum = weights.sum();
+    T sum = weights.sum();
     //std::cout << "sum: " << sum << std::endl;
     if(sum <= 0)
     {
@@ -189,9 +191,9 @@ class KMeans {
     // Normalize
     Vector<T> normalizedWeights = weights.normalized();
   
-    double randomValue = drand48();
+    T randomValue = (T)drand48();
   
-    double runningTotal = 0.0;
+    T runningTotal = 0.0;
     for(unsigned int i = 0; i < normalizedWeights.size(); i++)
     {
       runningTotal += normalizedWeights[i];
@@ -208,24 +210,8 @@ class KMeans {
     return 0;
   }
   
-  Vector<T> GetRandomPointInBounds(const Matrix<T> &input_data)
-  {
-    Vector<T> minVector = input_data.rowwise().minCoeff();
-    Vector<T> maxVector = input_data.rowwise().maxCoeff();
   
-    Vector<T> randomVector = Vector<T>::Zero(minVector.size());
-  
-    for(int i = 0; i < randomVector.size(); ++i)
-    {
-      T range = maxVector(i) - minVector(i);
-      T randomValue = (T)drand48() * range + minVector(i);
-      randomVector(i) = randomValue;
-    }
-  
-    return randomVector;
-  }
-  
-  bool CheckChanged(const Vector<unsigned int>& labels, const Vector<unsigned int>& oldLabels)
+  bool CheckChanged(const Vector<T>& labels, const Vector<T>& oldLabels)
   {
     bool changed = false;
     for(unsigned int i = 0; i < labels.size(); i++)
@@ -245,15 +231,15 @@ class KMeans {
     for(unsigned int point = 0; point < input_data.cols(); ++point)
     {
       unsigned int closestCluster = ClosestCluster(input_data.col(point));
-      Labels(point) = closestCluster;
+      Labels(point) = (T)closestCluster;
     }
   }
   
-  void EstimateClusterCenters(const Matrix<T> &input_data, int k)
+  void EstimateClusterCenters(const Matrix<T> &input_data)
   {
     Matrix<T> oldCenters = ClusterCenters;
   
-    for(unsigned int cluster = 0; cluster < k; ++cluster)
+    for(unsigned int cluster = 0; cluster < K; ++cluster)
     {
       std::vector<unsigned int> indicesWithLabel = GetIndicesWithLabel(cluster);
       Matrix<T> classPoints(input_data.rows(), indicesWithLabel.size());
@@ -296,11 +282,11 @@ class KMeans {
   unsigned int ClosestPointIndex(const Matrix<T> &input_data, const Vector<T> queryPoint)
   {
     unsigned int closestPoint = 0;
-    double minDist = std::numeric_limits<double>::max();
+    T minDist = std::numeric_limits<T>::max();
     for(unsigned int i = 0; i < input_data.cols(); i++)
     {
       //double dist = sqrt(vtkMath::Distance2BetweenPoints(points->GetPoint(i), queryPoint));
-      double dist = (input_data.col(i) - queryPoint).norm();
+      T dist = (input_data.col(i) - queryPoint).norm();
       if(dist < minDist)
       {
         minDist = dist;
@@ -311,7 +297,7 @@ class KMeans {
     return closestPoint;
   }
   
-  double ClosestPointDistanceExcludingId(const Matrix<T> &input_data, Vector<T> queryPoint, const unsigned int excludedId)
+  T ClosestPointDistanceExcludingId(const Matrix<T> &input_data, Vector<T> queryPoint, const unsigned int excludedId)
   {
     std::vector<unsigned int> excludedIds;
     excludedIds.push_back(excludedId);
@@ -346,29 +332,40 @@ class KMeans {
     return minDist;
   }
   
-  double ClosestPointDistance(const Vector<T>& queryPoint)
+  T ClosestPointDistance(const Vector<T>& queryPoint)
   {
     std::vector<unsigned int> excludedIds; // none
     return ClosestPointDistanceExcludingIds(queryPoint, excludedIds);
   }
+
+  Vector<T> GetRandomPointInBounds(const Matrix<T> &input_data)
+  {
+    Vector<T> minVector = input_data.rowwise().minCoeff();
+    Vector<T> maxVector = input_data.rowwise().maxCoeff();
   
+    Vector<T> randomVector = Vector<T>::Zero(minVector.size());
+  
+    for(int i = 0; i < randomVector.size(); ++i)
+    {
+      T range = maxVector(i) - minVector(i);
+      T randomValue = (T)drand48() * range + minVector(i);
+      randomVector(i) = randomValue;
+    }
+  
+    return randomVector;
+  }
+
   void RandomInit(const Matrix<T> &input_data)
   {
-    ClusterCenters.resize(input_data.rows(), K);
-  
     // Completely randomly choose initial cluster centers
-    for(unsigned int i = 0; i < k; i++)
+    for(unsigned int i = 0; i < K; i++)
     {
-      Vector<T> p = GetRandomPointInBounds();
-  
-      ClusterCenters.col(i) = p;
+      ClusterCenters.col(i) = GetRandomPointInBounds(input_data);
     }
   }
   
-  void KMeansPPInit(const Matrix<T> &input_data, int k)
+  void KMeansPPInit(const Matrix<T> &input_data)
   {
-    ClusterCenters.resize(input_data.rows(), k);
-  
     // Assign one center at random
     unsigned int randomId = rand() % input_data.cols();
     Vector<T> p = input_data.col(randomId);
@@ -376,7 +373,7 @@ class KMeans {
   
     // Assign the rest of the initial centers using a weighted probability of the distance to the nearest center
     Vector<T> weights(input_data.cols());
-    for(unsigned int cluster = 1; cluster < k; ++cluster) // Start at 1 because cluster 0 is already set
+    for(unsigned int cluster = 1; cluster < K; ++cluster) // Start at 1 because cluster 0 is already set
     {
       // Create weight vector
       for(unsigned int i = 0; i < input_data.cols(); i++)
@@ -417,7 +414,7 @@ class KMeans {
     // \hat{\sigma}^2 = \frac{1}{n} \sum_{i=1}^n (x_i - \hat{x}_i)^2
   
     T overall_variance = 0;
-    for(unsigned int i = 0; i < k; ++i)
+    for(unsigned int i = 0; i < K; ++i)
     {
       std::vector<unsigned int> indicesWithLabel = GetIndicesWithLabel(i);
       T variance = 0;
@@ -454,7 +451,7 @@ class KMeans {
   bool Random = true;
 
   /** The initialization method to use. */
-  int InitMethod = RANDOM;
+  int InitMethod = KMEANSPP;
 
   /** The number of clusters to find. */
   unsigned int K;
