@@ -26,6 +26,8 @@
 #include "include/matrix.h"
 #include "include/vector.h"
 #include <vector>
+#include <map>
+#include <algorithm>
 #include "dlib/clustering.h"
 
 
@@ -65,7 +67,7 @@ class KMeans {
 
   void Fit(const Matrix<T> &input_data, int k) {
     K = k;
-    ClusterCenters.resize(input_data.rows(), K);
+    centers_.resize(input_data.rows(), K);
     Cluster(input_data);
   }
 
@@ -122,7 +124,7 @@ class KMeans {
     {
       AssignLabels(input_data);
   
-      EstimateClusterCenters(input_data);
+      EstimateNewCenters(input_data);
       
       changed = CheckChanged(Labels, oldLabels);
   
@@ -165,32 +167,19 @@ class KMeans {
   
   unsigned int SelectWeightedIndex(Vector<T> weights)
   {
-    // Ensure all weights are positive
-    for(unsigned int i = 0; i < weights.size(); i++)
-    {
-      if(weights[i] < 0)
-      {
-        std::stringstream ss;
-        ss << "weights[" << i << "] is " << weights[i] << " (must be positive!)";
-        throw std::runtime_error(ss.str());
-      }
-    }
-  
-    //Helpers::Output(weights);
-    
-    // Sum
-    T sum = weights.sum();
-    //std::cout << "sum: " << sum << std::endl;
-    if(sum <= 0)
-    {
-      std::stringstream ss;
-      ss << "Sum must be positive, but it is " << sum << "!";
-      throw std::runtime_error(ss.str());
-    }
   
     // Normalize
-    Vector<T> normalizedWeights = weights.normalized();
+    Vector<T> normalizedWeights = weights / weights.sum();
+
+    std::map<T, unsigned int> weights_index_map;
+    for (unsigned int i = 0; i < weights.size(); i++) {
+      weights_index_map[normalizedWeights(i)] = i;
+    }
   
+    // Sort the normalized weights
+    std::sort(normalizedWeights.data(), normalizedWeights.data()+normalizedWeights.size());
+
+    // Get the 
     T randomValue = (T)drand48();
   
     T runningTotal = 0.0;
@@ -199,7 +188,8 @@ class KMeans {
       runningTotal += normalizedWeights[i];
       if(randomValue < runningTotal)
       {
-        return i;
+        T weight = normalizedWeights(i);
+        return weights_index_map[weight];
       }
     }
   
@@ -230,14 +220,14 @@ class KMeans {
     // Assign each point to the closest cluster
     for(unsigned int point = 0; point < input_data.cols(); ++point)
     {
-      unsigned int closestCluster = ClosestCluster(input_data.col(point));
+      unsigned int closestCluster = FindClosestCluster(input_data.col(point), K);
       Labels(point) = (T)closestCluster;
     }
   }
   
-  void EstimateClusterCenters(const Matrix<T> &input_data)
+  void EstimateNewCenters(const Matrix<T> &input_data)
   {
-    Matrix<T> oldCenters = ClusterCenters;
+    Matrix<T> oldCenters = centers_;
   
     for(unsigned int cluster = 0; cluster < K; ++cluster)
     {
@@ -258,17 +248,17 @@ class KMeans {
         center = classPoints.rowwise().mean();
       }
   
-      ClusterCenters.col(cluster) = center;
+      centers_.col(cluster) = center;
     }
   }
   
-  unsigned int ClosestCluster(const Vector<T>& queryPoint)
+  unsigned int FindClosestCluster(const Vector<T>& queryPoint, unsigned int num_cluster)
   {
     unsigned int closestCluster = 0;
     T minDist = std::numeric_limits<T>::max();
-    for(unsigned int i = 0; i < ClusterCenters.cols(); ++i)
+    for(unsigned int i = 0; i < num_cluster; ++i)
     {
-      T dist = (ClusterCenters.col(i) - queryPoint).norm();
+      T dist = (centers_.col(i) - queryPoint).norm();
       if(dist < minDist)
       {
         minDist = dist;
@@ -360,7 +350,7 @@ class KMeans {
     // Completely randomly choose initial cluster centers
     for(unsigned int i = 0; i < K; i++)
     {
-      ClusterCenters.col(i) = GetRandomPointInBounds(input_data);
+      centers_.col(i) = GetRandomPointInBounds(input_data);
     }
   }
   
@@ -369,7 +359,7 @@ class KMeans {
     // Assign one center at random
     unsigned int randomId = rand() % input_data.cols();
     Vector<T> p = input_data.col(randomId);
-    ClusterCenters.col(0) = p;
+    centers_.col(0) = p;
   
     // Assign the rest of the initial centers using a weighted probability of the distance to the nearest center
     Vector<T> weights(input_data.cols());
@@ -379,13 +369,13 @@ class KMeans {
       for(unsigned int i = 0; i < input_data.cols(); i++)
       {
         Vector<T> currentPoint = input_data.col(i);
-        unsigned int closestCluster = ClosestCluster(currentPoint);
-        weights(i) = (ClusterCenters.col(closestCluster) - currentPoint).norm();
+        unsigned int closestCluster = FindClosestCluster(currentPoint, cluster);
+        weights(i) = (centers_.col(closestCluster) - currentPoint).squaredNorm();
       }
   
       unsigned int selectedPointId = SelectWeightedIndex(weights);
       p = input_data.col(selectedPointId);
-      ClusterCenters.col(cluster) = p;
+      centers_.col(cluster) = p;
     }
   }
   
@@ -399,15 +389,6 @@ class KMeans {
     this->InitMethod = method;
   }
   
-  Matrix<T> GetClusterCenters() const
-  {
-    return this->ClusterCenters;
-  }
-  
-  void SetClusterCenters(const Matrix<T>& clusterCenters)
-  {
-      this->ClusterCenters = clusterCenters;
-  }
   
   T ComputeMLEVariance(const Matrix<T> &input_data) const
   {
@@ -425,7 +406,7 @@ class KMeans {
   
       // \hat{\sigma}^2 = \frac{1}{n} \sum_{i=1}^n (x_i - \hat{x}_i)^2
   
-      Vector<T> clusterCenter = ClusterCenters.col(i);
+      Vector<T> clusterCenter = centers_.col(i);
   
       for(unsigned int i = 0; i < indicesWithLabel.size(); ++i)
       {
@@ -457,7 +438,7 @@ class KMeans {
   unsigned int K;
   
   /** The current cluster centers. */
-  Matrix<T> ClusterCenters;
+  Matrix<T> centers_;
  
 };
 }

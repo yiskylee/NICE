@@ -61,7 +61,7 @@ class KMeansTest : public ::testing::Test {
 
     data_file_path_ = base_dir + file_name;
     std::cout << "data_file_path: " << data_file_path_ << std::endl;
-    data_ = Nice::util::FromFile<T>(data_file_path_);
+    data_ = Nice::util::FromFile<T>(data_file_path_, ",");
   }
 
 };
@@ -99,11 +99,12 @@ TYPED_TEST_CASE(KMeansTest, DoubleTypes);
 
 
 TYPED_TEST(KMeansTest, CPU50_10000_600) {
-  //std::string base_dir = "/home/shidong/GitRepo/NICE/cpp/test/data_for_test/";
+  std::string base_dir = "/home/shidong/GitRepo/NICE/cpp/test/data_for_test/";
   //std::string file_name = "clustering_k5_10_d3.txt";
-  std::string base_dir = "/usr/local/share/";
-  std::string file_name = "data_k50_p10000_d100_c1.txt";
-  this->SetupInputData(50, base_dir, file_name, "cpu");
+  //std::string file_name = "data_k50_p10000_d100_c1.txt";
+  //std::string file_name = "data_k5_p10_d3_c1.txt";
+  std::string file_name = "data_k5_p500_d10_c1.txt";
+  this->SetupInputData(5, base_dir, file_name, "cpu");
   this->kmeans_->Fit(this->data_.transpose(), this->k_);
   //this->kmeans_->Fit(this->data_, this->k_);
   this->labels_ = this->kmeans_->GetLabels();
