@@ -31,6 +31,7 @@
 #include "include/matrix.h"
 #include "include/vector.h"
 #include "include/kernel_types.h"
+#include "include/stop_watch.h"
 
 
 template<typename T>
@@ -73,42 +74,19 @@ typedef ::testing::Types<double> DoubleTypes;
 typedef ::testing::Types<float, double> BothTypes;
 
 
-TYPED_TEST_CASE(KMeansTest, DoubleTypes);
-
-#define EXPECT_MATRIX_EQ(a, ref)\
-    EXPECT_EQ(a.rows(), ref.rows());\
-    EXPECT_EQ(a.cols(), ref.cols());\
-    for (int i = 0; i < a.rows(); i++)\
-      for (int j = 0; j < a.cols(); j++)\
-        EXPECT_NEAR(double(a(i, j)), double(ref(i, j)), 0.0001);\
-
-#define PRINTV(v, num_per_line)\
-  for (int i = 0; i < v.rows(); i++) {\
-    if (i % num_per_line == 0 && i != 0)\
-      std::cout << std::endl;\
-    std::cout << v(i) << ",";\
-  }\
-  std::cout << std::endl;\
-
-#define EXPECT_MATRIX_ABS_EQ(a, ref, error)\
-    EXPECT_EQ(a.rows(), ref.rows());\
-    EXPECT_EQ(a.cols(), ref.cols());\
-    for (int i = 0; i < a.rows(); i++)\
-      for (int j = 0; j < a.cols(); j++)\
-        EXPECT_NEAR(std::abs(a(i, j)), std::abs(ref(i, j)), error);\
+TYPED_TEST_CASE(KMeansTest, FloatTypes);
 
 
-TYPED_TEST(KMeansTest, CPU50_10000_600) {
-  std::string base_dir = "/home/shidong/GitRepo/NICE/cpp/test/data_for_test/";
+TYPED_TEST(KMeansTest, CPU5_10_3) {
+  std::string base_dir = "../test/data_for_test/";
   //std::string file_name = "clustering_k5_10_d3.txt";
   //std::string file_name = "data_k50_p10000_d100_c1.txt";
-  //std::string file_name = "data_k5_p10_d3_c1.txt";
-  std::string file_name = "data_k5_p500_d10_c1.txt";
+  //std::string file_name = "data_k5_p500_d10_c1.txt";
+  std::string file_name = "data_k5_p10_d3_c1.txt";
   this->SetupInputData(5, base_dir, file_name, "cpu");
-  this->kmeans_->Fit(this->data_.transpose(), this->k_);
-  //this->kmeans_->Fit(this->data_, this->k_);
+  this->kmeans_->Fit(this->data_, this->k_);
   this->labels_ = this->kmeans_->GetLabels();
-  std::cout << this->labels_;
+  //std::cout << this->labels_ << std::endl;
 }
 
 

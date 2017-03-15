@@ -5,7 +5,6 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
 include(eigen)
 include(check)
 include(doc)
-include(dlib/cmake)
 find_package(Threads REQUIRED)
 
 set(CMAKE_BUILD_TYPE Release)
