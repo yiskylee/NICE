@@ -20,8 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef CPP_INTERFACE_CLUSTERING_CLUSTERING_H_
-#define CPP_INTERFACE_CLUSTERING_CLUSTERING_H_
+#ifndef CPP_INTERFACE_CLUSTERING_KDAC_INTERFACE_H_
+#define CPP_INTERFACE_CLUSTERING_KDAC_INTERFACE_H_
 
 #include <boost/python.hpp>
 
@@ -40,14 +40,13 @@
 #include "include/kdac_gpu.h"
 #include "include/util.h"
 #include "include/kdac_profiler.h"
-#include "../../include/kdac_profiler.h"
 
 namespace Nice {
 // The numpy array is stored in row major
-using IMatrixMap = Eigen::Map< Eigen::Matrix<int, Eigen::Dynamic,
-                                             Eigen::Dynamic, Eigen::RowMajor> >;
-using FMatrixMap = Eigen::Map< Eigen::Matrix<float, Eigen::Dynamic,
-                                             Eigen::Dynamic, Eigen::RowMajor> >;
+//using IMatrixMap = Eigen::Map< Eigen::Matrix<int, Eigen::Dynamic,
+//                                             Eigen::Dynamic, Eigen::RowMajor> >;
+//using FMatrixMap = Eigen::Map< Eigen::Matrix<float, Eigen::Dynamic,
+//                                             Eigen::Dynamic, Eigen::RowMajor> >;
 using DMatrixMap = Eigen::Map< Eigen::Matrix<double, Eigen::Dynamic,
                                              Eigen::Dynamic, Eigen::RowMajor> >;
 
@@ -88,6 +87,31 @@ class KDACInterface {
         kdac_ -> SetQ(q);
         continue;
       }
+      if (strcmp("lambda", boost::python::extract<char *>(key_list[i])) == 0) {
+        double lambda = boost::python::extract<double>(params["lambda"]);
+        kdac_ -> SetLambda(lambda);
+        continue;
+      }
+      if (strcmp("sigma", boost::python::extract<char *>(key_list[i])) == 0) {
+        sigma = boost::python::extract<double>(params["sigma"]);
+        has_sigma = true;
+        continue;
+      }
+      if (strcmp("verbose", boost::python::extract<char *>(key_list[i])) == 0) {
+        bool verbose = boost::python::extract<double>(params["verbose"]);
+        kdac_ -> SetVerbose(verbose);
+        continue;
+      }
+      if (strcmp("threshold1", boost::python::extract<char *>(key_list[i])) == 0) {
+        double thresh1 = boost::python::extract<double>(params["threshold1"]);
+        kdac_ -> SetThreshold1(thresh1);
+        continue;
+      }
+      if (strcmp("threshold2", boost::python::extract<char *>(key_list[i])) == 0) {
+        double thresh2 = boost::python::extract<double>(params["threshold2"]);
+        kdac_ -> SetThreshold1(thresh2);
+        continue;
+      }
       if (strcmp("kernel", boost::python::extract<char *>(key_list[i])) == 0) {
         if (strcmp("Gaussian",
                    boost::python::extract<char *>(params["kernel"])) == 0) {
@@ -104,21 +128,6 @@ class KDACInterface {
         has_kernel = true;
         continue;
       }
-      if (strcmp("lambda", boost::python::extract<char *>(key_list[i])) == 0) {
-        double lambda = boost::python::extract<double>(params["lambda"]);
-        kdac_ -> SetLambda(lambda);
-        continue;
-      }
-      if (strcmp("sigma", boost::python::extract<char *>(key_list[i])) == 0) {
-        sigma = boost::python::extract<double>(params["sigma"]);
-        has_sigma = true;
-        continue;
-      }
-      if (strcmp("verbose", boost::python::extract<char *>(key_list[i])) == 0) {
-        bool verbose = boost::python::extract<double>(params["verbose"]);
-        kdac_ -> SetVerbose(verbose);
-        continue;
-      }
     }
     if (has_kernel && has_sigma)
       kdac_ -> SetKernel(kernel, sigma);
@@ -128,8 +137,11 @@ class KDACInterface {
     profile["init"] = profiler.init.GetTotalTime();
     profile["u"] = profiler.u.GetTotalTime();
     profile["w"] = profiler.w.GetTotalTime();
+    profile["u_avg"] = profiler.u.GetAvgTimePerIter();
+    profile["w_avg"] = profiler.w.GetAvgTimePerIter();
     profile["kmeans"] = profiler.kmeans.GetTotalTime();
     profile["fit"] = profiler.fit.GetTotalTime();
+    profile["fit_avg"] = profiler.fit.GetAvgTimePerIter();
     profile["num_iters"] = profiler.u.GetNumIters();
     profile["gen_phi"] = profiler.gen_phi.GetTotalTime();
     profile["gen_grad"] = profiler.gen_grad.GetTotalTime();
@@ -197,13 +209,23 @@ class KDACInterface {
     PyObject_GetBuffer(u_obj, &u_buf, PyBUF_SIMPLE);
     MatrixMap<T> u(reinterpret_cast<T *>(u_buf.buf), row, col);
     u = kdac_ -> GetU();
+    PyBuffer_Release(&u_buf);
   }
   void GetW(PyObject *w_obj, int row, int col) {
     Py_buffer w_buf;
     PyObject_GetBuffer(w_obj, &w_buf, PyBUF_SIMPLE);
     MatrixMap<T> w(reinterpret_cast<T *>(w_buf.buf), row, col);
     w = kdac_ -> GetW();
+    PyBuffer_Release(&w_buf);
   }
+  void GetK(PyObject *k_obj, int row) {
+    Py_buffer k_buf;
+    PyObject_GetBuffer(k_obj, &k_buf, PyBUF_SIMPLE);
+    MatrixMap<T> k(reinterpret_cast<T *>(k_buf.buf), row, row);
+    k = kdac_ -> GetK();
+    PyBuffer_Release(&k_buf);
+  }
+
   int GetD() {
     return kdac_ -> GetD();
   }
@@ -212,6 +234,9 @@ class KDACInterface {
   }
   int GetQ() {
     return kdac_ -> GetQ();
+  }
+  void DiscardLastRun() {
+    kdac_ -> DiscardLastRun();
   }
 
  protected:
@@ -236,4 +261,4 @@ class KDACInterface {
 
 }  // namespace Nice
 
-#endif  // CPP_INTERFACE_CLUSTERING_CLUSTERING_H_
+#endif  // CPP_INTERFACE_CLUSTERING_KDAC_INTERFACE_H_

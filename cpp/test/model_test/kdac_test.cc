@@ -28,7 +28,6 @@
 #include "include/cpu_operations.h"
 #include "include/kdac_cpu.h"
 #include "include/kdac_gpu.h"
-#include "../../build/gtest/src/googletest/googletest/include/gtest/gtest.h"
 #include "include/util.h"
 #include "include/matrix.h"
 #include "include/vector.h"
@@ -38,9 +37,7 @@
 template<typename T>
 class KDACTest : public ::testing::Test {
  protected:
-//  Nice::Matrix<T> data_matrix_;
   std::shared_ptr<Nice::KDAC<T>> kdac_;
-  int c_;
   std::string device_type_;
   std::string base_dir_;
   int num_clusters_;
@@ -193,6 +190,7 @@ TYPED_TEST(KDACTest, GPU3_20_600) {
 TYPED_TEST(KDACTest, CPU3_30_600) {
   this->SetupInputData(3, 30, 600, "cpu");
   this->kdac_->SetVerbose(true);
+  this->kdac_->SetDebug(true);
   this->kdac_->Fit(this->data_matrix_, this->existing_y_);
   this->Output();
 }
@@ -200,6 +198,7 @@ TYPED_TEST(KDACTest, CPU3_30_600) {
 TYPED_TEST(KDACTest, GPU3_30_600) {
   this->SetupInputData(3, 30, 600, "gpu");
   this->kdac_->SetVerbose(true);
+  this->kdac_->SetDebug(true);
   this->kdac_->Fit(this->data_matrix_, this->existing_y_);
   this->Output();
 }

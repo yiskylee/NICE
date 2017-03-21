@@ -23,12 +23,17 @@ endif()
 
 set(COMMON_INCLUDES ${PROJECT_SOURCE_DIR})
 include_directories(${EIGEN_INCLUDE_DIRS})
-include_directories(${COMMON_INCLUDES}) 
+include_directories(${COMMON_INCLUDES})
 
 # This is a Hack for Clion to know where eigen is
 include_directories(./build/eigen/src/eigen)
 include_directories(./)
 include_directories(./build/gtest/src/googletest/googletest/include)
+
+#get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
+#foreach(dir ${dirs})
+#  message(STATUS "dir='${dir}'")
+#endforeach()
 
 set(enable-mkl)
 option (enable-mkl "Compile NICE library with MKL" OFF)
@@ -89,12 +94,11 @@ if (CUDA_HAVE_GPU)
   # Set NVCC flags
   set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -std=c++11 -O3
 #          -gencode arch=compute_20,code=sm_20
-#          -gencode arch=compute_30,code=sm_30
+          -gencode arch=compute_30,code=sm_30
 #          -gencode arch=compute_35,code=sm_35
 #          -gencode arch=compute_37,code=sm_37
           -gencode arch=compute_50,code=sm_50
 #          -gencode arch=compute_52,code=sm_52
-#          -fgomp
           )
 
 
@@ -181,5 +185,5 @@ endif()
 
 # Build Python interface
 if (enable-interface)
-  add_subdirectory(interface)
+	add_subdirectory(interface)
 endif()

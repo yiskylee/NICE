@@ -67,7 +67,8 @@ class KDAC {
       u_converge_(false),
       w_converge_(false),
       u_w_converge_(false),
-      threshold_(0.01),
+      threshold1_(0.01),
+      threshold2_(0.01),
       x_matrix_(),
       w_matrix_(),
       pre_w_matrix_(),
@@ -89,7 +90,8 @@ class KDAC {
       gamma_matrix_(),
       g_of_w_(),
       clustering_result_(),
-      verbose_(false) {}
+      verbose_(false),
+      debug_(false) {}
 
   ~KDAC() {}
   KDAC(const KDAC &rhs) {}
@@ -103,6 +105,11 @@ class KDAC {
   /// Set the reduced dimension q
   void SetQ(int q) { q_ = q; }
 
+  /// Set thresholds
+  void SetThreshold1(float thresh1) { threshold1_ = thresh1; }
+
+  void SetThreshold2(float thresh2) { threshold2_ = thresh2; }
+
   /// Set the kernel type: kGaussianKernel, kPolynomialKernel, kLinearKernel
   /// And set the constant associated the kernel
   void SetKernel(KernelType kernel_type, float constant) {
@@ -111,6 +118,8 @@ class KDAC {
   }
 
   void SetVerbose(bool verbose) { verbose_ = verbose; }
+
+  void SetDebug(bool debug) { debug_ = debug; }
 
   int GetD(void) { return d_; }
 
@@ -132,7 +141,10 @@ class KDAC {
 
   Matrix<T> GetDToTheMinusHalf(void) { return d_matrix_to_the_minus_half_; }
 
-  Matrix<T> GetK(void) { return k_matrix_; }
+  Matrix<T> GetK(void) {
+    GenKernelMatrix();
+    return k_matrix_;
+  }
 
   Matrix<T> GetY(void) { return y_matrix_; }
 
@@ -161,6 +173,18 @@ class KDAC {
   /// It only generates the clustering result but does not returns it
   /// Users can use Predict() to get the clustering result returned
   void Fit(const Matrix<T> &input_matrix) {
+    profiler_.fit.Start();
+    PROFILE(Init(input_matrix), profiler_.init);
+    // When there is no Y, it is the the first round when the second term
+    // lambda * HSIC is zero, we do not need to optimize W, and we directly
+    // go to kmeans where Y_0 is generated. And both u and v are converged.
+    PROFILE(OptimizeU(), profiler_.u);
+    PROFILE(RunKMeans(), profiler_.kmeans);
+    profiler_.fit.Stop();
+  }
+
+  // Used only in Fit(const Matrix<T> &input_matrix)
+  virtual void Init(const Matrix<T> &input_matrix) {
     x_matrix_ = input_matrix;
     n_ = input_matrix.rows();
     d_ = input_matrix.cols();
@@ -170,32 +194,42 @@ class KDAC {
         - Matrix<T>::Constant(n_, n_, 1) / static_cast<T>(n_);
     // kernel matrix
     k_matrix_ = Matrix<T>::Zero(n_, n_);
-    // When there is no Y, it is the the first round when the second term
-    // lambda * HSIC is zero, we do not need to optimize W, and we directly
-    // go to kmeans where Y_0 is generated. And both u and v are converged.
-    OptimizeU();
-    RunKMeans();
   }
 
+  /// This function can be used when the user is not satisfied with
+  /// the previous clustering results and want to discard the result from
+  /// the last run so she can re-run Fit with new parameters
+  void DiscardLastRun() {
+    if (debug_)
+      util::Print(y_matrix_, "y_matrix_before");
+    Matrix<T> y_matrix_new = Matrix<T>::Zero(n_, y_matrix_.cols() - c_);
+    y_matrix_new = y_matrix_.leftCols(y_matrix_.cols() - c_);
+    y_matrix_ = y_matrix_new;
+    if (debug_)
+      util::Print(y_matrix_, "y_matrix_after");
+  }
 
   // Fit() with an empty param list can only be run when the X and Y already
   // exist from the previous round of computation
   void Fit(void) {
-    Init(x_matrix_, y_matrix_);
+    // Only changes w_matrix and y_tilde matrix
+    profiler_.fit.Start();
+    PROFILE(Init(), profiler_.init);
     while (!u_w_converge_) {
       pre_u_matrix_ = u_matrix_;
       pre_w_matrix_ = w_matrix_;
-      OptimizeU();
-      OptimizeW();
-      u_converge_ = util::CheckConverged(u_matrix_, pre_u_matrix_, threshold_);
-      w_converge_ = util::CheckConverged(w_matrix_, pre_w_matrix_, threshold_);
+      PROFILE(OptimizeU(), profiler_.u);
+      PROFILE(OptimizeW(), profiler_.w);
+      u_converge_ = util::CheckConverged(u_matrix_, pre_u_matrix_, threshold2_);
+      w_converge_ = util::CheckConverged(w_matrix_, pre_w_matrix_, threshold2_);
       u_w_converge_ = u_converge_ && w_converge_;
       if (verbose_)
         OutputProgress();
     }
-    RunKMeans();
+    PROFILE(RunKMeans(), profiler_.kmeans);
     if (verbose_)
       std::cout << "Kmeans Done" << std::endl;
+    profiler_.fit.Stop();
   }
 
   /// This function creates an alternative clustering result
@@ -222,8 +256,8 @@ class KDAC {
       pre_w_matrix_ = w_matrix_;
       PROFILE(OptimizeU(), profiler_.u);
       PROFILE(OptimizeW(), profiler_.w);
-      u_converge_ = util::CheckConverged(u_matrix_, pre_u_matrix_, threshold_);
-      w_converge_ = util::CheckConverged(w_matrix_, pre_w_matrix_, threshold_);
+      u_converge_ = util::CheckConverged(u_matrix_, pre_u_matrix_, threshold2_);
+      w_converge_ = util::CheckConverged(w_matrix_, pre_w_matrix_, threshold2_);
       u_w_converge_ = u_converge_ && w_converge_;
       if (verbose_)
         OutputProgress();
@@ -247,6 +281,8 @@ class KDAC {
     }
   }
 
+
+
  protected:
   int c_;  // cluster number c
   int q_;  // reduced dimension q
@@ -261,7 +297,8 @@ class KDAC {
   bool u_converge_;  // If matrix U reaches convergence, false by default
   bool w_converge_;  // If matrix W reaches convergence, false by default
   bool u_w_converge_;  // If matrix U and W both converge, false by default
-  T threshold_;  // To determine convergence
+  T threshold1_;  // threshold for column convergence
+  T threshold2_;  // threshold for matrix convergence
   Matrix<T> x_matrix_;  // Input matrix X (n by d)
   Matrix<T> w_matrix_;  // Transformation matrix W (d by q, q < d).
   // Initialized to (d by d) of I
@@ -292,6 +329,7 @@ class KDAC {
   KDACProfiler profiler_;
   // Set to true for debug use
   bool verbose_;
+  bool debug_;
 
 
   Vector<T> GenOrthogonal(const Matrix<T> &space,
@@ -307,7 +345,9 @@ class KDAC {
 
   Vector<T> GenOrthonormal(const Matrix<T> &space,
                            const Vector<T> &vector) {
+    util::CheckFinite(space, "space");
     Vector<T> ortho_vector = GenOrthogonal(space, vector);
+    util::CheckFinite(ortho_vector, "ortho_vector");
     return ortho_vector.array() / ortho_vector.norm();
   }
 
@@ -347,6 +387,24 @@ class KDAC {
     d_matrix_to_the_minus_half_ = d_i_.asDiagonal();
   }
 
+  /// Generate the Kernel Matrix based on the current W
+  void GenKernelMatrix() {
+    // If this is the first round and second,
+    // then we use the full X to initialize the
+    // U matrix, Otherwise, we project X to subspace W (n * d to n * q)
+    // Generate the kernel matrix based on kernel type from projected X
+    Matrix<T> projected_x_matrix = x_matrix_ * w_matrix_;
+    if (kernel_type_ == kGaussianKernel) {
+      float sigma_sq = constant_ * constant_;
+      for (int i = 0; i < n_; i++)
+        for (int j = 0; j < n_; j++) {
+          Vector<T> delta_ij =
+              projected_x_matrix.row(i) - projected_x_matrix.row(j);
+          T i_j_dist = delta_ij.norm();
+          k_matrix_(i, j) = exp(-i_j_dist / (2 * sigma_sq));
+        }
+    }
+  }
 
   // Check if q is not bigger than c
   void CheckQD() {
@@ -372,33 +430,17 @@ class KDAC {
         y_matrix_(i, clustering_result_(i)) = 1;
     } else {
       // When this is to calculate Y_i and append it to Y_[0~i-1]
+      y_matrix_temp_ = Matrix<T>::Zero(n_, c_);
       for (int i = 0; i < n_; i++)
         y_matrix_temp_(i, clustering_result_(i)) = 1;
       Matrix<T> y_matrix_new(n_, y_matrix_.cols() + c_);
       y_matrix_new << y_matrix_, y_matrix_temp_;
       y_matrix_ = y_matrix_new;
       // Reset the y_matrix_temp holder to zero
-      y_matrix_temp_.setZero();
     }
   }
 
-  void GenKernelMatrix() {
-    // If this is the first round and second,
-    // then we use the full X to initialize the
-    // U matrix, Otherwise, we project X to subspace W (n * d to n * q)
-    // Generate the kernel matrix based on kernel type from projected X
-    Matrix<T> projected_x_matrix = x_matrix_ * w_matrix_;
-    if (kernel_type_ == kGaussianKernel) {
-      float sigma_sq = constant_ * constant_;
-      for (int i = 0; i < n_; i++)
-        for (int j = 0; j < n_; j++) {
-          Vector<T> delta_ij =
-              projected_x_matrix.row(i) - projected_x_matrix.row(j);
-          T i_j_dist = delta_ij.norm();
-          k_matrix_(i, j) = exp(-i_j_dist / (2 * sigma_sq));
-        }
-    }
-  }
+
 
   void OptimizeU(void) {
     GenKernelMatrix();
@@ -441,6 +483,8 @@ class KDAC {
       } else {
         w_l = GenOrthonormal(w_matrix_.leftCols(l), w_matrix_.col(l));
       }
+      util::CheckFinite(w_matrix_, "w_matrix");
+      util::CheckFinite(w_l, "w_l");
       // Search for the w_l that maximizes formula 5
       // The initial objective is set to the lowest number
 
@@ -453,15 +497,17 @@ class KDAC {
         // that is vertical to the space spanned by w_0 to w_l
 //        util::Print(g_of_w_.block(0,0,4,4), "g_of_w");
         Vector<T> grad_f = GenWGradient(w_l);
+        util::CheckFinite(grad_f, "grad_f");
 //        util::Print(grad_f.head(4), "grad_f");
         grad_f_vertical =
             GenOrthonormal(w_matrix_.leftCols(l + 1), grad_f);
+        util::CheckFinite(grad_f_vertical, "grad_f_vertical");
         LineSearch(grad_f_vertical, &w_l, &objective);
         w_l = sqrt(1.0 - pow(alpha_, 2)) * w_l + alpha_ * grad_f_vertical;
-//        util::Print(w_l.head(4), "w_l");
+        util::CheckFinite(w_l, "w_l");
         w_matrix_.col(l) = w_l;
         w_l_converged =
-            util::CheckConverged(objective, pre_objective, threshold_);
+            util::CheckConverged(objective, pre_objective, threshold1_);
       }
       UpdateGOfW(w_l);
       // TODO: Need to learn about if using Vector<T> &w_l = w_matrix_.col(l)
@@ -510,6 +556,16 @@ class KDAC {
     util::CheckFinite(w_matrix_, "W");
   }
 
+  // Initialization when Fit() is called, only need to update w and y_tilde
+  void Init() {
+    w_matrix_ = Matrix<T>::Identity(d_, d_);
+    k_matrix_y_ = y_matrix_ * y_matrix_.transpose();
+    y_matrix_tilde_ = h_matrix_ * k_matrix_y_ * h_matrix_;
+    u_converge_ = false;
+    w_converge_ = false;
+    u_w_converge_ = false;
+  }
+
   // Initialization for generating alternative views with a given Y
   virtual void Init(const Matrix<T> &input_matrix,
                     const Matrix<T> &y_matrix) {
@@ -520,7 +576,6 @@ class KDAC {
     w_matrix_ = Matrix<T>::Identity(d_, d_);
     h_matrix_ = Matrix<T>::Identity(n_, n_)
         - Matrix<T>::Constant(n_, n_, 1) / static_cast<T>(n_);
-    y_matrix_temp_ = Matrix<T>::Zero(n_, c_);
     y_matrix_ = y_matrix;
     // kernel matrix
     k_matrix_ = Matrix<T>::Zero(n_, n_);

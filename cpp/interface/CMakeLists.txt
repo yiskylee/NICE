@@ -7,12 +7,13 @@ find_package(PythonLibs)
 find_package(Boost COMPONENTS python)
 include_directories(${Boost_INCLUDE_DIRS} 
                     ${PYTHON_INCLUDE_DIRS}
-                    clustering/)
+                    )
+
 
 # Set source files
 file(GLOB_RECURSE 
      CLUSTERING_INTERFACE_SOURCES RELATIVE 
-     ${CMAKE_CURRENT_SOURCE_DIR} clustering/*.cc)
+     ${CMAKE_CURRENT_SOURCE_DIR} *.cc)
 message(STATUS "Clustering interface source files: " 
         ${CLUSTERING_INTERFACE_SOURCES})
 

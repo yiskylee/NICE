@@ -61,6 +61,10 @@ class Timer {
     return std::accumulate(vec_.begin(), vec_.end(), 0.0);
   }
 
+  double GetAvgTimePerIter() {
+    return GetTotalTime() / GetNumIters();
+  }
+
   Matrix<double> GetTimePerIter() {
     Matrix<double> m(vec_.size(), 1);
     for(unsigned int i = 0; i < vec_.size(); i++)
