@@ -28,7 +28,6 @@
 #include <vector>
 #include <map>
 #include <algorithm>
-#include "dlib/clustering.h"
 
 
 namespace Nice {
