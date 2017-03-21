@@ -87,6 +87,31 @@ class KDACInterface {
         kdac_ -> SetQ(q);
         continue;
       }
+      if (strcmp("lambda", boost::python::extract<char *>(key_list[i])) == 0) {
+        double lambda = boost::python::extract<double>(params["lambda"]);
+        kdac_ -> SetLambda(lambda);
+        continue;
+      }
+      if (strcmp("sigma", boost::python::extract<char *>(key_list[i])) == 0) {
+        sigma = boost::python::extract<double>(params["sigma"]);
+        has_sigma = true;
+        continue;
+      }
+      if (strcmp("verbose", boost::python::extract<char *>(key_list[i])) == 0) {
+        bool verbose = boost::python::extract<double>(params["verbose"]);
+        kdac_ -> SetVerbose(verbose);
+        continue;
+      }
+      if (strcmp("threshold1", boost::python::extract<char *>(key_list[i])) == 0) {
+        double thresh1 = boost::python::extract<double>(params["threshold1"]);
+        kdac_ -> SetThreshold1(thresh1);
+        continue;
+      }
+      if (strcmp("threshold2", boost::python::extract<char *>(key_list[i])) == 0) {
+        double thresh2 = boost::python::extract<double>(params["threshold2"]);
+        kdac_ -> SetThreshold1(thresh2);
+        continue;
+      }
       if (strcmp("kernel", boost::python::extract<char *>(key_list[i])) == 0) {
         if (strcmp("Gaussian",
                    boost::python::extract<char *>(params["kernel"])) == 0) {
@@ -103,21 +128,6 @@ class KDACInterface {
         has_kernel = true;
         continue;
       }
-      if (strcmp("lambda", boost::python::extract<char *>(key_list[i])) == 0) {
-        double lambda = boost::python::extract<double>(params["lambda"]);
-        kdac_ -> SetLambda(lambda);
-        continue;
-      }
-      if (strcmp("sigma", boost::python::extract<char *>(key_list[i])) == 0) {
-        sigma = boost::python::extract<double>(params["sigma"]);
-        has_sigma = true;
-        continue;
-      }
-      if (strcmp("verbose", boost::python::extract<char *>(key_list[i])) == 0) {
-        bool verbose = boost::python::extract<double>(params["verbose"]);
-        kdac_ -> SetVerbose(verbose);
-        continue;
-      }
     }
     if (has_kernel && has_sigma)
       kdac_ -> SetKernel(kernel, sigma);
@@ -127,8 +137,11 @@ class KDACInterface {
     profile["init"] = profiler.init.GetTotalTime();
     profile["u"] = profiler.u.GetTotalTime();
     profile["w"] = profiler.w.GetTotalTime();
+    profile["u_avg"] = profiler.u.GetAvgTimePerIter();
+    profile["w_avg"] = profiler.w.GetAvgTimePerIter();
     profile["kmeans"] = profiler.kmeans.GetTotalTime();
     profile["fit"] = profiler.fit.GetTotalTime();
+    profile["fit_avg"] = profiler.fit.GetAvgTimePerIter();
     profile["num_iters"] = profiler.u.GetNumIters();
     profile["gen_phi"] = profiler.gen_phi.GetTotalTime();
     profile["gen_grad"] = profiler.gen_grad.GetTotalTime();

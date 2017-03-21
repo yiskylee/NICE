@@ -105,6 +105,11 @@ class KDAC {
   /// Set the reduced dimension q
   void SetQ(int q) { q_ = q; }
 
+  /// Set thresholds
+  void SetThreshold1(float thresh1) { threshold1_ = thresh1; }
+
+  void SetThreshold2(float thresh2) { threshold2_ = thresh2; }
+
   /// Set the kernel type: kGaussianKernel, kPolynomialKernel, kLinearKernel
   /// And set the constant associated the kernel
   void SetKernel(KernelType kernel_type, float constant) {
