@@ -5,7 +5,6 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
 include(eigen)
 include(check)
 include(doc)
-include(dlib/cmake)
 find_package(Threads REQUIRED)
 
 set(CMAKE_BUILD_TYPE Release)
@@ -170,6 +169,7 @@ if (enable-test)
          )
   endif()
   add_executable(${PROJECT_TEST_NAME} ${TEST_SRC_FILES})
+  add_dependencies(${PROJECT_TEST_NAME} googletest)
   add_dependencies(${PROJECT_TEST_NAME} ${PROJECT_NAME})
 
   # Link libraries
