@@ -98,7 +98,10 @@ class LogisticRegression {
     }
     
   public:
-    void logistic_regression(Matrix<T> training_x, Vector<T>training_y, Vector<T>theta_params){
+    LogisticRegression() {}
+    
+    Vector<T> logistic_regression(Matrix<T> training_x, Vector<T>training_y, Vector<T>theta_params){
+    std::cout << "Checkpoint D" << std::endl;
       for (int i = 0; i < number_iterations; i++){
         get_gradient();
         if (i % 100 == 0){
@@ -109,6 +112,7 @@ class LogisticRegression {
           std::cout << "Cost is: " << get_cost();
         }
       }
+      return theta_params;
     }
 };
 } 

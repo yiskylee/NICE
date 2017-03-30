@@ -35,11 +35,8 @@ class LogisticRegressionTest : public ::testing::Test {
   Nice::Matrix<T> x;
   Nice::Vector<T> y;
   Nice::Vector<T> theta_output;
-  void Instantiate() {
-	lr = new Nice::LogisticRegression<T>();
-  }
-  void Predict() {
-    predicted = lr->Predict(predict_input);
+  void make_instance() {
+    lr = new Nice::LogisticRegression<T>();
   }
 };
 
@@ -62,9 +59,14 @@ std::cout << "Checkpoint A" << std::endl;
                6, 3.5;
   this->y.resize(10);
   std::cout << "Checkpoint B" << std::endl;
+  
+  // POSSIBLE SOURCE OF ERROR IN INITALIZING MATRIX
   this->y << 0, 0, 0, 0, 0, 1, 1, 1, 1, 1;
   this->theta_output << 0.0,0.0,0.0;
-  this->Instantiate();
+  
+  
+  std::cout << "Checkpoint C" << std::endl;
+  this->make_instance();
   this->lr->logistic_regression(this->x,this->y,this->theta_output);
   // this->lr->SetLambda(.0001);
   // this->lr->Fit(this->x, this->y);

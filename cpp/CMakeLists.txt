@@ -148,9 +148,9 @@ if (enable-test)
   else()
     file(GLOB_RECURSE TEST_SRC_FILES RELATIVE 
          ${PROJECT_SOURCE_DIR} 
-         test/cpu_operations_test/*.cc
-         test/util_test/*.cc
-         test/cpu_solver_test/*.cc
+         # test/cpu_operations_test/*.cc
+         # test/util_test/*.cc
+         # test/cpu_solver_test/*.cc
          test/logistic_regression_test/*.cc)
   endif()
   message(STATUS "Test case source files: " ${TEST_SRC_FILES})
@@ -173,4 +173,4 @@ if (enable-test)
 endif()
 
 # Build Python interface
-add_subdirectory(interface)
+# add_subdirectory(interface)
