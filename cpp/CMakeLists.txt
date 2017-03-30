@@ -173,4 +173,4 @@ if (enable-test)
 endif()
 
 # Build Python interface
-# add_subdirectory(interface)
+  add_subdirectory(interface)
