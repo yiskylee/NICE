@@ -57,17 +57,19 @@ std::cout << "Checkpoint A" << std::endl;
                4, 3,
                3, 5,
                6, 3.5;
-  this->y.resize(10);
   std::cout << "Checkpoint B" << std::endl;
   
   // POSSIBLE SOURCE OF ERROR IN INITALIZING MATRIX
+  this->y.resize(10);
+  this->theta_output.resize(2);
   this->y << 0, 0, 0, 0, 0, 1, 1, 1, 1, 1;
-  this->theta_output << 0.0,0.0,0.0;
+  this->theta_output << 10.0,10.0;
   
   
   std::cout << "Checkpoint C" << std::endl;
   this->make_instance();
-  this->lr->logistic_regression(this->x,this->y,this->theta_output);
+  this->theta_output = this->lr->logistic_regression(this->x,this->y,this->theta_output);
+  std::cout << this->theta_output << std::endl;
   // this->lr->SetLambda(.0001);
   // this->lr->Fit(this->x, this->y);
   // this->predict_input.resize(2,2);
