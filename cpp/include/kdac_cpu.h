@@ -71,7 +71,10 @@ class KDACCPU: public KDAC<T> {
     faf_matrix_ = Matrix<T>::Zero(this->n_, this->n_);
   }
 
-
+  void OptimizeWISM(void) {
+    KDAC<T>::GenGammaMatrix();
+    KDAC<T>::OptimizeWISM();
+  }
 
   void OptimizeW(void) {
     KDAC<T>::GenGammaMatrix();

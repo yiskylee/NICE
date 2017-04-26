@@ -93,7 +93,8 @@ class KDAC {
       verbose_(false),
       debug_(false),
       max_time_exceeded_(false),
-      max_time_(10){}
+      max_time_(10),
+      method_("KDAC") {}
 
   ~KDAC() {}
   KDAC(const KDAC &rhs) {}
@@ -134,6 +135,8 @@ class KDAC {
   void SetVerbose(bool verbose) { verbose_ = verbose; }
 
   void SetDebug(bool debug) { debug_ = debug; }
+
+  void SetMethod(std::string method) { method_ = method; }
 
   int GetD(void) { return d_; }
 
@@ -223,7 +226,14 @@ class KDAC {
       pre_u_matrix_ = u_matrix_;
       pre_w_matrix_ = w_matrix_;
       PROFILE(OptimizeU(), profiler_.u);
-      PROFILE(OptimizeW(), profiler_.w);
+      if (method_ == "KDAC") {
+        PROFILE(OptimizeW(), profiler_.w);
+      } else if (method_ == "ISM") {
+        PROFILE(OptimizeWISM(), profiler_.w);
+      } else {
+        std::cerr << "Use either KDAC or ISM as the method, exiting" << std::endl;
+        exit(1);
+      }
       u_converge_ = util::CheckConverged(u_matrix_, pre_u_matrix_, threshold2_);
       w_converge_ = util::CheckConverged(w_matrix_, pre_w_matrix_, threshold2_);
       u_w_converge_ = u_converge_ && w_converge_;
@@ -260,7 +270,14 @@ class KDAC {
       pre_u_matrix_ = u_matrix_;
       pre_w_matrix_ = w_matrix_;
       PROFILE(OptimizeU(), profiler_.u);
-      PROFILE(OptimizeW(), profiler_.w);
+      if (method_ == "KDAC") {
+        PROFILE(OptimizeW(), profiler_.w);
+      } else if (method_ == "ISM") {
+        PROFILE(OptimizeWISM(), profiler_.w);
+      } else {
+        std::cerr << "Use either KDAC or ISM as the method, exiting" << std::endl;
+        exit(1);
+      }
       u_converge_ = util::CheckConverged(u_matrix_, pre_u_matrix_, threshold2_);
       w_converge_ = util::CheckConverged(w_matrix_, pre_w_matrix_, threshold2_);
       u_w_converge_ = u_converge_ && w_converge_;
@@ -338,6 +355,8 @@ class KDAC {
   bool max_time_exceeded_;
   // Maximum time before exiting, 72000 seconds by default
   int max_time_;
+  // Either KDAC or ISM
+  std::string method_;
 
 
   Vector<T> GenOrthogonal(const Matrix<T> &space,
@@ -446,8 +465,6 @@ class KDAC {
     }
   }
 
-
-
   void OptimizeU(void) {
     GenKernelMatrix();
     // Generate degree matrix from the kernel matrix
@@ -469,6 +486,41 @@ class KDAC {
     CheckFiniteOptimizeU();
     if (verbose_)
       std::cout << "U Optimized" << std::endl;
+  }
+
+  virtual void OptimizeWISM(void) {
+    // If this is the first time to update w_matrix, then w_matrix still is
+    // d x d. Now we initialize it to 0
+    if (w_matrix_.cols() == d_)
+      w_matrix_ = Matrix<T>::Zero(d_, q_);
+
+    float sigma_sq = pow(constant_, 2);
+
+    Matrix<T> phi_w = Matrix<T>::Zero(d_, d_);
+    for (int i = 0; i < n_; i++) {
+      for (int j = 0; j < n_; j++) {
+        Vector<T> delta_x_ij =
+            this->x_matrix_.row(i) - this->x_matrix_.row(j);
+        Matrix<T> a_ij = delta_x_ij * delta_x_ij.transpose();
+        Matrix<T> waw = w_matrix_.transpose() * a_ij * w_matrix_;
+        T value = gamma_matrix_(i, j) * exp( -waw.trace() / (2.0 * sigma_sq) );
+        phi_w = phi_w + a_ij * value;
+      }
+    }
+    Eigen::EigenSolver<Matrix<T>> solver(phi_w);
+    util::Print(solver.eigenvectors(), "eigen vectors");
+//    for (int i = 0; i < q_; i++)
+//      w_matrix_.col(i) = solver.eigenvectors().col(q_ - i);
+    Vector<T> eigen_values = solver.eigenvalues().real();
+    std::vector<T> v(eigen_values.data(), eigen_values.data() + eigen_values.size());
+    std::vector<size_t> idx(v.size());
+    std::iota(idx.begin(), idx.end(), 0);
+    std::sort(idx.begin(), idx.end(),
+              [&v](size_t t1, size_t t2)
+              {return v[t1] < v[t2];});
+
+    for (int i = 0; i < q_; i++)
+      w_matrix_.col(i) = solver.eigenvectors().col(idx[i]).real();
   }
 
   virtual void OptimizeW(void) {
