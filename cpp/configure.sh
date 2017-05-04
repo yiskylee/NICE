@@ -1,5 +1,5 @@
 if [ ! -d build ]; then
-  sudo mkdir build
+  mkdir build
 fi
 cd build
-sudo cmake ..
+cmake ..

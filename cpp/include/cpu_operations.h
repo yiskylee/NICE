@@ -52,7 +52,7 @@ class CpuOperations {
   }
 
   /// This is a function that calculates the transpose Vector of the
-  // input Vecto
+  // input Vector
   ///
   /// \param a
   /// Input Vector
