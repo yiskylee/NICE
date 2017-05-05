@@ -25,7 +25,7 @@
 #include <iostream>
 #include "Eigen/Dense"
 #include "gtest/gtest.h"
-#include "include/cpu_operations.h"
+#include "include/logistic_regression.h"
 #include "include/matrix.h"
 
 template<typename T>
@@ -40,11 +40,11 @@ class LogisticRegressionTest : public ::testing::Test {
   Nice::Vector<T> predictions;
 
   void LogisticRegressionFit() {
-    coeff= Nice::CpuOperations<T>::LogisticRegressionFit(training_x, training_y, iterations, alpha);
+    coeff= Nice::LogisticRegression<T>::Fit(training_x, training_y, iterations, alpha);
   }
 
   void LogisticRegressionPredict() {
-    predictions = Nice::CpuOperations<T>::LogisticRegressionPredict(predict_x, coeff);
+    predictions = Nice::LogisticRegression<T>::Predict(predict_x, coeff);
   }
 };
 
