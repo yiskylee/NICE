@@ -39,24 +39,22 @@ namespace Nice {
 template<typename T>
 class LogisticRegression {
  public:
-  static T sigmoid( T x){
-    return 1 / (1 + std::exp(-x));
-  }
-
- 
   static Vector<T> Predict(const Matrix<T> &inputs, const Vector<T> thetas){
-    Vector<T> predictions;
-    Vector<T> mult_thetas;
+    Vector<T> predictions, mult_thetas, yhat;
+    Matrix<T> product;
+
     mult_thetas.resize(thetas.size()-1);  
     mult_thetas << thetas(1), thetas(2);
-    Matrix<T> product;
-    Vector<T> yhat; 
+
     product.resize(inputs.rows(),inputs.cols());
     product = inputs * mult_thetas;
+
     yhat.resize(inputs.rows());
     yhat = product.rowwise().sum();
     yhat = yhat.array() + thetas(0);
+
     predictions.resize(inputs.rows());
+    
     // TODO Parallelize exponential function
     for (int i = 0; i < yhat.size(); i++){
       T value = (1 / (1 + (exp(-yhat(i)))));  
@@ -69,19 +67,34 @@ class LogisticRegression {
   /// returns it as a vector. 
   ///
   /// 
-  static Vector<T> Fit(const Matrix<T> &x, const Vector<T> &y, int iterations, T alpha){
-    Vector<T> thetas;
-    thetas.resize(3);
-    thetas << 0, 0, 0;
-    Vector<T> z, grad;
+  static Vector<T> Fit(const Matrix<T> &xin, const Vector<T> &y, int iterations, T alpha){
+    Matrix<T> x;
+    Vector<T> z, grad, thetas;
+
+    x.resize(xin.rows(), xin.cols() + 1);
+    x.col(0).setOnes();
+
+    // TODO Parallelize the shift function
+    for(int i = 1; i <= xin.cols(); ++i) {
+      x.col(i) = xin.col(i - 1);
+    }
+
+    thetas.resize(x.cols());
+    thetas.setZero();
+    z.resize(x.rows());
+    
     for (int i = 0; i < iterations; i++){
-      z.resize(x.rows());
-      grad.resize(thetas.size());
-      z = Predict(x, thetas); 
+      z = x * thetas;
+      // TODO Parallelize exponential function
+      for (int i = 0; i < z.size(); i++){
+        T value = (1 / (1 + (exp(-z(i)))));  
+        z(i) = value;  
+      }
       thetas -= alpha * (x.transpose() * (z - y)) / y.size();
+      
     }
     return thetas;
   }
 };
 }  // namespace Nice
-#endif  // CPP_INCLUDE_CPU_OPERATIONS_H_
+#endif  // CPP_INCLUDE:_LOGISITC_REGRESSION_H

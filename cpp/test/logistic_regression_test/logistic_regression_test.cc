@@ -74,18 +74,18 @@ TYPED_TEST(LogisticRegressionTest, MatrixLogisticRegressionPredict) {
 
 TYPED_TEST(LogisticRegressionTest, MatrixLogisticRegressionFit) {
   this->training_x.resize(10,2);
-  this-> iterations = 1000;
-  this-> alpha = 0.1;
-  this->training_x << 2.781,2.550,
-	     1.465,2.362,
-	     3.396,4.400,
-	     1.388,1.850,
-	     3.064,3.005,
-	     7.627,2.759,
-	     5.332,2.088,
-	     6.922,1.771,
-	     8.675,-0.242,
-	     7.673,3.508;
+  this-> iterations = 100;
+  this-> alpha = 0.3;
+  this->training_x << 2, .5,
+               2, 0,
+               4, 1,
+               5, 2,
+               7, 3,
+               1, 3,
+               2, 2,
+               4, 3,
+               3, 5,
+               6, 3.5;  
   this->training_y.resize(10);
   this->training_y << 0, 0, 0, 0, 0, 1, 1, 1, 1, 1;
   this->coeff.resize(3);
