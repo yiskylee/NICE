@@ -38,28 +38,32 @@ namespace Nice {
 // Abstract class of common logistic regression functions
 template<typename T>
 class LogisticRegression {
+ private:
+  static Matrix<T> Sigmoid(const Matrix<T> &x){
+    return (1 / (1 +
+            (-x).array().unaryExpr(std::ptr_fun(std::exp<T>)))).matrix();
+  }
  public:
   static Vector<T> Predict(const Matrix<T> &inputs, const Vector<T> thetas){
     Vector<T> predictions, mult_thetas, yhat;
     Matrix<T> product;
 
-    mult_thetas.resize(thetas.size()-1);  
-    mult_thetas << thetas(1), thetas(2);
-
+    T theta_0 = thetas(0);    
+    
     product.resize(inputs.rows(),inputs.cols());
-    product = inputs * mult_thetas;
+    product = inputs * thetas.block(1,0,(thetas.rows()-1),(thetas.cols()-1));
 
     yhat.resize(inputs.rows());
     yhat = product.rowwise().sum();
-    yhat = yhat.array() + thetas(0);
+    yhat = yhat.array() + theta_0;
 
     predictions.resize(inputs.rows());
-    
+    predictions = Sigmoid(yhat);
     // TODO Parallelize exponential function
-    for (int i = 0; i < yhat.size(); i++){
+    /**for (int i = 0; i < yhat.size(); i++){
       T value = (1 / (1 + (exp(-yhat(i)))));  
       predictions(i) = value;  
-    }
+    }**/
     return predictions;
   }
 
@@ -85,11 +89,12 @@ class LogisticRegression {
     
     for (int i = 0; i < iterations; i++){
       z = x * thetas;
+      z = Sigmoid(z);
       // TODO Parallelize exponential function
-      for (int i = 0; i < z.size(); i++){
+      /**for (int i = 0; i < z.size(); i++){
         T value = (1 / (1 + (exp(-z(i)))));  
         z(i) = value;  
-      }
+      }**/
       thetas -= alpha * (x.transpose() * (z - y)) / y.size();
       
     }
