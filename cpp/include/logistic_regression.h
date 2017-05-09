@@ -45,13 +45,11 @@ class LogisticRegression {
   }
  public:
   static Vector<T> Predict(const Matrix<T> &inputs, const Vector<T> thetas){
-    Vector<T> predictions, mult_thetas, yhat;
+    Vector<T> predictions, yhat;
     Matrix<T> product;
 
-    T theta_0 = thetas(0);    
-    
     product.resize(inputs.rows(),inputs.cols());
-    product = inputs * thetas.block(1,0,(thetas.rows()-1),(thetas.cols()-1));
+    product = inputs * thetas.bottomRows(thetas.rows()-1);
 
     yhat.resize(inputs.rows());
     yhat = product.rowwise().sum();
@@ -73,7 +71,7 @@ class LogisticRegression {
   /// 
   static Vector<T> Fit(const Matrix<T> &xin, const Vector<T> &y, int iterations, T alpha){
     Matrix<T> x;
-    Vector<T> z, grad, thetas;
+    Vector<T> gradient, thetas;
 
     x.resize(xin.rows(), xin.cols() + 1);
     x.col(0).setOnes();
@@ -85,17 +83,16 @@ class LogisticRegression {
 
     thetas.resize(x.cols());
     thetas.setZero();
-    z.resize(x.rows());
+    gradient.resize(x.rows());
     
     for (int i = 0; i < iterations; i++){
-      z = x * thetas;
-      z = Sigmoid(z);
+      gradient = x * thetas;
       // TODO Parallelize exponential function
-      /**for (int i = 0; i < z.size(); i++){
-        T value = (1 / (1 + (exp(-z(i)))));  
-        z(i) = value;  
-      }**/
-      thetas -= alpha * (x.transpose() * (z - y)) / y.size();
+      for (int i = 0; i < gradient.size(); i++){
+        T value = (1 / (1 + (exp(-gradient(i)))));  
+        gradient(i) = value;  
+      }
+      thetas -= alpha * (x.transpose() * (gradient - y)) / y.size();
       
     }
     return thetas;
