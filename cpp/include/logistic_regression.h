@@ -53,15 +53,15 @@ class LogisticRegression {
 
     yhat.resize(inputs.rows());
     yhat = product.rowwise().sum();
-    yhat = yhat.array() + theta_0;
+    yhat = yhat.array() + thetas(0);
 
     predictions.resize(inputs.rows());
-    predictions = Sigmoid(yhat);
+    //predictions = Sigmoid(yhat);
     // TODO Parallelize exponential function
-    /**for (int i = 0; i < yhat.size(); i++){
+    for (int i = 0; i < yhat.size(); i++){
       T value = (1 / (1 + (exp(-yhat(i)))));  
       predictions(i) = value;  
-    }**/
+    }
     return predictions;
   }
 
