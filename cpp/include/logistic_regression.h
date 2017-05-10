@@ -69,18 +69,12 @@ class LogisticRegression {
   /// returns it as a vector. 
   ///
   /// 
-  static Vector<T> Fit(const Matrix<T> &xin, const Vector<T> &y, int iterations, T alpha){
-    Matrix<T> x;
+  static Vector<T> Fit( Matrix<T> &x, const Vector<T> &y, int iterations, T alpha){
     Vector<T> gradient, thetas;
 
-    x.resize(xin.rows(), xin.cols() + 1);
+    x.conservativeResize(x.rows(), x.cols() + 1);
+    x.rightCols(x.cols()-1) = x.leftCols(x.cols()-1);
     x.col(0).setOnes();
-
-    // TODO Parallelize the shift function
-    for(int i = 1; i <= xin.cols(); ++i) {
-      x.col(i) = xin.col(i - 1);
-    }
-
     thetas.resize(x.cols());
     thetas.setZero();
     gradient.resize(x.rows());
