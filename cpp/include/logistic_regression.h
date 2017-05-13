@@ -39,9 +39,9 @@ namespace Nice {
 template<typename T>
 class LogisticRegression {
  private:
-  static Matrix<T> Sigmoid(const Matrix<T> &x){
+  T Sigmoid(T x){
     return (1 / (1 +
-            (-x).array().unaryExpr(std::ptr_fun(std::exp<T>)))).matrix();
+            (-x)));
   }
  public:
   static Vector<T> Predict(const Matrix<T> &inputs, const Vector<T> thetas){
@@ -56,12 +56,11 @@ class LogisticRegression {
     yhat = yhat.array() + thetas(0);
 
     predictions.resize(inputs.rows());
-    //predictions = Sigmoid(yhat);
-    // TODO Parallelize exponential function
-    for (int i = 0; i < yhat.size(); i++){
-      T value = (1 / (1 + (exp(-yhat(i)))));  
-      predictions(i) = value;  
-    }
+
+    predictions = ((-1 * yhat).array().exp()) + 1;
+    predictions = predictions.array().inverse();
+    predictions = predictions.matrix();
+    predictions.resize(inputs.rows());
     return predictions;
   }
 
@@ -69,11 +68,19 @@ class LogisticRegression {
   /// returns it as a vector. 
   ///
   /// 
-  static Vector<T> Fit( Matrix<T> &x, const Vector<T> &y, int iterations, T alpha){
+  static Vector<T> Fit( Matrix<T> &xin, const Vector<T> &y, int iterations, T alpha){
     Vector<T> gradient, thetas;
-
+    Matrix<T> x;
     x.conservativeResize(x.rows(), x.cols() + 1);
-    x.rightCols(x.cols()-1) = x.leftCols(x.cols()-1);
+    std::cout << x << std::endl;
+    /**x.rightCols(x.cols()-1) = x.leftCols(x.cols()-1);
+    std::cout << x << std::endl;
+    x.col(0).setOnes();**/
+    x.resize(xin.rows(), xin.cols() + 1); 
+    // TODO Parallelize the shift function
+    for(int i = 1; i <= xin.cols(); ++i) {
+            x.col(i) = xin.col(i - 1);
+    }
     x.col(0).setOnes();
     thetas.resize(x.cols());
     thetas.setZero();
@@ -81,11 +88,10 @@ class LogisticRegression {
     
     for (int i = 0; i < iterations; i++){
       gradient = x * thetas;
-      // TODO Parallelize exponential function
-      for (int i = 0; i < gradient.size(); i++){
-        T value = (1 / (1 + (exp(-gradient(i)))));  
-        gradient(i) = value;  
-      }
+      gradient = ((-1 * gradient).array().exp()) + 1;
+      gradient = gradient.array().inverse();
+      gradient = gradient.matrix();
+      gradient.resize(x.rows());
       thetas -= alpha * (x.transpose() * (gradient - y)) / y.size();
       
     }
