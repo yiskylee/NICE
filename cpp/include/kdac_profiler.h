@@ -39,6 +39,7 @@ struct KDACProfiler {
   Timer kmeans;
   Timer gen_grad;
   Timer update_g_of_w;
+  Timer exit_timer;
 
 };
 } // namespace Nice

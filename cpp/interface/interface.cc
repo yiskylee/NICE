@@ -84,6 +84,7 @@ BOOST_PYTHON_MODULE(Nice4Py) {
         .def("GetK", &Nice::KDACInterface<float>::GetK)
         .def("GetW", &Nice::KDACInterface<float>::GetW)
         .def("GetU", &Nice::KDACInterface<float>::GetU)
+        .def("SetW", &Nice::KDACInterface<float>::SetW)
         .def("DiscardLastRun", &Nice::KDACInterface<float>::DiscardLastRun);
     boost::python::class_<Nice::CPUOperationsInterface<float>>("CPUOp")
         .def("GenKernelMatrix",

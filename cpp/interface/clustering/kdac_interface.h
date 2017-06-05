@@ -87,6 +87,11 @@ class KDACInterface {
         kdac_ -> SetQ(q);
         continue;
       }
+      if (strcmp("max_time", boost::python::extract<char *>(key_list[i])) == 0) {
+        int max_time = boost::python::extract<int>(params["max_time"]);
+        kdac_ -> SetMaxTime(max_time);
+        continue;
+      }
       if (strcmp("lambda", boost::python::extract<char *>(key_list[i])) == 0) {
         double lambda = boost::python::extract<double>(params["lambda"]);
         kdac_ -> SetLambda(lambda);
@@ -237,6 +242,13 @@ class KDACInterface {
   }
   void DiscardLastRun() {
     kdac_ -> DiscardLastRun();
+  }
+  void SetW(PyObject *input_obj, int row, int col) {
+    Py_buffer input_buf;
+    PyObject_GetBuffer(input_obj, &input_buf, PyBUF_SIMPLE);
+    MatrixMap<T> w_matrix(reinterpret_cast<T *>(input_buf.buf), row, col);
+    kdac_ -> SetW(w_matrix);
+    PyBuffer_Release(&input_buf);
   }
 
  protected:

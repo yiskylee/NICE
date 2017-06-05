@@ -34,6 +34,7 @@ class Timer {
   std::vector<double> vec_;
   std::vector<double> vec_temp_;
 
+
   void Start() {
     watch_.Start();
   }
@@ -75,8 +76,6 @@ class Timer {
   int GetNumIters() {
     return vec_.size();
   }
-
-
 
  private:
   StopWatch watch_;
