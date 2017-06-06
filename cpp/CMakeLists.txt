@@ -24,6 +24,7 @@ message(STATUS "Eigen path: " ${EIGEN_INCLUDE_DIRS})
 set(COMMON_INCLUDES ${PROJECT_SOURCE_DIR})
 include_directories(${EIGEN_INCLUDE_DIRS})
 include_directories(${COMMON_INCLUDES}) 
+message(STATUS "Common include: " ${COMMON_INCLUDES})
 
 # Set source files
 file(GLOB_RECURSE SOURCES RELATIVE ${CMAKE_SOURCE_DIR} src/*.cc)
@@ -65,22 +66,22 @@ if(CUDA_FOUND)
   # COMPILE_RESULT_VAR is TRUE when compile succeeds
   # RUN_RESULT_VAR is zero when a GPU is found
   if(COMPILE_RESULT_VAR AND NOT RUN_RESULT_VAR)
-      set(CUDA_HAVE_GPU TRUE CACHE BOOL "Whether CUDA-capable GPU is present")
+      set(CUDA_AND_GPU TRUE CACHE BOOL "Whether CUDA-capable GPU is present")
   else()
-      set(CUDA_HAVE_GPU FALSE CACHE BOOL "Whether CUDA-capable GPU is present")
+      set(CUDA_AND_GPU FALSE CACHE BOOL "Whether CUDA-capable GPU is present")
   endif()
 else()
-  set(CUDA_HAVE_GPU FALSE CACHE BOOL "Whether CUDA-capable GPU is present")
+  set(CUDA_AND_GPU FALSE CACHE BOOL "Whether CUDA-capable GPU is present")
 endif()
 
 # Buld NICE library with/without CUDA
-if (CUDA_HAVE_GPU)
+if (CUDA_AND_GPU)
 
   # Print messge to indicate that CUDA exists
   message(STATUS "GPU device exists")
 
   # Add definition
-  add_definitions(-DNEED_CUDA)
+  add_definitions(-DCUDA_AND_GPU)
 
   #include the built-in findCUDA cmake scripts
   include(FindCUDA)
@@ -135,7 +136,7 @@ if (enable-test)
   include_directories(${GTEST_INCLUDE_DIRS})
 
   # Add source files according to machine setup
-  if (CUDA_HAVE_GPU)
+  if (CUDA_AND_GPU)
     file(GLOB_RECURSE TEST_SRC_FILES RELATIVE 
          ${PROJECT_SOURCE_DIR} 
          test/cpu_operations_test/*.cc
