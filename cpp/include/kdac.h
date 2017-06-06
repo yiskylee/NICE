@@ -489,10 +489,7 @@ class KDAC {
   }
 
   virtual void OptimizeWISM(void) {
-    // If this is the first time to update w_matrix, then w_matrix still is
-    // d x d. Now we initialize it to 0
-    if (w_matrix_.cols() == d_)
-      w_matrix_ = Matrix<T>::Zero(d_, q_);
+
 
     float sigma_sq = pow(constant_, 2);
 
@@ -628,8 +625,13 @@ class KDAC {
     CheckQD();
     // When the user does not initialize W using SetW()
     // W matrix is initilized to be an identity matrix
-    if (w_matrix_.cols() == 0)
-      w_matrix_ = Matrix<T>::Identity(d_, q_);
+    if (w_matrix_.cols() == 0) {
+      if (method_ == "KDAC") {
+        w_matrix_ = Matrix<T>::Identity(d_, q_);
+      } else if (method_ == "ISM") {
+        w_matrix_ = Matrix<T>::Zero(d_, q_);
+      }
+    }
 
     h_matrix_ = Matrix<T>::Identity(n_, n_)
         - Matrix<T>::Constant(n_, n_, 1) / static_cast<T>(n_);
@@ -648,9 +650,13 @@ class KDAC {
 
     // When the user does not initialize W using SetW()
     // W matrix is initilized to be an identity matrix
-    if (w_matrix_.cols() == 0)
-      w_matrix_ = Matrix<T>::Identity(d_, q_);
-
+    if (w_matrix_.cols() == 0) {
+      if (method_ == "KDAC") {
+        w_matrix_ = Matrix<T>::Identity(d_, q_);
+      } else if (method_ == "ISM") {
+        w_matrix_ = Matrix<T>::Zero(d_, q_);
+      }
+    }
     h_matrix_ = Matrix<T>::Identity(n_, n_)
         - Matrix<T>::Constant(n_, n_, 1) / static_cast<T>(n_);
     y_matrix_ = y_matrix;
