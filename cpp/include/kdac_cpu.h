@@ -29,8 +29,8 @@
 // case suffixed with "_matrix". For example:
 // matrix U in the paper is named u_matrix in this implementation.
 
-#ifndef CPP_INCLUDE_KDAC_CPU_H
-#define CPP_INCLUDE_KDAC_CPU_H
+#ifndef CPP_INCLUDE_KDAC_CPU_H_
+#define CPP_INCLUDE_KDAC_CPU_H_
 
 #include "include/kdac.h"
 
@@ -178,7 +178,7 @@ class KDACCPU: public KDAC<T> {
           T g_of_w = this->g_of_w_(i, j);
           w_gradient += -exp_term * gamma * g_of_w / sigma_sq *
               delta_w * delta_x_ij;
-//          T exp_term = exp(static_cast<T>(-w_l.transpose() * a_matrix_ij * w_l)
+//          T exp_term = exp(static_cast<T>(-w_l.transpose() * a_matrix_ij*w_l)
 //                               / (2.0 * pow(this->constant_, 2)));
 //          w_gradient += -(this->gamma_matrix_(i, j)) * (this->g_of_w_(i, j))
 //              * exp_term * a_matrix_ij * w_l / pow(this->constant_, 2);
@@ -207,6 +207,6 @@ class KDACCPU: public KDAC<T> {
     this->profiler_.update_g_of_w.Record();
   }
 };
-}  // namespace NICE
+}  // namespace Nice
 
-#endif  // CPP_INCLUDE_KDAC_CPU_H
+#endif  // CPP_INCLUDE_KDAC_CPU_H_

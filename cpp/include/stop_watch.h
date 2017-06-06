@@ -33,6 +33,7 @@ class StopWatch {
   struct timeval start_;
   struct timeval end_;
   bool started_;
+
  public:
   StopWatch() :
     started_(false) {}
@@ -51,12 +52,14 @@ class StopWatch {
     }
   }
   double DiffInMs() {
-    return (double)(end_.tv_sec * 1000 + static_cast<double>(end_.tv_usec) / 1000) -
-      (double)(start_.tv_sec * 1000 + static_cast<double>(start_.tv_usec) / 1000);
+    return static_cast<double>(end_.tv_sec * 1000 +
+        static_cast<double>(end_.tv_usec) / 1000) -
+        static_cast<double>(start_.tv_sec * 1000 +
+            static_cast<double>(start_.tv_usec) / 1000);
   }
 };
 
-} // namespace Nice
+}  // namespace Nice
 
 #endif  // CPP_INCLUDE_STOP_WATCH_H_
 

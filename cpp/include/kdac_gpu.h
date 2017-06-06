@@ -29,8 +29,8 @@
 // case suffixed with "_matrix". For example:
 // matrix U in the paper is named u_matrix in this implementation.
 
-#ifndef CPP_INCLUDE_KDAC_GPU_H
-#define CPP_INCLUDE_KDAC_GPU_H
+#ifndef CPP_INCLUDE_KDAC_GPU_H_
+#define CPP_INCLUDE_KDAC_GPU_H_
 
 
 #include "include/kdac.h"
@@ -43,7 +43,7 @@ class KDACGPU: public KDAC<T> {
   /// This is the default constructor for KDACGPU
   /// Number of clusters c and reduced dimension q will be both set to 2
   KDACGPU() :
-      block_limit_(256){}
+      block_limit_(256) {}
 
   ~KDACGPU() {
     // Free parameters, intermediate delta and parameters
@@ -75,7 +75,7 @@ class KDACGPU: public KDAC<T> {
   void UpdateGOfW(const Vector<T> &w_l);
 
  private:
-  T* x_matrix_d_; // Input matrix X (n by d) on device
+  T* x_matrix_d_;  // Input matrix X (n by d) on device
   T* gamma_matrix_d_;
   T* waw_matrix_d_;
   T* waf_matrix_d_;
@@ -159,6 +159,6 @@ class KDACGPU: public KDAC<T> {
     KDAC<T>::OptimizeW();
   }
 };
-}  // namespace NICE
+}  // namespace Nice
 
-#endif  // CPP_INCLUDE_KDAC_GPU_H
+#endif  // CPP_INCLUDE_KDAC_GPU_H_

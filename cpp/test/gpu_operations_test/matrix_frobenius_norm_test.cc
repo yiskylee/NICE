@@ -67,7 +67,7 @@ class GpuFrobeniusNormTest : public ::testing::Test {  // Inherits testing::Test
     // Create matrix
     a_ = Nice::Matrix<T>::Random(row_, col_);
     a_vec_ = Nice::Vector<T>(4);
-    a_vec_ << 1,2,3,4;
+    a_vec_ << 1, 2, 3, 4;
 
     Nice::CpuOperations<T> cpu_op;
 

@@ -29,14 +29,15 @@
 // case suffixed with "_matrix". For example:
 // matrix U in the paper is named u_matrix in this implementation.
 
-#ifndef CPP_INCLUDE_KDAC_H
-#define CPP_INCLUDE_KDAC_H
+#ifndef CPP_INCLUDE_KDAC_H_
+#define CPP_INCLUDE_KDAC_H_
+#include <tgmath.h>
 #include <functional>
 #include <vector>
 #include <cmath>
 #include <valarray>
-#include <tgmath.h>
 #include <numeric>
+#include <limits>
 #include "include/matrix.h"
 #include "include/vector.h"
 #include "include/cpu_operations.h"
@@ -93,7 +94,7 @@ class KDAC {
       verbose_(false),
       debug_(false),
       max_time_exceeded_(false),
-      max_time_(10){}
+      max_time_(10) {}
 
   ~KDAC() {}
   KDAC(const KDAC &rhs) {}
@@ -503,7 +504,8 @@ class KDAC {
             util::CheckConverged(objective, pre_objective, threshold1_);
       }
       UpdateGOfW(w_l);
-      // TODO: Need to learn about if using Vector<T> &w_l = w_matrix_.col(l)
+      // TODO(yiskylee):
+      // Need to learn about if using Vector<T> &w_l = w_matrix_.col(l)
       if (verbose_)
         std::cout << "Column " << l+1 << " cost: " << objective << " | ";
     }
@@ -535,7 +537,8 @@ class KDAC {
         *w_l = -(*w_l);
         GenPhi(*w_l, gradient, true);
       }
-      while ((phi_of_alpha_ < phi_of_zero_ + alpha_ * a1 * phi_of_zero_prime_)) {
+      while ((phi_of_alpha_ < phi_of_zero_ +
+          alpha_ * a1 * phi_of_zero_prime_)) {
         alpha_ = alpha_ * rho;
         GenPhi(*w_l, gradient, false);
       }
@@ -544,7 +547,6 @@ class KDAC {
   }
 
   void CheckFiniteOptimizeU(void) {
-
     util::CheckFinite(k_matrix_, "Kernel");
     util::CheckFinite(d_matrix_to_the_minus_half_, "d_matrix_to_minus_half");
     util::CheckFinite(l_matrix_, "L");
@@ -622,10 +624,7 @@ class KDAC {
 
   virtual void GenPhiCoeff(const Vector<T> &w_l, const Vector<T> &gradient) = 0;
   virtual Vector<T> GenWGradient(const Vector<T> &w_l) = 0;
-
-
-
 };
-}  // namespace NICE
+}  // namespace Nice
 
-#endif  // CPP_INCLUDE_KDAC_H
+#endif  // CPP_INCLUDE_KDAC_H_

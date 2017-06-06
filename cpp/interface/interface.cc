@@ -32,32 +32,39 @@
 #include "include/gpu_operations.h"
 #include "include/timer.h"
 #include "clustering/kdac_interface.h"
-#include "cpu_operations_interface.h"
+#include "interface/cpu_operations_interface.h"
 
-//void (Nice::KDACCPUInterface<float>::*Fit1Float)(PyObject *, int row, int col)
+// void (Nice::KDACCPUInterface<float>::*Fit1Float)
+// (PyObject *, int row, int col)
 //  = &Nice::KDACCPUInterface<float>::Fit;
-//void (Nice::KDACCPUInterface<float>::*Fit2Float)()
+// void (Nice::KDACCPUInterface<float>::*Fit2Float)()
 //  = &Nice::KDACCPUInterface<float>::Fit;
-//void (Nice::KDACCPUInterface<float>::*Fit3Float)(PyObject *, int row_1, int col_1,
+// void (Nice::KDACCPUInterface<float>::*Fit3Float)
+// (PyObject *, int row_1, int col_1,
 //                                  PyObject *, int row_2, int col_2)
 //  = &Nice::KDACCPUInterface<float>::Fit;
 //
-//void (Nice::KDACGPUInterface<float>::*GPUFit1Float)(PyObject *, int row, int col)
-//= &Nice::KDACGPUInterface<float>::Fit;
-//void (Nice::KDACGPUInterface<float>::*GPUFit2Float)()
-//= &Nice::KDACGPUInterface<float>::Fit;
-//void (Nice::KDACGPUInterface<float>::*GPUFit3Float)(PyObject *, int row_1, int col_1,
-//                                              PyObject *, int row_2, int col_2)
-//= &Nice::KDACGPUInterface<float>::Fit;
+// void (Nice::KDACGPUInterface<float>::*GPUFit1Float)
+// (PyObject *, int row, int col)
+// = &Nice::KDACGPUInterface<float>::Fit;
+// void (Nice::KDACGPUInterface<float>::*GPUFit2Float)()
+// = &Nice::KDACGPUInterface<float>::Fit;
+// void (Nice::KDACGPUInterface<float>::*GPUFit3Float)
+// (PyObject *, int row_1, int col_1,
+//
+// PyObject *, int row_2, int col_2)
+// = &Nice::KDACGPUInterface<float>::Fit;
 //
 //
-//void (Nice::KDACCPUInterface<double>::*Fit1Double)(PyObject *, int row, int col)
-//= &Nice::KDACCPUInterface<double>::Fit;
-//void (Nice::KDACCPUInterface<double>::*Fit2Double)()
-//= &Nice::KDACCPUInterface<double>::Fit;
-//void (Nice::KDACCPUInterface<double>::*Fit3Double)(PyObject *, int row_1, int col_1,
+// void (Nice::KDACCPUInterface<double>::*Fit1Double)
+// (PyObject *, int row, int col)
+// = &Nice::KDACCPUInterface<double>::Fit;
+// void (Nice::KDACCPUInterface<double>::*Fit2Double)()
+// = &Nice::KDACCPUInterface<double>::Fit;
+// void (Nice::KDACCPUInterface<double>::*Fit3Double)
+// (PyObject *, int row_1, int col_1,
 //                                         PyObject *, int row_2, int col_2)
-//= &Nice::KDACCPUInterface<double>::Fit;
+// = &Nice::KDACCPUInterface<double>::Fit;
 
 void (Nice::KDACInterface<float>::*Fit0Arg)()
 = &Nice::KDACInterface<float>::Fit;
@@ -139,15 +146,15 @@ BOOST_PYTHON_MODULE(Nice4Py) {
 //}
 
 // Explicit Instantiation
-//template
-//class Nice::KDACInterface<float>;
-//template
-//class Nice::KDACInterface<double>;
-//template
-//class Nice::KDACCPUInterface<float>;
-//template
-//class Nice::KDACCPUInterface<double>;
-//template
-//class Nice::KDACGPUInterface<float>;
-//template
-//class Nice::KDACGPUInterface<double>;
+// template
+// class Nice::KDACInterface<float>;
+// template
+// class Nice::KDACInterface<double>;
+// template
+// class Nice::KDACCPUInterface<float>;
+// template
+// class Nice::KDACCPUInterface<double>;
+// template
+// class Nice::KDACGPUInterface<float>;
+// template
+// class Nice::KDACGPUInterface<double>;

@@ -23,9 +23,9 @@
 #ifndef CPP_INCLUDE_MODEL_H_
 #define CPP_INCLUDE_MODEL_H_
 
-//#include <string>
+#include <string>
 #include "include/matrix.h"
-//#include "include/vector.h"
+#include "include/vector.h"
 
 namespace Nice {
 
@@ -34,14 +34,11 @@ class Model {
  public:
 //  static Vector<T> default_label = Vector<T>::Random(1,1);
 //  virtual void Fit(Matrix<T> input_data, Vector<T> label = default_label) = 0;
-  virtual Vector<unsigned long> FitPredict(const Matrix<T> &input_data, int k) = 0;
+  virtual Vector<uint64_t>
+  FitPredict(const Matrix<T> &input_data, int k) = 0;
 //  virtual Vector<T> Predict(Matrix<T> x) = 0;
   virtual ~Model() {}
 };
 
-}
-
-
-
-
+}  // namespace Nice
 #endif  // CPP_INCLUDE_MODEL_H_

@@ -20,8 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef CPP_INCLUDE_KDAC_PROFILER_H
-#define CPP_INCLUDE_KDAC_PROFILER_H
+#ifndef CPP_INCLUDE_KDAC_PROFILER_H_
+#define CPP_INCLUDE_KDAC_PROFILER_H_
 
 #include <vector>
 #include <numeric>
@@ -40,7 +40,6 @@ struct KDACProfiler {
   Timer gen_grad;
   Timer update_g_of_w;
   Timer exit_timer;
-
 };
-} // namespace Nice
-#endif  // CPP_INCLUDE_KDAC_PROFILER_H
+}  // namespace Nice
+#endif  // CPP_INCLUDE_KDAC_PROFILER_H_

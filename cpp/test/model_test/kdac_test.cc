@@ -124,23 +124,19 @@ class KDACTest : public ::testing::Test {
     data_file_path_ = base_dir_ + data_type_ + suffix;
     label_file_path_ = base_dir_ + label_type_ + suffix;
   }
-
 };
 
-typedef ::testing::Types<float, int, long, double> AllTypes;
-typedef ::testing::Types<int, long> IntTypes;
 typedef ::testing::Types<float> FloatTypes;
-typedef ::testing::Types<float, double> BothTypes;
-
+// typedef ::testing::Types<float, double> BothTypes;
 
 TYPED_TEST_CASE(KDACTest, FloatTypes);
 
-#define EXPECT_MATRIX_EQ(a, ref)\
-    EXPECT_EQ(a.rows(), ref.rows());\
-    EXPECT_EQ(a.cols(), ref.cols());\
-    for (int i = 0; i < a.rows(); i++)\
-      for (int j = 0; j < a.cols(); j++)\
-        EXPECT_NEAR(double(a(i, j)), double(ref(i, j)), 0.0001);\
+// #define EXPECT_MATRIX_EQ(a, ref)\
+//    EXPECT_EQ(a.rows(), ref.rows());\
+//    EXPECT_EQ(a.cols(), ref.cols());\
+//    for (int i = 0; i < a.rows(); i++)\
+//      for (int j = 0; j < a.cols(); j++)\
+//        EXPECT_NEAR(double(a(i, j)), double(ref(i, j)), 0.0001);\
 
 #define PRINTV(v, num_per_line)\
   for (int i = 0; i < v.rows(); i++) {\

@@ -20,8 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef CPP_INCLUDE_NICE_TIMER_H
-#define CPP_INCLUDE_NICE_TIMER_H
+#ifndef CPP_INCLUDE_TIMER_H_
+#define CPP_INCLUDE_TIMER_H_
 
 #include <vector>
 #include "include/stop_watch.h"
@@ -53,7 +53,8 @@ class Timer {
   // Sum up all the temporarily recorded times and store the sum to vec_
   // Then erase the temporary vector
   void SumRecords() {
-    double total_time = std::accumulate(vec_temp_.begin(), vec_temp_.end(), 0.0);
+    double total_time = std::accumulate(vec_temp_.begin(),
+                                        vec_temp_.end(), 0.0);
     vec_.push_back(total_time);
     vec_temp_.clear();
   }
@@ -68,7 +69,7 @@ class Timer {
 
   Matrix<double> GetTimePerIter() {
     Matrix<double> m(vec_.size(), 1);
-    for(unsigned int i = 0; i < vec_.size(); i++)
+    for (unsigned int i = 0; i < vec_.size(); i++)
       m(i, 0) = vec_[i];
     return m;
   }
@@ -79,9 +80,8 @@ class Timer {
 
  private:
   StopWatch watch_;
-
 };
 
-} // namespace Nice
+}  // namespace Nice
 
-#endif  // CPP_INCLUDE_NICE_TIMER_H
+#endif  // CPP_INCLUDE_TIMER_H_

@@ -81,12 +81,12 @@ TYPED_TEST(GpuVectorScalarMultiplyTest, FuncionalityTest) {
   int scalar = 4.8;
   srand(time(NULL));
   this->CreateTestData(num_elem, scalar);
-  Nice::Vector<TypeParam> gpu_c(num_elem);
+  Nice::Vector <TypeParam> gpu_c(num_elem);
   // Test gpu vector multiplying scalar in Nice
-  Nice::GpuOperations<TypeParam> gpu_op;
+  Nice::GpuOperations <TypeParam> gpu_op;
   gpu_c = gpu_op.Multiply(this->a_, this->b_);
-
   // Verify the result
   for (int i = 0; i < num_elem; i++)
     EXPECT_NEAR(this->c_(i), gpu_c(i), 0.001);
+}
 

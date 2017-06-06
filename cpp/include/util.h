@@ -23,9 +23,9 @@
 #ifndef CPP_INCLUDE_UTIL_H_
 #define CPP_INCLUDE_UTIL_H_
 // Position for Column-Major index
-#define IDXC(i,j,ld) (((j)*(ld))+(i))
+#define IDXC(i, j, ld) (((j)*(ld))+(i))
 // Position for Row-Major index
-#define IDXR(i,j,ld) (((i)*(ld))+(j))
+#define IDXR(i, j, ld) (((i)*(ld))+(j))
 // Pass in a timer and a function, the time taken by that function is then
 // recorded in the timer
 #define PROFILE(func, timer)\
@@ -33,6 +33,7 @@
   func;\
   timer.Stop();\
 
+#include <math.h>
 #include <cstdlib>
 #include <string>
 #include <fstream>
@@ -40,11 +41,9 @@
 #include <algorithm>
 #include <sstream>
 #include <vector>
-#include <math.h>
 
 #include "include/matrix.h"
 #include "include/vector.h"
-//#include "include/cpu_operations.h"
 
 namespace Nice {
 

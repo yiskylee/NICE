@@ -25,6 +25,7 @@
 
 #include <boost/python.hpp>
 #include <iostream>
+#include <string>
 #include "Eigen/Core"
 #include "Eigen/Dense"
 #include "include/cpu_operations.h"
@@ -61,5 +62,5 @@ class CPUOperationsInterface {
     }
   }
 };
-} // namespace Nice
+}  // namespace Nice
 #endif  // CPP_INTERFACE_CPU_OPERATIONS_INTERFACE_H_

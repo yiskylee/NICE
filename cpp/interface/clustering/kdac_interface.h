@@ -29,6 +29,7 @@
 #include <memory>
 #include <vector>
 #include <iostream>
+#include <string>
 
 #include "Eigen/Dense"
 #include "Eigen/Core"
@@ -43,10 +44,12 @@
 
 namespace Nice {
 // The numpy array is stored in row major
-//using IMatrixMap = Eigen::Map< Eigen::Matrix<int, Eigen::Dynamic,
-//                                             Eigen::Dynamic, Eigen::RowMajor> >;
-//using FMatrixMap = Eigen::Map< Eigen::Matrix<float, Eigen::Dynamic,
-//                                             Eigen::Dynamic, Eigen::RowMajor> >;
+// using
+// IMatrixMap = Eigen::Map< Eigen::Matrix<int, Eigen::Dynamic,
+//                                          Eigen::Dynamic, Eigen::RowMajor> >;
+// using
+// FMatrixMap = Eigen::Map< Eigen::Matrix<float, Eigen::Dynamic,
+//                                          Eigen::Dynamic, Eigen::RowMajor> >;
 using DMatrixMap = Eigen::Map< Eigen::Matrix<double, Eigen::Dynamic,
                                              Eigen::Dynamic, Eigen::RowMajor> >;
 
@@ -60,7 +63,7 @@ using VectorMap = Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic,
 template<typename T>
 class KDACInterface {
  public:
-  KDACInterface(std::string device_type) {
+  explicit KDACInterface(std::string device_type) {
     if (device_type == "cpu")
       kdac_ = std::make_shared<Nice::KDACCPU<T>>();
     else if (device_type == "gpu")
@@ -87,7 +90,8 @@ class KDACInterface {
         kdac_ -> SetQ(q);
         continue;
       }
-      if (strcmp("max_time", boost::python::extract<char *>(key_list[i])) == 0) {
+      if (strcmp("max_time",
+                 boost::python::extract<char *>(key_list[i])) == 0) {
         int max_time = boost::python::extract<int>(params["max_time"]);
         kdac_ -> SetMaxTime(max_time);
         continue;
@@ -102,17 +106,20 @@ class KDACInterface {
         has_sigma = true;
         continue;
       }
-      if (strcmp("verbose", boost::python::extract<char *>(key_list[i])) == 0) {
+      if (strcmp("verbose",
+                 boost::python::extract<char *>(key_list[i])) == 0) {
         bool verbose = boost::python::extract<double>(params["verbose"]);
         kdac_ -> SetVerbose(verbose);
         continue;
       }
-      if (strcmp("threshold1", boost::python::extract<char *>(key_list[i])) == 0) {
+      if (strcmp("threshold1",
+                 boost::python::extract<char *>(key_list[i])) == 0) {
         double thresh1 = boost::python::extract<double>(params["threshold1"]);
         kdac_ -> SetThreshold1(thresh1);
         continue;
       }
-      if (strcmp("threshold2", boost::python::extract<char *>(key_list[i])) == 0) {
+      if (strcmp("threshold2",
+                 boost::python::extract<char *>(key_list[i])) == 0) {
         double thresh2 = boost::python::extract<double>(params["threshold2"]);
         kdac_ -> SetThreshold1(thresh2);
         continue;
@@ -203,7 +210,8 @@ class KDACInterface {
 
   void Predict(PyObject *clustering_results_obj, int row, int col) {
     Py_buffer clustering_results_buf;
-    PyObject_GetBuffer(clustering_results_obj, &clustering_results_buf, PyBUF_SIMPLE);
+    PyObject_GetBuffer(clustering_results_obj,
+                       &clustering_results_buf, PyBUF_SIMPLE);
     VectorMap<T> clustering_results(
         reinterpret_cast<T *>(clustering_results_buf.buf), row);
     clustering_results = kdac_ -> Predict();
@@ -255,21 +263,21 @@ class KDACInterface {
   std::shared_ptr<Nice::KDAC<T>> kdac_;
 };
 
-//template <typename T>
-//class KDACGPUInterface: public KDACInterface<T> {
+// template <typename T>
+// class KDACGPUInterface: public KDACInterface<T> {
 // public:
 //  KDACGPUInterface() {
 //    this->kdac_ = std::make_shared<Nice::KDACGPU<T>>();
 //  }
-//};
+// };
 //
-//template <typename T>
-//class KDACCPUInterface: public KDACInterface<T> {
+// template <typename T>
+// class KDACCPUInterface: public KDACInterface<T> {
 // public:
 //  KDACCPUInterface() {
 //    this->kdac_ = std::make_shared<Nice::KDACCPU<T>>();
 //  }
-//};
+// };
 
 }  // namespace Nice
 
