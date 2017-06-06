@@ -9,18 +9,16 @@ find_package(Threads REQUIRED)
 
 set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_MACOSX_RPATH 1)
-set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 if(CMAKE_COMPILER_IS_GNUCXX)
-  add_definitions(-Wall -ansi -Wno-deprecated -pthread -fPIC -std=c++11)
-  #  add_definitions(-Wall -ansi -Wno-deprecated -std=c++11)
+    add_definitions(-Wall -ansi -Wno-deprecated -pthread -fPIC -std=c++11)
+    #  add_definitions(-Wall -ansi -Wno-deprecated -std=c++11)
 endif()
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-  add_definitions(-Wall -ansi -Wno-deprecated -pthread -std=c++11) 
+    add_definitions(-Wall -ansi -Wno-deprecated -pthread -std=c++11)
 endif()
 if(${APPLE})
-  add_definitions(-Wall -ansi -Wno-deprecated -pthread -std=c++11)
+    add_definitions(-Wall -ansi -Wno-deprecated -pthread -std=c++11)
 endif()
-
 set(COMMON_INCLUDES ${PROJECT_SOURCE_DIR})
 include_directories(${EIGEN_INCLUDE_DIRS})
 include_directories(${COMMON_INCLUDES})
@@ -29,11 +27,6 @@ include_directories(${COMMON_INCLUDES})
 include_directories(./build/eigen/src/eigen)
 include_directories(./)
 include_directories(./build/gtest/src/googletest/googletest/include)
-
-#get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
-#foreach(dir ${dirs})
-#  message(STATUS "dir='${dir}'")
-#endforeach()
 
 set(enable-mkl)
 option (enable-mkl "Compile NICE library with MKL" OFF)
@@ -70,27 +63,28 @@ if(CUDA_FOUND)
   # COMPILE_RESULT_VAR is TRUE when compile succeeds
   # RUN_RESULT_VAR is zero when a GPU is found
   if(COMPILE_RESULT_VAR AND NOT RUN_RESULT_VAR)
-      set(CUDA_HAVE_GPU TRUE CACHE BOOL "Whether CUDA-capable GPU is present")
+      set(CUDA_AND_GPU TRUE CACHE BOOL "Whether CUDA-capable GPU is present")
   else()
-      set(CUDA_HAVE_GPU FALSE CACHE BOOL "Whether CUDA-capable GPU is present")
+      set(CUDA_AND_GPU FALSE CACHE BOOL "Whether CUDA-capable GPU is present")
   endif()
 else()
-  set(CUDA_HAVE_GPU FALSE CACHE BOOL "Whether CUDA-capable GPU is present")
+  set(CUDA_AND_GPU FALSE CACHE BOOL "Whether CUDA-capable GPU is present")
 endif()
 
 # Build NICE library with/without CUDA
-if (CUDA_HAVE_GPU)
-#   Print messge to indicate that CUDA exists
+if (CUDA_AND_GPU)
+
+  # Print messge to indicate that CUDA exists
   message(STATUS "GPU device exists")
   # Set source files
   file(GLOB_RECURSE SOURCES RELATIVE ${CMAKE_SOURCE_DIR} src/*.cc src/*.cu)
 
   # Add definition
-  add_definitions(-DNEED_CUDA)
+  add_definitions(-DCUDA_AND_GPU)
 
   #include the built-in findCUDA cmake scripts
   include(FindCUDA)
-
+  
   # Set NVCC flags
   set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -std=c++11 -O3
 #          -gencode arch=compute_20,code=sm_20
@@ -149,7 +143,7 @@ if (enable-test)
   include_directories(${GTEST_INCLUDE_DIRS})
 
   # Add source files according to machine setup
-  if (CUDA_HAVE_GPU)
+  if (CUDA_AND_GPU)
     file(GLOB_RECURSE TEST_SRC_FILES RELATIVE
          ${PROJECT_SOURCE_DIR}
          test/cpu_operations_test/*.cc

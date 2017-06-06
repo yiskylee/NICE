@@ -23,11 +23,13 @@
 #ifndef CPP_INCLUDE_GPU_OPERATIONS_H_
 #define CPP_INCLUDE_GPU_OPERATIONS_H_
 
+#ifdef CUDA_AND_GPU
+
 #include <stdlib.h>
 #include <time.h>
-#include <cuda_runtime.h>
-#include <device_launch_parameters.h>
-#include <cuda_runtime_api.h>
+#include<cuda_runtime.h>
+#include<device_launch_parameters.h>
+#include<cuda_runtime_api.h>
 #include <cublas_v2.h>
 #include <cusolverDn.h>
 #include <unistd.h>
@@ -664,5 +666,6 @@ template <typename T>
 GpuUtil<T> *GpuOperations<T>::util_ = GpuUtil<T>::GetInstance();
 
 }  // namespace Nice
+#endif  // CUDA_AND_GPU
 #endif  // CPP_INCLUDE_GPU_OPERATIONS_H_
 

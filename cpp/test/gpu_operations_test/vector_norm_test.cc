@@ -69,16 +69,17 @@ typedef ::testing::Types<float, double> dataTypes;
 TYPED_TEST_CASE(VectorNormTest, dataTypes);
 
 TYPED_TEST(VectorNormTest, VectorNorm) {
-  // Create test data
-  int num_elem = 5;
-  srand(time(NULL));
-  this->CreateTestData(num_elem);
-  TypeParam gpu_norm, gpu_squared_norm;
-  // Test gpu matrix matrix multiply in Nice
-  Nice::GpuOperations<TypeParam> gpu_op;
-  gpu_norm = gpu_op.Norm(this->a_);
-  gpu_squared_norm = gpu_op.SquaredNorm(this->a_);
-  // Verify the result
-  EXPECT_NEAR(this->norm_, gpu_norm, 0.001);
-  EXPECT_NEAR(this->squared_norm_, gpu_squared_norm, 0.001);
+// Create test data
+int num_elem = 5;
+srand(time(NULL));
+this->CreateTestData(num_elem);
+TypeParam gpu_norm, gpu_squared_norm;
+// Test gpu matrix matrix multiply in Nice
+Nice::GpuOperations<TypeParam> gpu_op;
+gpu_norm = gpu_op.Norm(this->a_);
+gpu_squared_norm = gpu_op.SquaredNorm(this->a_);
+// Verify the result
+EXPECT_NEAR(this->norm_, gpu_norm, 0.001);
+EXPECT_NEAR(this->squared_norm_, gpu_squared_norm, 0.001);
 }
+

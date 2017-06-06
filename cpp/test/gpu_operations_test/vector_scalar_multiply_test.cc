@@ -89,4 +89,4 @@ TYPED_TEST(GpuVectorScalarMultiplyTest, FuncionalityTest) {
   // Verify the result
   for (int i = 0; i < num_elem; i++)
     EXPECT_NEAR(this->c_(i), gpu_c(i), 0.001);
-}
+
