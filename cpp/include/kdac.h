@@ -489,10 +489,7 @@ class KDAC {
   }
 
   virtual void OptimizeWISM(void) {
-
-
     float sigma_sq = pow(constant_, 2);
-
     Matrix<T> phi_w = Matrix<T>::Zero(d_, d_);
     for (int i = 0; i < n_; i++) {
       for (int j = 0; j < n_; j++) {
@@ -505,17 +502,18 @@ class KDAC {
       }
     }
     Eigen::EigenSolver<Matrix<T>> solver(phi_w);
-    util::Print(solver.eigenvectors(), "eigen vectors");
-//    for (int i = 0; i < q_; i++)
-//      w_matrix_.col(i) = solver.eigenvectors().col(q_ - i);
+
     Vector<T> eigen_values = solver.eigenvalues().real();
+    Vector<T> eigen_values_img = solver.eigenvalues().imag();
+    util::PrintMatrix(eigen_values_img.data(), 0, 0, "Imaginary Parts");
+
+    // Key-value sort for eigen values
     std::vector<T> v(eigen_values.data(), eigen_values.data() + eigen_values.size());
     std::vector<size_t> idx(v.size());
     std::iota(idx.begin(), idx.end(), 0);
     std::sort(idx.begin(), idx.end(),
               [&v](size_t t1, size_t t2)
               {return v[t1] < v[t2];});
-
     for (int i = 0; i < q_; i++)
       w_matrix_.col(i) = solver.eigenvectors().col(idx[i]).real();
   }

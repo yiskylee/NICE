@@ -159,6 +159,7 @@ TYPED_TEST_CASE(KDACTest, FloatTypes);
 
 
 
+
 TYPED_TEST(KDACTest, CPU3_10_600_KDAC) {
   this->SetupInputData(3, 10, 600, "cpu");
   this->kdac_->SetVerbose(true);
@@ -168,6 +169,39 @@ TYPED_TEST(KDACTest, CPU3_10_600_KDAC) {
 
 TYPED_TEST(KDACTest, CPU3_10_600_ISM) {
   this->SetupInputData(3, 10, 600, "cpu");
+  this->kdac_->SetVerbose(true);
+  this->kdac_->SetMethod("ISM");
+  this->kdac_->Fit(this->data_matrix_, this->existing_y_);
+  this->Output();
+}
+
+TYPED_TEST(KDACTest, CPU3_10_40_ISM) {
+  this->SetupInputData(3, 10, 40, "cpu");
+  this->kdac_->SetVerbose(true);
+  this->kdac_->SetMethod("ISM");
+  this->kdac_->Fit(this->data_matrix_, this->existing_y_);
+  this->Output();
+}
+
+TYPED_TEST(KDACTest, CPU3_10_30_ISM) {
+  this->SetupInputData(3, 10, 30, "cpu");
+  this->kdac_->SetVerbose(true);
+  this->kdac_->SetMethod("ISM");
+  this->kdac_->Fit(this->data_matrix_, this->existing_y_);
+  this->Output();
+}
+
+TYPED_TEST(KDACTest, CPU3_10_29_ISM) {
+  this->SetupInputData(3, 10, 29, "cpu");
+  this->kdac_->SetVerbose(true);
+  this->kdac_->SetMethod("ISM");
+  this->kdac_->Fit(this->data_matrix_, this->existing_y_);
+  this->Output();
+}
+
+
+TYPED_TEST(KDACTest, CPU3_10_20_ISM) {
+  this->SetupInputData(3, 10, 20, "cpu");
   this->kdac_->SetVerbose(true);
   this->kdac_->SetMethod("ISM");
   this->kdac_->Fit(this->data_matrix_, this->existing_y_);

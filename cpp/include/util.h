@@ -255,8 +255,8 @@ static T reciprocal(T x) {
 
 template <typename T>
 void PrintMatrix(T* matrix, int row, int col, bool row_major = true) {
-  for (int i = 0; i < row; i++) {
-    for (int j = 0; j < col; j++) {
+  for (int i = 0; i <= row; i++) {
+    for (int j = 0; j <= col; j++) {
       if (row_major)
         std::cout << matrix[IDXR(i, j, col)] << "\t";
       else
