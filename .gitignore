@@ -9,3 +9,5 @@ cpp/dlib/
 python
 .idea
 matlab
+data_for_test/
+*.out
