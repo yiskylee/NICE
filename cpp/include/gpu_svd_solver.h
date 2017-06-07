@@ -109,6 +109,5 @@ GpuUtil<T> *GpuSvdSolver<T>::util_ = GpuUtil<T>::GetInstance();
 }  // namespace Nice
 
 #endif  // CUDA_AND_GPU
-
 #endif  // CPP_INCLUDE_GPU_SVD_SOLVER_H_
 

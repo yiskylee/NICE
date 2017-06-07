@@ -5,6 +5,8 @@
 Debug
 *.m
 cpp/build/
+cpp/dlib/build/
+cpp/standalone_build
 python
 .idea
 matlab
