@@ -131,12 +131,12 @@ typedef ::testing::Types<float> FloatTypes;
 
 TYPED_TEST_CASE(KDACTest, FloatTypes);
 
-// #define EXPECT_MATRIX_EQ(a, ref)\
-//    EXPECT_EQ(a.rows(), ref.rows());\
-//    EXPECT_EQ(a.cols(), ref.cols());\
-//    for (int i = 0; i < a.rows(); i++)\
-//      for (int j = 0; j < a.cols(); j++)\
-//        EXPECT_NEAR(double(a(i, j)), double(ref(i, j)), 0.0001);\
+#define EXPECT_MATRIX_EQ(a, ref)\
+  EXPECT_EQ(a.rows(), ref.rows());\
+  EXPECT_EQ(a.cols(), ref.cols());\
+  for (int i = 0; i < a.rows(); i++)\
+    for (int j = 0; j < a.cols(); j++)\
+      EXPECT_NEAR(double(a(i, j)), double(ref(i, j)), 0.0001);\
 
 #define PRINTV(v, num_per_line)\
   for (int i = 0; i < v.rows(); i++) {\

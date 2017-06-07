@@ -94,7 +94,7 @@ class KDAC {
       verbose_(false),
       debug_(false),
       max_time_exceeded_(false),
-      max_time_(10) {}
+      max_time_(72000) {}
 
   ~KDAC() {}
   KDAC(const KDAC &rhs) {}
@@ -559,9 +559,9 @@ class KDAC {
     util::CheckFinite(w_matrix_, "W");
   }
 
-  // Initialization when Fit() is called, only need to update w and y_tilde
+  // Initialization when Fit() is called, w_matrix is already set up in
+  // Fit(input) or Fit(input, y), so we only need to y_tilde
   void Init() {
-    w_matrix_ = Matrix<T>::Identity(d_, d_);
     k_matrix_y_ = y_matrix_ * y_matrix_.transpose();
     y_matrix_tilde_ = h_matrix_ * k_matrix_y_ * h_matrix_;
     u_converge_ = false;
