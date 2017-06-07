@@ -400,6 +400,8 @@ class KDAC {
   void GenKernelMatrix() {
     // Project X to subspace W (n * d to d * q)
     // Generate the kernel matrix based on kernel type from projected X
+    // when there is no existing clustering solution
+    // X is projected to (d * d) identity matrix, which is still X
     Matrix<T> projected_x_matrix = x_matrix_ * w_matrix_;
     if (kernel_type_ == kGaussianKernel) {
       float sigma_sq = constant_ * constant_;
@@ -560,8 +562,11 @@ class KDAC {
   }
 
   // Initialization when Fit() is called, w_matrix is already set up in
-  // Fit(input) or Fit(input, y), so we only need to y_tilde
+  // Fit(input) or Fit(input, y), if w_matrix is setup in Fit(input), it is
+  // still a d x d matrix, we need to change it to d x q matrix
   void Init() {
+    if (w_matrix_.cols() == d_)
+      w_matrix_ = Matrix<T>::Identity(d_, q_);
     k_matrix_y_ = y_matrix_ * y_matrix_.transpose();
     y_matrix_tilde_ = h_matrix_ * k_matrix_y_ * h_matrix_;
     u_converge_ = false;
@@ -577,9 +582,11 @@ class KDAC {
     d_ = input_matrix.cols();
     CheckQD();
     // When the user does not initialize W using SetW()
-    // W matrix is initilized to be an identity matrix
+    // W matrix is initialized to be a d x d identity matrix
+    // because Init(input) is only called when spectral clustering
+    // is used.
     if (w_matrix_.cols() == 0)
-      w_matrix_ = Matrix<T>::Identity(d_, q_);
+      w_matrix_ = Matrix<T>::Identity(d_, d_);
 
     h_matrix_ = Matrix<T>::Identity(n_, n_)
         - Matrix<T>::Constant(n_, n_, 1) / static_cast<T>(n_);
