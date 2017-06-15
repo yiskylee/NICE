@@ -47,7 +47,7 @@ class KMeansGPU: public KMeans<T> {
 
  private:
   T* x_matrix_d_;  // Input matrix X (n by d) on device
-  Tdsx
+
   // GPUUtil object to setup memory etc.
   GpuUtil<T> *gpu_util_;
   unsigned int block_limit_;

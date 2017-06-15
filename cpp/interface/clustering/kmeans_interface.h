@@ -97,3 +97,4 @@ class KmeansInterface {
 };
 
 } // namespace NICE
+#endif

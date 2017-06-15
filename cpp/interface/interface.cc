@@ -32,6 +32,7 @@
 #include "include/gpu_operations.h"
 #include "include/timer.h"
 #include "clustering/kdac_interface.h"
+#include "clustering/kmeans_interface.h"
 #include "interface/cpu_operations_interface.h"
 
 // void (Nice::KDACCPUInterface<float>::*Fit1Float)
@@ -91,7 +92,7 @@ BOOST_PYTHON_MODULE(Nice4Py) {
         .def("GetK", &Nice::KDACInterface<float>::GetK)
         .def("GetW", &Nice::KDACInterface<float>::GetW)
         .def("GetU", &Nice::KDACInterface<float>::GetU)
-        .def("SetW", &Nice::KDACInterface<float>::SetW);
+        .def("SetW", &Nice::KDACInterface<float>::SetW)
         .def("DiscardLastRun", &Nice::KDACInterface<float>::DiscardLastRun);
     boost::python::class_<Nice::CPUOperationsInterface<float>>("CPUOp")
         .def("GenKernelMatrix",
@@ -100,7 +101,7 @@ BOOST_PYTHON_MODULE(Nice4Py) {
 
     boost::python::class_<Nice::KmeansInterface<float>>
     ("KMeans", boost::python::init<std::string>())
-    .def("Fit", &Nice::KMeansInterface<float>::Fit)
+    .def("Fit", &Nice::KmeansInterface<float>::Fit)
     .def("GetLabels", &Nice::KmeansInterface<float>::GetLabels);
 
 //  boost::python::class_<Nice::CpuOperationsInterface<float>::GenKernelMatrix
