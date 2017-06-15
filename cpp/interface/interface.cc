@@ -91,12 +91,18 @@ BOOST_PYTHON_MODULE(Nice4Py) {
         .def("GetK", &Nice::KDACInterface<float>::GetK)
         .def("GetW", &Nice::KDACInterface<float>::GetW)
         .def("GetU", &Nice::KDACInterface<float>::GetU)
-        .def("SetW", &Nice::KDACInterface<float>::SetW)
+        .def("SetW", &Nice::KDACInterface<float>::SetW);
         .def("DiscardLastRun", &Nice::KDACInterface<float>::DiscardLastRun);
     boost::python::class_<Nice::CPUOperationsInterface<float>>("CPUOp")
         .def("GenKernelMatrix",
              &Nice::CPUOperationsInterface<float>::GenKernelMatrix)
         .staticmethod("GenKernelMatrix");
+
+    boost::python::class_<Nice::KmeansInterface<float>>
+    ("KMeans", boost::python::init<std::string>())
+    .def("Fit", &Nice::KMeansInterface<float>::Fit)
+    .def("GetLabels", &Nice::KmeansInterface<float>::GetLabels);
+
 //  boost::python::class_<Nice::CpuOperationsInterface<float>::GenKernelMatrix
 }
 //  //Use float by default
