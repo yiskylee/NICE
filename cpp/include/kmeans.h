@@ -68,6 +68,15 @@ class KMeans {
     k_ = k;
     centers_.resize(input_data.cols(), k_);
     Run(input_data.transpose());
+
+//    std::string sep = "\n----------------------------------------\n";
+//    Eigen::IOFormat OctaveFmt(Eigen::StreamPrecision, 0, ", ", ";\n", "", "", "[", "]");
+//    std::cout << "Check centers?\n";
+//    std::cout << GetCenters().format(OctaveFmt) << sep;
+//    std::cout << "Check labels?\n";
+//    std::cout << GetLabels().format(OctaveFmt) << sep;
+//    std::cout << "Check data?\n";
+//    std::cout << input_data.format(OctaveFmt) << sep;
   }
 
   void Run(const Matrix<T> &input_data) {
@@ -84,20 +93,7 @@ class KMeans {
     } else {
       srand48(0);
     }
-
-    std::string sep = "\n----------------------------------------\n";
-    Eigen::IOFormat OctaveFmt(Eigen::StreamPrecision, 0, ", ", ";\n", "", "", "[", "]");
-    std::cout << "Check input data tranpose is correct?\n";
-    std::cout << input_data.format(OctaveFmt) << sep;
-    std::cout << "Is k right? k_ = " << k_ << sep;
-    std::cout << "Are the centers laid out right?\n";
-    std::cout << centers_.format(OctaveFmt) << sep << std::endl;
-
-
-
     KMeansPPInit(input_data);
-    std::cout << "Are the centers laid out right?\n";
-    std::cout << centers_.format(OctaveFmt) << sep << std::endl;
 
     // We must store the labels at the previous iteration to
     // determine whether any labels changed at each iteration.
@@ -119,7 +115,6 @@ class KMeans {
       old_labels = labels_;
       iter++;
     } while (changed);
-    std::cout << "iters = " << iter << std::endl;
   }
   unsigned int FindClosestCluster(const Vector<T>& query_point,
                                   unsigned int num_cluster) {
@@ -245,7 +240,7 @@ class KMeans {
   }
  private:
   Vector<T> labels_;
-  bool random_ = false;
+  bool random_ = true;
   // The number of clusters to find.
   unsigned int k_;
   // The current cluster centers.

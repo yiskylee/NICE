@@ -76,26 +76,13 @@ class KmeansInterface {
 
   void fit(PyObject *input_obj, int row_1, int col_1, unsigned int k) {
     Py_buffer input_buf;
-
     PyObject_GetBuffer(input_obj, &input_buf, PyBUF_SIMPLE);
     MatrixMap<T> input(reinterpret_cast<T *>(input_buf.buf), row_1, col_1);
-
-    std::string sep = "\n----------------------------------------\n";
-    Eigen::IOFormat OctaveFmt(Eigen::StreamPrecision, 0, ", ", ";\n", "", "", "[", "]");
-    std::cout << "Check input data  is correct?\n";
-    std::cout << input.format(OctaveFmt) << sep;
-
-
     kmeans_->Fit(input, k);
     PyBuffer_Release(&input_buf);
   }
 
   void getLabels(PyObject *u_obj, int row, int col) {
-    std::string sep = "\n----------------------------------------\n";
-    Eigen::IOFormat OctaveFmt(Eigen::StreamPrecision, 0, ", ", ";\n", "", "", "[", "]");
-    std::cout << "Check labels?\n";
-    std::cout << kmeans_->GetLabels().format(OctaveFmt) << sep;
-
     Py_buffer u_buf;
     PyObject_GetBuffer(u_obj, &u_buf, PyBUF_SIMPLE);
     MatrixMap<T> u(reinterpret_cast<T *>(u_buf.buf), row, col);
@@ -104,11 +91,6 @@ class KmeansInterface {
   }
 
   void getCenters(PyObject *u_obj, int row, int col) {
-    std::string sep = "\n----------------------------------------\n";
-    Eigen::IOFormat OctaveFmt(Eigen::StreamPrecision, 0, ", ", ";\n", "", "", "[", "]");
-    std::cout << "Check labels?\n";
-    std::cout << kmeans_->GetLabels().format(OctaveFmt) << sep;
-
     Py_buffer u_buf;
     PyObject_GetBuffer(u_obj, &u_buf, PyBUF_SIMPLE);
     MatrixMap<T> u(reinterpret_cast<T *>(u_buf.buf), row, col);
