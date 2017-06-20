@@ -85,7 +85,19 @@ class KMeans {
       srand48(0);
     }
 
+    std::string sep = "\n----------------------------------------\n";
+    Eigen::IOFormat OctaveFmt(Eigen::StreamPrecision, 0, ", ", ";\n", "", "", "[", "]");
+    std::cout << "Check input data tranpose is correct?\n";
+    std::cout << input_data.format(OctaveFmt) << sep;
+    std::cout << "Is k right? k_ = " << k_ << sep;
+    std::cout << "Are the centers laid out right?\n";
+    std::cout << centers_.format(OctaveFmt) << sep << std::endl;
+
+
+
     KMeansPPInit(input_data);
+    std::cout << "Are the centers laid out right?\n";
+    std::cout << centers_.format(OctaveFmt) << sep << std::endl;
 
     // We must store the labels at the previous iteration to
     // determine whether any labels changed at each iteration.
@@ -107,6 +119,7 @@ class KMeans {
       old_labels = labels_;
       iter++;
     } while (changed);
+    std::cout << "iters = " << iter << std::endl;
   }
   unsigned int FindClosestCluster(const Vector<T>& query_point,
                                   unsigned int num_cluster) {
@@ -166,6 +179,7 @@ class KMeans {
     }
     return changed;
   }
+
   unsigned int SelectWeightedIndex(Vector<T> weights) {
     // Normalize
     Vector<T> normalizedWeights = weights / weights.sum();
@@ -178,8 +192,11 @@ class KMeans {
       normalizedWeights.data()+normalizedWeights.size());
     // Get a randome value between 0 and 1
     T random_value = (T)drand48();
+
     T running_total = 0.0;
+
     for (unsigned int i = 0; i < normalizedWeights.size(); i++) {
+
       running_total += normalizedWeights[i];
       if (random_value < running_total) {
         T weight = normalizedWeights(i);
@@ -214,17 +231,21 @@ class KMeans {
       centers_.col(cluster) = p;
     }
   }
+
   void SetRandom(const bool r) {
     this->Random = r;
   }
 
-  Vector<T> GetLabels() {
+  Matrix <T> GetLabels() {
     return labels_;
   }
 
+  Matrix <T> GetCenters() {
+    return centers_;
+  }
  private:
   Vector<T> labels_;
-  bool random_ = true;
+  bool random_ = false;
   // The number of clusters to find.
   unsigned int k_;
   // The current cluster centers.

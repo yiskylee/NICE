@@ -100,9 +100,10 @@ BOOST_PYTHON_MODULE(Nice4Py) {
         .staticmethod("GenKernelMatrix");
 
     boost::python::class_<Nice::KmeansInterface<float>>
-    ("KMeans", boost::python::init<std::string>())
-    .def("Fit", &Nice::KmeansInterface<float>::Fit)
-    .def("GetLabels", &Nice::KmeansInterface<float>::GetLabels);
+        ("KMean", boost::python::init<std::string>())
+        .def("fit", &Nice::KmeansInterface<float>::fit)
+        .def("getLabels", &Nice::KmeansInterface<float>::getLabels)
+        .def("getCenters", &Nice::KmeansInterface<float>::getCenters);
 
 //  boost::python::class_<Nice::CpuOperationsInterface<float>::GenKernelMatrix
 }
