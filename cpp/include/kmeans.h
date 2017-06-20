@@ -68,6 +68,15 @@ class KMeans {
     k_ = k;
     centers_.resize(input_data.cols(), k_);
     Run(input_data.transpose());
+
+//    std::string sep = "\n----------------------------------------\n";
+//    Eigen::IOFormat OctaveFmt(Eigen::StreamPrecision, 0, ", ", ";\n", "", "", "[", "]");
+//    std::cout << "Check centers?\n";
+//    std::cout << GetCenters().format(OctaveFmt) << sep;
+//    std::cout << "Check labels?\n";
+//    std::cout << GetLabels().format(OctaveFmt) << sep;
+//    std::cout << "Check data?\n";
+//    std::cout << input_data.format(OctaveFmt) << sep;
   }
 
   void Run(const Matrix<T> &input_data) {
@@ -84,7 +93,6 @@ class KMeans {
     } else {
       srand48(0);
     }
-
     KMeansPPInit(input_data);
 
     // We must store the labels at the previous iteration to
@@ -166,6 +174,7 @@ class KMeans {
     }
     return changed;
   }
+
   unsigned int SelectWeightedIndex(Vector<T> weights) {
     // Normalize
     Vector<T> normalizedWeights = weights / weights.sum();
@@ -178,8 +187,11 @@ class KMeans {
       normalizedWeights.data()+normalizedWeights.size());
     // Get a randome value between 0 and 1
     T random_value = (T)drand48();
+
     T running_total = 0.0;
+
     for (unsigned int i = 0; i < normalizedWeights.size(); i++) {
+
       running_total += normalizedWeights[i];
       if (random_value < running_total) {
         T weight = normalizedWeights(i);
@@ -214,14 +226,18 @@ class KMeans {
       centers_.col(cluster) = p;
     }
   }
+
   void SetRandom(const bool r) {
     this->Random = r;
   }
 
-  Vector<T> GetLabels() {
+  Matrix <T> GetLabels() {
     return labels_;
   }
 
+  Matrix <T> GetCenters() {
+    return centers_;
+  }
  private:
   Vector<T> labels_;
   bool random_ = true;
