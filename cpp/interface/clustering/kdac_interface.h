@@ -67,8 +67,13 @@ class KDACInterface {
     if (device_type == "cpu")
       kdac_ = std::make_shared<Nice::KDACCPU<T>>();
 #ifdef CUDA_AND_GPU
+<<<<<<< HEAD
     else if (device_type == "gpu")
       kdac_ = std::make_shared<Nice::KDACGPU<T>>();
+=======
+	else if (device_type == "gpu")
+	  kdac_ = std::make_shared<Nice::KDACGPU<T>>();
+>>>>>>> 9b58133198b8edbb8f2b9607f6bb6a26145eaf49
 #endif
   }
 
