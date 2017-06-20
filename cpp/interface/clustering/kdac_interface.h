@@ -67,10 +67,11 @@ class KDACInterface {
     if (device_type == "cpu")
       kdac_ = std::make_shared<Nice::KDACCPU<T>>();
 #ifdef CUDA_AND_GPU
-	else if (device_type == "gpu")
-	  kdac_ = std::make_shared<Nice::KDACGPU<T>>();
+    else if (device_type == "gpu")
+      kdac_ = std::make_shared<Nice::KDACGPU<T>>();
 #endif
   }
+
   ~KDACInterface() {}
 
   void SetupParams(const boost::python::dict &params) {
