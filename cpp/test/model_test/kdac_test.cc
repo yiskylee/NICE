@@ -65,10 +65,10 @@ class KDACTest : public ::testing::Test {
     device_type_ = device_type;
 
 #ifndef CUDA_AND_GPU
-    if (device_type_ == "cpu")
+   if (device_type_ == "cpu")
       kdac_ = std::make_shared<Nice::KDACCPU<T>>();
 #else
-    else if (device_type_ == "gpu")
+   else if (device_type_ == "gpu")
       kdac_ = std::make_shared<Nice::KDACGPU<T>>();
 #endif
 
