@@ -68,15 +68,6 @@ class KMeans {
     k_ = k;
     centers_.resize(input_data.cols(), k_);
     Run(input_data.transpose());
-
-//    std::string sep = "\n----------------------------------------\n";
-//    Eigen::IOFormat OctaveFmt(Eigen::StreamPrecision, 0, ", ", ";\n", "", "", "[", "]");
-//    std::cout << "Check centers?\n";
-//    std::cout << GetCenters().format(OctaveFmt) << sep;
-//    std::cout << "Check labels?\n";
-//    std::cout << GetLabels().format(OctaveFmt) << sep;
-//    std::cout << "Check data?\n";
-//    std::cout << input_data.format(OctaveFmt) << sep;
   }
 
   void Run(const Matrix<T> &input_data) {
