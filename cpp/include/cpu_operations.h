@@ -537,30 +537,45 @@ class CpuOperations {
       exit(1);
     }
   }
-/// statix Matrix <T> Normalize(const Matrix <T> &a, const int &p
-/// =2, const int &axis = 0) normalizes a m x n matrix by element.
-///
-/// \param a
-/// const Matrix<T> &a
-/// \param b
-/// const int &p = 2
-/// \param c
-/// const int &axis = 0
-///
-/// \return
-/// Matrix <T>
-/// \sa
-/// \ref Norm
+  /// statix Matrix <T> Normalize(const Matrix <T> &a, const int &p
+  /// =2, const int &axis = 0) normalizes a m x n matrix by element.
+  ///
+  /// \param a
+  /// Input matrix
+  /// \param p
+  /// Input for exponent used in norm
+  /// \param axis
+  /// Axis which normalize will be calculated along. If 0, axis will be
+  /// calcualted column wise. If 1, axis will be calculated row wise.
+  /// \param denom
+  /// The value to be used in the denominator of the normalize function. Can be
+  /// set to either "norm" or "std"
+  ///
+  /// \return Matrix <T>
+  /// \sa
+  /// \ref Norm
   static Matrix<T> Normalize(const Matrix<T> &a, const int &p = 2,
-                             const int &axis = 0) {
+                             const int &axis = 0,
+                             const std::string &denom = "norm") {
     int num_rows = a.rows();
     int num_cols = a.cols();
+    Vector<T> denominator;
+
+    if (denom == "norm") {
+      denominator = Norm(a, p, axis);
+    } else if (denom == "std") {
+      denominator = StandardDeviation(a, axis);
+    } else {
+      std::cerr << "Invalid denominator assignment";
+    }
+
     Matrix<T> b(num_rows, num_cols);
+
     if (axis == 0) {
-      b = a.transpose().array().colwise() / Norm(a, p, axis).array();
+      b = a.transpose().array().colwise() / denominator.array();
       return b.transpose();
     } else if (axis == 1) {
-      b = a.array().colwise() / Norm(a, p, axis).array();
+      b = a.array().colwise() / denominator.array();
       return b;
     } else {
       std::cerr << "Axis must be zero or one!";
@@ -631,7 +646,7 @@ class CpuOperations {
   /// /return
   /// Output a vector containing the standaard deviations of the rows or columns
   /// of the input matrix
-  static Vector<T> StandardDeviation(const Matrix<T> &a, const int axis = 0){
+  static Vector<T> StandardDeviation(const Matrix<T> &a, const int axis = 0) {
     // Std = sqrt(1/n*[(x1-u)^2+(x2-u)^2...+(xn-u)^2])
     // u = average of the vector
     // n = number of the elements
