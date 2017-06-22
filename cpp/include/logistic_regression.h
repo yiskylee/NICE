@@ -64,38 +64,38 @@ class LogisticRegression {
     return predictions;
   }
 
-  /// Calculates the coeffients for a logisitic regression of a given matrix and
-  /// returns it as a vector. 
+  /// Calculates the hypothesis of a given input vector
   ///
-  /// 
+  ///
+  ///
+  static Vector<T> h(Vector<T> input){
+    input = ((-1 * input).array().exp()) + 1;
+    return input.array().inverse();
+  }
+
+  /// Calculates the coeffients for a logisitic regression of a given matrix and
+  /// returns it as a vector.
+  ///
+  ///
   static Vector<T> Fit( Matrix<T> &xin, const Vector<T> &y, int iterations, T alpha){
-    Vector<T> gradient, thetas;
+    Vector<T> gradient, theta;
     Matrix<T> x;
     x.conservativeResize(x.rows(), x.cols() + 1);
     std::cout << x << std::endl;
-    /**x.rightCols(x.cols()-1) = x.leftCols(x.cols()-1);
-    std::cout << x << std::endl;
-    x.col(0).setOnes();**/
-    x.resize(xin.rows(), xin.cols() + 1); 
+    x.resize(xin.rows(), xin.cols() + 1);
     // TODO Parallelize the shift function
     for(int i = 1; i <= xin.cols(); ++i) {
             x.col(i) = xin.col(i - 1);
     }
     x.col(0).setOnes();
-    thetas.resize(x.cols());
-    thetas.setZero();
+    theta.resize(x.cols());
+    theta.setZero();
     gradient.resize(x.rows());
-    
     for (int i = 0; i < iterations; i++){
-      gradient = x * thetas;
-      gradient = ((-1 * gradient).array().exp()) + 1;
-      gradient = gradient.array().inverse();
-      gradient = gradient.matrix();
-      gradient.resize(x.rows());
-      thetas -= alpha * (x.transpose() * (gradient - y)) / y.size();
-      
+      gradient = (x.transpose() * (h(x * theta) - y)) / y.size();
+      theta = theta - (alpha * gradient);
     }
-    return thetas;
+    return theta;
   }
 };
 }  // namespace Nice
