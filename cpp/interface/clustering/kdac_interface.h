@@ -92,6 +92,11 @@ class KDACInterface {
         kdac_ -> SetMaxTime(max_time);
         continue;
       }
+      if (strcmp("method", boost::python::extract<char *>(key_list[i])) == 0) {
+        char* method = boost::python::extract<char *>(params["method"]);
+        kdac_ -> SetMethod(method);
+        continue;
+      }
       if (strcmp("lambda", boost::python::extract<char *>(key_list[i])) == 0) {
         double lambda = boost::python::extract<double>(params["lambda"]);
         kdac_ -> SetLambda(lambda);

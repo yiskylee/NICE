@@ -72,7 +72,7 @@ class KDACCPU: public KDAC<T> {
   }
 
   void OptimizeWISM(void) {
-    if (vectorization_) {
+    if (KDAC<T>::vectorization_) {
       KDAC<T>::OptimizeWISM();
     } else {
       KDAC<T>::GenGammaMatrix();

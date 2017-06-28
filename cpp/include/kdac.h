@@ -514,7 +514,8 @@ class KDAC {
 
       Vector<T> eigen_values = solver.eigenvalues().real();
       Vector<T> eigen_values_img = solver.eigenvalues().imag();
-      util::PrintMatrix(eigen_values_img.data(), 0, 0, "Imaginary Parts");
+      if (eigen_values_img.sum() != 0)
+        std::cout << "Imaginary Parts Exist!" << std::endl;
 
       // Key-value sort for eigen values
       std::vector<T>

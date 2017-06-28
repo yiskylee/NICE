@@ -1,3 +1,3 @@
 cd ../build
-cmake -Denable-mkl=OFF -Denable-interface=ON ..
+cmake -Denable-mkl=ON -Denable-test=ON -Denable-interface=ON ..
 make -j 16
