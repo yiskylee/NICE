@@ -94,7 +94,8 @@ class KDAC {
       debug_(false),
       max_time_exceeded_(false),
       max_time_(10),
-      method_("KDAC") {}
+      method_("KDAC"),
+      vectorization_(false) {}
 
   ~KDAC() {}
   KDAC(const KDAC &rhs) {}
@@ -357,6 +358,8 @@ class KDAC {
   int max_time_;
   // Either KDAC or ISM
   std::string method_;
+  // Vetorize ISM or not
+  bool vectorization_;
 
 
   Vector<T> GenOrthogonal(const Matrix<T> &space,
@@ -386,9 +389,8 @@ class KDAC {
     // gamma_ij on the fly as in the paper, we generate the whole gamma matrix
     // at one time and then access its entry of (i, j)
     // This is an element-wise operation
-    // u*ut and didj matrix has the same size
     gamma_matrix_ = ((u_matrix_ * u_matrix_.transpose()).array() /
-        didj_matrix_.array()).matrix() - lambda_ * y_matrix_tilde_;
+        didj_matrix_.array()).matrix() - y_matrix_tilde_ * lambda_;
   }
 
   void GenGofW(void) {
@@ -489,33 +491,41 @@ class KDAC {
   }
 
   virtual void OptimizeWISM(void) {
-    float sigma_sq = pow(constant_, 2);
-    Matrix<T> phi_w = Matrix<T>::Zero(d_, d_);
-    for (int i = 0; i < n_; i++) {
-      for (int j = 0; j < n_; j++) {
-        Vector<T> delta_x_ij =
-            this->x_matrix_.row(i) - this->x_matrix_.row(j);
-        Matrix<T> a_ij = delta_x_ij * delta_x_ij.transpose();
-        Matrix<T> waw = w_matrix_.transpose() * a_ij * w_matrix_;
-        T value = gamma_matrix_(i, j) * exp( -waw.trace() / (2.0 * sigma_sq) );
-        phi_w = phi_w + a_ij * value;
+    if (vectorization_) {
+      // Vectorization solution, where we convert the conventional for loop
+      // solution to matrix multiplications
+      Matrix<T> psi = h_matrix_ * (u_matrix_ * u_matrix_.transpose() -
+                      k_matrix_y_ * lambda_) * h_matrix_;
+    } else {
+      // For loop solution
+      float sigma_sq = pow(constant_, 2);
+      Matrix<T> phi_w = Matrix<T>::Zero(d_, d_);
+      for (int i = 0; i < n_; i++) {
+        for (int j = 0; j < n_; j++) {
+          Vector<T> delta_x_ij =
+              this->x_matrix_.row(i) - this->x_matrix_.row(j);
+          Matrix<T> a_ij = delta_x_ij * delta_x_ij.transpose();
+          Matrix<T> waw = w_matrix_.transpose() * a_ij * w_matrix_;
+          T value = gamma_matrix_(i, j) * exp(-waw.trace() / (2.0 * sigma_sq));
+          phi_w = phi_w + a_ij * value;
+        }
       }
+      Eigen::EigenSolver<Matrix<T>> solver(phi_w);
+
+      Vector<T> eigen_values = solver.eigenvalues().real();
+      Vector<T> eigen_values_img = solver.eigenvalues().imag();
+      util::PrintMatrix(eigen_values_img.data(), 0, 0, "Imaginary Parts");
+
+      // Key-value sort for eigen values
+      std::vector<T>
+          v(eigen_values.data(), eigen_values.data() + eigen_values.size());
+      std::vector<size_t> idx(v.size());
+      std::iota(idx.begin(), idx.end(), 0);
+      std::sort(idx.begin(), idx.end(),
+                [&v](size_t t1, size_t t2) { return v[t1] < v[t2]; });
+      for (int i = 0; i < q_; i++)
+        w_matrix_.col(i) = solver.eigenvectors().col(idx[i]).real();
     }
-    Eigen::EigenSolver<Matrix<T>> solver(phi_w);
-
-    Vector<T> eigen_values = solver.eigenvalues().real();
-    Vector<T> eigen_values_img = solver.eigenvalues().imag();
-    util::PrintMatrix(eigen_values_img.data(), 0, 0, "Imaginary Parts");
-
-    // Key-value sort for eigen values
-    std::vector<T> v(eigen_values.data(), eigen_values.data() + eigen_values.size());
-    std::vector<size_t> idx(v.size());
-    std::iota(idx.begin(), idx.end(), 0);
-    std::sort(idx.begin(), idx.end(),
-              [&v](size_t t1, size_t t2)
-              {return v[t1] < v[t2];});
-    for (int i = 0; i < q_; i++)
-      w_matrix_.col(i) = solver.eigenvectors().col(idx[i]).real();
   }
 
   virtual void OptimizeW(void) {
