@@ -68,7 +68,7 @@ class LogisticRegression {
     Matrix<T> product;
 
     product.resize(inputs.rows(), inputs.cols());
-    product = inputs * thetas.bottomRows(thetas.rows()-1);
+    product = inputs * thetas.bottomRows(thetas.rows()-1);
 
     yhat.resize(inputs.rows());
     yhat = product.rowwise().sum();
