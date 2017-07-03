@@ -39,16 +39,35 @@ namespace Nice {
 template<typename T>
 class LogisticRegression {
  private:
-  T Sigmoid(T x){
-    return (1 / (1 +
-            (-x)));
+  /// Calculates the hypothesis of a given input Vector
+  ///
+  /// \param input
+  /// Input Vector
+  ///
+  /// \return
+  /// This function returns a Vector of type T
+  static Vector<T> h(Vector<T> input) {
+    input = ((-1 * input).array().exp()) + 1;
+    return input.array().inverse();
   }
+
+
  public:
-  static Vector<T> Predict(const Matrix<T> &inputs, const Vector<T> thetas){
+  /// Given a set of features and parameters creates a vector of target outputs
+  ///
+  /// \param inputs
+  /// Matrix of input conditions
+  ///
+  /// \param thetas
+  /// Vector of parameters to fit with input conditions
+  ///
+  /// \return
+  /// This function returns a Vector of target outputs of type T
+  static Vector<T> Predict(const Matrix<T> &inputs, const Vector<T> thetas) {
     Vector<T> predictions, yhat;
     Matrix<T> product;
 
-    product.resize(inputs.rows(),inputs.cols());
+    product.resize(inputs.rows(), inputs.cols());
     product = inputs * thetas.bottomRows(thetas.rows()-1);
 
     yhat.resize(inputs.rows());
@@ -56,7 +75,6 @@ class LogisticRegression {
     yhat = yhat.array() + thetas(0);
 
     predictions.resize(inputs.rows());
-
     predictions = ((-1 * yhat).array().exp()) + 1;
     predictions = predictions.array().inverse();
     predictions = predictions.matrix();
@@ -64,34 +82,32 @@ class LogisticRegression {
     return predictions;
   }
 
-  /// Calculates the hypothesis of a given input vector
+  /// Generates a set of parameters from a given training set
   ///
+  /// \param xin
+  /// Matrix of features
   ///
+  /// \param y
+  /// Vector of target variables for each set of features
   ///
-  static Vector<T> h(Vector<T> input){
-    input = ((-1 * input).array().exp()) + 1;
-    return input.array().inverse();
-  }
-
-  /// Calculates the coeffients for a logisitic regression of a given matrix and
-  /// returns it as a vector.
-  ///
-  ///
-  static Vector<T> Fit( Matrix<T> &xin, const Vector<T> &y, int iterations, T alpha){
+  /// \return
+  /// This function returns a Vector of parameters of type T
+  static Vector<T> Fit(const Matrix<T> &xin, const Vector<T> &y,
+    int iterations, T alpha){
     Vector<T> gradient, theta;
     Matrix<T> x;
     x.conservativeResize(x.rows(), x.cols() + 1);
     std::cout << x << std::endl;
     x.resize(xin.rows(), xin.cols() + 1);
-    // TODO Parallelize the shift function
-    for(int i = 1; i <= xin.cols(); ++i) {
+    // TODO(chris): Parallelize the shift function
+    for (int i = 1; i <= xin.cols(); ++i) {
             x.col(i) = xin.col(i - 1);
     }
     x.col(0).setOnes();
     theta.resize(x.cols());
     theta.setZero();
     gradient.resize(x.rows());
-    for (int i = 0; i < iterations; i++){
+    for (int i = 0; i < iterations; i++) {
       gradient = (x.transpose() * (h(x * theta) - y)) / y.size();
       theta = theta - (alpha * gradient);
     }
@@ -99,4 +115,4 @@ class LogisticRegression {
   }
 };
 }  // namespace Nice
-#endif  // CPP_INCLUDE:_LOGISITC_REGRESSION_H
+#endif  // CPP_INCLUDE_LOGISTIC_REGRESSION_H_
