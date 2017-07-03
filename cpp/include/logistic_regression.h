@@ -66,19 +66,12 @@ class LogisticRegression {
   static Vector<T> Predict(const Matrix<T> &inputs, const Vector<T> thetas) {
     Vector<T> predictions, yhat;
     Matrix<T> product;
+    product = inputs * thetas.bottomRows(thetas.rows()-1);
 
-    product.resize(inputs.rows(), inputs.cols());
-    product = inputs * thetas.bottomRows(thetas.rows()-1);
-
-    yhat.resize(inputs.rows());
     yhat = product.rowwise().sum();
     yhat = yhat.array() + thetas(0);
 
-    predictions.resize(inputs.rows());
-    predictions = ((-1 * yhat).array().exp()) + 1;
-    predictions = predictions.array().inverse();
-    predictions = predictions.matrix();
-    predictions.resize(inputs.rows());
+    predictions = h(yhat);
     return predictions;
   }
 
