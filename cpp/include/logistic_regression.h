@@ -88,21 +88,18 @@ class LogisticRegression {
   static Vector<T> Fit(const Matrix<T> &xin, const Vector<T> &y,
     int iterations, T alpha){
     Vector<T> gradient, theta;
-    Matrix<T> x;
-    x.conservativeResize(x.rows(), x.cols() + 1);
-    std::cout << x << std::endl;
-    x.resize(xin.rows(), xin.cols() + 1);
-    // TODO(chris): Parallelize the shift function
-    for (int i = 1; i <= xin.cols(); ++i) {
-            x.col(i) = xin.col(i - 1);
-    }
-    x.col(0).setOnes();
-    theta.resize(x.cols());
+
+    theta.resize(xin.cols() + 1);
+    gradient.resize(theta.rows());
     theta.setZero();
-    gradient.resize(x.rows());
+    gradient.setZero();
+
     for (int i = 0; i < iterations; i++) {
-      gradient = (x.transpose() * (h(x * theta) - y)) / y.size();
-      theta = theta - (alpha * gradient);
+      Vector<T> Xtheta = (xin * (theta.bottomRows(theta.rows() - 1)));
+      Xtheta = Xtheta.array() + theta(0);
+      gradient.bottomRows(gradient.rows() - 1) = xin.transpose() * (h(Xtheta) - y);
+      gradient(0) = theta.sum();
+      theta = theta - ((alpha/ y.size()) * gradient);
     }
     return theta;
   }

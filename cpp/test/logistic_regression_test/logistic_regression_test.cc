@@ -51,6 +51,7 @@ class LogisticRegressionTest : public ::testing::Test {
 typedef ::testing::Types<float, double> MyTypes;
 TYPED_TEST_CASE(LogisticRegressionTest, MyTypes);
 
+
 TYPED_TEST(LogisticRegressionTest, MatrixLogisticRegressionPredict) {
   this->coeff.resize(3);
   this->coeff << -0.406, 0.852, -1.104;
@@ -64,7 +65,7 @@ TYPED_TEST(LogisticRegressionTest, MatrixLogisticRegressionPredict) {
 		      5.332,2.088,
 		      6.922,1.771,
 		      8.675,-0.242,
-		      7.673,3.508; 
+		      7.673,3.508;
   this->LogisticRegressionPredict();
   std::cout << "Checkpoint A" << std::endl;
   this->predictions.resize(10);
@@ -74,7 +75,7 @@ TYPED_TEST(LogisticRegressionTest, MatrixLogisticRegressionPredict) {
 
 TYPED_TEST(LogisticRegressionTest, MatrixLogisticRegressionFit) {
   this->training_x.resize(10,2);
-  this-> iterations = 100;
+  this-> iterations = 10000;
   this-> alpha = 0.3;
   this->training_x << 2, .5,
                2, 0,
@@ -85,7 +86,7 @@ TYPED_TEST(LogisticRegressionTest, MatrixLogisticRegressionFit) {
                2, 2,
                4, 3,
                3, 5,
-               6, 3.5;  
+               6, 3.5;
   this->training_y.resize(10);
   this->training_y << 0, 0, 0, 0, 0, 1, 1, 1, 1, 1;
   this->coeff.resize(3);
@@ -93,4 +94,3 @@ TYPED_TEST(LogisticRegressionTest, MatrixLogisticRegressionFit) {
   std::cout << this->coeff << std::endl;
   ASSERT_TRUE(true);
 }
-
