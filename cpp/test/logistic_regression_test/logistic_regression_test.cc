@@ -29,7 +29,7 @@
 #include "include/matrix.h"
 
 template<typename T>
-class LogisticRegressionTest : public ::testing::Test {
+class LogisticRegressionTest: public ::testing::Test {
  public:
   int iterations;
   T alpha;
@@ -39,20 +39,21 @@ class LogisticRegressionTest : public ::testing::Test {
   Nice::Matrix<T> predict_x;
   Nice::Vector<T> predictions;
 
-  void LogisticRegressionFit() {
-    coeff= Nice::LogisticRegression<T>::Fit(training_x, training_y, iterations, alpha);
+  void LogisticRegressionFit(Nice::LogisticRegression<T> &testModel) {
+    coeff = testModel.Fit(training_x, training_y, iterations, alpha);
   }
 
-  void LogisticRegressionPredict() {
-    predictions = Nice::LogisticRegression<T>::Predict(predict_x, coeff);
+  void LogisticRegressionPredict(Nice::LogisticRegression<T> &testModel) {
+    testModel.setTheta(coeff);
+    predictions = testModel.Predict(predict_x);
   }
 };
 
-typedef ::testing::Types<float, double> MyTypes;
+typedef ::testing::Types<float,double> MyTypes;
 TYPED_TEST_CASE(LogisticRegressionTest, MyTypes);
 
-
 TYPED_TEST(LogisticRegressionTest, MatrixLogisticRegressionPredict) {
+  Nice::LogisticRegression<TypeParam> testModel;
   this->coeff.resize(3);
   this->coeff << -0.406, 0.852, -1.104;
   this->predict_x.resize(10,2);
@@ -66,7 +67,7 @@ TYPED_TEST(LogisticRegressionTest, MatrixLogisticRegressionPredict) {
 		      6.922,1.771,
 		      8.675,-0.242,
 		      7.673,3.508;
-  this->LogisticRegressionPredict();
+  this->LogisticRegressionPredict(testModel);
   std::cout << "Checkpoint A" << std::endl;
   this->predictions.resize(10);
   std::cout << this->predictions << std::endl;
@@ -74,6 +75,7 @@ TYPED_TEST(LogisticRegressionTest, MatrixLogisticRegressionPredict) {
 }
 
 TYPED_TEST(LogisticRegressionTest, MatrixLogisticRegressionFit) {
+  Nice::LogisticRegression<TypeParam> testModel;
   this->training_x.resize(10,2);
   this-> iterations = 10000;
   this-> alpha = 0.3;
@@ -90,7 +92,7 @@ TYPED_TEST(LogisticRegressionTest, MatrixLogisticRegressionFit) {
   this->training_y.resize(10);
   this->training_y << 0, 0, 0, 0, 0, 1, 1, 1, 1, 1;
   this->coeff.resize(3);
-  this->LogisticRegressionFit();
+  this->LogisticRegressionFit(testModel);
   std::cout << this->coeff << std::endl;
   ASSERT_TRUE(true);
 }

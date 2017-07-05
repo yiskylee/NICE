@@ -39,6 +39,7 @@ namespace Nice {
 template<typename T>
 class LogisticRegression {
  private:
+  Vector<T> theta;
   /// Calculates the hypothesis of a given input Vector
   ///
   /// \param input
@@ -46,13 +47,22 @@ class LogisticRegression {
   ///
   /// \return
   /// This function returns a Vector of type T
-  static Vector<T> h(Vector<T> input) {
+  Vector<T> h(Vector<T> input) {
     input = ((-1 * input).array().exp()) + 1;
     return input.array().inverse();
   }
 
 
  public:
+  LogisticRegression() {
+  }
+  void setTheta(const Vector<T> &input) {
+    theta = input;
+  }
+
+  Vector<T> getTheta(){
+    return theta;
+  }
   /// Given a set of features and parameters creates a vector of target outputs
   ///
   /// \param inputs
@@ -63,13 +73,13 @@ class LogisticRegression {
   ///
   /// \return
   /// This function returns a Vector of target outputs of type T
-  static Vector<T> Predict(const Matrix<T> &inputs, const Vector<T> thetas) {
+  Vector<T> Predict(const Matrix<T> &inputs) {
     Vector<T> predictions, yhat;
     Matrix<T> product;
-    product = inputs * thetas.bottomRows(thetas.rows()-1);
+    product = inputs * theta.bottomRows(theta.rows()-1);
 
     yhat = product.rowwise().sum();
-    yhat = yhat.array() + thetas(0);
+    yhat = yhat.array() + theta(0);
 
     predictions = h(yhat);
     return predictions;
@@ -85,9 +95,9 @@ class LogisticRegression {
   ///
   /// \return
   /// This function returns a Vector of parameters of type T
-  static Vector<T> Fit(const Matrix<T> &xin, const Vector<T> &y,
+  Vector<T> Fit(const Matrix<T> &xin, const Vector<T> &y,
     int iterations, T alpha){
-    Vector<T> gradient, theta;
+    Vector<T> gradient;
 
     theta.resize(xin.cols() + 1);
     gradient.resize(theta.rows());
