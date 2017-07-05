@@ -60,7 +60,7 @@ class LogisticRegression {
     theta = input;
   }
 
-  Vector<T> getTheta(){
+  Vector<T> getTheta() {
     return theta;
   }
   /// Given a set of features and parameters creates a vector of target outputs
@@ -76,8 +76,8 @@ class LogisticRegression {
   Vector<T> Predict(const Matrix<T> &inputs) {
     Vector<T> predictions, yhat;
     Matrix<T> product;
+    theta.resize(inputs.rows() + 1);
     product = inputs * theta.bottomRows(theta.rows()-1);
-
     yhat = product.rowwise().sum();
     yhat = yhat.array() + theta(0);
 
@@ -92,18 +92,13 @@ class LogisticRegression {
   ///
   /// \param y
   /// Vector of target variables for each set of features
-  ///
-  /// \return
-  /// This function returns a Vector of parameters of type T
-  Vector<T> Fit(const Matrix<T> &xin, const Vector<T> &y,
+  void Fit(const Matrix<T> &xin, const Vector<T> &y,
     int iterations, T alpha){
     Vector<T> gradient;
-
     theta.resize(xin.cols() + 1);
     gradient.resize(theta.rows());
     theta.setZero();
     gradient.setZero();
-
     for (int i = 0; i < iterations; i++) {
       Vector<T> Xtheta = (xin * (theta.bottomRows(theta.rows() - 1)));
       Xtheta = Xtheta.array() + theta(0);
@@ -111,7 +106,7 @@ class LogisticRegression {
       gradient(0) = theta.sum();
       theta = theta - ((alpha/ y.size()) * gradient);
     }
-    return theta;
+    std::cout << theta << '\n';
   }
 };
 }  // namespace Nice
