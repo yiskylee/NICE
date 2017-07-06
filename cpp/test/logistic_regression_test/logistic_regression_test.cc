@@ -37,11 +37,15 @@ class LogisticRegressionTest: public ::testing::Test {
   Nice::Vector<T> training_y;
   Nice::Matrix<T> predict_x;
   Nice::Vector<T> predictions;
+  Nice::LogisticRegression<T> testModel1;
+  Nice::LogisticRegression<T> testModel2;
 
+  // Runs the Fit function for a specific model
   void LogisticRegressionFit(Nice::LogisticRegression<T> &testModel) {
     testModel.Fit(training_x, training_y, iterations, alpha);
   }
 
+  // Runs the Predict function for a specific model 
   void LogisticRegressionPredict(Nice::LogisticRegression<T> &testModel) {
     predictions = testModel.Predict(predict_x);
   }
@@ -50,9 +54,9 @@ class LogisticRegressionTest: public ::testing::Test {
 typedef ::testing::Types<float, double> MyTypes;
 TYPED_TEST_CASE(LogisticRegressionTest, MyTypes);
 
-
-TYPED_TEST(LogisticRegressionTest, MatrixLogisticRegressionFit) {
-  Nice::LogisticRegression<TypeParam> testModel;
+// Runs both the fit and predict function on a single model.
+TYPED_TEST(LogisticRegressionTest, MatrixLogisticRegressionOneModel) {
+  // Setup for the Fit function
   this->training_x.resize(10, 2);
   this->iterations = 10000;
   this->alpha = 0.3;
@@ -68,12 +72,9 @@ TYPED_TEST(LogisticRegressionTest, MatrixLogisticRegressionFit) {
           7.673, 3.508;
   this->training_y.resize(10);
   this->training_y << 0, 0, 0, 0, 0, 1, 1, 1, 1, 1;
-  this->LogisticRegressionFit(testModel);
-  ASSERT_TRUE(true);
-}
+  this->LogisticRegressionFit(this->testModel1);
 
-TYPED_TEST(LogisticRegressionTest, MatrixLogisticRegressionPredict) {
-  Nice::LogisticRegression<TypeParam> testModel;
+  // Setup for the Predict function
   this->predict_x.resize(10, 2);
   this->predict_x << 2.781, 2.550,
           1.465, 2.362,
@@ -85,24 +86,74 @@ TYPED_TEST(LogisticRegressionTest, MatrixLogisticRegressionPredict) {
           6.922, 1.771,
           8.675, -0.242,
           7.673, 3.508;
-  this->LogisticRegressionPredict(testModel);
+  this->LogisticRegressionPredict(this->testModel1);
   this->predictions.resize(10);
   std::cout << this->predictions << std::endl;
   ASSERT_TRUE(true);
 }
 
-/**
-this->alpha = 0.3;
-this->training_x << 2, .5,
-             2, 0,
-             4, 1,
-             5, 2,
-             7, 3,
-             1, 3,
-             2, 2,
-             4, 3,
-             3, 5,
-             6, 3.5;
-this->training_y.resize(10);
-this->training_y << 0, 0, 0, 0, 0, 1, 1, 1, 1, 1;
-**/
+// Runs both the fit and predict function on two separate models in
+// the same test.
+TYPED_TEST(LogisticRegressionTest, MatrixLogisticRegressionTwoModels) {
+  // Setup for Model 1's Fit function
+  this->training_x.resize(10, 2);
+  this->iterations = 10000;
+  this->alpha = 0.3;
+  this->training_x << 2.781, 2.550,
+          1.465, 2.362,
+          3.396, 4.400,
+          1.388, 1.850,
+          3.064, 3.005,
+          7.627, 2.759,
+          5.332, 2.088,
+          6.922, 1.771,
+          8.675, -0.242,
+          7.673, 3.508;
+  this->training_y.resize(10);
+  this->training_y << 0, 0, 0, 0, 0, 1, 1, 1, 1, 1;
+  this->LogisticRegressionFit(this->testModel1);
+
+  // Setup for Model 2's Fit function
+  this->training_x << 2, .5,
+               2, 0,
+               4, 1,
+               5, 2,
+               7, 3,
+               1, 3,
+               2, 2,
+               4, 3,
+               3, 5,
+               6, 3.5;
+  this->LogisticRegressionFit(this->testModel2);
+
+  // Setup for Model 1's Predict function
+  this->predict_x.resize(10, 2);
+  this->predict_x << 2.781, 2.550,
+          1.465, 2.362,
+          3.396, 4.400,
+          1.388, 1.850,
+          3.064, 3.005,
+          7.627, 2.759,
+          5.332, 2.088,
+          6.922, 1.771,
+          8.675, -0.242,
+          7.673, 3.508;
+  this->LogisticRegressionPredict(this->testModel1);
+
+  // Setup for Model 2's Fit function
+  this->predictions.resize(10);
+  std::cout << this->predictions << std::endl;
+  this->predict_x << 2, .5,
+               2, 0,
+               4, 1,
+               5, 2,
+               7, 3,
+               1, 3,
+               2, 2,
+               4, 3,
+               3, 5,
+               6, 3.5;
+  this->LogisticRegressionPredict(this->testModel2);
+  std::cout << this->predictions << std::endl;
+  ASSERT_TRUE(true);
+}

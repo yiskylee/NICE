@@ -56,13 +56,23 @@ class LogisticRegression {
  public:
   LogisticRegression() {
   }
+
+  /// Sets the theta for the model from an external Vector
+  ///
+  /// \param input
+  /// A Vector containing the theta to manually set the model 
   void setTheta(const Vector<T> &input) {
     theta = input;
   }
 
+  /// Returns the current theta for the specific model
+  ///
+  /// \return
+  /// A Vector containing the current theta values
   Vector<T> getTheta() {
     return theta;
   }
+
   /// Given a set of features and parameters creates a vector of target outputs
   ///
   /// \param inputs
@@ -76,7 +86,7 @@ class LogisticRegression {
   Vector<T> Predict(const Matrix<T> &inputs) {
     Vector<T> predictions, yhat;
     Matrix<T> product;
-    theta.resize(inputs.rows() + 1);
+    //theta.resize(inputs.rows() + 1);
     product = inputs * theta.bottomRows(theta.rows()-1);
     yhat = product.rowwise().sum();
     yhat = yhat.array() + theta(0);
