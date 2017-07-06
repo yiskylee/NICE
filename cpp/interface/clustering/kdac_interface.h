@@ -77,52 +77,38 @@ class KDACInterface {
     KernelType  kernel = kGaussianKernel;
     double sigma = 1.0;
     for (int i = 0; i < boost::python::len(key_list); i++) {
-      if (strcmp("c", boost::python::extract<char *>(key_list[i])) == 0) {
+      char *param = boost::python::extract<char *>(key_list[i]);
+      if (strcmp("c", param) == 0) {
         int c = boost::python::extract<int>(params["c"]);
         kdac_ -> SetC(c);
-        continue;
-      }
-      if (strcmp("q", boost::python::extract<char *>(key_list[i])) == 0) {
+      } else if (strcmp("q", param) == 0) {
         int q = boost::python::extract<int>(params["q"]);
         kdac_ -> SetQ(q);
-        continue;
-      }
-      if (strcmp("max_time", boost::python::extract<char *>(key_list[i])) == 0) {
+      } else if (strcmp("max_time", param) == 0) {
         int max_time = boost::python::extract<int>(params["max_time"]);
         kdac_ -> SetMaxTime(max_time);
-        continue;
-      }
-      if (strcmp("method", boost::python::extract<char *>(key_list[i])) == 0) {
+      } else if (strcmp("method", param) == 0) {
         char* method = boost::python::extract<char *>(params["method"]);
         kdac_ -> SetMethod(method);
-        continue;
-      }
-      if (strcmp("lambda", boost::python::extract<char *>(key_list[i])) == 0) {
+      } else if (strcmp("lambda", param) == 0) {
         double lambda = boost::python::extract<double>(params["lambda"]);
         kdac_ -> SetLambda(lambda);
-        continue;
-      }
-      if (strcmp("sigma", boost::python::extract<char *>(key_list[i])) == 0) {
+      } else if (strcmp("sigma", param) == 0) {
         sigma = boost::python::extract<double>(params["sigma"]);
         has_sigma = true;
-        continue;
-      }
-      if (strcmp("verbose", boost::python::extract<char *>(key_list[i])) == 0) {
+      } else if (strcmp("verbose", param) == 0) {
         bool verbose = boost::python::extract<double>(params["verbose"]);
         kdac_ -> SetVerbose(verbose);
-        continue;
-      }
-      if (strcmp("threshold1", boost::python::extract<char *>(key_list[i])) == 0) {
+      } else if (strcmp("debug", param) == 0) {
+        bool debug = boost::python::extract<double>(params["debug"]);
+        kdac_ -> SetDebug(debug);
+      } else if (strcmp("threshold1", param) == 0) {
         double thresh1 = boost::python::extract<double>(params["threshold1"]);
         kdac_ -> SetThreshold1(thresh1);
-        continue;
-      }
-      if (strcmp("threshold2", boost::python::extract<char *>(key_list[i])) == 0) {
+      } else if (strcmp("threshold2", param) == 0) {
         double thresh2 = boost::python::extract<double>(params["threshold2"]);
         kdac_ -> SetThreshold1(thresh2);
-        continue;
-      }
-      if (strcmp("kernel", boost::python::extract<char *>(key_list[i])) == 0) {
+      } else if (strcmp("kernel", param) == 0) {
         if (strcmp("Gaussian",
                    boost::python::extract<char *>(params["kernel"])) == 0) {
           kernel = kGaussianKernel;
@@ -136,7 +122,9 @@ class KDACInterface {
           kernel = kPolynomialKernel;
         }
         has_kernel = true;
-        continue;
+      } else {
+        std::cout << "Parameter: " << param << " not recognized." << std::endl;
+        exit(1);
       }
     }
     if (has_kernel && has_sigma)

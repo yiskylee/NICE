@@ -95,7 +95,8 @@ class KDAC {
       max_time_exceeded_(false),
       max_time_(10),
       method_("KDAC"),
-      vectorization_(false) {}
+      vectorization_(false),
+      first_time_gen_u_(true) {}
 
   ~KDAC() {}
   KDAC(const KDAC &rhs) {}
@@ -160,7 +161,6 @@ class KDAC {
   Matrix<T> GetDToTheMinusHalf(void) { return d_matrix_to_the_minus_half_; }
 
   Matrix<T> GetK(void) {
-    GenKernelMatrix();
     return k_matrix_;
   }
 
@@ -360,6 +360,10 @@ class KDAC {
   std::string method_;
   // Vetorize ISM or not
   bool vectorization_;
+  // If this is the first time to generate a matrix U
+  // If this is true, it means the kernel matrix is generated directly from
+  // the input matrix X
+  bool first_time_gen_u_;
 
 
   Vector<T> GenOrthogonal(const Matrix<T> &space,
@@ -391,6 +395,9 @@ class KDAC {
     // This is an element-wise operation
     gamma_matrix_ = ((u_matrix_ * u_matrix_.transpose()).array() /
         didj_matrix_.array()).matrix() - y_matrix_tilde_ * lambda_;
+    util::CheckFinite(u_matrix_, "u_matrix_");
+    util::CheckFinite(didj_matrix_, "didj_matrix_");
+    util::CheckFinite(y_matrix_tilde_, "y_matrix_tilde_");
   }
 
   void GenGofW(void) {
@@ -417,19 +424,20 @@ class KDAC {
   }
 
   /// Generate the Kernel Matrix based on the current W
-  void GenKernelMatrix() {
-    // Project X to subspace W (n * d to d * q)
-    // Generate the kernel matrix based on kernel type from projected X
-    Matrix<T> projected_x_matrix = x_matrix_ * w_matrix_;
+  /// Currently only support the gaussian kernel
+  /// This is a slight violation of google coding style because
+  /// input_matrix is not modified in any way but we cannot use const
+  /// because the row() function can only be applied on a non-const variable
+  void GenKernelMatrix(Matrix<T> &input) {
     if (kernel_type_ == kGaussianKernel) {
       float sigma_sq = constant_ * constant_;
-      for (int i = 0; i < n_; i++)
+      for (int i = 0; i < n_; i++) {
         for (int j = 0; j < n_; j++) {
-          Vector<T> delta_ij =
-              projected_x_matrix.row(i) - projected_x_matrix.row(j);
-          T i_j_dist = delta_ij.norm();
+          Vector<T> delta_ij = input.row(i) - input.row(j);
+          T i_j_dist = delta_ij.squaredNorm();
           k_matrix_(i, j) = exp(-i_j_dist / (2 * sigma_sq));
         }
+      }
     }
   }
 
@@ -468,7 +476,18 @@ class KDAC {
   }
 
   void OptimizeU(void) {
-    GenKernelMatrix();
+    // If this is the first time to generate matrix U for the
+    // then we just use the input X matrix to generate the
+    // kernel matrix
+    if (first_time_gen_u_) {
+      GenKernelMatrix(x_matrix_);
+      first_time_gen_u_ = false;
+    } else {
+      // Otherwise, we project X to subspace W (n * d to d * q)
+      // Generate the kernel matrix based on kernel type from projected X
+      Matrix<T> projected_matrix = x_matrix_ * w_matrix_;
+      GenKernelMatrix(projected_matrix);
+    }
     // Generate degree matrix from the kernel matrix
     // d_i is the diagonal vector of degree matrix D
     // This is a reference to how to directly generate D^(-1/2)
@@ -478,8 +497,9 @@ class KDAC {
 
     // Generate D and D^(-1/2)
     GenDegreeMatrix();
-    l_matrix_ = d_matrix_to_the_minus_half_ *
-        k_matrix_ * d_matrix_to_the_minus_half_;
+    l_matrix_ = h_matrix_ * d_matrix_to_the_minus_half_ *
+        k_matrix_ * d_matrix_to_the_minus_half_ * h_matrix_;
+
     SvdSolver<T> solver;
     solver.Compute(l_matrix_);
     // Generate a u matrix from SVD solver and then use Normalize
@@ -488,6 +508,16 @@ class KDAC {
     CheckFiniteOptimizeU();
     if (verbose_)
       std::cout << "U Optimized" << std::endl;
+
+
+    if (debug_) {
+      std::cout << "L\n";
+      std::cout << l_matrix_ << std::endl;
+      std::cout << "U\n";
+      std::cout << u_matrix_ << std::endl;
+//      std::cout << "U\n";
+//      std::cout << u_matrix_ << std::endl;
+    }
   }
 
   virtual void OptimizeWISM(void) {
@@ -506,16 +536,26 @@ class KDAC {
               this->x_matrix_.row(i) - this->x_matrix_.row(j);
           Matrix<T> a_ij = delta_x_ij * delta_x_ij.transpose();
           Matrix<T> waw = w_matrix_.transpose() * a_ij * w_matrix_;
-          T value = gamma_matrix_(i, j) * exp(-waw.trace() / (2.0 * sigma_sq));
-          phi_w = phi_w + a_ij * value;
+          T exp_term = gamma_matrix_(i, j) / sigma_sq *
+                    exp(-waw.trace() / (2.0 * sigma_sq));
+          phi_w = phi_w + a_ij * exp_term;
         }
       }
+      if (debug_) {
+        std::cout << "Phi(W)\n";
+        std::cout << phi_w << std::endl;
+      }
+
       Eigen::EigenSolver<Matrix<T>> solver(phi_w);
 
       Vector<T> eigen_values = solver.eigenvalues().real();
       Vector<T> eigen_values_img = solver.eigenvalues().imag();
-      if (eigen_values_img.sum() != 0)
+      if (eigen_values_img.sum() != 0) {
         std::cout << "Imaginary Parts Exist!" << std::endl;
+      }
+      if (debug_) {
+        std::cout << "eigen_values\n" << eigen_values << std::endl;
+      }
 
       // Key-value sort for eigen values
       std::vector<T>
@@ -527,6 +567,7 @@ class KDAC {
       for (int i = 0; i < q_; i++)
         w_matrix_.col(i) = solver.eigenvectors().col(idx[i]).real();
     }
+    CheckFiniteOptimizeW();
   }
 
   virtual void OptimizeW(void) {
@@ -620,6 +661,7 @@ class KDAC {
     w_matrix_ = Matrix<T>::Identity(d_, d_);
     k_matrix_y_ = y_matrix_ * y_matrix_.transpose();
     y_matrix_tilde_ = h_matrix_ * k_matrix_y_ * h_matrix_;
+    first_time_gen_u_ = true;
     u_converge_ = false;
     w_converge_ = false;
     u_w_converge_ = false;
@@ -673,6 +715,7 @@ class KDAC {
     k_matrix_ = Matrix<T>::Zero(n_, n_);
     // Generate the kernel for the label matrix Y: K_y
     k_matrix_y_ = y_matrix_ * y_matrix_.transpose();
+    util::CheckFinite(k_matrix_y_, "k_matrix_y_");
     // Generate Y tilde matrix in equation 5 from kernel matrix of Y
     y_matrix_tilde_ = h_matrix_ * k_matrix_y_ * h_matrix_;
     u_converge_ = false;
