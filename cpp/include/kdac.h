@@ -443,8 +443,8 @@ class KDAC {
 
   // Check if q is not bigger than c
   void CheckQD() {
-    if (q_ >= d_) {
-      std::cerr << "Reduced dimension q cannot >= dimension d" << std::endl;
+    if (q_ > d_) {
+      std::cerr << "Reduced dimension q cannot > dimension d" << std::endl;
       exit(1);
     }
   }
@@ -473,6 +473,53 @@ class KDAC {
       y_matrix_ = y_matrix_new;
       // Reset the y_matrix_temp holder to zero
     }
+  }
+
+  Matrix<T> GenPhiOfW(void) {
+    if (vectorization_) {
+      // Vectorization solution, where we convert the conventional for loop
+      // solution to matrix multiplications
+      Matrix<T> psi = h_matrix_ * (u_matrix_ * u_matrix_.transpose() -
+          k_matrix_y_ * lambda_) * h_matrix_;
+      return psi;
+    } else {
+      // For loop solution
+      float sigma_sq = pow(constant_, 2);
+      Matrix<T> phi_w = Matrix<T>::Zero(d_, d_);
+      for (int i = 0; i < n_; i++) {
+        for (int j = 0; j < n_; j++) {
+          Vector<T> delta_x_ij =
+              this->x_matrix_.row(i) - this->x_matrix_.row(j);
+          Matrix<T> a_ij = delta_x_ij * delta_x_ij.transpose();
+          Matrix<T> waw = w_matrix_.transpose() * a_ij * w_matrix_;
+          T value = gamma_matrix_(i, j) / sigma_sq
+              * exp(-waw.trace() / (2.0 * sigma_sq));
+          phi_w = phi_w + a_ij * value;
+        }
+      }
+      return phi_w;
+    }
+  }
+
+  void UpdateW(const Matrix<T> &phi_w) {
+    Eigen::EigenSolver<Matrix<T>> solver(phi_w);
+    Vector<T> eigen_values = solver.eigenvalues().real();
+    Vector<T> eigen_values_img = solver.eigenvalues().imag();
+    if (eigen_values_img.sum() != 0) {
+      std::cerr << "Imaginary Parts Exist! Exiting..." << std::endl;
+
+      exit(1);
+    }
+
+    // Key-value sort for eigen values
+    std::vector<T>
+        v(eigen_values.data(), eigen_values.data() + eigen_values.size());
+    std::vector<size_t> idx(v.size());
+    std::iota(idx.begin(), idx.end(), 0);
+    std::sort(idx.begin(), idx.end(),
+              [&v](size_t t1, size_t t2) { return v[t1] < v[t2]; });
+    for (int i = 0; i < q_; i++)
+      w_matrix_.col(i) = solver.eigenvectors().col(idx[i]).real();
   }
 
   void OptimizeU(void) {
@@ -521,53 +568,17 @@ class KDAC {
   }
 
   virtual void OptimizeWISM(void) {
-    if (vectorization_) {
-      // Vectorization solution, where we convert the conventional for loop
-      // solution to matrix multiplications
-      Matrix<T> psi = h_matrix_ * (u_matrix_ * u_matrix_.transpose() -
-                      k_matrix_y_ * lambda_) * h_matrix_;
-    } else {
-      // For loop solution
-      float sigma_sq = pow(constant_, 2);
-      Matrix<T> phi_w = Matrix<T>::Zero(d_, d_);
-      for (int i = 0; i < n_; i++) {
-        for (int j = 0; j < n_; j++) {
-          Vector<T> delta_x_ij =
-              this->x_matrix_.row(i) - this->x_matrix_.row(j);
-          Matrix<T> a_ij = delta_x_ij * delta_x_ij.transpose();
-          Matrix<T> waw = w_matrix_.transpose() * a_ij * w_matrix_;
-          T exp_term = gamma_matrix_(i, j) / sigma_sq *
-                    exp(-waw.trace() / (2.0 * sigma_sq));
-          phi_w = phi_w + a_ij * exp_term;
-        }
-      }
-      if (debug_) {
-        std::cout << "Phi(W)\n";
-        std::cout << phi_w << std::endl;
-      }
-
-      Eigen::EigenSolver<Matrix<T>> solver(phi_w);
-
-      Vector<T> eigen_values = solver.eigenvalues().real();
-      Vector<T> eigen_values_img = solver.eigenvalues().imag();
-      if (eigen_values_img.sum() != 0) {
-        std::cout << "Imaginary Parts Exist!" << std::endl;
-      }
-      if (debug_) {
-        std::cout << "eigen_values\n" << eigen_values << std::endl;
-      }
-
-      // Key-value sort for eigen values
-      std::vector<T>
-          v(eigen_values.data(), eigen_values.data() + eigen_values.size());
-      std::vector<size_t> idx(v.size());
-      std::iota(idx.begin(), idx.end(), 0);
-      std::sort(idx.begin(), idx.end(),
-                [&v](size_t t1, size_t t2) { return v[t1] < v[t2]; });
-      for (int i = 0; i < q_; i++)
-        w_matrix_.col(i) = solver.eigenvectors().col(idx[i]).real();
+    Matrix<T> pre_w_matrix;
+    bool converge = false;
+    int i = 0;
+    while (!converge) {
+      pre_w_matrix = w_matrix_;
+      Matrix<T> phi_w = GenPhiOfW();
+      UpdateW(phi_w);
+      converge = util::CheckConverged(w_matrix_, pre_w_matrix, threshold2_);
+      std::cout << "Round " << i++ << ": Not Converged" << std::endl;
     }
-    CheckFiniteOptimizeW();
+    std::cout << "Round " << i++ << ": Converged" << std::endl;
   }
 
   virtual void OptimizeW(void) {

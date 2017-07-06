@@ -208,8 +208,8 @@ TYPED_TEST(KDACTest, CPU3_10_20_ISM) {
   this->Output();
 }
 
-TYPED_TEST(KDACTest, CPU3_10_6_ISM) {
-  this->SetupInputData(3, 10, 6, "cpu");
+TYPED_TEST(KDACTest, CPU3_10_3_ISM) {
+  this->SetupInputData(3, 10, 3, "cpu");
   this->kdac_->SetVerbose(true);
   this->kdac_->SetMethod("ISM");
   this->kdac_->Fit(this->data_matrix_, this->existing_y_);
