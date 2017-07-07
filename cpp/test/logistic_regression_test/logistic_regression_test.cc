@@ -45,7 +45,7 @@ class LogisticRegressionTest: public ::testing::Test {
     testModel.Fit(training_x, training_y, iterations, alpha);
   }
 
-  // Runs the Predict function for a specific model 
+  // Runs the Predict function for a specific model
   void LogisticRegressionPredict(Nice::LogisticRegression<T> &testModel) {
     predictions = testModel.Predict(predict_x);
   }

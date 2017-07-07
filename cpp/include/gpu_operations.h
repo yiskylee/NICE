@@ -171,7 +171,7 @@ class GpuOperations {
   /// \return
   /// This function returns a Vector of type T
   static Matrix<T> Multiply(const Matrix<T> &a, const Vector<T> &b) {
-    if (a.cols() == b.rows()) {  // Check if matricies k vals are equal
+    if (a.cols() == b.rows() && !a.isZero()) {
       // Allocate and transfer memories
       int m = a.rows();
       int n = b.cols();
@@ -211,9 +211,24 @@ class GpuOperations {
       util_->SyncMem(d_y, &h_y(0), m);
 
       return h_y;
-
-    } else {
+    } else if (a.cols() != b.rows()) {
       std::cerr << "Matricies in gpu matrix multiply's sizes aren't compatible"
+                << std::endl;
+      exit(1);
+    } else if (a.isZero() && b.isZero()) {
+      std::cerr << "The maxtrix and the vector are empty"
+                << std::endl;
+      exit(1);
+    } else if (a.isZero()) {
+      std::cerr << "The maxtrix is empty"
+                << std::endl;
+      exit(1);
+    } else if (b.isZero()) {
+      std::cerr << "The vector is empty"
+                << std::endl;
+      exit(1);
+    } else {
+      std::cerr << "Unknown error"
                 << std::endl;
       exit(1);
     }
@@ -274,7 +289,7 @@ class GpuOperations {
 
   /// This function calculates the sum of the input Matricies
   ///
-  /// \param aVector
+  /// \param a
   /// Input Matrix 1
   /// \param b
   /// Input Matrix 2

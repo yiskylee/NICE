@@ -1,4 +1,3 @@
-
 // The MIT License (MIT)
 //
 // Copyright (c) 2016 Northeastern University
@@ -80,8 +79,8 @@ TYPED_TEST_CASE(GpuMatrixVectorMultiplyTest, dataTypes);
 
 TYPED_TEST(GpuMatrixVectorMultiplyTest, FuncionalityTest) {
   // Create test data
-  int m = 2;
-  int n = 2;
+  int m = 10;
+  int n = 5;
   srand(time(NULL));
   this->CreateTestData(m, n);
   Nice::Vector<TypeParam> gpu_c(m);
@@ -93,4 +92,54 @@ TYPED_TEST(GpuMatrixVectorMultiplyTest, FuncionalityTest) {
   for (int i = 0; i < n; i++) {
     EXPECT_NEAR(this->c_(i), gpu_c(i), 0.001);
   }
+}
+
+TYPED_TEST(GpuMatrixVectorMultiplyTest, SizeTest) {
+  // Create test data
+  int m = 5;
+  int n = 10;
+  srand(time(NULL));
+  this->CreateTestData(m, n);
+  Nice::Vector<TypeParam> gpu_c(m);
+  // Test gpu matrix matrix multiply in Nice
+  Nice::GpuOperations<TypeParam> gpu_op;
+  ASSERT_DEATH(gpu_op.Multiply(this->a_, this->b_), ".*");
+}
+
+TYPED_TEST(GpuMatrixVectorMultiplyTest, MatrixAndVectorEmptyTest) {
+  // Create test data
+  int m = 0;
+  int n = 0;
+  srand(time(NULL));
+  this->CreateTestData(m, n);
+  Nice::Vector<TypeParam> gpu_c(m);
+  // Test gpu matrix matrix multiply in Nice
+  Nice::GpuOperations<TypeParam> gpu_op;
+  ASSERT_DEATH(gpu_op.Multiply(this->a_, this->b_), ".*");
+}
+
+TYPED_TEST(GpuMatrixVectorMultiplyTest, MatrixEmptyTest) {
+  // Create test data
+  int m = 10;
+  int n = 5;
+  srand(time(NULL));
+  this->CreateTestData(m, n);
+  this->a_ = Nice::Matrix<TypeParam>::Zero(m, n);
+  Nice::Vector<TypeParam> gpu_c(m);
+  // Test gpu matrix matrix multiply in Nice
+  Nice::GpuOperations<TypeParam> gpu_op;
+  ASSERT_DEATH(gpu_op.Multiply(this->a_, this->b_), ".*");
+}
+
+TYPED_TEST(GpuMatrixVectorMultiplyTest, VectorEmptyTest) {
+  // Create test data
+  int m = 0;
+  int n = 0;
+  srand(time(NULL));
+  this->CreateTestData(m, n);
+  this->b_ = Nice::Vector<TypeParam>::Zero(n);
+  Nice::Vector<TypeParam> gpu_c(m);
+  // Test gpu matrix matrix multiply in Nice
+  Nice::GpuOperations<TypeParam> gpu_op;
+  ASSERT_DEATH(gpu_op.Multiply(this->a_, this->b_), ".*");
 }
