@@ -52,15 +52,15 @@ class GpuOperations {
   static GpuUtil<T> *util_;
 
  public:
-   /// This function multiplies an input Matrix and a scalar
-   ///
-   /// \param a
-   /// Input Matrix
-   /// \param scalar
-   /// Input Scalar of type T
-   ///
-   /// \return
-   /// This function returns a Matrix of type T
+  /// This function multiplies an input Matrix and a scalar
+  ///
+  /// \param a
+  /// Input Matrix
+  /// \param scalar
+  /// Input Scalar of type T
+  ///
+  /// \return
+  /// This function returns a Matrix of type T
   static Matrix<T> Multiply(const Matrix<T> &a, const T &scalar) {
     // Allocate and transfer memory
     int n = a.cols() * a.rows();
