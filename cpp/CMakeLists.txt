@@ -153,7 +153,9 @@ if (enable-test)
     file(GLOB_RECURSE TEST_SRC_FILES RELATIVE
          ${PROJECT_SOURCE_DIR}
          test/cpu_operations_test/*.cc
-         test/util_test/*.cc
+         test/logistic_regression_test/*.cc
+         test/gpu_logistic_regression_test/*.cc
+	 test/util_test/*.cc
          test/cpu_solver_test/*.cc
          test/gpu_operations_test/*.cc
          test/gpu_solver_test/*.cc
@@ -163,6 +165,7 @@ if (enable-test)
     file(GLOB_RECURSE TEST_SRC_FILES RELATIVE
          ${PROJECT_SOURCE_DIR}
          test/cpu_operations_test/*.cc
+	 test/logistic_regression_test/*.cc
          test/util_test/*.cc
          test/cpu_solver_test/*.cc
          test/model_test/*.cc
