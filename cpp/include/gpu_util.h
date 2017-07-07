@@ -283,6 +283,7 @@ void GpuMatrixVectorMul(cublasHandle_t handle,
                                   const double *x, int incx,
                                   const double *beta,
                                   double *y, int incy);
+
 void GpuMatrixScalarMul(cublasHandle_t handle,
                                   int n,
                                   const float &scalar,
