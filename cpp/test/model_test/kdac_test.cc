@@ -141,7 +141,8 @@ TYPED_TEST_CASE(KDACTest, FloatTypes);
   EXPECT_EQ(a.cols(), ref.cols());\
   for (int i = 0; i < a.rows(); i++)\
     for (int j = 0; j < a.cols(); j++)\
-      EXPECT_NEAR(double(a(i, j)), double(ref(i, j)), 0.0001);\
+      EXPECT_NEAR(static_cast<double>(a(i, j)), \
+                  static_cast<double>(ref(i, j)), 0.0001);\
 
 #define PRINTV(v, num_per_line)\
   for (int i = 0; i < v.rows(); i++) {\

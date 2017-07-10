@@ -24,9 +24,9 @@
 #define CPP_INCLUDE_TIMER_H_
 
 #include <vector>
+#include <numeric>
 #include "include/stop_watch.h"
 #include "include/matrix.h"
-#include <numeric>
 
 namespace Nice {
 // A timer includes a Stop Watch and a vector to store the time

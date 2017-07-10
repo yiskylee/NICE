@@ -23,19 +23,19 @@
 #define CPP_INCLUDE_GPU_UTIL_H_
 
 #ifdef CUDA_AND_GPU
-
 #include <cuda_runtime_api.h>
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
 #include <cuda_profiler_api.h>
 #include <cusolverDn.h>
 #include <cublas_v2.h>
+#include <iostream>
+#include <memory>
+#include <string>
 #include "include/matrix.h"
 #include "include/vector.h"
 #include "Eigen/Core"
 #include "Eigen/Dense"
-#include <iostream>
-#include <memory>
 
 namespace Nice {
 
@@ -43,25 +43,22 @@ namespace Nice {
 // Helper macros
 //
 // Position for Column-Major index
-#define IDXC(i,j,ld) (((j)*(ld))+(i))
+#define IDXC(i, j, ld) (((j)*(ld))+(i))
 // Position for Row-Major index
-#define IDXR(i,j,ld) (((i)*(ld))+(j))
+#define IDXR(i, j, ld) (((i)*(ld))+(j))
 
 // Utility class used to avoid linker errors with extern
 // unsized shared memory arrays with templated type
 template<typename T>
-struct SharedMemory
-{
-  __device__ inline operator       T *()
-  {
+struct SharedMemory {
+  __device__ inline operator       T *() {
     extern __shared__ int __smem[];
-    return (T *)__smem;
+    return reinterpret_cast<T *>__smem;
   }
 
-  __device__ inline operator const T *() const
-  {
+  __device__ inline operator const T *() const {
     extern __shared__ int __smem[];
-    return (T *)__smem;
+    return reinterpret_cast<T *>__smem;
   }
 };
 
@@ -187,8 +184,8 @@ class GpuUtil {
     Matrix<T> matrix_gpu = Eigen::Map<Matrix<T>>(host, row, col);
     if ( !matrix_cpu.isApprox(matrix_gpu) ) {
       std::cout << matrix_name << " not validated.\n";
-      std::cout << "cpu: " << std::endl << matrix_cpu.block(0,0,4,4) << std::endl;
-      std::cout << "gpu: " << std::endl << matrix_gpu.block(0,0,4,4) << std::endl;
+      std::cout << "cpu: \n" << matrix_cpu.block(0, 0, 4, 4) << std::endl;
+      std::cout << "gpu: \n" << matrix_gpu.block(0, 0, 4, 4) << std::endl;
 //      exit(1);
     }
   }
@@ -217,7 +214,7 @@ class GpuUtil {
   }
 
   void ValidateCPUScalarResult(T host, T dev, std::string scalar_name) {
-    if ( fabs(host - dev) / fabs(host) > 0.01) {
+    if (fabs(host - dev) / fabs(host) > 0.01) {
       std::cout << scalar_name << " not validated.\n";
       std::cout << "cpu: " << host << std::endl;
       std::cout << "gpu: " << dev << std::endl;
@@ -231,10 +228,11 @@ class GpuUtil {
     Matrix<T> matrix_gpu = DevBufferToEigen(dev, row, col);
     if ( !matrix_cpu.isApprox(matrix_gpu) ) {
       std::cout << matrix_name << " not validated.\n";
-      for(int i = 0; i < matrix_cpu.rows(); i++) {
+      for (int i = 0; i < matrix_cpu.rows(); i++) {
         for (int j = 0; j < matrix_cpu.cols(); j++) {
-          if ( fabs(matrix_cpu(i, j) - matrix_gpu(i, j)) > 0.01) {
-            std::cout << i << ", " << j << ": " << matrix_cpu(i, j) << " " << matrix_gpu(i, j) << std::endl;
+          if (fabs(matrix_cpu(i, j) - matrix_gpu(i, j)) > 0.01) {
+            std::cout << i << ", " << j << ": " << matrix_cpu(i, j) <<
+                      " " << matrix_gpu(i, j) << std::endl;
           }
         }
       }
@@ -268,7 +266,6 @@ class GpuUtil {
   void SyncDev() {
     CUDA_CALL(cudaDeviceSynchronize());
   }
-
 };
 
 template <typename T>
