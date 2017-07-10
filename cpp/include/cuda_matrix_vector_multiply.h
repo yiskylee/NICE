@@ -37,7 +37,6 @@
 #include "include/gpu_util.h"
 
 
-
 namespace Nice {
 
 template<typename T>

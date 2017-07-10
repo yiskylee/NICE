@@ -25,15 +25,15 @@
 
 namespace Nice {
   template <typename T>
-  __global__ void GpuMatrixVectorMul(T *d_a, T *d_x, T *d_y, int size) {
-    int index = blockIDx.x * blockDim.x + threadIdx.x;
-    T sum = 0;
-    for (int i = 0; i < size; i++) {
-      sum += d_a[index] * d_x[index];
-    }
-    d_y[index] = sum;
+   __global__ void GpuMatrixVectorMul(T *d_a, T *d_x, T *d_y, int size) {
+     int row = blockIdx.y * blockDim.y + threadIdx.y;
+     int col = blockIdx.x * blockDim.x + threadIdx.x;
+     float sum = 0.0f;
+     for (int k = 0; k < n; k++) {
+       sum += d_a[row*n+k] * d_x[k * n + col];
+     }
+     d_y[row*n+col] = sum;
   }
-
 }
 
 #endif  // NEED_CUDA

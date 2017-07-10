@@ -95,9 +95,6 @@ if (CUDA_AND_GPU)
   include(FindCUDA)
 
   # Set NVCC flags
-<<<<<<< HEAD
-  set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -std=c++11 -O3 -gencode arch=compute_50,code=sm_50)
-=======
   set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -std=c++11 -O3
 #          -gencode arch=compute_20,code=sm_20
           -gencode arch=compute_30,code=sm_30
@@ -107,7 +104,6 @@ if (CUDA_AND_GPU)
 #          -gencode arch=compute_52,code=sm_52
           )
 
->>>>>>> 59d97c07a84a6eee7d5e4486c0c37e1fc073f0eb
 
   # Find cusolver library
   find_library(CUDA_SOLVER_LIBRARY cusolver HINTS ${CUDA_TOOLKIT_ROOT_DIR}/lib64)
@@ -116,12 +112,6 @@ if (CUDA_AND_GPU)
   # Add NICE library together with CUDA
   cuda_include_directories(${CUDA_INCLUDE_DIR})
   cuda_add_library(${PROJECT_NAME} SHARED ${SOURCES})
-<<<<<<< HEAD
-  add_dependencies(${PROJECT_NAME} ${CUDA_SOLVER_LIBRARY})
-  add_dependencies(${PROJECT_NAME} ${CUDA_BLAS_LIBRARY})
-  add_dependencies(${PROJECT_NAME} ${CUDA_LIBRARIES})
-=======
->>>>>>> 59d97c07a84a6eee7d5e4486c0c37e1fc073f0eb
   target_link_libraries(${PROJECT_NAME}
                         ${CUDA_SOLVER_LIBRARY}
                         ${CUDA_BLAS_LIBRARY}
