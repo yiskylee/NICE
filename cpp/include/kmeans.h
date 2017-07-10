@@ -182,7 +182,6 @@ class KMeans {
     T running_total = 0.0;
 
     for (unsigned int i = 0; i < normalizedWeights.size(); i++) {
-
       running_total += normalizedWeights[i];
       if (random_value < running_total) {
         T weight = normalizedWeights(i);
@@ -229,6 +228,7 @@ class KMeans {
   Matrix <T> GetCenters() {
     return centers_;
   }
+
  private:
   Vector<T> labels_;
   bool random_ = true;

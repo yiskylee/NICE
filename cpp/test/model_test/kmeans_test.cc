@@ -26,7 +26,6 @@
 #include "Eigen/Dense"
 #include "gtest/gtest.h"
 #include "include/kmeans.h"
-#include "gtest/gtest.h"
 #include "include/util.h"
 #include "include/matrix.h"
 #include "include/vector.h"
