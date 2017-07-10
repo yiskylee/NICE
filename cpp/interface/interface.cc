@@ -32,6 +32,7 @@
 #include "include/gpu_operations.h"
 #include "include/timer.h"
 #include "clustering/kdac_interface.h"
+#include "clustering/kmeans_interface.h"
 #include "interface/cpu_operations_interface.h"
 
 // void (Nice::KDACCPUInterface<float>::*Fit1Float)
@@ -74,6 +75,11 @@ void (Nice::KDACInterface<float>::*Fit2Arg)(PyObject *, int, int,
                                             PyObject *, int, int)
     = &Nice::KDACInterface<float>::Fit;
 
+void (Nice::CPUOperationsInterface<float>::*Multiply0)(PyObject *, int, int, PyObject *, int, int, PyObject *)
+=&Nice::CPUOperationsInterface<float>::MultiplyMatrix;
+void (Nice::CPUOperationsInterface<float>::*Multiply1)(PyObject *, int, int, PyObject *, float) 
+=&Nice::CPUOperationsInterface<float>::MultiplyMatrix;
+  
 
 BOOST_PYTHON_MODULE(Nice4Py) {
     boost::python::class_<Nice::KDACInterface<float>>
@@ -96,7 +102,25 @@ BOOST_PYTHON_MODULE(Nice4Py) {
     boost::python::class_<Nice::CPUOperationsInterface<float>>("CPUOp")
         .def("GenKernelMatrix",
              &Nice::CPUOperationsInterface<float>::GenKernelMatrix)
-        .staticmethod("GenKernelMatrix");
+        .staticmethod("GenKernelMatrix")
+	.def("MultiplyMatrix", Multiply0) 
+	.def("MultiplyMatrix", Multiply1)
+	.def("InverseMatrix",
+	     &Nice::CPUOperationsInterface<float>::InverseMatrix)
+	.def("NormMatrix", 
+	     &Nice::CPUOperationsInterface<float>::NormMatrix)
+        .def("CenterMatrix", 
+             &Nice::CPUOperationsInterface<float>::CenterMatrix)
+	.def("NormalizeMatrix",
+	     &Nice::CPUOperationsInterface<float>::NormalizeMatrix)
+	.def("StandardDeviationMatrix",
+	     &Nice::CPUOperationsInterface<float>::StandardDeviationMatrix);
+    boost::python::class_<Nice::KmeansInterface<float>>
+        ("KMean", boost::python::init<std::string>())
+        .def("fit", &Nice::KmeansInterface<float>::fit)
+        .def("getLabels", &Nice::KmeansInterface<float>::getLabels)
+        .def("getCenters", &Nice::KmeansInterface<float>::getCenters);
+
 //  boost::python::class_<Nice::CpuOperationsInterface<float>::GenKernelMatrix
 }
 //  //Use float by default
