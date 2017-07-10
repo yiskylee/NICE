@@ -20,15 +20,44 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#ifndef CPP_INCLUDE_SPECTRAL_CLUSTERING_H_
+#define CPP_INCLUDE_SPECTRAL_CLUSTERING_H_
+
 #include "include/matrix.h"
 #include "include/vector.h"
-#include "include/cpu_operations.h"
-#include "include/gpu_operations.h"
-#include "include/svd_solver.h"
-#include "include/gpu_svd_solver.h"
-#include "include/util.h"
-#include "include/gpu_util.h"
-#include "include/cuda_matrix_vector_multiply.h"
-#include "include/kdac_cpu.h"
+#include <vector>
+#include "dlib/clustering.h"
 
-// Place holder
+namespace Nice {
+
+template<typename T>
+class SpectralClustering {
+ public:
+  Vector<int> FitPredict(const Matrix<T> &input_data, int k) {
+    int num_features = input_data.cols();
+    int num_samples = input_data.rows();
+    typedef dlib::matrix<T> sample_type;
+    typedef dlib::radial_basis_kernel<sample_type> kernel_type;
+    std::vector<sample_type> samples;
+    sample_type m;
+    m.set_size(num_features, 1);
+    for (long i = 0; i < num_samples; i++) {
+      for (long j = 0; j < num_features; j++) {
+        m(j) = input_data(i, j);
+      }
+      samples.push_back(m);
+    }
+    std::vector<unsigned long> results = dlib::spectral_cluster(
+        kernel_type(0.1), samples, k);
+    Vector<int> assignments(num_samples);
+    for (long i = 0; i < num_samples; i++) {
+      assignments[i] = int(results[i]);
+    }
+    return assignments;
+
+  }
+};
+
+}
+
+#endif  // CPP_INCLUDE_SPECTRAL_CLUSTERING_H_

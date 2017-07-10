@@ -23,7 +23,7 @@
 #ifndef CPP_INCLUDE_GPU_SVD_SOLVER_H_
 #define CPP_INCLUDE_GPU_SVD_SOLVER_H_
 
-#ifdef NEED_CUDA
+#ifdef CUDA_AND_GPU
 #include<cuda_runtime_api.h>
 #include<cuda_runtime.h>
 #include<device_launch_parameters.h>
@@ -108,7 +108,6 @@ template <typename T>
 GpuUtil<T> *GpuSvdSolver<T>::util_ = GpuUtil<T>::GetInstance();
 }  // namespace Nice
 
-#endif  // NEED_CUDA
-
+#endif  // CUDA_AND_GPU
 #endif  // CPP_INCLUDE_GPU_SVD_SOLVER_H_
 

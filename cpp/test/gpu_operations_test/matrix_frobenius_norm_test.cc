@@ -47,7 +47,9 @@ template<class T>  // Template
 class GpuFrobeniusNormTest : public ::testing::Test {  // Inherits testing::Test
  public:  // Members must be public to be accessed by tests
   Nice::Matrix<T> a_;
+  Nice::Vector<T> a_vec_;
   T norm_;
+  T norm_vec_;
 
   int row_;
   int col_;
@@ -64,11 +66,14 @@ class GpuFrobeniusNormTest : public ::testing::Test {  // Inherits testing::Test
 
     // Create matrix
     a_ = Nice::Matrix<T>::Random(row_, col_);
+    a_vec_ = Nice::Vector<T>(4);
+    a_vec_ << 1, 2, 3, 4;
 
     Nice::CpuOperations<T> cpu_op;
 
     // Solve in CPU
     norm_ = cpu_op.FrobeniusNorm(a_);
+    norm_vec_ = cpu_op.FrobeniusNorm(a_vec_);
   }
 };
 // Establishes a test case with the given types, Char and short types will
@@ -91,3 +96,8 @@ TYPED_TEST(GpuFrobeniusNormTest, FuncionalityTest) {
   EXPECT_NEAR(this->norm_, gpu_norm, 0.001);
 }
 
+TYPED_TEST(GpuFrobeniusNormTest, VecTest) {
+  this->CreateTestData(10, 10);
+  Nice::GpuOperations<TypeParam>::FrobeniusNorm(this->a_vec_);
+  std::cout << this->norm_vec_;
+}

@@ -60,5 +60,7 @@ TYPED_TEST(GenKernelMatrixTest, GaussianKernel) {
   Nice::Matrix<TypeParam> kernel_matrix_ref(2, 2);
   kernel_matrix_ref << exp(-0.0), exp(-sqrt(27.0)/2.0),
                        exp(-sqrt(27.0)/2.0), exp(-0.0);
+  std::cout << kernel_matrix << std::endl;
+  std::cout << kernel_matrix_ref << std::endl;
   EXPECT_MATRIX_EQ(kernel_matrix, kernel_matrix_ref);
 }

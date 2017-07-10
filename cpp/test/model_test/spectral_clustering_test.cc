@@ -19,16 +19,17 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-
-#include "include/matrix.h"
-#include "include/vector.h"
-#include "include/cpu_operations.h"
-#include "include/gpu_operations.h"
-#include "include/svd_solver.h"
-#include "include/gpu_svd_solver.h"
-#include "include/util.h"
-#include "include/gpu_util.h"
-#include "include/cuda_matrix_vector_multiply.h"
-#include "include/kdac_cpu.h"
-
-// Place holder
+// #include <iostream>
+// #include "include/util.h"
+// #include "gtest/gtest.h"
+// #include "include/spectral_clustering.h"
+//
+// TEST(SpectralClusteringTest, SimpleTest) {
+//  Nice::Matrix<double> m = Nice::util::FromFile<double>(
+//      "../test/data_for_test/spectral_clustering/"
+//      "SimpleTest/data_matrix_input_40_2.txt", 40, 2);
+//  Nice::SpectralClustering<double> model;
+//  Nice::Vector<int> assignments = model.FitPredict(m, 2);
+////  for (int i = 0; i < assignments.rows(); i++)
+////    std::cout << assignments[i] << std::endl;
+// }

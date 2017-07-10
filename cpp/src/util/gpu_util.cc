@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifdef NEED_CUDA
+#ifdef CUDA_AND_GPU
 #include "include/gpu_util.h"
 
 namespace Nice {
@@ -306,4 +306,4 @@ void GpuFrobeniusNorm(cublasHandle_t handle,
 }
 
 }  // namespace Nice
-#endif  // Need Cuda
+#endif  // CUDA_AND_GPU
