@@ -22,14 +22,18 @@
 #ifndef CPP_INCLUDE_GPU_UTIL_H_
 #define CPP_INCLUDE_GPU_UTIL_H_
 
-#ifdef NEED_CUDA
+#ifdef CUDA_AND_GPU
 
 #include <cuda_runtime_api.h>
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
+#include <cuda_profiler_api.h>
 #include <cusolverDn.h>
 #include <cublas_v2.h>
-
+#include "include/matrix.h"
+#include "include/vector.h"
+#include "Eigen/Core"
+#include "Eigen/Dense"
 #include <iostream>
 #include <memory>
 
@@ -38,11 +42,43 @@ namespace Nice {
 //
 // Helper macros
 //
+// Position for Column-Major index
+#define IDXC(i,j,ld) (((j)*(ld))+(i))
+// Position for Row-Major index
+#define IDXR(i,j,ld) (((i)*(ld))+(j))
+
+// Utility class used to avoid linker errors with extern
+// unsized shared memory arrays with templated type
+template<typename T>
+struct SharedMemory
+{
+  __device__ inline operator       T *()
+  {
+    extern __shared__ int __smem[];
+    return (T *)__smem;
+  }
+
+  __device__ inline operator const T *() const
+  {
+    extern __shared__ int __smem[];
+    return (T *)__smem;
+  }
+};
+
+
+
+struct CUBLASParams {
+  float alpha;
+  float beta;
+  int incx;
+  int incy;
+};
+
 #define CUDA_CALL(x) \
 do {\
   cudaError_t ret = x;\
   if (ret != cudaSuccess) {\
-    std::cout << "CUDA Error at " << __FILE__ << __LINE__ << std::endl;\
+    std::cout << "CUDA Error at " << __FILE__ << " " << __LINE__ << std::endl;\
     std::cout << cudaGetErrorString(ret) << std::endl;\
     exit(EXIT_FAILURE);\
   }\
@@ -119,6 +155,7 @@ class GpuUtil {
     else
       CUDA_CALL(cudaMemset(*dev, 0, size * sizeof(T)));
   }
+
   void SyncMem(T *dev, T *host, int size, bool copy = true) {
     // Copy memory over to device
     if (copy)
@@ -128,6 +165,83 @@ class GpuUtil {
     // Free device memory
     CUDA_CALL(cudaFree(dev));
   }
+
+  Matrix<T> DevBufferToEigen(T *dev, int row, int col) {
+    T *host = new T[row * col];
+    CUDA_CALL(cudaMemcpy(host, dev, row * col * sizeof(T),
+              cudaMemcpyDeviceToHost));
+    return Eigen::Map<Matrix<T>>(host, row, col);
+  }
+
+  Vector<T> DevBufferToEigen(T *dev, int n) {
+    T *host = new T[n];
+    CUDA_CALL(cudaMemcpy(host, dev, n * sizeof(T),
+                         cudaMemcpyDeviceToHost));
+    return Eigen::Map<Vector<T>>(host, n);
+  }
+
+
+  void ValidateCPUResult(T *host,
+                         const Matrix<T> matrix_cpu,
+                         int row, int col, std::string matrix_name) {
+    Matrix<T> matrix_gpu = Eigen::Map<Matrix<T>>(host, row, col);
+    if ( !matrix_cpu.isApprox(matrix_gpu) ) {
+      std::cout << matrix_name << " not validated.\n";
+      std::cout << "cpu: " << std::endl << matrix_cpu.block(0,0,4,4) << std::endl;
+      std::cout << "gpu: " << std::endl << matrix_gpu.block(0,0,4,4) << std::endl;
+//      exit(1);
+    }
+  }
+
+  void ValidateCPUResult(T *host,
+                         const Vector<T> vector_cpu,
+                         int row, std::string vector_name) {
+    Matrix<T> vector_gpu = Eigen::Map<Vector<T>>(host, row);
+    if ( !vector_cpu.isApprox(vector_gpu) ) {
+      std::cout << vector_name << " not validated.\n";
+      std::cout << "cpu: " << std::endl << vector_cpu.head(4) << std::endl;
+      std::cout << "gpu: " << std::endl << vector_gpu.head(4) << std::endl;
+//      exit(1);
+    }
+  }
+
+  void ValidateCPUResult(const Vector<T> vector_gpu,
+                         const Vector<T> vector_cpu,
+                         int row, std::string vector_name) {
+    if ( !vector_cpu.isApprox(vector_gpu) ) {
+      std::cout << vector_name << " not validated.\n";
+      std::cout << "cpu: " << std::endl << vector_cpu.head(4) << std::endl;
+      std::cout << "gpu: " << std::endl << vector_gpu.head(4) << std::endl;
+//      exit(1);
+    }
+  }
+
+  void ValidateCPUScalarResult(T host, T dev, std::string scalar_name) {
+    if ( fabs(host - dev) / fabs(host) > 0.01) {
+      std::cout << scalar_name << " not validated.\n";
+      std::cout << "cpu: " << host << std::endl;
+      std::cout << "gpu: " << dev << std::endl;
+      exit(1);
+    }
+  }
+
+  void ValidateGPUResult(T *dev,
+                         const Matrix<T> matrix_cpu,
+                         int row, int col, std::string matrix_name) {
+    Matrix<T> matrix_gpu = DevBufferToEigen(dev, row, col);
+    if ( !matrix_cpu.isApprox(matrix_gpu) ) {
+      std::cout << matrix_name << " not validated.\n";
+      for(int i = 0; i < matrix_cpu.rows(); i++) {
+        for (int j = 0; j < matrix_cpu.cols(); j++) {
+          if ( fabs(matrix_cpu(i, j) - matrix_gpu(i, j)) > 0.01) {
+            std::cout << i << ", " << j << ": " << matrix_cpu(i, j) << " " << matrix_gpu(i, j) << std::endl;
+          }
+        }
+      }
+      exit(1);
+    }
+  }
+
 
   void SetupIntMem(int **dev, const int *host, int size, bool copy = true) {
     // Create memory
@@ -140,6 +254,7 @@ class GpuUtil {
     else
       CUDA_CALL(cudaMemset(*dev, 0, size * sizeof(int)));
   }
+
   void SyncIntMem(int *dev, int *host, int size, bool copy = true) {
     // Copy memory over to device
     if (copy)
@@ -153,6 +268,7 @@ class GpuUtil {
   void SyncDev() {
     CUDA_CALL(cudaDeviceSynchronize());
   }
+
 };
 
 template <typename T>
@@ -369,5 +485,5 @@ void GpuFrobeniusNorm(cublasHandle_t handle,
                                 double * c);
 }  // namespace Nice
 
-#endif  // NEED_CUDA
+#endif  // CUDA_AND_GPU
 #endif  // CPP_INCLUDE_GPU_UTIL_H_

@@ -20,14 +20,26 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "include/matrix.h"
-#include "include/vector.h"
-#include "include/cpu_operations.h"
-#include "include/gpu_operations.h"
-#include "include/svd_solver.h"
-#include "include/gpu_svd_solver.h"
-#include "include/util.h"
-#include "include/gpu_util.h"
-#include "include/kdac_cpu.h"
+#ifndef CPP_INCLUDE_KDAC_PROFILER_H_
+#define CPP_INCLUDE_KDAC_PROFILER_H_
 
-// Place holder
+#include <vector>
+#include <numeric>
+#include "include/timer.h"
+#include "include/stop_watch.h"
+
+namespace Nice {
+// A profiler includes one timer for a function or a partition of code
+struct KDACProfiler {
+  Timer init;
+  Timer fit;
+  Timer u;
+  Timer w;
+  Timer gen_phi;
+  Timer kmeans;
+  Timer gen_grad;
+  Timer update_g_of_w;
+  Timer exit_timer;
+};
+}  // namespace Nice
+#endif  // CPP_INCLUDE_KDAC_PROFILER_H_

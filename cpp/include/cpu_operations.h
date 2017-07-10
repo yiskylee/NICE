@@ -586,13 +586,14 @@ class CpuOperations {
     // An n x n kernel matrix
     Matrix<T> kernel_matrix(num_samples, num_samples);
     if (kernel_type == kGaussianKernel) {
-      float sigma = constant;
+      float sigma_sq = constant * constant;
       // This for loop generates the kernel matrix using Gaussian kernel
       for (int i = 0; i < num_samples; i++)
         for (int j = 0; j < num_samples; j++) {
           // Calculate the the norm of (x_i - x_j) for all (i, j) pairs
-          float i_j_dist = (data_matrix.row(i) - data_matrix.row(j)).norm();
-          kernel_matrix(i, j) = exp(-i_j_dist / (2 * sigma * sigma));
+          Vector<T> delta_ij = data_matrix.row(i) - data_matrix.row(j);
+          T i_j_dist = delta_ij.norm();
+          kernel_matrix(i, j) = exp(-i_j_dist / (2 * sigma_sq));
         }
     }
     return kernel_matrix;

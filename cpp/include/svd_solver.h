@@ -25,7 +25,6 @@
 
 #include "include/matrix.h"
 #include "include/vector.h"
-
 #include "Eigen/SVD"
 
 

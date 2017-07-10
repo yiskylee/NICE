@@ -20,14 +20,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#ifndef CPP_INCLUDE_MODEL_H_
+#define CPP_INCLUDE_MODEL_H_
+
+#include <string>
 #include "include/matrix.h"
 #include "include/vector.h"
-#include "include/cpu_operations.h"
-#include "include/gpu_operations.h"
-#include "include/svd_solver.h"
-#include "include/gpu_svd_solver.h"
-#include "include/util.h"
-#include "include/gpu_util.h"
-#include "include/kdac_cpu.h"
 
-// Place holder
+namespace Nice {
+
+template<typename T>
+class Model {
+ public:
+//  static Vector<T> default_label = Vector<T>::Random(1,1);
+//  virtual void Fit(Matrix<T> input_data, Vector<T> label = default_label) = 0;
+  virtual Vector<uint64_t>
+  FitPredict(const Matrix<T> &input_data, int k) = 0;
+//  virtual Vector<T> Predict(Matrix<T> x) = 0;
+  virtual ~Model() {}
+};
+
+}  // namespace Nice
+#endif  // CPP_INCLUDE_MODEL_H_
