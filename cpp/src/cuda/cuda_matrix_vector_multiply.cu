@@ -19,18 +19,21 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
+#ifdef NEED_CUDA
 
-#include "include/matrix.h"
-#include "include/vector.h"
-#include "include/cpu_operations.h"
-#include "include/gpu_operations.h"
-#include "include/svd_solver.h"
-#include "include/gpu_svd_solver.h"
-#include "include/util.h"
-#include "include/gpu_util.h"
 #include "include/cuda_matrix_vector_multiply.h"
 
-// Place holder
-//
-/// THIS IS A TEST
-/// DOXYGEN - Andrew Tu
+namespace Nice {
+  template <typename T>
+  __global__ void GpuMatrixVectorMul(T *d_a, T *d_x, T *d_y, int size) {
+    int index = blockIDx.x * blockDim.x + threadIdx.x;
+    T sum = 0;
+    for (int i = 0; i < size; i++) {
+      sum += d_a[index] * d_x[index];
+    }
+    d_y[index] = sum;
+  }
+
+}
+
+#endif  // NEED_CUDA
