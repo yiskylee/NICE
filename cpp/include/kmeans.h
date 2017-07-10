@@ -84,7 +84,6 @@ class KMeans {
     } else {
       srand48(0);
     }
-
     KMeansPPInit(input_data);
 
     // We must store the labels at the previous iteration to
@@ -166,6 +165,7 @@ class KMeans {
     }
     return changed;
   }
+
   unsigned int SelectWeightedIndex(Vector<T> weights) {
     // Normalize
     Vector<T> normalizedWeights = weights / weights.sum();
@@ -178,8 +178,11 @@ class KMeans {
       normalizedWeights.data()+normalizedWeights.size());
     // Get a randome value between 0 and 1
     T random_value = (T)drand48();
+
     T running_total = 0.0;
+
     for (unsigned int i = 0; i < normalizedWeights.size(); i++) {
+
       running_total += normalizedWeights[i];
       if (random_value < running_total) {
         T weight = normalizedWeights(i);
@@ -214,14 +217,18 @@ class KMeans {
       centers_.col(cluster) = p;
     }
   }
+
   void SetRandom(const bool r) {
     this->Random = r;
   }
 
-  Vector<T> GetLabels() {
+  Matrix <T> GetLabels() {
     return labels_;
   }
 
+  Matrix <T> GetCenters() {
+    return centers_;
+  }
  private:
   Vector<T> labels_;
   bool random_ = true;

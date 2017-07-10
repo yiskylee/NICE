@@ -64,10 +64,15 @@ class KDACTest : public ::testing::Test {
     dim_ = dim;
     device_type_ = device_type;
 
+#ifndef CUDA_AND_GPU
+    if (device_type_ == "cpu")
+      kdac_ = std::make_shared<Nice::KDACCPU<T>>();
+#else
     if (device_type_ == "cpu")
       kdac_ = std::make_shared<Nice::KDACCPU<T>>();
     else if (device_type_ == "gpu")
       kdac_ = std::make_shared<Nice::KDACGPU<T>>();
+#endif
 
     kdac_->SetQ(num_clusters_);
     kdac_->SetC(num_clusters_);
