@@ -340,28 +340,24 @@ class CpuOperations {
   }
 
   /// static static T Determinant(const Matrix<T> &a) is a function that returns
-  ///                                                 the Determinant of a matrix 
+  ///                                                the Determinant of a matrix
   /// \param a
   /// Matrix<T> &a
   ///
   /// \return
-  /// This function returns the Determinant 
+  /// This function returns the Determinant
   static T Determinant(const Matrix<T> &a) {
-
     if (a.cols() == 0 && a.rows() == 0) {
       std::cerr << "MATRIX IS EMPTY";
       exit(1);
-
     } else if (a.cols() != a.rows) {
       std::cerr << "MATRIX IS NOT SQUARE AND CANNOT CALCULATE DETERMINANT";
       exit(1);
-
     } else {
       return a.determinant();
     }
   }
 
-  
   /// static int Rank(const Matrix <T> &a) is a function that returns
   ///                                      the rank of a m x n matrix
   /// \param a
