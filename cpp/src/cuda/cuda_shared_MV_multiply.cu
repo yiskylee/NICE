@@ -19,39 +19,30 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-#include "include/cuda_matrix_vector_multiply.h"
-#include <chrono>
+#include "include/cuda_shared_MV_multiply.h"
 
 namespace Nice {
-  //template <typename T>
-  /**__global__ void CudaMatrixVectorMulKernel(T *d_a, T *d_x, T *d_y, int size) {
-    int row = blockIdx.y * blockDim.y + threadIdx.y;
-    int col = blockIdx.x * blockDim.x + threadIdx.x;
-    float sum = 0.0f;
-    if (row >= 5 || col >= 10) return;
-    for (int k = 0; k < 5; k++) {
-      printf("(%u, %u) Operation: %f * %f = %f  \n", row, col, d_a[k * size + col], d_x[row * size + k], (d_a[k * size + col] * d_x[row * size + k]));
-      sum += (d_a[k * size + col] * d_x[row * size + k]);
-    }
-    __syncthreads();
-    d_y[row * size + col] = sum;
-  }**/
-
   template <typename T>
   __global__ void CudaMatrixVectorMulKernel(T *d_a, T *d_x, T *d_y, int a_rows, int x_size) {
     int row = blockIdx.y * blockDim.y + threadIdx.y;
     int col = blockIdx.x * blockDim.x + threadIdx.x;
+    __shared__ float shar_a[100][100], shar_x[100][1];
     float sum = 0.0f;
     if (row >= x_size || col >= a_rows) return;
-    for (int k = 0; k < x_size; k++) {
-      sum += (d_a[k * a_rows + col] * d_x[row * a_rows + k]);
+    for (int i = 0; i < gridDim.y; i++){
+      shar_a[threadIdx.x][threadIdx.y] = d_a[i * a_rows + col];
+      shar_x[threadIdx.y][threadIdx.x] = d_x[row * a_rows + i];
+      __syncthreads();
+      for (int k = 0; k < x_size; k++){
+        sum += shar_a[threadIdx.x][threadIdx.y] * shar_x[threadIdx.y][threadIdx.x];
+      }
     }
     __syncthreads();
     d_y[row * a_rows + col] = sum;
   }
 
   template <typename T>
-  Vector<T> CudaMatrixVectorMultiply<T>::Multiply(const Matrix<T> &a, const Vector<T> &b) {
+  Vector<T> CudaSharedMVMultiply<T>::Multiply(const Matrix<T> &a, const Vector<T> &b) {
     if (a.cols() == b.rows() && !a.isZero()) {
       // Allocate and transfer memories
       int m = a.rows();
@@ -78,13 +69,8 @@ namespace Nice {
       CUDA_CALL(cudaMalloc(&d_y, m * sizeof(T)));
       CUDA_CALL(cudaMemset(d_y, 0, m * sizeof(T)));
 
-      high_resolution_clock::time_point t1 = high_resolution_clock::now();
       // Launch kernel here
       CudaMatrixVectorMulKernel<<<m, 256>>>(d_a, d_x, d_y, m, k);
-      high_resolution_clock::time_point t2 = high_resolution_clock::now();
-      auto duration = duration_cast<microseconds>( t2 - t1 ).count();
-      std::cout << "Global Kernel run time: " << (long)duration << std::endl;
-
       // Device sync
       CUDA_CALL(cudaDeviceSynchronize());
 
@@ -118,6 +104,6 @@ namespace Nice {
     }
   }
   template
-  Vector<float> CudaMatrixVectorMultiply<float>::Multiply(const Matrix<float> &a, const Vector<float> &b);
+  Vector<float> CudaSharedMVMultiply<float>::Multiply(const Matrix<float> &a, const Vector<float> &b);
 
 }
