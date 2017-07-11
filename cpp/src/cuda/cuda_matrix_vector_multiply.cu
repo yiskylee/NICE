@@ -34,7 +34,6 @@ namespace Nice {
   }
 
   template <typename T>
-
   Vector<T> CudaMatrixVectorMultiply<T>::Multiply(const Matrix<T> &a, const Vector<T> &b) {
     if (a.cols() == b.rows() && !a.isZero()) {
       // Allocate and transfer memories
@@ -52,11 +51,11 @@ namespace Nice {
 
       // Setup GPU memory
       CUDA_CALL(cudaMalloc(&d_a, m * k * sizeof(T)));
-      CUDA_CALL(cudaMemcpy(d_a, h_a, m * k * sizeof(T),
+      CUDA_CALL(cudaMemcpy(d_a, &h_a, m * k * sizeof(T),
         cudaMemcpyHostToDevice));
 
-      CUDA_CALL(cudaMalloc(&d_x, m * k * sizeof(T)));
-      CUDA_CALL(cudaMemcpy(d_x, h_x, k * n * sizeof(T),
+      CUDA_CALL(cudaMalloc(&d_x, k * n * sizeof(T)));
+      CUDA_CALL(cudaMemcpy(d_x, &h_x, k * n * sizeof(T),
           cudaMemcpyHostToDevice));
 
       CUDA_CALL(cudaMalloc(&d_y, m * sizeof(T)));
@@ -66,13 +65,13 @@ namespace Nice {
       unsigned int blocks = (a.cols() + 255) / 256;
       unsigned int size = a.cols();
       // Launch kernel here
-      CudaMatrixVectorMultiply::CudaMatrixVectorMulKernel<<(blocks, 256)>>(d_a, d_x, d_y, size);
+      CudaMatrixVectorMulKernel<<<blocks, 256>>>(d_a, d_x, d_y, size);
 
       // Device sync
       CUDA_CALL(cudaDeviceSynchronize());
 
       // Transfer memories back, clear memrory, and return result
-      CUDA_CALL(cudaMemcpy(h_y(0), d_y, m * sizeof(T),
+      CUDA_CALL(cudaMemcpy(&h_y(0), d_y, m * sizeof(T),
         cudaMemcpyDeviceToHost));
       CUDA_CALL(cudaFree(d_a));
       CUDA_CALL(cudaFree(d_x));
@@ -104,7 +103,7 @@ namespace Nice {
       exit(1);
     }
   }
-  //template
-  //Vector<float> CudaMatrixVectorMultiply<float>::Multiply(const Matrix<float> &a, const Vector<float> &b);
+  template
+  Vector<float> CudaMatrixVectorMultiply<float>::Multiply(const Matrix<float> &a, const Vector<float> &b);
 
 }

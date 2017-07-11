@@ -163,8 +163,8 @@ if (enable-test)
          test/cpu_solver_test/*.cc
          test/gpu_operations_test/*.cc
          test/gpu_solver_test/*.cc
-         test/model_test/*.cc
          test/matrix_vector_mult_test/*.cc
+         test/model_test/*.cc
          )
   else()
   message("NO GPU TEST MADE")
