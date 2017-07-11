@@ -22,15 +22,31 @@
 #include "include/cuda_matrix_vector_multiply.h"
 
 namespace Nice {
-  template <typename T>
-  __global__ void CudaMatrixVectorMulKernel(T *d_a, T *d_x, T *d_y, int size) {
+  //template <typename T>
+  /**__global__ void CudaMatrixVectorMulKernel(T *d_a, T *d_x, T *d_y, int size) {
     int row = blockIdx.y * blockDim.y + threadIdx.y;
     int col = blockIdx.x * blockDim.x + threadIdx.x;
     float sum = 0.0f;
-    for (int k = 0; k < size; k++) {
-      sum += d_a[row * size + k] * d_x[k * size + col];
+    if (row >= 5 || col >= 10) return;
+    for (int k = 0; k < 5; k++) {
+      printf("(%u, %u) Operation: %f * %f = %f  \n", row, col, d_a[k * size + col], d_x[row * size + k], (d_a[k * size + col] * d_x[row * size + k]));
+      sum += (d_a[k * size + col] * d_x[row * size + k]);
     }
+    __syncthreads();
     d_y[row * size + col] = sum;
+  }**/
+
+  template <typename T>
+  __global__ void CudaMatrixVectorMulKernel(T *d_a, T *d_x, T *d_y, int a_rows, int x_size) {
+    int row = blockIdx.y * blockDim.y + threadIdx.y;
+    int col = blockIdx.x * blockDim.x + threadIdx.x;
+    float sum = 0.0f;
+    if (row >= x_size || col >= a_rows) return;
+    for (int k = 0; k < x_size; k++) {
+      sum += (d_a[k * a_rows + col] * d_x[row * a_rows + k]);
+    }
+    __syncthreads();
+    d_y[row * a_rows + col] = sum;
   }
 
   template <typename T>
@@ -51,21 +67,19 @@ namespace Nice {
 
       // Setup GPU memory
       CUDA_CALL(cudaMalloc(&d_a, m * k * sizeof(T)));
-      CUDA_CALL(cudaMemcpy(d_a, &h_a, m * k * sizeof(T),
+      CUDA_CALL(cudaMemcpy(d_a, h_a, m * k * sizeof(T),
         cudaMemcpyHostToDevice));
 
-      CUDA_CALL(cudaMalloc(&d_x, k * n * sizeof(T)));
-      CUDA_CALL(cudaMemcpy(d_x, &h_x, k * n * sizeof(T),
+      CUDA_CALL(cudaMalloc(&d_x, k * sizeof(T)));
+      CUDA_CALL(cudaMemcpy(d_x, h_x, k * sizeof(T),
           cudaMemcpyHostToDevice));
 
       CUDA_CALL(cudaMalloc(&d_y, m * sizeof(T)));
       CUDA_CALL(cudaMemset(d_y, 0, m * sizeof(T)));
 
 
-      unsigned int blocks = (a.cols() + 255) / 256;
-      unsigned int size = a.cols();
       // Launch kernel here
-      CudaMatrixVectorMulKernel<<<blocks, 256>>>(d_a, d_x, d_y, size);
+      CudaMatrixVectorMulKernel<<<m, 256>>>(d_a, d_x, d_y, m, k);
 
       // Device sync
       CUDA_CALL(cudaDeviceSynchronize());
@@ -75,10 +89,6 @@ namespace Nice {
         cudaMemcpyDeviceToHost));
       CUDA_CALL(cudaFree(d_a));
       CUDA_CALL(cudaFree(d_x));
-
-      //util_->SyncMem(d_a, nullptr, 0, false);
-      //util_->SyncMem(d_x, nullptr, 0, false);
-      //util_->SyncMem(d_y, &h_y(0), m);
 
       return h_y;
     } else if (a.cols() != b.rows()) {

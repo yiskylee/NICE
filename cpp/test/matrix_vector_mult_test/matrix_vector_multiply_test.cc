@@ -94,13 +94,12 @@ TYPED_TEST(CudaMatrixVectorMultiplyTest, FunctionalityTest) {
   // Test gpu matrix matrix multiply in Nice
   Nice::CudaMatrixVectorMultiply<TypeParam> gpu_op;
   gpu_c = gpu_op.Multiply(this->a_, this->b_);
-
   // Verify the result
   for (int i = 0; i < n; i++) {
     EXPECT_NEAR(this->c_(i), gpu_c(i), 0.001);
   }
 }
-/**
+
 TYPED_TEST(CudaMatrixVectorMultiplyTest, SizeTest) {
   // Create test data
   int m = 5;
@@ -150,4 +149,3 @@ TYPED_TEST(CudaMatrixVectorMultiplyTest, VectorEmptyTest) {
   Nice::CudaMatrixVectorMultiply<TypeParam> gpu_op;
   ASSERT_DEATH(gpu_op.Multiply(this->a_, this->b_), ".*");
 }
-**/
