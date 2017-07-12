@@ -21,12 +21,14 @@
 // SOFTWARE.
 #include "include/cuda_shared_MV_multiply.h"
 
+using namespace std::chrono;
+
 namespace Nice {
   template <typename T>
-  __global__ void CudaMatrixVectorMulKernel(T *d_a, T *d_x, T *d_y, int a_rows, int x_size) {
+  __global__ void CudaMatrixVectorMulKernel(T *d_a, T *d_x, T *d_y, int const a_rows, int const x_size) {
     int row = blockIdx.y * blockDim.y + threadIdx.y;
     int col = blockIdx.x * blockDim.x + threadIdx.x;
-    __shared__ float shar_a[100][100], shar_x[100][1];
+    __shared__ float shar_a[50][50], shar_x[50][50];
     float sum = 0.0f;
     if (row >= x_size || col >= a_rows) return;
     for (int i = 0; i < gridDim.y; i++){
@@ -70,15 +72,22 @@ namespace Nice {
       CUDA_CALL(cudaMemset(d_y, 0, m * sizeof(T)));
 
       // Launch kernel here
+      high_resolution_clock::time_point t1 = high_resolution_clock::now();
       CudaMatrixVectorMulKernel<<<m, 256>>>(d_a, d_x, d_y, m, k);
+
       // Device sync
       CUDA_CALL(cudaDeviceSynchronize());
+
+      high_resolution_clock::time_point t2 = high_resolution_clock::now();
+      auto duration = duration_cast<microseconds>( t2 - t1 ).count();
+      std::cout << "Shared time: " << (long)duration << std::endl;
 
       // Transfer memories back, clear memrory, and return result
       CUDA_CALL(cudaMemcpy(&h_y(0), d_y, m * sizeof(T),
         cudaMemcpyDeviceToHost));
       CUDA_CALL(cudaFree(d_a));
       CUDA_CALL(cudaFree(d_x));
+      CUDA_CALL(cudaFree(d_y));
 
       return h_y;
     } else if (a.cols() != b.rows()) {
@@ -105,5 +114,8 @@ namespace Nice {
   }
   template
   Vector<float> CudaSharedMVMultiply<float>::Multiply(const Matrix<float> &a, const Vector<float> &b);
+
+  template
+  Vector<double> CudaSharedMVMultiply<double>::Multiply(const Matrix<double> &a, const Vector<double> &b);
 
 }

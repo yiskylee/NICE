@@ -77,10 +77,10 @@ class GpuMatrixVectorMultiplyTest : public ::testing::Test {
 typedef ::testing::Types<float, double> dataTypes;
 TYPED_TEST_CASE(GpuMatrixVectorMultiplyTest, dataTypes);
 
-TYPED_TEST(GpuMatrixVectorMultiplyTest, FuncionalityTest) {
+TYPED_TEST(GpuMatrixVectorMultiplyTest, FunctionalityTest) {
   // Create test data
-  int m = 10;
-  int n = 5;
+  int m = 100;
+  int n = 50;
   srand(time(NULL));
   this->CreateTestData(m, n);
   Nice::Vector<TypeParam> gpu_c(m);

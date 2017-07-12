@@ -81,13 +81,13 @@ class CudaMatrixVectorMultiplyTest : public ::testing::Test {
 };
 // Establishes a test case with the given types, Char and short types will
 // Throw compiler errors
-typedef ::testing::Types<float> dataTypes;
+typedef ::testing::Types<float, double> dataTypes;
 TYPED_TEST_CASE(CudaMatrixVectorMultiplyTest, dataTypes);
 
 TYPED_TEST(CudaMatrixVectorMultiplyTest, FunctionalityTest) {
   // Create test data
-  int m = 10;
-  int n = 5;
+  int m = 100;
+  int n = 50;
   srand(time(NULL));
   this->CreateTestData(m, n);
   Nice::Vector<TypeParam> gpu_c(m);

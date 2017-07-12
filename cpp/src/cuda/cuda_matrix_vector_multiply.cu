@@ -22,20 +22,9 @@
 #include "include/cuda_matrix_vector_multiply.h"
 #include <chrono>
 
+using namespace std::chrono;
+
 namespace Nice {
-  //template <typename T>
-  /**__global__ void CudaMatrixVectorMulKernel(T *d_a, T *d_x, T *d_y, int size) {
-    int row = blockIdx.y * blockDim.y + threadIdx.y;
-    int col = blockIdx.x * blockDim.x + threadIdx.x;
-    float sum = 0.0f;
-    if (row >= 5 || col >= 10) return;
-    for (int k = 0; k < 5; k++) {
-      printf("(%u, %u) Operation: %f * %f = %f  \n", row, col, d_a[k * size + col], d_x[row * size + k], (d_a[k * size + col] * d_x[row * size + k]));
-      sum += (d_a[k * size + col] * d_x[row * size + k]);
-    }
-    __syncthreads();
-    d_y[row * size + col] = sum;
-  }**/
 
   template <typename T>
   __global__ void CudaMatrixVectorMulKernel(T *d_a, T *d_x, T *d_y, int a_rows, int x_size) {
@@ -67,8 +56,8 @@ namespace Nice {
       T * d_y;
 
       // Setup GPU memory
-      CUDA_CALL(cudaMalloc(&d_a, m * k * sizeof(T)));
-      CUDA_CALL(cudaMemcpy(d_a, h_a, m * k * sizeof(T),
+      CUDA_CALL(cudaMalloc(&d_a, (m * k) * sizeof(T)));
+      CUDA_CALL(cudaMemcpy(d_a, h_a, (m * k) * sizeof(T),
         cudaMemcpyHostToDevice));
 
       CUDA_CALL(cudaMalloc(&d_x, k * sizeof(T)));
@@ -78,21 +67,22 @@ namespace Nice {
       CUDA_CALL(cudaMalloc(&d_y, m * sizeof(T)));
       CUDA_CALL(cudaMemset(d_y, 0, m * sizeof(T)));
 
-      high_resolution_clock::time_point t1 = high_resolution_clock::now();
       // Launch kernel here
+      high_resolution_clock::time_point t1 = high_resolution_clock::now();
       CudaMatrixVectorMulKernel<<<m, 256>>>(d_a, d_x, d_y, m, k);
-      high_resolution_clock::time_point t2 = high_resolution_clock::now();
-      auto duration = duration_cast<microseconds>( t2 - t1 ).count();
-      std::cout << "Global Kernel run time: " << (long)duration << std::endl;
 
       // Device sync
       CUDA_CALL(cudaDeviceSynchronize());
+      high_resolution_clock::time_point t2 = high_resolution_clock::now();
+      auto duration = duration_cast<microseconds>( t2 - t1 ).count();
+      std::cout << "CUDA global time: " << (long)duration << std::endl;
 
       // Transfer memories back, clear memrory, and return result
       CUDA_CALL(cudaMemcpy(&h_y(0), d_y, m * sizeof(T),
         cudaMemcpyDeviceToHost));
       CUDA_CALL(cudaFree(d_a));
       CUDA_CALL(cudaFree(d_x));
+      CUDA_CALL(cudaFree(d_y));
 
       return h_y;
     } else if (a.cols() != b.rows()) {
@@ -119,5 +109,8 @@ namespace Nice {
   }
   template
   Vector<float> CudaMatrixVectorMultiply<float>::Multiply(const Matrix<float> &a, const Vector<float> &b);
+
+  template
+  Vector<double> CudaMatrixVectorMultiply<double>::Multiply(const Matrix<double> &a, const Vector<double> &b);
 
 }

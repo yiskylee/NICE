@@ -81,13 +81,13 @@ class CudaSharedMVMultiplyTest : public ::testing::Test {
 };
 // Establishes a test case with the given types, Char and short types will
 // Throw compiler errors
-typedef ::testing::Types<float> dataTypes;
+typedef ::testing::Types<float, double> dataTypes;
 TYPED_TEST_CASE(CudaSharedMVMultiplyTest, dataTypes);
 
 TYPED_TEST(CudaSharedMVMultiplyTest, FunctionalityTest) {
   // Create test data
-  int m = 10;
-  int n = 5;
+  int m = 100;
+  int n = 50;
   srand(time(NULL));
   this->CreateTestData(m, n);
   Nice::Vector<TypeParam> gpu_c(m);
@@ -95,7 +95,7 @@ TYPED_TEST(CudaSharedMVMultiplyTest, FunctionalityTest) {
   Nice::CudaSharedMVMultiply<TypeParam> gpu_op;
   gpu_c = gpu_op.Multiply(this->a_, this->b_);
   // Verify the result
-  for (int i = 0; i < n; i++) {
+  for (int i = 0; i < m; i++) {
     EXPECT_NEAR(this->c_(i), gpu_c(i), 0.001);
   }
 }
