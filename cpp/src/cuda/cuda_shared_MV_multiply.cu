@@ -20,27 +20,44 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 #include "include/cuda_shared_MV_multiply.h"
-
+#define BLOCK_SIZE 16
 using namespace std::chrono;
 
 namespace Nice {
+
+  /**template <typename T>
+  __device__ T getSubTile(const T* d_, int row, int col) {
+    return &d_[row + col];
+  }**/
+
   template <typename T>
   __global__ void CudaMatrixVectorMulKernel(T *d_a, T *d_x, T *d_y, int const a_rows, int const x_size) {
-    int row = blockIdx.y * blockDim.y + threadIdx.y;
-    int col = blockIdx.x * blockDim.x + threadIdx.x;
-    __shared__ float shar_a[50][50], shar_x[50][50];
+    int blockRow = blockIdx.y;
+    int blockCol = blockIdx.x;
+
+    int threadRow = threadIdx.y;
+    int threadCol = threadIdx.x;
     float sum = 0.0f;
-    if (row >= x_size || col >= a_rows) return;
-    for (int i = 0; i < gridDim.y; i++){
-      shar_a[threadIdx.x][threadIdx.y] = d_a[i * a_rows + col];
-      shar_x[threadIdx.y][threadIdx.x] = d_x[row * a_rows + i];
+    if (threadRow >= x_size || threadCol >= a_rows) return;
+    for (int i = 0; i < gridDim.y / BLOCK_SIZE; i++){
+
+      T * aTile = &d_a[BLOCK_SIZE * blockRow + i * BLOCK_SIZE];
+      T * xTile = &d_x[BLOCK_SIZE * i + blockCol* BLOCK_SIZE];
+
+      __shared__ float shar_a[BLOCK_SIZE][BLOCK_SIZE];
+      __shared__ float shar_x[BLOCK_SIZE];
+
+      shar_a[threadRow][threadCol] = aTile[threadRow + threadCol];
+      shar_x[threadCol] = xTile[threadRow + threadCol];
+
       __syncthreads();
-      for (int k = 0; k < x_size; k++){
-        sum += shar_a[threadIdx.x][threadIdx.y] * shar_x[threadIdx.y][threadIdx.x];
+
+      for (int j = 0; j < BLOCK_SIZE; j++){
+        sum += shar_a[threadRow][j] * shar_x[threadCol];
       }
+      __syncthreads();
     }
-    __syncthreads();
-    d_y[row * a_rows + col] = sum;
+    d_y[threadRow + threadCol] = sum;
   }
 
   template <typename T>
@@ -72,7 +89,12 @@ namespace Nice {
       CUDA_CALL(cudaMemset(d_y, 0, m * sizeof(T)));
 
       // Launch kernel here
+
+      dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE);
+      dim3 dimGrid(a.rows() / dimBlock.x, a.cols() / dimBlock.y);
+
       high_resolution_clock::time_point t1 = high_resolution_clock::now();
+
       CudaMatrixVectorMulKernel<<<m, 256>>>(d_a, d_x, d_y, m, k);
 
       // Device sync

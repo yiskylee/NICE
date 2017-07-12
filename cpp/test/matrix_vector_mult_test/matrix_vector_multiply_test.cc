@@ -86,7 +86,7 @@ TYPED_TEST_CASE(CudaMatrixVectorMultiplyTest, dataTypes);
 
 TYPED_TEST(CudaMatrixVectorMultiplyTest, FunctionalityTest) {
   // Create test data
-  int m = 100;
+  int m = 100000;
   int n = 50;
   srand(time(NULL));
   this->CreateTestData(m, n);

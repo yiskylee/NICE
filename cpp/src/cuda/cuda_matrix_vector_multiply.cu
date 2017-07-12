@@ -68,6 +68,7 @@ namespace Nice {
       CUDA_CALL(cudaMemset(d_y, 0, m * sizeof(T)));
 
       // Launch kernel here
+
       high_resolution_clock::time_point t1 = high_resolution_clock::now();
       CudaMatrixVectorMulKernel<<<m, 256>>>(d_a, d_x, d_y, m, k);
 
