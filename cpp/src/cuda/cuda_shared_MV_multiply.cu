@@ -25,11 +25,6 @@ using namespace std::chrono;
 
 namespace Nice {
 
-  /**template <typename T>
-  __device__ T getSubTile(const T* d_, int row, int col) {
-    return &d_[row + col];
-  }**/
-
   template <typename T>
   __global__ void CudaMatrixVectorMulKernel(T *d_a, T *d_x, T *d_y, int const a_rows, int const x_size) {
     int blockRow = blockIdx.y;
@@ -39,21 +34,18 @@ namespace Nice {
     int threadCol = threadIdx.x;
     float sum = 0.0f;
     if (threadRow >= x_size || threadCol >= a_rows) return;
-    for (int i = 0; i < gridDim.y / BLOCK_SIZE; i++){
+    for (int i = 0; i < gridDim.y / blockDim.x; i++){
 
-      T * aTile = &d_a[BLOCK_SIZE * blockRow + i * BLOCK_SIZE];
-      T * xTile = &d_x[BLOCK_SIZE * i + blockCol* BLOCK_SIZE];
+      T * aTile = &d_a[blockDim.x * blockRow + i * blockDim.x];
+      T * xTile = &d_x[blockDim.y * i + blockCol * blockDim.y];
 
-      __shared__ float shar_a[BLOCK_SIZE][BLOCK_SIZE];
-      __shared__ float shar_x[BLOCK_SIZE];
-
-      shar_a[threadRow][threadCol] = aTile[threadRow + threadCol];
+      extern __shared__ float shar_x[];
       shar_x[threadCol] = xTile[threadRow + threadCol];
 
       __syncthreads();
 
-      for (int j = 0; j < BLOCK_SIZE; j++){
-        sum += shar_a[threadRow][j] * shar_x[threadCol];
+      for (int j = 0; j < blockDim.y; j++){
+        sum += aTile[j * a_rows + threadCol] * shar_x[threadCol];
       }
       __syncthreads();
     }
@@ -88,13 +80,16 @@ namespace Nice {
       CUDA_CALL(cudaMalloc(&d_y, m * sizeof(T)));
       CUDA_CALL(cudaMemset(d_y, 0, m * sizeof(T)));
 
+
+
       // Launch kernel here
-      dim3 dimBlock(BLOCK_SIZE *BLOCK_SIZE);
+      dim3 dimBlock(block_size * block_size);
       dim3 dimGrid((a.rows() / dimBlock.x) * (a.cols() / dimBlock.y));
 
       high_resolution_clock::time_point t1 = high_resolution_clock::now();
 
-      CudaMatrixVectorMulKernel<<<dimGrid, dimBlock>>>(d_a, d_x, d_y, m, k);
+      CudaMatrixVectorMulKernel<<<dimGrid, dimBlock, block_size>>>
+        (d_a, d_x, d_y, m, k);
 
       // Device sync
       CUDA_CALL(cudaDeviceSynchronize());

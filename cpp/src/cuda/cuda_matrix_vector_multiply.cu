@@ -23,6 +23,7 @@
 #include <chrono>
 
 using namespace std::chrono;
+#define BLOCK_SIZE 16
 
 namespace Nice {
 
@@ -37,6 +38,7 @@ namespace Nice {
     }
     __syncthreads();
     d_y[row * a_rows + col] = sum;
+    __syncthreads();
   }
 
   template <typename T>
@@ -68,6 +70,8 @@ namespace Nice {
       CUDA_CALL(cudaMemset(d_y, 0, m * sizeof(T)));
 
       // Launch kernel here
+      //dim3 dimBlock(BLOCK_SIZE *BLOCK_SIZE);
+      //dim3 dimGrid((a.rows() / dimBlock.x) * (a.cols() / dimBlock.y));
 
       high_resolution_clock::time_point t1 = high_resolution_clock::now();
       CudaMatrixVectorMulKernel<<<m, 256>>>(d_a, d_x, d_y, m, k);
