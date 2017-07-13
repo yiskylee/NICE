@@ -47,8 +47,6 @@ namespace Nice {
 // IMatrixMap = Eigen::Map< Eigen::Matrix<int, Eigen::Dynamic,
 //                                          Eigen::Dynamic, Eigen::RowMajor> >;
 
-//using FMatrixMap = Eigen::Map< Eigen::Matrix<float, Eigen::Dynamic,
-//                                         Eigen::Dynamic, Eigen::RowMajor> >;
 using DMatrixMap = Eigen::Map<Eigen::Matrix<double, Eigen::Dynamic,
                                             Eigen::Dynamic, Eigen::RowMajor> >;
 
@@ -64,10 +62,6 @@ class KmeansInterface {
  public:
   explicit KmeansInterface(std::string device_type) {
     kmeans_ = std::make_shared<Nice::KMeans<T>>();
-    //if (device_type == "cpu")
-    //    kmeans_ = std::make_shared<Nice::KMeansCPU<T>>();
-    //else if (device_type == "gpu")
-    //    kmeans_ = std::make_shared<Nice::KMeansGPU<T>>();
   }
 
   ~KmeansInterface() {}
@@ -100,5 +94,5 @@ class KmeansInterface {
   std::shared_ptr<Nice::KMeans<T>> kmeans_;
 };
 
-} // namespace NICE
-#endif
+}  // namespace Nice
+#endif  //  CPP_INTERFACE_CLUSTERING_KMEANS_INTERFACE_H_
