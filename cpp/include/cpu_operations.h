@@ -350,7 +350,7 @@ class CpuOperations {
     if (a.cols() == 0 && a.rows() == 0) {
       std::cerr << "MATRIX IS EMPTY";
       exit(1);
-    } else if (a.cols() != a.rows) {
+    } else if (a.cols() != a.rows()) {
       std::cerr << "MATRIX IS NOT SQUARE AND CANNOT CALCULATE DETERMINANT";
       exit(1);
     } else {
