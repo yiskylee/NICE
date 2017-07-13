@@ -23,8 +23,8 @@
 
 // This file tests the cpu_operations.cc Determinant() function by calling it
 // on a square, non-singular matrix (should work), a matrix that is not square
-// (should not work), and a matrix that is empty (should not work). Any square 
-// matrix will be able to have a determinant calculated regardless of size. 
+// (should not work), and a matrix that is empty (should not work). Any square
+// matrix will be able to have a determinant calculated regardless of size.
 
 #include <stdio.h>
 #include <iostream>
@@ -34,11 +34,11 @@
 #include "include/matrix.h"
 #include "include/vector.h"
 
-template<class T> 
+template<class T>
 class DeterminantTest : public ::testing::Test {
  public:
   Nice::Matrix<T> input;
-  T output; 
+  T output;
   T correct;
 
   void GetDeterminant() {
@@ -51,8 +51,8 @@ TYPED_TEST_CASE(DeterminantTest, MyTypes);
 
 TYPED_TEST(DeterminantTest, DeterminantFunctionality1) {
   this->input.resize(2, 2);
-  this->input << 2,8,
-                 4,6;
+  this->input << 2, 8,
+                 4, 6;
   this->correct = -20;
   this->GetDeterminant();
   EXPECT_NEAR(this->output, this->correct, 0.0001);
@@ -61,8 +61,8 @@ TYPED_TEST(DeterminantTest, DeterminantFunctionality1) {
 TYPED_TEST(DeterminantTest, DeterminantFunctionality2) {
   this->input.resize(3, 3);
   this->input << 4, 2, 4,
-		 5, 1, 3,
-		 8, 9, 6;
+                 5, 1, 3,
+                 8, 9, 6;
   this->correct = 52;
   this->GetDeterminant();
   EXPECT_NEAR(this->output, this->correct, 0.0001);
@@ -74,30 +74,16 @@ TYPED_TEST(DeterminantTest, DeterminantFunctionality3) {
                  6, 2, 1, 4,
                  0, 2, 1, 2,
                  5, 8, 7, 2;
-  this->correct = 148; 
+  this->correct = 148;
   this->GetDeterminant();
   EXPECT_NEAR(this->output, this->correct, 0.0001);
 }
 
 TYPED_TEST(DeterminantTest, NonSquareMatrix) {
-this->input.setRandom(3,1);
-ASSERT_DEATH(this->GetDeterminant(), ".*");
+  this->input.setRandom(3, 1);
+  ASSERT_DEATH(this->GetDeterminant(), ".*");
 }
 
-TYPED_TEST(DeterminantTest,EmptyMatrix) {
-ASSERT_DEATH(this->GetDeterminant(), ".*");
+TYPED_TEST(DeterminantTest, EmptyMatrix) {
+  ASSERT_DEATH(this->GetDeterminant(), ".*");
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
