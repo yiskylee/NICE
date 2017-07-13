@@ -50,100 +50,75 @@ class LinearRegression {
   Vector <T> Fit(Matrix<T> &a, Matrix<T> &y) { 
     alpha = 0.0001;
     iterations = 230;
-    seta();
-    setY();
-    //had setA and setY here...instead of setting them by functions should I set the class members to the parameters?
-    Norma(); //Feature Normalization //is this needed for gradient descent?
-    settheta(); //is this needed for gradient descent?
-    setdcost_history(); //doesnt return anything...do i need? uses iterations
-    setcost_history(); //doesnt return anything...do I need? Uses iterations
+    settheta(X); 
     if (algo_ == MLE) {
-      return MLE(); //change to no parameters
+      return MLE(X, Y); 
     } else if (algo_ == GD) {
-        return GradientDescent();
+        return GradientDescent(X, Y);
     } else { 
         std::cout << "Not valid linear regression algorithm type, enter 0 or 1" << std::endl;
     }
   }
-  Vector<T> Predict() {
-    int i = a.rows();
-    int j = a.cols();
-    X.resize(i, j+1);
-    X.col(0).setOnes();
-    for(int n = 0; n < xval.cols(); n++) {
-      X.col(n+1) = xval.col(n);
-    }
+  Vector<T> Predict(Matrix<T> &X) {
+    Vector<T> newY;
+    newY.resize(X.rows());
     newY = theta.transpose() * X.transpose();
     return newY;
   }
-  void Norma() {
-    for(int b = 0; b < a.cols(); b++) {
-      for(int c = 0; c < a.rows(); c++) {
-        a(c, b) = (xval(c, b) - xval.mean())/(xval.maxCoeff() - xval.minCoeff());
-      }
-    }
-  }
-  Vector<T> HypothesisFunction() {
-    int i = a.rows();
-    int j = a.cols();
-    X.resize(i, j+1);
-    X.col(0).setOnes();
-    for(int n = 0; n < a.cols(); n++) {
-      X.col(n+1) = a.col(n);
-    }
+  Vector<T> HypothesisFunction(Matrix<T> &X) {
+    int i = X.rows();
     Vector<T> hf;
     hf.resize(i);
     hf = theta.transpose() * X.transpose();
     return hf;
 }
-  float DCostFunction() { //Derivative of Cost Function
-    Vector<T> cost;
-    cost.resize(a.rows());
-    Vector<T> hf;
-    hf.resize(a.rows());
-    for(int m = 0; m < a.rows(); m++) {
-      hf = HypothesisFunction(); 
-      cost(m) = (hf(m) - Y(m));
+  float DCostFunction(Matrix<T> &X, Matrix<T> &Y) {
+    for (int k = 0; k < iterations; k++) {          
+      delta = 2 / ((double) X.rows()) * (X.transpose() * (X * theta - Y));
+      theta = (theta - (alpha * delta));
     }
-    float final_error = cost.sum();
-    final_error *= (1.0/a.rows());
-    return final_error;
-   }
-
-  float CostFunction() {
+    return theta;
+}
+  float CostFunction(Matrix<T> &X, Matrix<T> &Y) {
     Vector<T> cost;
-    cost.resize(a.rows());
+    cost.resize(X.rows());
     Vector<T> hf;
-    hf.resize(a.rows());
-    for(int m = 0; m < a.rows(); m++) {
-      hf = HypothesisFunction();
+    hf.resize(X.rows());
+    for(int m = 0; m < X.rows(); m++) {
+      hf = HypothesisFunction(X);
       cost(m) = pow((hf(m) - Y(m)), 2);
     }
     float final_error = cost.sum();
-    final_error *= (1.0/(2*a.rows()));
+    final_error *= (1.0/(2*X.rows()));
     return final_error;
 }
-  Vector<T> MaximumLikelihoodEstimation(){ //need to ask Shi what is A, X, and Y?? 
+  Vector<T> MaximumLikelihoodEstimation(Matrix<T> &X, Matrix<T> &Y) { 
     Matrix<T> xTransposed = X.transpose();
-    Matrix<T> bPart1 = xTransposed*X;
-    Matrix<T> bPart1Inv = bPart1.inverse();
-    Vector<T> bPart2 = xTransposed*Y;
-    Vector<T> b = bPart1Inv*bPart2;
-    return b; //b is theta for MLE should I use the theta class member?
+    Matrix<T> thetaPart1 = xTransposed*X;
+    Matrix<T> thetaPart1Inv = thetaPart1.inverse();
+    Vector<T> thetaPart2 = xTransposed*Y;
+    theta = thetaPart1Inv*thetaPart2;
+    return theta; 
   }
-  Vector<T> GradientDescent() {
+  Vector<T> GradientDescent(Matrx<T> &X, Matrix<T> &Y) {
     int v = 1;
     float delta = 10;
+    Vector<T> cost_history;
+    cost_history.resize(iterations);
+    cost_history.setZero();
+    Vector<T> dcost_history;
+    dcost_history.resize(iterations);
+    dcost_history.setZero();
     while((delta > pow(10, -10)) & (v < iterations)) {
-      cost_history(0) = CostFunction();
-      dcost_history(0) = DCostFunction();
+      cost_history(0) = CostFunction(X, Y);
+      dcost_history(0) = DCostFunction(X, Y);
         for(int j = 0; j < X.cols(); j++) {
           for(int i = 0; i < X.rows(); i++) {
-            theta(j) -= alpha * DCostFunction() * X(i, j);
+            theta(j) -= alpha * DCostFunction(X, Y) * X(i, j);
           }
         }
-        dcost_history(v) = DCostFunction();
-        cost_history(v) = CostFunction();
+        dcost_history(v) = DCostFunction(X, Y);
+        cost_history(v) = CostFunction(X, Y);
         delta = (cost_history(v-1) - cost_history(v));
         v++;
       }
@@ -154,36 +129,11 @@ class LinearRegression {
       }
  private:
   LinearRegressionAlgo algo_;
-  Matrix<T> a;
-  Matrix<T> xval;
-  void seta() {
-    a.resize(xval.rows(), xval.cols()); //where does xval and yval come from??
-  }
-  Matrix<T> X;
-  Matrix<T> Y;
-  Matrix<T> yval;
-  void setY() {
-    Y.resize(yval.rows(), yval.cols());
-    Y = yval;
-  }
   Vector<T> theta;
-  void settheta() {
-   theta.resize(a.cols() +1);
+  void settheta(Matrix<T> &X) { 
+   theta.resize(X.cols());
    theta.setOnes();
   }
-  Vector<T> dcost_history;
-  void setdcost_history() {
-   dcost_history.resize(iterations);
-   dcost_history.setZero();
-  }
-  Vector<T> cost_history;
-  void setcost_history() {
-    cost_history.resize(iterations);
-    cost_history.setZero();
-  }
-  Vector<T> hf;
-  Vector<T> newY;
-  Vector<T> final_theta;
   float alpha;
   int iterations;
 };
