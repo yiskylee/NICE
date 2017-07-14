@@ -20,8 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef CPP_INCLUDE_LINEAR_REGRESSION_H
-#define CPP_INCLUDE_LINEAR_REGRESSION_H
+#ifndef CPP_INCLUDE_LINEAR_REGRESSION_H_
+#define CPP_INCLUDE_LINEAR_REGRESSION_H_
 
 #include <iostream>
 #include <vector>
@@ -35,107 +35,80 @@ namespace Nice {
 enum LinearRegressionAlgo {
   MLE = 0,
   GD
-}
+};
 
 // LinearRegression lr(MLE);
 template<typename T>
 class LinearRegression {
  public:
-  LinearRegression()  
+  LinearRegression()
   :
-  algo_(MLE) {}
-  LinearRegression(LinearRegressionAlgo algo)
+  algo_(MLE), alpha_(0.0001), max_iterations_(230), threshold_(0.00001) {}
+  explicit LinearRegression(LinearRegressionAlgo algo)
   :
-  algo_(algo) {} 
-  Vector <T> Fit(Matrix<T> &a, Matrix<T> &y) { 
-    alpha = 0.0001;
-    iterations = 230;
-    settheta(X); 
+  algo_(algo), alpha_(0.0001), max_iterations_(230), threshold_(.00001) {}
+  void Fit(const Matrix<T> &X, const Matrix<T> &Y) {
+    settheta(X);
     if (algo_ == MLE) {
-      return MLE(X, Y); 
+      MaximumLikelihoodEstimation(X, Y);
     } else if (algo_ == GD) {
-        return GradientDescent(X, Y);
-    } else { 
-        std::cout << "Not valid linear regression algorithm type, enter 0 or 1" << std::endl;
+      GradientDescent(X, Y);
+    } else {
+        std::cout << "Not valid linear regression algorithm type, enter 0 or 1"
+                  << std::endl;
     }
   }
-  Vector<T> Predict(Matrix<T> &X) {
+  Vector<T> Predict(const Matrix<T> &X) {
     Vector<T> newY;
     newY.resize(X.rows());
-    newY = theta.transpose() * X.transpose();
+    newY = theta_.transpose() * X.transpose();
     return newY;
   }
-  Vector<T> HypothesisFunction(Matrix<T> &X) {
-    int i = X.rows();
-    Vector<T> hf;
-    hf.resize(i);
-    hf = theta.transpose() * X.transpose();
-    return hf;
-}
-  float DCostFunction(Matrix<T> &X, Matrix<T> &Y) {
-    for (int k = 0; k < iterations; k++) {          
-      delta = 2 / ((double) X.rows()) * (X.transpose() * (X * theta - Y));
-      theta = (theta - (alpha * delta));
-    }
-    return theta;
-}
-  float CostFunction(Matrix<T> &X, Matrix<T> &Y) {
+  T Loss(const Matrix<T> &X, const Matrix<T> &Y) {
     Vector<T> cost;
     cost.resize(X.rows());
     Vector<T> hf;
     hf.resize(X.rows());
-    for(int m = 0; m < X.rows(); m++) {
-      hf = HypothesisFunction(X);
+    for (int m = 0; m < X.rows(); m++) {
+      hf = X * theta_;
       cost(m) = pow((hf(m) - Y(m)), 2);
     }
-    float final_error = cost.sum();
+    T final_error = cost.sum();
     final_error *= (1.0/(2*X.rows()));
     return final_error;
-}
-  Vector<T> MaximumLikelihoodEstimation(Matrix<T> &X, Matrix<T> &Y) { 
+  }
+  void MaximumLikelihoodEstimation(const Matrix<T> &X, const Matrix<T> &Y) {
     Matrix<T> xTransposed = X.transpose();
     Matrix<T> thetaPart1 = xTransposed*X;
     Matrix<T> thetaPart1Inv = thetaPart1.inverse();
     Vector<T> thetaPart2 = xTransposed*Y;
-    theta = thetaPart1Inv*thetaPart2;
-    return theta; 
+    theta_ = thetaPart1Inv*thetaPart2;
   }
-  Vector<T> GradientDescent(Matrx<T> &X, Matrix<T> &Y) {
-    int v = 1;
-    float delta = 10;
-    Vector<T> cost_history;
-    cost_history.resize(iterations);
-    cost_history.setZero();
-    Vector<T> dcost_history;
-    dcost_history.resize(iterations);
-    dcost_history.setZero();
-    while((delta > pow(10, -10)) & (v < iterations)) {
-      cost_history(0) = CostFunction(X, Y);
-      dcost_history(0) = DCostFunction(X, Y);
-        for(int j = 0; j < X.cols(); j++) {
-          for(int i = 0; i < X.rows(); i++) {
-            theta(j) -= alpha * DCostFunction(X, Y) * X(i, j);
-          }
-        }
-        dcost_history(v) = DCostFunction(X, Y);
-        cost_history(v) = CostFunction(X, Y);
-        delta = (cost_history(v-1) - cost_history(v));
-        v++;
-      }
-        std::cout<<"Done!"<<std::endl;
-        std::cout<<"This took "<<v<<" iterations."<<std::endl;
-        std::cout<<"The values of theta are: "<<"\n"<<theta<<std::endl;
-        return theta;
-      }
+  void GradientDescent(const Matrx<T> &X, const Matrix<T> &Y) {
+    Vector<T> delta;
+    delta.resize(X.rows());
+    T loss = Loss(X, Y);
+    for (int k = 0; k < max_iterations_ || loss >= threshold_; k++) {
+      delta = 2 / ((T) X.rows()) * (X.transpose() * (X * theta_ - Y));
+      theta_ = (theta_ - (alpha * delta));
+      loss = Loss(X, Y);
+    }
+  }
+  Vector<T> getTheta() {
+    return theta_;
+  }
+
  private:
   LinearRegressionAlgo algo_;
-  Vector<T> theta;
-  void settheta(Matrix<T> &X) { 
-   theta.resize(X.cols());
-   theta.setOnes();
+  Vector<T> theta_;
+  void settheta(const Matrix<T> &X) {
+    theta_.resize(X.cols());
+    theta_.setOnes();
   }
-  float alpha;
-  int iterations;
+  float alpha_;
+  int max_iterations_;
+  T threshold_;
 };
-}
-#endif
+
+}  // namespace Nice
+#endif  // CPP_INCLUDE_LINEAR_REGRESSION_H_
