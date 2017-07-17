@@ -27,6 +27,7 @@
 #include <map>
 #include <algorithm>
 #include <limits>
+#include <cstdlib>
 #include "include/matrix.h"
 #include "include/vector.h"
 
@@ -196,7 +197,8 @@ class KMeans {
 
   void KMeansPPInit(const Matrix<T> &input_data) {
     // Assign one center at random
-    unsigned int random_id = rand() % input_data.cols();
+    unsigned int seed = 1234;
+    unsigned int random_id = rand_r(&seed) % input_data.cols();
     Vector<T> p = input_data.col(random_id);
     centers_.col(0) = p;
     // Assign the rest of the initial centers using a
