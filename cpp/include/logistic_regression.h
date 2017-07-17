@@ -89,7 +89,6 @@ class LogisticRegression {
     product = inputs * theta.bottomRows(theta.rows()-1);
     yhat = product.rowwise().sum();
     yhat = yhat.array() + theta(0);
-
     predictions = h(yhat);
     return predictions;
   }
@@ -116,7 +115,6 @@ class LogisticRegression {
       gradient(0) = theta.sum();
       theta = theta - ((alpha/ y.size()) * gradient);
     }
-    std::cout << theta << '\n';
   }
 };
 }  // namespace Nice

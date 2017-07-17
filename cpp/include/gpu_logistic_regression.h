@@ -25,23 +25,8 @@
 
 #ifdef CUDA_AND_GPU
 
-#include <stdlib.h>
-#include <time.h>
-#include <cuda_runtime.h>
-#include <device_launch_parameters.h>
-#include <cuda_runtime_api.h>
-#include <cublas_v2.h>
-#include <cusolverDn.h>
-#include <unistd.h>
-#include <stdexcept>
-#include <chrono>
-
 #include <iostream>
-
-#include "include/matrix.h"
-#include "include/vector.h"
 #include "include/gpu_util.h"
-#include "include/gpu_svd_solver.h"
 
 namespace Nice {
 
@@ -76,6 +61,11 @@ private:
   /// \return
   /// A Vector containing the current theta values
   Vector<T> getTheta() {return theta;}
+
+  Vector<T> GpuFit(const Matrix<T> &xin, const Vector<T> &y,
+    int iterations, T alpha);
+
+  Vector<T> GpuPredict(const Matrix<T> &inputs, const Vector<T> &theta);
 };
 }
 

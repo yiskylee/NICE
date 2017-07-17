@@ -165,7 +165,6 @@ if (enable-test)
          test/gpu_solver_test/*.cc
          test/matrix_vector_mult_test/*.cc
          test/shared_MV_mult_test/*.cc
-         test/gpu_logistic_regression_test/.*cc
          //test/model_test/*.cc
          )
   else()
