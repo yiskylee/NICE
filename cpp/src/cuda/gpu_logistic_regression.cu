@@ -23,6 +23,7 @@
 #include "include/gpu_logistic_regression.h"
 #include <cmath>
 
+#define BLOCK_DIM 16
 #define BLOCK_SIZE 16
 namespace Nice {
 
@@ -38,6 +39,13 @@ namespace Nice {
     return 1 / ((exp(-1 * input) + 1));
   }
 
+  /// CPU Transpose. Used for testing
+  template <typename T>
+  __device__ T transpose(T * input) {
+    return 1 / ((exp(-1 * input) + 1));
+  }
+
+  /// CUDA kernel for predict functionality
   template <typename T>
   __global__ void PredictKernel(T *d_theta, T *d_inputs, T *d_predictions, int input_x, int input_y, T theta_0){
     extern __shared__ float yhat[];
@@ -53,6 +61,75 @@ namespace Nice {
     yhat[row * input_x + col] = sum + theta_0;
     d_predictions[row * input_x + col] = h(yhat[row * input_x + col]);
     __syncthreads();
+  }
+
+  /// Work in progress CUDA kernel for Fit functionality
+  template <typename T>
+  __global__ void FitKernel(T *d_xin, T *d_y, T *d_theta, int iterations,
+    T alpha, int input_x, int input_y){
+    extern __shared__ float theta[];
+    // Variables are hard coded for development only
+    __shared__ float gradient[3];
+    __shared__ float new_theta[3];
+    __shared__ float temp[10];
+
+    // Corresponding row/col variables
+    int row = blockIdx.y * blockDim.y + threadIdx.y;
+    int col = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (row >= input_y || col >= input_x) return;
+
+    theta[row * input_x + col] = 0.0;
+    gradient[row * input_x + col] = 0.0;
+    new_theta[row * input_x + col] = 0.0;
+    temp[row * input_x + col] = 0.0;
+
+    // iterations loop for Fit kernel. The two is hard-coded for testing
+    // purposes, it will be replaced by the iterations variable
+    for (int i = 0; i < 2; i++) {
+
+      // Multiplies xin array by current thetas to generate new thetas
+      float sum = 0.0f;
+      for (int j = 0; j < input_y; j++) {
+        sum += (d_xin[j * input_x + col] * theta[row * input_x + (j+ 1)]);
+      }
+      __syncthreads();
+      new_theta[row * input_x + col] = sum;
+
+      // Adds the value of theta(0) to every value of new_theta
+      new_theta[row * input_x + col] = theta[row * input_x] +
+        new_theta[row * input_x + col];
+      __syncthreads();
+
+      // Generates hypothesis from new_theta and subtracts them from y values
+      temp[row * input_x + col] = h(new_theta[row * input_x + col]) - d_y[row * input_x + col];
+
+      /// TODO fix transpose functionality
+      /// For this function, it is supposed to multiply the transpose of xin by temp.
+      /// Currently, it prints out the correct multiplication values but it does not add them together
+      /// The current print out shows only the first values of num in the gradient array.
+      sum = 0.0f;
+      for (int j = 0; j < (input_y); j++) {
+          __syncthreads();
+          float num = (d_xin[(row+j) * input_x + col] * temp[row * input_x + col]);
+          printf("%i: %5.5f * %5.5f = %5.5f\n", j, d_xin[(row+j) * input_x + col], temp[row * input_x + col], d_xin[(row+j) * input_x + col] * temp[row * input_x + col]);
+          __syncthreads();
+          gradient[j+1] = gradient[j+1] + num;
+          __syncthreads();
+      }
+
+      /// Sums up theta and sets it to gradient[0]
+      for (int j = 1; j < input_x + 1; j++){
+        sum += theta[row * input_x];
+      }
+      __syncthreads();
+      gradient[0] = sum;
+
+      /// Sets thetas according to gradient descent equation. 
+      __syncthreads();
+      d_theta[row * input_x + col] = d_theta[row * input_x + col] -
+        ((alpha / input_x) * gradient[row * input_x + col]);
+    }
   }
   /// Given a set of features and parameters creates a vector of target outputs
   ///
@@ -93,8 +170,10 @@ namespace Nice {
     dim3 dimBlock(BLOCK_SIZE *BLOCK_SIZE);
     dim3 dimGrid(inputs.rows() * inputs.cols());
     //std::cout <<  (inputs.cols() / dimBlock.x) * (inputs.rows() / dimBlock.y) << "\n";
-    PredictKernel<<<dimGrid, dimBlock, m>>>(d_theta, d_inputs,
+    PredictKernel<<<dimGrid, dimBlock, (k + 1)>>>(d_theta, d_inputs,
       d_predictions, m, k, theta_0);
+    CUDA_CALL(cudaDeviceSynchronize());
+
     CUDA_CALL(cudaMemcpy(&h_predictions(0), d_predictions, m * sizeof(T),
       cudaMemcpyDeviceToHost));
     CUDA_CALL(cudaFree(d_theta));
@@ -118,20 +197,44 @@ namespace Nice {
   template <typename T>
   Vector<T> GpuLogisticRegression<T>::GpuFit(const Matrix<T> &xin, const Vector<T> &y,
     int iterations, T alpha){
-    Vector<T> gradient, theta;
-    theta.resize(xin.cols() + 1);
-    gradient.resize(theta.rows());
-    theta.setZero();
-    gradient.setZero();
-    for (int i = 0; i < iterations; i++) {
-      Vector<T> Xtheta = (xin * (theta.bottomRows(theta.rows() - 1)));
-      Xtheta = Xtheta.array() + theta(0);
-      gradient.bottomRows(gradient.rows() - 1) =
-        xin.transpose() * (h(Xtheta) - y);
-      gradient(0) = theta.sum();
-      theta = theta - ((alpha/ y.size()) * gradient);
-    }
-    return theta;
+      int m = xin.rows();
+      int k = xin.cols();
+
+      const T * h_xin = &xin(0);
+      const T * h_y = &y(0);
+      Vector<T> h_theta(m);
+
+      T * d_xin;
+      T * d_y;
+      T * d_theta;
+
+      // Setup GPU memory
+      CUDA_CALL(cudaMalloc(&d_xin, (m * k) * sizeof(T)));
+      CUDA_CALL(cudaMemcpy(d_xin, h_xin, (m * k) * sizeof(T),
+        cudaMemcpyHostToDevice));
+
+      CUDA_CALL(cudaMalloc(&d_y, m * sizeof(T)));
+      CUDA_CALL(cudaMemcpy(d_y, h_y, m * sizeof(T),
+        cudaMemcpyHostToDevice));
+
+      CUDA_CALL(cudaMalloc(&d_theta, k * sizeof(T)));
+      CUDA_CALL(cudaMemset(d_theta, 0, k * sizeof(T)));
+
+      // Launch kernel here
+      dim3 dimBlock(BLOCK_SIZE *BLOCK_SIZE);
+      dim3 dimGrid(xin.rows() * xin.cols());
+      //std::cout <<  (inputs.cols() / dimBlock.x) * (inputs.rows() / dimBlock.y) << "\n";
+      FitKernel<<<dimGrid, dimBlock, m>>>(d_xin, d_y,
+        d_theta, iterations, alpha, m, k);
+
+      CUDA_CALL(cudaDeviceSynchronize());
+
+      CUDA_CALL(cudaMemcpy(&h_theta(0), d_theta, k * sizeof(T),
+        cudaMemcpyDeviceToHost));
+      CUDA_CALL(cudaFree(d_theta));
+      CUDA_CALL(cudaFree(d_xin));
+      CUDA_CALL(cudaFree(d_y));
+      return h_theta;
   }
 
   template
@@ -139,14 +242,7 @@ namespace Nice {
     int iterations, float alpha);
 
   template
-  Vector<double> GpuLogisticRegression<double>::GpuFit(const Matrix<double> &xin, const Vector<double> &y,
-      int iterations, double alpha);
-
-  template
   Vector<float> GpuLogisticRegression<float>::GpuPredict(const Matrix<float> &inputs, const Vector<float> &theta);
-
-  template
-  Vector<double> GpuLogisticRegression<double>::GpuPredict(const Matrix<double> &inputs, const Vector<double> &theta);
 
 
 }; // namespace Nice

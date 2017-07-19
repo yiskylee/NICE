@@ -59,9 +59,10 @@ TYPED_TEST(GpuLogisticRegressionTest, MatrixLogisticRegressionOneModel) {
           7.673, 3.508;
   this->training_y.resize(10);
   this->training_y << 0, 0, 0, 0, 0, 1, 1, 1, 1, 1;
-  Nice::Vector<TypeParam> theta(10);
+  Nice::Vector<TypeParam> theta(3);
   theta = testModel1.GpuFit(this->training_x, this->training_y, this->iterations,
     this->alpha);
+  std::cout << "Final thetas \n " << theta << "\n \n \n";
   // Setup for the Predict function
   this->predict_x.resize(10, 2);
   this->predict_x << 2.781, 2.550,

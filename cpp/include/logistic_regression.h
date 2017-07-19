@@ -107,12 +107,18 @@ class LogisticRegression {
     gradient.resize(theta.rows());
     theta.setZero();
     gradient.setZero();
-    for (int i = 0; i < iterations; i++) {
+    for (int i = 0; i < 2; i++) {
       Vector<T> Xtheta = (xin * (theta.bottomRows(theta.rows() - 1)));
       Xtheta = Xtheta.array() + theta(0);
+
       gradient.bottomRows(gradient.rows() - 1) =
         xin.transpose() * (h(Xtheta) - y);
+        std::cout << xin << '\n' << '\n';
+        std::cout << xin.transpose() << '\n' << '\n';
+        std::cout << (h(Xtheta) - y) << '\n' << '\n';
+
       gradient(0) = theta.sum();
+      std::cout << gradient << '\n' << '\n';
       theta = theta - ((alpha/ y.size()) * gradient);
     }
   }
