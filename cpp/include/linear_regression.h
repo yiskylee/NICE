@@ -43,7 +43,7 @@ class LinearRegression {
  public:
   LinearRegression()
   :
-  algo_(MLE), alpha_(0.0001), max_iterations_(230), threshold_(0.00001) {}
+  algo_(MLE), alpha_(0.5), max_iterations_(10000), threshold_(0.000001) {}
   void setAlgorithm(LinearRegressionAlgo algo) {
     algo_ = algo;
   }
@@ -84,11 +84,11 @@ class LinearRegression {
     Vector<T> thetaPart2 = xTransposed*Y;
     theta_ = thetaPart1Inv*thetaPart2;
   }
-  void GradientDescent(const Matrx<T> &X, const Matrix<T> &Y) {
+  void GradientDescent(const Matrix<T> &X, const Matrix<T> &Y) {
     Vector<T> delta_;
     delta_.resize(X.rows());
     T loss = Loss(X, Y);
-    for (int k = 0; k < max_iterations_ || loss >= threshold_; k++) {
+    for (int k = 0; k < max_iterations_ && loss >= threshold_; k++) {
       delta_ = 2 / ((T) X.rows()) * (X.transpose() * (X * theta_ - Y));
       theta_ = (theta_ - (alpha_ * delta_));
       loss = Loss(X, Y);
