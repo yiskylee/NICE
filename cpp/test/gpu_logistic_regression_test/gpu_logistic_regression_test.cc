@@ -62,7 +62,6 @@ TYPED_TEST(GpuLogisticRegressionTest, MatrixLogisticRegressionOneModel) {
   Nice::Vector<TypeParam> theta(3);
   theta = testModel1.GpuFit(this->training_x, this->training_y, this->iterations,
     this->alpha);
-  std::cout << "Final thetas \n " << theta << "\n \n \n";
   // Setup for the Predict function
   this->predict_x.resize(10, 2);
   this->predict_x << 2.781, 2.550,
@@ -80,7 +79,7 @@ TYPED_TEST(GpuLogisticRegressionTest, MatrixLogisticRegressionOneModel) {
   std::cout << this->predictions << std::endl;
   ASSERT_TRUE(true);
 }
-/**
+
 // Runs both the fit and predict function on two separate models in
 // the same test.
 TYPED_TEST(GpuLogisticRegressionTest, MatrixLogisticRegressionTwoModels) {
@@ -100,7 +99,8 @@ TYPED_TEST(GpuLogisticRegressionTest, MatrixLogisticRegressionTwoModels) {
           7.673, 3.508;
   this->training_y.resize(10);
   this->training_y << 0, 0, 0, 0, 0, 1, 1, 1, 1, 1;
-  this->testModel1.Fit(this->training_x, this->training_y, this->iterations,
+  Nice::Vector<TypeParam> theta1(3);
+  theta1 = this->testModel1.GpuFit(this->training_x, this->training_y, this->iterations,
     this->alpha);
 
   // Setup for Model 2's Fit function
@@ -114,7 +114,8 @@ TYPED_TEST(GpuLogisticRegressionTest, MatrixLogisticRegressionTwoModels) {
                4, 3,
                3, 5,
                6, 3.5;
-  this->testModel2.Fit(this->training_x, this->training_y,
+    Nice::Vector<TypeParam> theta2(3);
+    theta2 = this->testModel2.GpuFit(this->training_x, this->training_y,
     this->iterations, this->alpha);
 
   // Setup for Model 1's Predict function
@@ -129,7 +130,7 @@ TYPED_TEST(GpuLogisticRegressionTest, MatrixLogisticRegressionTwoModels) {
           6.922, 1.771,
           8.675, -0.242,
           7.673, 3.508;
-  this->predictions = this->testModel1.Predict(this->predict_x);
+  this->predictions = this->testModel1.GpuPredict(this->predict_x, theta1);
 
   // Setup for Model 2's Fit function
   this->predictions.resize(10);
@@ -144,8 +145,7 @@ TYPED_TEST(GpuLogisticRegressionTest, MatrixLogisticRegressionTwoModels) {
                4, 3,
                3, 5,
                6, 3.5;
-  this->predictions = this->testModel2.Predict(this->predict_x);
+  this->predictions = this->testModel2.GpuPredict(this->predict_x, theta2);
   std::cout << this->predictions << std::endl;
   ASSERT_TRUE(true);
 }
-**/

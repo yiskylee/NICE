@@ -27,19 +27,19 @@ namespace Nice {
 
   template <typename T>
   __global__ void CudaMatrixVectorMulKernel(T *d_a, T *d_x, T *d_y, int const a_rows, int const x_size) {
+    extern __shared__ float shar_x[];
     int blockRow = blockIdx.y;
     int blockCol = blockIdx.x;
-
     int threadRow = threadIdx.y;
     int threadCol = threadIdx.x;
-    float sum = 0.0f;
+    T sum = 0.0;
     if (threadRow >= x_size || threadCol >= a_rows) return;
-    for (int i = 0; i < gridDim.y / blockDim.x; i++){
-
+    int size = (gridDim.y / blockDim.x);
+    __syncthreads();
+    for (int i = 0; i < size; i++){
       T * aTile = &d_a[blockDim.x * blockRow + i * blockDim.x];
       T * xTile = &d_x[blockDim.y * i + blockCol * blockDim.y];
 
-      extern __shared__ float shar_x[];
       shar_x[threadCol] = xTile[threadRow + threadCol];
 
       __syncthreads();
@@ -50,6 +50,7 @@ namespace Nice {
       __syncthreads();
     }
     d_y[threadRow + threadCol] = sum;
+
   }
 
   template <typename T>
@@ -83,14 +84,12 @@ namespace Nice {
 
 
       // Launch kernel here
-      dim3 dimBlock(block_size * block_size);
-      dim3 dimGrid((a.rows() / dimBlock.x) * (a.cols() / dimBlock.y));
+      dim3 dimBlock(block_size, block_size);
+      dim3 dimGrid((a.rows() / dimBlock.y)+1, (a.cols() / dimBlock.x)+1);
 
       high_resolution_clock::time_point t1 = high_resolution_clock::now();
-
-      CudaMatrixVectorMulKernel<<<dimGrid, dimBlock, block_size>>>
+      CudaMatrixVectorMulKernel<<<dimGrid, dimBlock, a.rows() * sizeof(T)>>>
         (d_a, d_x, d_y, m, k);
-
       // Device sync
       CUDA_CALL(cudaDeviceSynchronize());
 
@@ -99,8 +98,14 @@ namespace Nice {
       std::cout << "Shared time: " << (long)duration << std::endl;
 
       // Transfer memories back, clear memrory, and return result
+
+
       CUDA_CALL(cudaMemcpy(&h_y(0), d_y, m * sizeof(T),
         cudaMemcpyDeviceToHost));
+      for(int i = 0; i < a.rows(); i++){
+        std::cout << h_y[i] << "\t";
+      }
+
       CUDA_CALL(cudaFree(d_a));
       CUDA_CALL(cudaFree(d_x));
       CUDA_CALL(cudaFree(d_y));

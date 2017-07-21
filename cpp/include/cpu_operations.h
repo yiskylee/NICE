@@ -683,54 +683,6 @@ class CpuOperations {
       exit(1);
     }
   }
-  
-  static T sigmoid( T x){
-    return 1 / (1 + std::exp(-x));
-  }
-
- 
-  static Vector<T> LogisticRegressionPredict(const Matrix<T> &inputs, const Vector<T> thetas){
-    Vector<T> predictions;
-    Vector<T> mult_thetas;
-    mult_thetas.resize(thetas.size()-1);  
-    mult_thetas << thetas(1), thetas(2);
-    //std::cout << mult_thetas << std::endl; 
-    Matrix<T> product;
-    Vector<T> yhat; 
-    product.resize(inputs.rows(),inputs.cols());
-    product = inputs * mult_thetas;
-    yhat.resize(inputs.rows());
-    yhat = product.rowwise().sum();
-    yhat = yhat.array() + thetas(0);
-    predictions.resize(inputs.rows());
-    // TODO Parallelize exponential function
-    for (int i = 0; i < yhat.size(); i++){
-      T value = (1 / (1 + (exp(-yhat(i)))));  
-      predictions(i) = value;  
-    }
-    return predictions;
-  }
-
-  /// Calculates the coeffients for a logisitic regression of a given matrix and
-  /// returns it as a vector. 
-  ///
-  /// 
-  static Vector<T> LogisticRegressionFit(const Matrix<T> &x, const Vector<T> &y, int iterations, T alpha){
-    Vector<T> thetas;
-    thetas.resize(3);
-    thetas << 0, 0, 0;
-    Vector<T> z, grad;
-    for (int i = 0; i < iterations; i++){
-      z.resize(x.rows());
-      grad.resize(thetas.size());
-      z = LogisticRegressionPredict(x, thetas); 
-      thetas -= alpha * (x.transpose() * (z - y)) / y.size();
-      if (iterations % 1000 == 0){
-        std::cout << z << std::endl;
-      }
-    }
-    return thetas;
-  }
 };
 }  // namespace Nice
 #endif  // CPP_INCLUDE_CPU_OPERATIONS_H_

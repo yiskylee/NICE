@@ -39,12 +39,6 @@ namespace Nice {
     return 1 / ((exp(-1 * input) + 1));
   }
 
-  /// CPU Transpose. Used for testing
-  template <typename T>
-  __device__ T transpose(T * input) {
-    return 1 / ((exp(-1 * input) + 1));
-  }
-
   /// CUDA kernel for predict functionality
   template <typename T>
   __global__ void PredictKernel(T *d_theta, T *d_inputs, T *d_predictions, int input_x, int input_y, T theta_0){
@@ -55,7 +49,6 @@ namespace Nice {
     if (row >= input_y || col >= input_x) return;
     for (int k = 0; k < input_y; k++) {
       sum += (d_inputs[k * input_x + col] * d_theta[row * input_x + k]);
-
     }
     __syncthreads();
     yhat[row * input_x + col] = sum + theta_0;
@@ -65,12 +58,12 @@ namespace Nice {
 
   /// Work in progress CUDA kernel for Fit functionality
   template <typename T>
-  __global__ void FitKernel(T *d_xin, T *d_y, T *d_theta, int iterations,
-    T alpha, int input_x, int input_y){
+  __global__ void FitKernel(T *d_xin, T *d_y, T *d_theta, T* d_trans,
+    int iterations, T alpha, int input_x, int input_y){
     extern __shared__ float theta[];
     // Variables are hard coded for development only
-    __shared__ float gradient[3];
-    __shared__ float new_theta[3];
+    __shared__ float gradient[10];
+    __shared__ float new_theta[10];
     __shared__ float temp[10];
 
     // Corresponding row/col variables
@@ -80,14 +73,14 @@ namespace Nice {
     if (row >= input_y || col >= input_x) return;
 
     theta[row * input_x + col] = 0.0;
-    gradient[row * input_x + col] = 0.0;
-    new_theta[row * input_x + col] = 0.0;
-    temp[row * input_x + col] = 0.0;
+
 
     // iterations loop for Fit kernel. The two is hard-coded for testing
     // purposes, it will be replaced by the iterations variable
-    for (int i = 0; i < 2; i++) {
-
+    for (int i = 0; i < iterations; i++) {
+      gradient[row * input_x + col] = 0.0;
+      new_theta[row * input_x + col] = 0.0;
+      temp[row * input_x + col] = 0.0;
       // Multiplies xin array by current thetas to generate new thetas
       float sum = 0.0f;
       for (int j = 0; j < input_y; j++) {
@@ -97,7 +90,7 @@ namespace Nice {
       new_theta[row * input_x + col] = sum;
 
       // Adds the value of theta(0) to every value of new_theta
-      new_theta[row * input_x + col] = theta[row * input_x] +
+      new_theta[row * input_x + col] = theta[0] +
         new_theta[row * input_x + col];
       __syncthreads();
 
@@ -108,28 +101,32 @@ namespace Nice {
       /// For this function, it is supposed to multiply the transpose of xin by temp.
       /// Currently, it prints out the correct multiplication values but it does not add them together
       /// The current print out shows only the first values of num in the gradient array.
-      sum = 0.0f;
       for (int j = 0; j < (input_y); j++) {
-          __syncthreads();
-          float num = (d_xin[(row+j) * input_x + col] * temp[row * input_x + col]);
-          printf("%i: %5.5f * %5.5f = %5.5f\n", j, d_xin[(row+j) * input_x + col], temp[row * input_x + col], d_xin[(row+j) * input_x + col] * temp[row * input_x + col]);
-          __syncthreads();
-          gradient[j+1] = gradient[j+1] + num;
-          __syncthreads();
+        float num = (d_xin[(row+j) * input_x + col] * temp[row * input_x + col]);
+        //printf("%i: %5.5f * %5.5f = %5.5f\n", j, d_xin[(j) * input_x + col], temp[row * input_x + col],
+        //d_xin[(row+j) * input_x + col] * temp[row * input_x + col]);
+        atomicAdd(&gradient[j + 1], num);
+        __syncthreads();
       }
+      __syncthreads();
+
 
       /// Sums up theta and sets it to gradient[0]
-      for (int j = 1; j < input_x + 1; j++){
-        sum += theta[row * input_x];
+      sum = 0.0f;
+      for (int j = 0; j < input_y + 1; j++){
+        sum += theta[row * input_x + j];
+        __syncthreads();
       }
       __syncthreads();
       gradient[0] = sum;
-
-      /// Sets thetas according to gradient descent equation. 
       __syncthreads();
-      d_theta[row * input_x + col] = d_theta[row * input_x + col] -
+
+      /// Sets thetas according to gradient descent equation.
+      __syncthreads();
+      theta[row * input_x + col] = theta[row * input_x + col] -
         ((alpha / input_x) * gradient[row * input_x + col]);
     }
+    d_theta[row * input_x + col] = theta[row * input_x + col];
   }
   /// Given a set of features and parameters creates a vector of target outputs
   ///
@@ -151,6 +148,7 @@ namespace Nice {
     const T * h_inputs = &inputs(0);
     Vector<T> h_predictions(m);
 
+
     T * d_theta;
     T * d_inputs;
     T * d_predictions;
@@ -166,6 +164,8 @@ namespace Nice {
 
     CUDA_CALL(cudaMalloc(&d_predictions, m * sizeof(T)));
     CUDA_CALL(cudaMemset(d_predictions, 0, m * sizeof(T)));
+
+
     // Launch kernel here
     dim3 dimBlock(BLOCK_SIZE *BLOCK_SIZE);
     dim3 dimGrid(inputs.rows() * inputs.cols());
@@ -202,8 +202,11 @@ namespace Nice {
 
       const T * h_xin = &xin(0);
       const T * h_y = &y(0);
-      Vector<T> h_theta(m);
+      Vector<T> h_theta(k+1);
+      Matrix<T> trans = xin.transpose();
+      const T * h_trans = &trans(0);
 
+      T * d_trans;
       T * d_xin;
       T * d_y;
       T * d_theta;
@@ -217,19 +220,23 @@ namespace Nice {
       CUDA_CALL(cudaMemcpy(d_y, h_y, m * sizeof(T),
         cudaMemcpyHostToDevice));
 
-      CUDA_CALL(cudaMalloc(&d_theta, k * sizeof(T)));
-      CUDA_CALL(cudaMemset(d_theta, 0, k * sizeof(T)));
+      CUDA_CALL(cudaMalloc(&d_theta, (k + 1) * sizeof(T)));
+      CUDA_CALL(cudaMemset(d_theta, 0, (k + 1) * sizeof(T)));
+
+      CUDA_CALL(cudaMalloc(&d_trans, m * k * sizeof(T)));
+      CUDA_CALL(cudaMemcpy(d_trans, h_trans, (m * k) * sizeof(T),
+        cudaMemcpyHostToDevice));
 
       // Launch kernel here
       dim3 dimBlock(BLOCK_SIZE *BLOCK_SIZE);
       dim3 dimGrid(xin.rows() * xin.cols());
       //std::cout <<  (inputs.cols() / dimBlock.x) * (inputs.rows() / dimBlock.y) << "\n";
       FitKernel<<<dimGrid, dimBlock, m>>>(d_xin, d_y,
-        d_theta, iterations, alpha, m, k);
+        d_theta, d_trans, iterations, alpha, m, k);
 
       CUDA_CALL(cudaDeviceSynchronize());
 
-      CUDA_CALL(cudaMemcpy(&h_theta(0), d_theta, k * sizeof(T),
+      CUDA_CALL(cudaMemcpy(&h_theta(0), d_theta, (k + 1) * sizeof(T),
         cudaMemcpyDeviceToHost));
       CUDA_CALL(cudaFree(d_theta));
       CUDA_CALL(cudaFree(d_xin));
