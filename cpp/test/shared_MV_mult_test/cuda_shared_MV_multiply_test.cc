@@ -92,7 +92,7 @@ TYPED_TEST(CudaSharedMVMultiplyTest, FunctionalityTest) {
   this->CreateTestData(m, n);
   Nice::Vector<TypeParam> gpu_c(m);
   // Test gpu matrix matrix multiply in Nice
-  Nice::CudaSharedMVMultiply<TypeParam> gpu_op(16);
+  Nice::CudaSharedMVMultiply<TypeParam> gpu_op;
   gpu_c = gpu_op.Multiply(this->a_, this->b_);
   // Verify the result
   for (int i = 0; i < m; i++) {
@@ -111,7 +111,7 @@ TYPED_TEST(CudaSharedMVMultiplyTest, OnesTest) {
   // Solve in CPU
   this->c_ = cpu_op.Multiply(this->a_, this->b_);
   // Test gpu matrix matrix multiply in Nice
-  Nice::CudaSharedMVMultiply<TypeParam> gpu_op(16);
+  Nice::CudaSharedMVMultiply<TypeParam> gpu_op;
   gpu_c = gpu_op.Multiply(this->a_, this->b_);
   // Verify the result
   for (int i = 0; i < m; i++) {

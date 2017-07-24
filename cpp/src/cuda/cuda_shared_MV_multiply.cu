@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 #include "include/cuda_shared_MV_multiply.h"
-#define BLOCK_SIZE 16
+#define BLOCK_SIZE 32
 using namespace std::chrono;
 
 namespace Nice {
@@ -32,16 +32,12 @@ namespace Nice {
     int blockCol = blockIdx.x;
     int threadRow = threadIdx.y;
     int threadCol = threadIdx.x;
-    T sum = 0.0;
-    if (threadRow >= x_size || threadCol >= a_rows) return;
-    int size = (gridDim.y / blockDim.x);
-    __syncthreads();
-    for (int i = 0; i < size; i++){
+    T sum = 2.0;
+    int size = (x_size / BLOCK_SIZE);
+    //__syncthreads();
+    for (int i = 0; i < size; ++i){
       T * aTile = &d_a[blockDim.x * blockRow + i * blockDim.x];
-      T * xTile = &d_x[blockDim.y * i + blockCol * blockDim.y];
-
-      shar_x[threadCol] = xTile[threadRow + threadCol];
-
+      shar_x[threadCol] = d_x[blockDim.y * i + blockCol * blockDim.y];
       __syncthreads();
 
       for (int j = 0; j < blockDim.y; j++){
@@ -49,8 +45,8 @@ namespace Nice {
       }
       __syncthreads();
     }
-    d_y[threadRow + threadCol] = sum;
-
+    d_y[threadCol] = sum;
+    printf("%5.5f\n", d_y[threadCol]);
   }
 
   template <typename T>
@@ -85,7 +81,7 @@ namespace Nice {
 
       // Launch kernel here
       dim3 dimBlock(block_size, block_size);
-      dim3 dimGrid((a.rows() / dimBlock.y)+1, (a.cols() / dimBlock.x)+1);
+      dim3 dimGrid((a.cols() / dimBlock.x)+1, (a.rows() / dimBlock.y)+1);
 
       high_resolution_clock::time_point t1 = high_resolution_clock::now();
       CudaMatrixVectorMulKernel<<<dimGrid, dimBlock, a.rows() * sizeof(T)>>>
@@ -102,10 +98,6 @@ namespace Nice {
 
       CUDA_CALL(cudaMemcpy(&h_y(0), d_y, m * sizeof(T),
         cudaMemcpyDeviceToHost));
-      for(int i = 0; i < a.rows(); i++){
-        std::cout << h_y[i] << "\t";
-      }
-
       CUDA_CALL(cudaFree(d_a));
       CUDA_CALL(cudaFree(d_x));
       CUDA_CALL(cudaFree(d_y));

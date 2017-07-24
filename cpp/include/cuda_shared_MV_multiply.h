@@ -20,8 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef CPP_INCLUDE_CUDA_MATRIX_VECTOR_MULTIPLY_H_
-#define CPP_INCLUDE_CUDA_MATRIX_VECTOR_MULTIPLY_H_
+#ifndef CPP_INCLUDE_CUDA_SHARED_MV_MULTIPLY_H_
+#define CPP_INCLUDE_CUDA_SHARED_MV_MULTIPLY_H_
 
 #ifdef CUDA_AND_GPU
 
@@ -33,14 +33,13 @@
 namespace Nice {
 
 template<typename T>
-class CudaSharedMVMultiply{
-  private:
-    int block_size;
-  public:
-    CudaSharedMVMultiply(int inBlock){block_size = inBlock;}
-    Vector<T> Multiply(const Matrix<T> &a, const Vector<T> &b);
+class CudaSharedMVMultiply {
+ private:
+  int block_size;
+ public:
+  Vector<T> Multiply(const Matrix<T> &a, const Vector<T> &b);
 };
 
 }  // namespace Nice
 #endif  // NEED_CUDA
-#endif  // CPP_INCLUDE_CUDA_MATRIX_VECTOR_MULTIPLY_H_
+#endif  // CPP_INCLUDE_CUDA_SHARED_MV_MULTIPLY_H_

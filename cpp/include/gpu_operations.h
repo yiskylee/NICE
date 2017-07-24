@@ -211,8 +211,8 @@ class GpuOperations {
       util_->SyncDev();
 
       high_resolution_clock::time_point t2 = high_resolution_clock::now();
-      auto duration = duration_cast<microseconds>( t2 - t1 ).count();
-      std::cout << "cuBLAS time: " << (long)duration << std::endl;
+      auto duration = duration_cast<microseconds>(t2 - t1).count();
+      std::cout << "cuBLAS time: " << (int)duration << std::endl;
       // Transfer memories back, clear memrory, and return result
       util_->SyncMem(d_a, nullptr, 0, false);
       util_->SyncMem(d_x, nullptr, 0, false);

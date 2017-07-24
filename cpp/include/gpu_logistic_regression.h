@@ -20,8 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef CPP_INCLUDE_LOGISTIC_REGRESSION_H_
-#define CPP_INCLUDE_LOGISTIC_REGRESSION_H_
+#ifndef CPP_INCLUDE_GPU_LOGISTIC_REGRESSION_H_
+#define CPP_INCLUDE_GPU_LOGISTIC_REGRESSION_H_
 
 #ifdef CUDA_AND_GPU
 
@@ -32,7 +32,7 @@ namespace Nice {
 
 template <typename T>
 class GpuLogisticRegression {
-private:
+ private:
   Vector<T> theta;
   /// Calculates the hypothesis of a given input Vector
   ///
@@ -54,7 +54,7 @@ private:
   ///
   /// \param input
   /// A Vector containing the theta to manually set the model
-  void setTheta(const Vector<T> &input){theta = input;}
+  void setTheta(const Vector<T> &input) {theta = input;}
 
   /// Returns the current theta for the specific model
   ///
@@ -67,7 +67,7 @@ private:
 
   Vector<T> GpuPredict(const Matrix<T> &inputs, const Vector<T> &theta);
 };
-}
+}  // namespace Nice
 
 #endif  // CUDA_AND_GPU
-#endif  // CPP_INCLUDE_LOGISTIC_REGRESSION_H_
+#endif  // CPP_INCLUDE_GPU_LOGISTIC_REGRESSION_H_

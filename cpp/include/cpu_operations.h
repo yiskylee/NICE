@@ -26,12 +26,16 @@
 #include <string>
 #include <iostream>
 #include <cmath>
+#include <chrono>
 #include "include/matrix.h"
 #include "include/vector.h"
 #include "include/kernel_types.h"
 #include "Eigen/SVD"
 #include "include/svd_solver.h"
 #include "include/util.h"
+
+
+using namespace std::chrono;
 
 namespace Nice {
 
@@ -90,7 +94,13 @@ class CpuOperations {
   /// This function returns a Matrix of type T
   static Matrix<T> Multiply(const Matrix<T> &a, const Matrix<T> &b) {
     // Matrix-matrix multiplication
-    return a * b;
+    Matrix<T> result;
+    high_resolution_clock::time_point t1 = high_resolution_clock::now();
+    result = a * b;
+    high_resolution_clock::time_point t2 = high_resolution_clock::now();
+    auto duration = duration_cast<microseconds>(t2 - t1).count();
+    std::cout << "CPU time: " << (int)duration << std::endl;
+    return result;
   }
   /// This is a function that adds each element in the matrix to a scalar and
   /// returns the resulting matrix.

@@ -116,7 +116,6 @@ class LogisticRegression {
       theta = theta - ((alpha/ y.size()) * gradient);
     }
   }
-
 };
 }  // namespace Nice
 #endif  // CPP_INCLUDE_LOGISTIC_REGRESSION_H_

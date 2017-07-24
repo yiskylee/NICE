@@ -33,8 +33,8 @@ namespace Nice {
 
 template<typename T>
 class CudaMatrixVectorMultiply{
-  public:
-    Vector<T> Multiply(const Matrix<T> &a, const Vector<T> &b);
+ public:
+  Vector<T> Multiply(const Matrix<T> &a, const Vector<T> &b);
 };
 
 }  // namespace Nice

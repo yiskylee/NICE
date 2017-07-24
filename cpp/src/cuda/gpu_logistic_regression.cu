@@ -97,14 +97,8 @@ namespace Nice {
       // Generates hypothesis from new_theta and subtracts them from y values
       temp[row * input_x + col] = h(new_theta[row * input_x + col]) - d_y[row * input_x + col];
 
-      /// TODO fix transpose functionality
-      /// For this function, it is supposed to multiply the transpose of xin by temp.
-      /// Currently, it prints out the correct multiplication values but it does not add them together
-      /// The current print out shows only the first values of num in the gradient array.
       for (int j = 0; j < (input_y); j++) {
         float num = (d_xin[(row+j) * input_x + col] * temp[row * input_x + col]);
-        //printf("%i: %5.5f * %5.5f = %5.5f\n", j, d_xin[(j) * input_x + col], temp[row * input_x + col],
-        //d_xin[(row+j) * input_x + col] * temp[row * input_x + col]);
         atomicAdd(&gradient[j + 1], num);
         __syncthreads();
       }
@@ -128,6 +122,7 @@ namespace Nice {
     }
     d_theta[row * input_x + col] = theta[row * input_x + col];
   }
+
   /// Given a set of features and parameters creates a vector of target outputs
   ///
   /// \param inputs
@@ -167,9 +162,8 @@ namespace Nice {
 
 
     // Launch kernel here
-    dim3 dimBlock(BLOCK_SIZE *BLOCK_SIZE);
-    dim3 dimGrid(inputs.rows() * inputs.cols());
-    //std::cout <<  (inputs.cols() / dimBlock.x) * (inputs.rows() / dimBlock.y) << "\n";
+    dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE);
+    dim3 dimGrid(inputs.rows(), inputs.cols());
     PredictKernel<<<dimGrid, dimBlock, (k + 1)>>>(d_theta, d_inputs,
       d_predictions, m, k, theta_0);
     CUDA_CALL(cudaDeviceSynchronize());

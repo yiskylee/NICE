@@ -60,8 +60,8 @@ TYPED_TEST(GpuLogisticRegressionTest, MatrixLogisticRegressionOneModel) {
   this->training_y.resize(10);
   this->training_y << 0, 0, 0, 0, 0, 1, 1, 1, 1, 1;
   Nice::Vector<TypeParam> theta(3);
-  theta = testModel1.GpuFit(this->training_x, this->training_y, this->iterations,
-    this->alpha);
+  theta = testModel1.GpuFit(this->training_x, this->training_y,
+    this->iterations, this->alpha);
   // Setup for the Predict function
   this->predict_x.resize(10, 2);
   this->predict_x << 2.781, 2.550,
@@ -100,8 +100,8 @@ TYPED_TEST(GpuLogisticRegressionTest, MatrixLogisticRegressionTwoModels) {
   this->training_y.resize(10);
   this->training_y << 0, 0, 0, 0, 0, 1, 1, 1, 1, 1;
   Nice::Vector<TypeParam> theta1(3);
-  theta1 = this->testModel1.GpuFit(this->training_x, this->training_y, this->iterations,
-    this->alpha);
+  theta1 = this->testModel1.GpuFit(this->training_x,
+    this->training_y, this->iterations, this->alpha);
 
   // Setup for Model 2's Fit function
   this->training_x << 2, .5,
