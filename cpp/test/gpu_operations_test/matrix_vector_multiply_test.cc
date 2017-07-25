@@ -79,8 +79,8 @@ TYPED_TEST_CASE(GpuMatrixVectorMultiplyTest, dataTypes);
 
 TYPED_TEST(GpuMatrixVectorMultiplyTest, FunctionalityTest) {
   // Create test data
-  int m = 100000;
-  int n = 1000;
+  int m = 1000000;
+  int n = 100;
   srand(time(NULL));
   this->CreateTestData(m, n);
   Nice::Vector<TypeParam> gpu_c(m);

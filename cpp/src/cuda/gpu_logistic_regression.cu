@@ -23,10 +23,7 @@
 #include "include/gpu_logistic_regression.h"
 #include <cmath>
 
-#define BLOCK_DIM 16
-#define BLOCK_SIZE 16
 namespace Nice {
-
   /// Calculates the hypothesis of a given input Vector
   ///
   /// \param input
@@ -41,7 +38,8 @@ namespace Nice {
 
   /// CUDA kernel for predict functionality
   template <typename T>
-  __global__ void PredictKernel(T *d_theta, T *d_inputs, T *d_predictions, int input_x, int input_y, T theta_0){
+  __global__ void PredictKernel(T *d_theta, T *d_inputs, T *d_predictions,
+      int input_x, int input_y, T theta_0){
     extern __shared__ float yhat[];
     int row = blockIdx.y * blockDim.y + threadIdx.y;
     int col = blockIdx.x * blockDim.x + threadIdx.x;
@@ -60,11 +58,12 @@ namespace Nice {
   template <typename T>
   __global__ void FitKernel(T *d_xin, T *d_y, T *d_theta, T* d_trans,
     int iterations, T alpha, int input_x, int input_y){
-    extern __shared__ float theta[];
+    extern __shared__ float shared[];
     // Variables are hard coded for development only
-    __shared__ float gradient[10];
-    __shared__ float new_theta[10];
-    __shared__ float temp[10];
+    T * theta = (T*)shared;
+    T * gradient = (T*)&theta[(input_y + 1)];
+    T * new_theta = (T*)&gradient[input_x];
+    T * temp = (T*)&new_theta[input_x];
 
     // Corresponding row/col variables
     int row = blockIdx.y * blockDim.y + threadIdx.y;
@@ -81,8 +80,8 @@ namespace Nice {
       gradient[row * input_x + col] = 0.0;
       new_theta[row * input_x + col] = 0.0;
       temp[row * input_x + col] = 0.0;
-      // Multiplies xin array by current thetas to generate new thetas
       float sum = 0.0f;
+
       for (int j = 0; j < input_y; j++) {
         sum += (d_xin[j * input_x + col] * theta[row * input_x + (j+ 1)]);
       }
@@ -92,31 +91,25 @@ namespace Nice {
       // Adds the value of theta(0) to every value of new_theta
       new_theta[row * input_x + col] = theta[0] +
         new_theta[row * input_x + col];
-      __syncthreads();
 
       // Generates hypothesis from new_theta and subtracts them from y values
-      temp[row * input_x + col] = h(new_theta[row * input_x + col]) - d_y[row * input_x + col];
+      temp[row * input_x + col] = h(new_theta[row * input_x + col]) -
+        d_y[row * input_x + col];
 
       for (int j = 0; j < (input_y); j++) {
         float num = (d_xin[(row+j) * input_x + col] * temp[row * input_x + col]);
         atomicAdd(&gradient[j + 1], num);
-        __syncthreads();
       }
-      __syncthreads();
-
 
       /// Sums up theta and sets it to gradient[0]
       sum = 0.0f;
       for (int j = 0; j < input_y + 1; j++){
         sum += theta[row * input_x + j];
-        __syncthreads();
       }
       __syncthreads();
       gradient[0] = sum;
-      __syncthreads();
 
       /// Sets thetas according to gradient descent equation.
-      __syncthreads();
       theta[row * input_x + col] = theta[row * input_x + col] -
         ((alpha / input_x) * gradient[row * input_x + col]);
     }
@@ -134,7 +127,7 @@ namespace Nice {
   /// \return
   /// This function returns a Vector of target outputs of type T
   template <typename T>
-  Vector<T> GpuLogisticRegression<T>::GpuPredict(const Matrix<T> &inputs, const Vector<T> &theta) {
+  Vector<T> GpuLogisticRegression<T>::GpuPredict(const Matrix<T> &inputs) {
     int m = inputs.rows();
     int k = inputs.cols();
     T theta_0 = theta[0];
@@ -164,7 +157,7 @@ namespace Nice {
     // Launch kernel here
     dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE);
     dim3 dimGrid(inputs.rows(), inputs.cols());
-    PredictKernel<<<dimGrid, dimBlock, (k + 1)>>>(d_theta, d_inputs,
+    PredictKernel<<<dimGrid, dimBlock, ((3 * m ) + (k+1))>>>(d_theta, d_inputs,
       d_predictions, m, k, theta_0);
     CUDA_CALL(cudaDeviceSynchronize());
 
@@ -189,7 +182,7 @@ namespace Nice {
   /// \param y
   /// Vector of target variables for each set of features
   template <typename T>
-  Vector<T> GpuLogisticRegression<T>::GpuFit(const Matrix<T> &xin, const Vector<T> &y,
+  void GpuLogisticRegression<T>::GpuFit(const Matrix<T> &xin, const Vector<T> &y,
     int iterations, T alpha){
       int m = xin.rows();
       int k = xin.cols();
@@ -235,15 +228,15 @@ namespace Nice {
       CUDA_CALL(cudaFree(d_theta));
       CUDA_CALL(cudaFree(d_xin));
       CUDA_CALL(cudaFree(d_y));
-      return h_theta;
+      theta = h_theta;
   }
 
   template
-  Vector<float> GpuLogisticRegression<float>::GpuFit(const Matrix<float> &xin, const Vector<float> &y,
+  void GpuLogisticRegression<float>::GpuFit(const Matrix<float> &xin, const Vector<float> &y,
     int iterations, float alpha);
 
   template
-  Vector<float> GpuLogisticRegression<float>::GpuPredict(const Matrix<float> &inputs, const Vector<float> &theta);
+  Vector<float> GpuLogisticRegression<float>::GpuPredict(const Matrix<float> &inputs);
 
 
 }; // namespace Nice

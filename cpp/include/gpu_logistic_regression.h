@@ -34,6 +34,7 @@ template <typename T>
 class GpuLogisticRegression {
  private:
   Vector<T> theta;
+  int BLOCK_SIZE;
   /// Calculates the hypothesis of a given input Vector
   ///
   /// \param input
@@ -48,8 +49,8 @@ class GpuLogisticRegression {
 
 
  public:
-  GpuLogisticRegression() {}
-
+  GpuLogisticRegression() {BLOCK_SIZE = 16;}
+  GpuLogisticRegression(int inBlock) {BLOCK_SIZE = inBlock;}
   /// Sets the theta for the model from an external Vector
   ///
   /// \param input
@@ -62,10 +63,10 @@ class GpuLogisticRegression {
   /// A Vector containing the current theta values
   Vector<T> getTheta() {return theta;}
 
-  Vector<T> GpuFit(const Matrix<T> &xin, const Vector<T> &y,
-    int iterations, T alpha);
+  void GpuFit(const Matrix<T> &xin, const Vector<T> &y,
+      int iterations, T alpha);
 
-  Vector<T> GpuPredict(const Matrix<T> &inputs, const Vector<T> &theta);
+  Vector<T> GpuPredict(const Matrix<T> &inputs);
 };
 }  // namespace Nice
 

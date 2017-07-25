@@ -202,17 +202,12 @@ class GpuOperations {
       int incx = 1;
       int incy = 1;
 
-      high_resolution_clock::time_point t1 = high_resolution_clock::now();
       // Set up and do cublas matrix multiply
       GpuMatrixVectorMul(util_->GetBlasHandle(), norm, m, k, &alpha,
                         d_a, lda, d_x, incx, &beta, d_y, incy);
 
       // Device sync
       util_->SyncDev();
-
-      high_resolution_clock::time_point t2 = high_resolution_clock::now();
-      auto duration = duration_cast<microseconds>(t2 - t1).count();
-      std::cout << "cuBLAS time: " << (int)duration << std::endl;
       // Transfer memories back, clear memrory, and return result
       util_->SyncMem(d_a, nullptr, 0, false);
       util_->SyncMem(d_x, nullptr, 0, false);

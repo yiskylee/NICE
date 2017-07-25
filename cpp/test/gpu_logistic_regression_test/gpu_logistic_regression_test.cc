@@ -59,8 +59,7 @@ TYPED_TEST(GpuLogisticRegressionTest, MatrixLogisticRegressionOneModel) {
           7.673, 3.508;
   this->training_y.resize(10);
   this->training_y << 0, 0, 0, 0, 0, 1, 1, 1, 1, 1;
-  Nice::Vector<TypeParam> theta(3);
-  theta = testModel1.GpuFit(this->training_x, this->training_y,
+  testModel1.GpuFit(this->training_x, this->training_y,
     this->iterations, this->alpha);
   // Setup for the Predict function
   this->predict_x.resize(10, 2);
@@ -74,7 +73,7 @@ TYPED_TEST(GpuLogisticRegressionTest, MatrixLogisticRegressionOneModel) {
           6.922, 1.771,
           8.675, -0.242,
           7.673, 3.508;
-  this->predictions = testModel1.GpuPredict(this->predict_x, theta);
+  this->predictions = testModel1.GpuPredict(this->predict_x);
   this->predictions.resize(10);
   std::cout << this->predictions << std::endl;
   ASSERT_TRUE(true);
@@ -99,8 +98,7 @@ TYPED_TEST(GpuLogisticRegressionTest, MatrixLogisticRegressionTwoModels) {
           7.673, 3.508;
   this->training_y.resize(10);
   this->training_y << 0, 0, 0, 0, 0, 1, 1, 1, 1, 1;
-  Nice::Vector<TypeParam> theta1(3);
-  theta1 = this->testModel1.GpuFit(this->training_x,
+  this->testModel1.GpuFit(this->training_x,
     this->training_y, this->iterations, this->alpha);
 
   // Setup for Model 2's Fit function
@@ -114,8 +112,7 @@ TYPED_TEST(GpuLogisticRegressionTest, MatrixLogisticRegressionTwoModels) {
                4, 3,
                3, 5,
                6, 3.5;
-    Nice::Vector<TypeParam> theta2(3);
-    theta2 = this->testModel2.GpuFit(this->training_x, this->training_y,
+    this->testModel2.GpuFit(this->training_x, this->training_y,
     this->iterations, this->alpha);
 
   // Setup for Model 1's Predict function
@@ -130,7 +127,7 @@ TYPED_TEST(GpuLogisticRegressionTest, MatrixLogisticRegressionTwoModels) {
           6.922, 1.771,
           8.675, -0.242,
           7.673, 3.508;
-  this->predictions = this->testModel1.GpuPredict(this->predict_x, theta1);
+  this->predictions = this->testModel1.GpuPredict(this->predict_x);
 
   // Setup for Model 2's Fit function
   this->predictions.resize(10);
@@ -145,7 +142,7 @@ TYPED_TEST(GpuLogisticRegressionTest, MatrixLogisticRegressionTwoModels) {
                4, 3,
                3, 5,
                6, 3.5;
-  this->predictions = this->testModel2.GpuPredict(this->predict_x, theta2);
+  this->predictions = this->testModel2.GpuPredict(this->predict_x);
   std::cout << this->predictions << std::endl;
   ASSERT_TRUE(true);
 }

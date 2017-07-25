@@ -86,7 +86,7 @@ TYPED_TEST_CASE(CudaSharedMVMultiplyTest, dataTypes);
 
 TYPED_TEST(CudaSharedMVMultiplyTest, FunctionalityTest) {
   // Create test data
-  int m = 10;
+  int m = 1000;
   int n = 10;
   srand(time(NULL));
   this->CreateTestData(m, n);

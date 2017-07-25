@@ -20,8 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 #include "include/cuda_shared_MV_multiply.h"
-#define BLOCK_SIZE 32
-using namespace std::chrono;
+#define BLOCK_SIZE 16
+
 
 namespace Nice {
 
@@ -30,9 +30,8 @@ namespace Nice {
     extern __shared__ float shar_x[];
     int blockRow = blockIdx.y;
     int blockCol = blockIdx.x;
-    int threadRow = threadIdx.y;
     int threadCol = threadIdx.x;
-    T sum = 2.0;
+    T sum = 0.0;
     int size = (x_size / BLOCK_SIZE);
     //__syncthreads();
     for (int i = 0; i < size; ++i){
@@ -77,25 +76,16 @@ namespace Nice {
       CUDA_CALL(cudaMalloc(&d_y, m * sizeof(T)));
       CUDA_CALL(cudaMemset(d_y, 0, m * sizeof(T)));
 
-
-
       // Launch kernel here
       dim3 dimBlock(block_size, block_size);
       dim3 dimGrid((a.cols() / dimBlock.x)+1, (a.rows() / dimBlock.y)+1);
 
-      high_resolution_clock::time_point t1 = high_resolution_clock::now();
       CudaMatrixVectorMulKernel<<<dimGrid, dimBlock, a.rows() * sizeof(T)>>>
         (d_a, d_x, d_y, m, k);
       // Device sync
       CUDA_CALL(cudaDeviceSynchronize());
 
-      high_resolution_clock::time_point t2 = high_resolution_clock::now();
-      auto duration = duration_cast<microseconds>( t2 - t1 ).count();
-      std::cout << "Shared time: " << (long)duration << std::endl;
-
       // Transfer memories back, clear memrory, and return result
-
-
       CUDA_CALL(cudaMemcpy(&h_y(0), d_y, m * sizeof(T),
         cudaMemcpyDeviceToHost));
       CUDA_CALL(cudaFree(d_a));
