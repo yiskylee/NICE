@@ -64,6 +64,7 @@ TYPED_TEST(LogisticRegressionTest, MatrixLogisticRegressionOneModel) {
   this->training_y << 0, 0, 0, 0, 0, 1, 1, 1, 1, 1;
   this->testModel1.Fit(this->training_x, this->training_y, this->iterations,
     this->alpha);
+
   // Setup for the Predict function
   this->predict_x.resize(10, 2);
   this->predict_x << 2.781, 2.550,

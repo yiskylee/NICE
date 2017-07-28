@@ -33,11 +33,12 @@
 namespace Nice {
 
 template<typename T>
-class CudaSharedMVMultiply {
- private:
-  int block_size;
- public:
-  Vector<T> Multiply(const Matrix<T> &a, const Vector<T> &b);
+class CudaSharedMVMultiply{
+  private:
+    int block_size;
+  public:
+    CudaSharedMVMultiply(int inBlock){block_size = inBlock;}
+    Vector<T> Multiply(const Matrix<T> &a, const Vector<T> &b);
 };
 
 }  // namespace Nice

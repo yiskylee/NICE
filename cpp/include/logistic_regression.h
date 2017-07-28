@@ -107,7 +107,7 @@ class LogisticRegression {
     gradient.resize(theta.rows());
     theta.setZero();
     gradient.setZero();
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < iterations; i++) {
       Vector<T> Xtheta = (xin * (theta.bottomRows(theta.rows() - 1)));
       Xtheta = Xtheta.array() + theta(0);
       gradient.bottomRows(gradient.rows() - 1) =

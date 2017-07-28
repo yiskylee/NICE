@@ -21,14 +21,14 @@
 // SOFTWARE.
 #include "include/cuda_matrix_vector_multiply.h"
 #include <chrono>
+#define BLOCK_SIZE 16
 
 using namespace std::chrono;
-#define BLOCK_SIZE 16
 
 namespace Nice {
 
   template <typename T>
-  __global__ void CudaMatrixVectorMulKernel(T *d_a, T *d_x, T *d_y, int a_rows, int x_size) {
+  __global__ void CudaMVKernel(T *d_a, T *d_x, T *d_y, int a_rows, int x_size) {
     int row = blockIdx.y * blockDim.y + threadIdx.y;
     int col = blockIdx.x * blockDim.x + threadIdx.x;
     float sum = 0.0f;
@@ -72,15 +72,17 @@ namespace Nice {
       // Launch kernel here
       //dim3 dimBlock(BLOCK_SIZE *BLOCK_SIZE);
       //dim3 dimGrid((a.rows() / dimBlock.x) * (a.cols() / dimBlock.y));
-
       high_resolution_clock::time_point t1 = high_resolution_clock::now();
-      CudaMatrixVectorMulKernel<<<m, 256>>>(d_a, d_x, d_y, m, k);
+      CudaMVKernel<<<m, 256>>>(d_a, d_x, d_y, m, k);
 
-      // Device sync
+            // Device sync
       CUDA_CALL(cudaDeviceSynchronize());
       high_resolution_clock::time_point t2 = high_resolution_clock::now();
       auto duration = duration_cast<microseconds>( t2 - t1 ).count();
       std::cout << "CUDA global time: " << (long)duration << std::endl;
+
+      // Device sync
+      CUDA_CALL(cudaDeviceSynchronize());
 
       // Transfer memories back, clear memrory, and return result
       CUDA_CALL(cudaMemcpy(&h_y(0), d_y, m * sizeof(T),
