@@ -166,6 +166,7 @@ if (enable-test)
          test/matrix_vector_mult_test/*.cc
          test/shared_MV_mult_test/*.cc
          //test/model_test/*.cc
+	 test/LogisticRegressionBenchmark/*.cc
          )
   else()
   message("NO GPU TEST MADE")

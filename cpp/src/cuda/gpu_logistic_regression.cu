@@ -215,7 +215,7 @@ namespace Nice {
         cudaMemcpyHostToDevice));
 
       // Launch kernel here
-      dim3 dimBlock(BLOCK_SIZE *BLOCK_SIZE);
+      dim3 dimBlock(BLOCK_SIZE * BLOCK_SIZE);
       dim3 dimGrid(xin.rows() * xin.cols());
       //std::cout <<  (inputs.cols() / dimBlock.x) * (inputs.rows() / dimBlock.y) << "\n";
       FitKernel<<<dimGrid, dimBlock, m>>>(d_xin, d_y,
