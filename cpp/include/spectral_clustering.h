@@ -28,6 +28,7 @@
 #include "include/kmeans.h"
 #include "include/svd_solver.h"
 #include <vector>
+#include <Eigen/Dense> 
 
 namespace Nice {
 
@@ -36,22 +37,24 @@ class SpectralClustering {
  public: 
   SpectralClustering()
   :
-  svd_(), kmeans_(), sigma_(1.0) {}
+  sigma_(1.0), kmeans_(), svd_() {}
 
-  void Fit(const Matrix<T> &input_data, int k, T s) {
+  void Fit(const Matrix<T> &input_data, int k) {
     k_ = k;
-    sigma_ = s;
     SimilarityGraph(input_data);
     ComputeLaplacian();
-    n_ = similarity_.rows();
+    int n_ = similarity_.rows();
     u_.resize(n_, n_);
     y_.resize(n_, k_); 
     svd_.Compute(laplacian_); 
-    u_ = svd_MatrixV();
-    y_ = u_.block(0, 0);
+    u_ = svd_.MatrixV();
+    y_ = u_.block(0, 0, n_, k_);
     kmeans_.Fit(y_, k_);
     labels_.resize(n_, 1);
     labels_ = kmeans_.GetLabels();
+  }
+  void SetSigma(T s) {
+    sigma_ = s;
   }
   void SimilarityGraph(const Matrix<T> &input_data) {
     int rows = input_data.rows();
@@ -64,10 +67,10 @@ class SpectralClustering {
     }
     int counter = 0;
     for(int i = 0; i < rows; i++) {
-      for(int j = counter; j < cols; j++) {
+      for(int j = counter; j < rows; j++) {
         Vector<T> x_i = input_data.row(i);
         Vector<T> x_j = input_data.row(j);
-        double sim = exp(norm(x_i - x_j))/(2*sigma);
+        double sim = exp((x_i - x_j).norm())/(2*sigma_);
         similarity_(i, j) = sim;
         similarity_(j, i) = sim;
       }
@@ -91,8 +94,8 @@ class SpectralClustering {
  private:
   int k_;
   T sigma_;
-  KMeans kmeans_;
-  SvdSolver svd_;
+  KMeans<T> kmeans_;
+  SvdSolver<T> svd_;
   Matrix<T> similarity_;
   Matrix<T> degrees_;
   Matrix<T> laplacian_;
