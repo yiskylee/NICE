@@ -33,6 +33,7 @@
 #include "include/timer.h"
 #include "clustering/kdac_interface.h"
 #include "clustering/kmeans_interface.h"
+#include "clustering/spectral_interface.h"
 #include "interface/cpu_operations_interface.h"
 
 // void (Nice::KDACCPUInterface<float>::*Fit1Float)
@@ -122,6 +123,11 @@ BOOST_PYTHON_MODULE(Nice4Py) {
         .def("fit", &Nice::KmeansInterface<float>::fit)
         .def("getLabels", &Nice::KmeansInterface<float>::getLabels)
         .def("getCenters", &Nice::KmeansInterface<float>::getCenters);
+    boost::python::class_<Nice::SpectralInterface<float>>
+        ("Spectral", boost::python::init<std::string>())
+        .def("Fit", &Nice::SpectralInterface<float>::Fit)
+        .def("GetLabels", &Nice::SpectralInterface<float>::GetLabels)
+        .def("SetSigma", &Nice::SpectralInterface<float>::SetSigma);
 //  boost::python::class_<Nice::CpuOperationsInterface<float>::GenKernelMatrix
 }
 //  //Use float by default
