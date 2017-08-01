@@ -59,7 +59,7 @@ using VectorMap = Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic,
 template<typename T>
 class SpectralInterface {
  public:
-  explicit SpectralInterface(std::string device_type) {
+  explicit SpectralInterface() {
     spectral_ = std::make_shared<Nice::SpectralClustering<T>>();
   }
 

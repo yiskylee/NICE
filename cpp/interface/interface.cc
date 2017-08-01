@@ -124,7 +124,7 @@ BOOST_PYTHON_MODULE(Nice4Py) {
         .def("getLabels", &Nice::KmeansInterface<float>::getLabels)
         .def("getCenters", &Nice::KmeansInterface<float>::getCenters);
     boost::python::class_<Nice::SpectralInterface<float>>
-        ("Spectral", boost::python::init<std::string>())
+        ("Spectral")
         .def("Fit", &Nice::SpectralInterface<float>::Fit)
         .def("GetLabels", &Nice::SpectralInterface<float>::GetLabels)
         .def("SetSigma", &Nice::SpectralInterface<float>::SetSigma);
