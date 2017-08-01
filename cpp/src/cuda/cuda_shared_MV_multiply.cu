@@ -20,36 +20,34 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 #include "include/cuda_shared_MV_multiply.h"
-#define BLOCK_SIZE 16
-using namespace std::chrono;
-
+#define BLOCK_SIZE 3
 namespace Nice {
 
   template <typename T>
-  __global__ void CudaMatrixVectorMulKernel(T *d_a, T *d_x, T *d_y, int const a_rows, int const x_size) {
+  __global__ void CudaSharedMVKernel(T *d_a, T *d_x, T *d_y, int const a_rows, int const x_size) {
     int blockRow = blockIdx.y;
     int blockCol = blockIdx.x;
-
-    int threadRow = threadIdx.y;
     int threadCol = threadIdx.x;
-    float sum = 0.0f;
-    if (threadRow >= x_size || threadCol >= a_rows) return;
-    for (int i = 0; i < gridDim.y / blockDim.x; i++){
 
-      T * aTile = &d_a[blockDim.x * blockRow + i * blockDim.x];
-      T * xTile = &d_x[blockDim.y * i + blockCol * blockDim.y];
-
-      extern __shared__ float shar_x[];
-      shar_x[threadCol] = xTile[threadRow + threadCol];
-
+    //if (threadRow >= x_size || threadCol >= a_rows) return;
+      T * aTile = &d_a[(blockCol * BLOCK_SIZE * a_rows) + (BLOCK_SIZE * blockRow)];
+      T * xTile = &d_x[BLOCK_SIZE * blockCol];
       __syncthreads();
-
-      for (int j = 0; j < blockDim.y; j++){
-        sum += aTile[j * a_rows + threadCol] * shar_x[threadCol];
+      float sum = 0.0f;
+      for (int i = 0; i < BLOCK_SIZE; i++){
+        int xGIndex = (blockCol * BLOCK_SIZE);
+        int yGIndex = (BLOCK_SIZE * blockRow);
+        if (!((xGIndex + i) >= a_rows || (yGIndex + i - (BLOCK_SIZE / 2)) >= x_size)){
+          printf("Sum = %5.5f pos-add (%i) i = %i tC = %i xG = %i yG = %i : %5.5f * %5.5f = %5.5f\n",
+            sum, threadCol + (blockRow * BLOCK_SIZE), i, threadCol, xGIndex,
+            yGIndex, aTile[(a_rows * i) + threadCol], xTile[i],
+            aTile[(a_rows * i) + threadCol] * xTile[i]);
+          sum += aTile[(a_rows *i) + threadCol] * xTile[i];
+        }
+        __syncthreads();
       }
       __syncthreads();
-    }
-    d_y[threadRow + threadCol] = sum;
+      d_y[threadCol + (blockRow * BLOCK_SIZE)] += sum;
   }
 
   template <typename T>
@@ -80,23 +78,17 @@ namespace Nice {
       CUDA_CALL(cudaMalloc(&d_y, m * sizeof(T)));
       CUDA_CALL(cudaMemset(d_y, 0, m * sizeof(T)));
 
-
-
       // Launch kernel here
-      dim3 dimBlock(block_size * block_size);
-      dim3 dimGrid((a.rows() / dimBlock.x) * (a.cols() / dimBlock.y));
+      dim3 dimBlock(BLOCK_SIZE);
+      dim3 dimGrid(std::ceil((float)m / (BLOCK_SIZE)), std::ceil((float)k / (BLOCK_SIZE)));
+      //std::cout << dimGrid.x << " | " << dimGrid.y <<std::endl;
 
-      high_resolution_clock::time_point t1 = high_resolution_clock::now();
-
-      CudaMatrixVectorMulKernel<<<dimGrid, dimBlock, block_size>>>
+      CudaSharedMVKernel<<<dimGrid, dimBlock, BLOCK_SIZE * sizeof(T)>>>
         (d_a, d_x, d_y, m, k);
 
       // Device sync
       CUDA_CALL(cudaDeviceSynchronize());
 
-      high_resolution_clock::time_point t2 = high_resolution_clock::now();
-      auto duration = duration_cast<microseconds>( t2 - t1 ).count();
-      std::cout << "Shared time: " << (long)duration << std::endl;
 
       // Transfer memories back, clear memrory, and return result
       CUDA_CALL(cudaMemcpy(&h_y(0), d_y, m * sizeof(T),
@@ -130,8 +122,5 @@ namespace Nice {
   }
   template
   Vector<float> CudaSharedMVMultiply<float>::Multiply(const Matrix<float> &a, const Vector<float> &b);
-
-  template
-  Vector<double> CudaSharedMVMultiply<double>::Multiply(const Matrix<double> &a, const Vector<double> &b);
 
 }

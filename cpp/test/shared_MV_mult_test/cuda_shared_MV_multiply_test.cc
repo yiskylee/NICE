@@ -73,6 +73,8 @@ class CudaSharedMVMultiplyTest : public ::testing::Test {
     // Create matrix
     a_ = Nice::Matrix<T>::Random(row_, col_);
     b_ = Nice::Vector<T>::Random(col_);
+    std::cout << a_ << std::endl;
+    std::cout << b_ << std::endl;
 
     Nice::CpuOperations<T> cpu_op;
     // Solve in CPU
@@ -81,13 +83,13 @@ class CudaSharedMVMultiplyTest : public ::testing::Test {
 };
 // Establishes a test case with the given types, Char and short types will
 // Throw compiler errors
-typedef ::testing::Types<float, double> dataTypes;
+typedef ::testing::Types<float> dataTypes;
 TYPED_TEST_CASE(CudaSharedMVMultiplyTest, dataTypes);
 
 TYPED_TEST(CudaSharedMVMultiplyTest, FunctionalityTest) {
   // Create test data
-  int m = 100000;
-  int n = 50;
+  int m = 512;
+  int n = 6;
   srand(time(NULL));
   this->CreateTestData(m, n);
   Nice::Vector<TypeParam> gpu_c(m);
