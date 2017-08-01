@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 #include "include/cuda_shared_MV_multiply.h"
-#define BLOCK_SIZE 3
+#define BLOCK_SIZE 4
 namespace Nice {
 
   template <typename T>
