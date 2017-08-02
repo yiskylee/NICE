@@ -48,7 +48,7 @@ class SpectralClustering {
     y_.resize(n_, k_); 
     svd_.Compute(laplacian_); 
     u_ = svd_.MatrixV();
-    y_ = u_.block(0, 0, n_, k_);
+    y_ = u_.block(0, n_-k_, n_, k_);
     kmeans_.Fit(y_, k_);
     labels_.resize(n_, 1);
     labels_ = kmeans_.GetLabels();
@@ -70,14 +70,14 @@ class SpectralClustering {
       for(int j = counter; j < rows; j++) {
         Vector<T> x_i = input_data.row(i);
         Vector<T> x_j = input_data.row(j);
-        double sim = exp((x_i - x_j).norm())/(2*sigma_);
+        double sim = exp(0 - (x_i - x_j).norm())/(2*sigma_);
         similarity_(i, j) = sim;
         similarity_(j, i) = sim;
       }
       counter++;
     }
     for(int i = 0; i < rows; i++) {
-      int sum = 0;
+      T sum = 0;
       for(int j = 0; j < rows; j++) {
         sum += similarity_(i, j);
       }
