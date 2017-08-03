@@ -22,6 +22,9 @@
 #ifdef CUDA_AND_GPU
 #include "include/gpu_logistic_regression.h"
 #include <cmath>
+#include <chrono>
+
+using namespace std::chrono;
 
 namespace Nice {
   /// Calculates the hypothesis of a given input Vector
@@ -44,7 +47,7 @@ namespace Nice {
     int row = blockIdx.y * blockDim.y + threadIdx.y;
     int col = blockIdx.x * blockDim.x + threadIdx.x;
     float sum = 0.0f;
-    if (row >= input_y || col >= input_x) return;
+    if (col >= input_x) return;
     for (int k = 0; k < input_y; k++) {
       sum += (d_inputs[k * input_x + col] * d_theta[row * input_x + k]);
     }
@@ -62,7 +65,7 @@ namespace Nice {
     // Variables are hard coded for development only
     T * theta = (T*)shared;
     T * gradient = (T*)&theta[(input_y + 1)];
-    T * new_theta = (T*)&gradient[input_x];
+    T * new_theta = (T*)&gradient[input_y + 1];
     T * temp = (T*)&new_theta[input_x];
 
     // Corresponding row/col variables
@@ -70,20 +73,27 @@ namespace Nice {
     int col = blockIdx.x * blockDim.x + threadIdx.x;
 
     if (row >= input_y || col >= input_x) return;
+    if (col < input_x + 1){
+      theta[row * input_x + col] = 0.0;
+    }
 
-    theta[row * input_x + col] = 0.0;
 
 
     // iterations loop for Fit kernel. The two is hard-coded for testing
     // purposes, it will be replaced by the iterations variable
-    for (int i = 0; i < iterations; i++) {
-      gradient[row * input_x + col] = 0.0;
-      new_theta[row * input_x + col] = 0.0;
-      temp[row * input_x + col] = 0.0;
+    for (int i = 0; i < 1; i++) {
+      //printf("Col: %i :: %5.5f\n", col, temp[col]);
       float sum = 0.0f;
+      if (col < input_y + 1){
+        gradient[row * input_x + col] = 0.0;
+      }
+      if (col < input_x){
+        new_theta[row * input_x + col] = 0.0;
+        temp[row * input_x + col] = 0.0;
+      }
 
       for (int j = 0; j < input_y; j++) {
-        sum += (d_xin[j * input_x + col] * theta[row * input_x + (j+ 1)]);
+        sum += (d_xin[j * input_x + col] * theta[j + 1]);
       }
       __syncthreads();
       new_theta[row * input_x + col] = sum;
@@ -101,19 +111,21 @@ namespace Nice {
         atomicAdd(&gradient[j + 1], num);
       }
 
-      /// Sums up theta and sets it to gradient[0]
-      sum = 0.0f;
-      for (int j = 0; j < input_y + 1; j++){
-        sum += theta[row * input_x + j];
+      if(col < input_y + 1){
+        atomicAdd(&gradient[0], theta[col]);
       }
       __syncthreads();
-      gradient[0] = sum;
 
       /// Sets thetas according to gradient descent equation.
-      theta[row * input_x + col] = theta[row * input_x + col] -
-        ((alpha / input_x) * gradient[row * input_x + col]);
+      if (col < input_y + 1){
+        theta[row * input_x + col] = theta[row * input_x + col] -
+          ((alpha / input_x) * gradient[row * input_x + col]);
+      }
+      __syncthreads();
     }
-    d_theta[row * input_x + col] = theta[row * input_x + col];
+    if (col < input_y + 1){
+      d_theta[row * input_x + col] = theta[row * input_x + col];
+    }
   }
 
   /// Given a set of features and parameters creates a vector of target outputs
@@ -155,11 +167,16 @@ namespace Nice {
 
 
     // Launch kernel here
-    dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE);
-    dim3 dimGrid(inputs.rows(), inputs.cols());
-    PredictKernel<<<dimGrid, dimBlock, ((3 * m ) + (k+1))>>>(d_theta, d_inputs,
+    dim3 dimBlock(BLOCK_SIZE * BLOCK_SIZE);
+    dim3 dimGrid(std::ceil((float)m / (BLOCK_SIZE)));
+
+    high_resolution_clock::time_point t1 = high_resolution_clock::now();
+    PredictKernel<<<dimGrid, dimBlock, m * sizeof(T)>>>(d_theta, d_inputs,
       d_predictions, m, k, theta_0);
     CUDA_CALL(cudaDeviceSynchronize());
+    high_resolution_clock::time_point t2 = high_resolution_clock::now();
+    auto duration = duration_cast<microseconds>( t2 - t1 ).count();
+    std::cout << "CUDA Logistic Regression - Predict: " << (long)duration << std::endl;
 
     CUDA_CALL(cudaMemcpy(&h_predictions(0), d_predictions, m * sizeof(T),
       cudaMemcpyDeviceToHost));
@@ -216,9 +233,8 @@ namespace Nice {
 
       // Launch kernel here
       dim3 dimBlock(BLOCK_SIZE * BLOCK_SIZE);
-      dim3 dimGrid(xin.rows() * xin.cols());
-      //std::cout <<  (inputs.cols() / dimBlock.x) * (inputs.rows() / dimBlock.y) << "\n";
-      FitKernel<<<dimGrid, dimBlock, m>>>(d_xin, d_y,
+      //dim3 dimGrid(std::ceil((float)m / (BLOCK_SIZE)), std::ceil((float)k / (BLOCK_SIZE)));
+      FitKernel<<<1, dimBlock, ((3 * m ) + (k+1))>>>(d_xin, d_y,
         d_theta, d_trans, iterations, alpha, m, k);
 
       CUDA_CALL(cudaDeviceSynchronize());

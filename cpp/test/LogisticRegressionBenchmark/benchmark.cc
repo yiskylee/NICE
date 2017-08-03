@@ -39,14 +39,26 @@ class Benchmark: public ::testing::Test {
   Nice::Vector<T> training_y;
   Nice::Matrix<T> predict_x;
   Nice::Vector<T> predictions;
+  Nice::Vector<T> gpuPredictions;
   Nice::Vector<T> expected_vals;
   Nice::LogisticRegression<T> model;
-
+  Nice::GpuLogisticRegression<T> gpuModel;
   Nice::Matrix<T> filler(std::string fileName, std::string d){
     std::string folder = "../test/data_for_test/LogisticRegressionBenchmark/";
     std::string testName = ::testing::UnitTest::GetInstance()->
       current_test_info()->name();
     return Nice::util::FromFile<T>(folder + testName + "/" + fileName, d);
+  }
+  void resultsCheck(Nice::Vector<T> results, std::string type){
+    int correct = 0;
+    int total = results.size();
+    for (int i = 0; i < results.size(); i++){
+      if ((results(i) <= 0.5 && expected_vals(i) <= 0.5) || (results(i) > 0.5 && expected_vals(i) > 0.5)){
+        correct++;
+      }
+    }
+    printf("The %s model predicts %i / %i correctly or with %2.3f accuracy\n",
+      type.c_str(), correct, total, correct / (float)total);
   }
 };
 
@@ -57,7 +69,7 @@ TYPED_TEST_CASE(Benchmark, MyTypes);
 TYPED_TEST(Benchmark, Heart) {
   // Setup for the Fit function
   //this->training_x.resize(10, 2);
-  this->iterations = 1000000;
+  this->iterations = 10000;
   this->alpha = 0.001;
   this->training_x = this->filler("heart_x.txt", ",");
 
@@ -65,19 +77,49 @@ TYPED_TEST(Benchmark, Heart) {
   this->training_y = this->filler("heart_y.txt", " ");
   this->model.Fit(this->training_x, this->training_y, this->iterations,
     this->alpha);
+  //std::cout << this->model.getTheta() << "\n";
+  this->gpuModel.GpuFit(this->training_x, this->training_y, this->iterations,
+    this->alpha);
+  this->gpuModel.setTheta(this->model.getTheta());
   // Setup for the Predict function
   this->predict_x = this->filler("heart_predict.txt", ",");
   this->predictions = this->model.Predict(this->predict_x);
+  this->gpuPredictions = this->gpuModel.GpuPredict(this->predict_x);
   this->expected_vals = this->filler("heart_expected.txt", " ");
   //std::cout << this->predictions << std::endl;
-  int total, correct;
-  correct = total = this->predictions.size();
-  for (int i = 0; i < this->predictions.size(); i++){
-    if (std::abs(this->predictions(i) - this->expected_vals(i)) >= 0.5){
-      correct--;
-    }
-  }
-  printf("The model predicts %i / %i correctly or with %2.3f accuracy\n",
-    correct, total, correct / (float)total);
+  this->resultsCheck(this->gpuPredictions, "GPU");
+  this->resultsCheck(this->predictions, "CPU");
+  ASSERT_TRUE(true);
+}
+
+TYPED_TEST(Benchmark, MNIST) {
+  // Setup for the Fit function
+  //this->training_x.resize(10, 2);
+  this->iterations = 10000;
+  this->alpha = 0.001;
+  this->training_x = this->filler("mnist_x.txt", ",");
+  this->training_y = this->filler("mnist_y.txt", " ");
+  std::cout << "Fitting the data" << "\n";
+  this->model.Fit(this->training_x, this->training_y, this->iterations,
+    this->alpha);
+  //std::cout << this->model.getTheta() << "\n";
+  //this->gpuModel.GpuFit(this->training_x, this->training_y, this->iterations,
+  //  this->alpha);
+  this->gpuModel.setTheta(this->model.getTheta());
+  // Setup for the Predict function
+  this->predict_x = this->filler("mnist_predict.txt", ",");
+  std::cout << "Predicting the data" << "\n";
+
+  high_resolution_clock::time_point t1 = high_resolution_clock::now();
+  this->predictions = this->model.Predict(this->predict_x);
+  high_resolution_clock::time_point t2 = high_resolution_clock::now();
+  auto duration = duration_cast<microseconds>( t2 - t1 ).count();
+  std::cout << "CPU Logistic Regression - Predict: " << (long)duration << std::endl;
+
+  this->gpuPredictions = this->gpuModel.GpuPredict(this->predict_x);
+  this->expected_vals = this->filler("mnist_expected.txt", " ");
+  //std::cout << this->predictions << std::endl;
+  this->resultsCheck(this->gpuPredictions, "GPU");
+  this->resultsCheck(this->predictions, "CPU");
   ASSERT_TRUE(true);
 }

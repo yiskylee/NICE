@@ -26,12 +26,16 @@
 #include <string>
 #include <iostream>
 #include <cmath>
+#include <chrono>
 #include "include/matrix.h"
 #include "include/vector.h"
 #include "include/kernel_types.h"
 #include "Eigen/SVD"
 #include "include/svd_solver.h"
 #include "include/util.h"
+
+
+using namespace std::chrono;
 
 namespace Nice {
 
