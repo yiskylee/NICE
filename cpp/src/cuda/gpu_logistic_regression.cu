@@ -59,73 +59,64 @@ namespace Nice {
 
   /// Work in progress CUDA kernel for Fit functionality
   template <typename T>
-  __global__ void FitKernel(T *d_xin, T *d_y, T *d_theta, T* d_trans,
+  __global__ void FitKernel(T *d_xin, T *d_y, T *d_theta,
     int iterations, T alpha, int input_x, int input_y){
     extern __shared__ float shared[];
     // Variables are hard coded for development only
     T * theta = (T*)shared;
-    T * gradient = (T*)&theta[(input_y + 1)];
+    T * gradient = (T*)&theta[input_y + 1];
     T * new_theta = (T*)&gradient[input_y + 1];
     T * temp = (T*)&new_theta[input_x];
 
     // Corresponding row/col variables
-    int row = blockIdx.y * blockDim.y + threadIdx.y;
     int col = blockIdx.x * blockDim.x + threadIdx.x;
 
-    if (row >= input_y || col >= input_x) return;
-    if (col < input_x + 1){
-      theta[row * input_x + col] = 0.0;
+    if (col >= input_x) return;
+    if (col < input_y + 1){
+      theta[col] = 0.0;
     }
-
-
-
     // iterations loop for Fit kernel. The two is hard-coded for testing
     // purposes, it will be replaced by the iterations variable
-    for (int i = 0; i < 1; i++) {
-      //printf("Col: %i :: %5.5f\n", col, temp[col]);
-      float sum = 0.0f;
-      if (col < input_y + 1){
-        gradient[row * input_x + col] = 0.0;
-      }
-      if (col < input_x){
-        new_theta[row * input_x + col] = 0.0;
-        temp[row * input_x + col] = 0.0;
-      }
-
-      for (int j = 0; j < input_y; j++) {
-        sum += (d_xin[j * input_x + col] * theta[j + 1]);
-      }
-      __syncthreads();
-      new_theta[row * input_x + col] = sum;
-
-      // Adds the value of theta(0) to every value of new_theta
-      new_theta[row * input_x + col] = theta[0] +
-        new_theta[row * input_x + col];
-
-      // Generates hypothesis from new_theta and subtracts them from y values
-      temp[row * input_x + col] = h(new_theta[row * input_x + col]) -
-        d_y[row * input_x + col];
-
-      for (int j = 0; j < (input_y); j++) {
-        float num = (d_xin[(row+j) * input_x + col] * temp[row * input_x + col]);
-        atomicAdd(&gradient[j + 1], num);
-      }
+    for (int i = 0; i < iterations; i++) {
 
       if(col < input_y + 1){
-        atomicAdd(&gradient[0], theta[col]);
+        gradient[col] = 0.0;
+        new_theta[col] = 0.0;
+        temp[col] = 0.0;
+      }
+      float sum = 0.0f;
+      for (int j = 0; j < input_y; j++) {
+        sum += (d_xin[j * input_x + col] * theta[j+ 1]);
       }
       __syncthreads();
-
+      new_theta[col] = sum;
+      // Adds the value of theta(0) to every value of new_theta
+      new_theta[col] = theta[0] + new_theta[col];
+      // Generates hypothesis from new_theta and subtracts them from y values
+      temp[col] = h(new_theta[col]) - d_y[col];
+      for (int j = 0; j < (input_y); j++) {
+        float num = (d_xin[j * input_x + col] * temp[col]);
+        atomicAdd(&gradient[j + 1], num);
+      }
+      /// Sums up theta and sets it to gradient[0]
+      sum = 0.0f;
+      for (int j = 0; j < input_y + 1; j++){
+        sum += theta[j];
+      }
+      __syncthreads();
+      gradient[0] = sum;
       /// Sets thetas according to gradient descent equation.
       if (col < input_y + 1){
-        theta[row * input_x + col] = theta[row * input_x + col] -
-          ((alpha / input_x) * gradient[row * input_x + col]);
+        theta[col] = theta[col] - ((alpha / input_x) * gradient[col]);
       }
-      __syncthreads();
+      if (col < 5){
+        printf("i: %i theta: %5.5f\n", i, theta[col]);
+      }
     }
     if (col < input_y + 1){
-      d_theta[row * input_x + col] = theta[row * input_x + col];
+      d_theta[col] = theta[col];
     }
+
   }
 
   /// Given a set of features and parameters creates a vector of target outputs
@@ -207,10 +198,7 @@ namespace Nice {
       const T * h_xin = &xin(0);
       const T * h_y = &y(0);
       Vector<T> h_theta(k+1);
-      Matrix<T> trans = xin.transpose();
-      const T * h_trans = &trans(0);
 
-      T * d_trans;
       T * d_xin;
       T * d_y;
       T * d_theta;
@@ -227,17 +215,21 @@ namespace Nice {
       CUDA_CALL(cudaMalloc(&d_theta, (k + 1) * sizeof(T)));
       CUDA_CALL(cudaMemset(d_theta, 0, (k + 1) * sizeof(T)));
 
-      CUDA_CALL(cudaMalloc(&d_trans, m * k * sizeof(T)));
-      CUDA_CALL(cudaMemcpy(d_trans, h_trans, (m * k) * sizeof(T),
-        cudaMemcpyHostToDevice));
-
       // Launch kernel here
       dim3 dimBlock(BLOCK_SIZE * BLOCK_SIZE);
-      //dim3 dimGrid(std::ceil((float)m / (BLOCK_SIZE)), std::ceil((float)k / (BLOCK_SIZE)));
-      FitKernel<<<1, dimBlock, ((3 * m ) + (k+1))>>>(d_xin, d_y,
-        d_theta, d_trans, iterations, alpha, m, k);
+      dim3 dimGrid(std::ceil((float)m / (BLOCK_SIZE * BLOCK_SIZE)));
+
+      high_resolution_clock::time_point t1 = high_resolution_clock::now();
+      int shared_size = ((3 * m )  * sizeof(T) + (k+1)  * sizeof(T));
+      FitKernel<<<dimGrid, dimBlock, shared_size>>>(d_xin, d_y,
+        d_theta, iterations, alpha, m, k);
 
       CUDA_CALL(cudaDeviceSynchronize());
+      high_resolution_clock::time_point t2 = high_resolution_clock::now();
+      auto duration = duration_cast<microseconds>( t2 - t1 ).count();
+      std::cout << "CUDA Logistic Regression - Fit: " << (long)duration << std::endl;
+
+
 
       CUDA_CALL(cudaMemcpy(&h_theta(0), d_theta, (k + 1) * sizeof(T),
         cudaMemcpyDeviceToHost));
