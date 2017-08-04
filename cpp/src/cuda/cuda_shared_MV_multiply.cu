@@ -20,34 +20,44 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 #include "include/cuda_shared_MV_multiply.h"
-#define BLOCK_SIZE 4
+#define BLOCK_SIZE 17
 namespace Nice {
 
   template <typename T>
   __global__ void CudaSharedMVKernel(T *d_a, T *d_x, T *d_y, int const a_rows, int const x_size) {
-    int blockRow = blockIdx.y;
-    int blockCol = blockIdx.x;
+    int blockRow = blockIdx.x;
+    int blockCol = blockIdx.y;
     int threadCol = threadIdx.x;
 
+
     //if (threadRow >= x_size || threadCol >= a_rows) return;
-      T * aTile = &d_a[(blockCol * BLOCK_SIZE * a_rows) + (BLOCK_SIZE * blockRow)];
-      T * xTile = &d_x[BLOCK_SIZE * blockCol];
+      T * aTile = &d_a[(blockCol * BLOCK_SIZE * a_rows) + (BLOCK_SIZE * blockRow)]; // ACCESSES ALL DO NOT CHANGE
+      //T * xTile = &d_x[BLOCK_SIZE * blockCol]; // ACCESSES ALL DO NOT CHANGE
+      extern __shared__ T xTile[];
+      xTile[threadCol] = d_x[BLOCK_SIZE * blockCol + threadCol];
+
       __syncthreads();
       float sum = 0.0f;
       for (int i = 0; i < BLOCK_SIZE; i++){
-        int xGIndex = (blockCol * BLOCK_SIZE);
-        int yGIndex = (BLOCK_SIZE * blockRow);
-        if (!((xGIndex + i) >= a_rows || (yGIndex + i - (BLOCK_SIZE / 2)) >= x_size)){
-          printf("Sum = %5.5f pos-add (%i) i = %i tC = %i xG = %i yG = %i : %5.5f * %5.5f = %5.5f\n",
-            sum, threadCol + (blockRow * BLOCK_SIZE), i, threadCol, xGIndex,
-            yGIndex, aTile[(a_rows * i) + threadCol], xTile[i],
-            aTile[(a_rows * i) + threadCol] * xTile[i]);
-          sum += aTile[(a_rows *i) + threadCol] * xTile[i];
+        int xGIndex = blockIdx.y * BLOCK_SIZE + i;
+        int yGIndex = blockIdx.x * BLOCK_SIZE + threadIdx.x;
+        //int xGIndex = ceil((double)((blockCol * BLOCK_SIZE * a_rows) + (BLOCK_SIZE * blockRow)) / a_rows);
+        //int yGIndex = ceil((double)((blockCol * BLOCK_SIZE * a_rows) + (BLOCK_SIZE * blockRow)) / x_size);
+        if (xGIndex < x_size && yGIndex < a_rows){
+          //printf("Sum = %5.5f pos-add (%i) br: %i bc: %i i = %i tC = %i xG = %i yG = %i : %5.5f * %5.5f = %5.5f\n",
+            //sum, threadCol + (blockRow * BLOCK_SIZE), blockRow, blockCol, i, threadCol, xGIndex,
+            //yGIndex, aTile[(a_rows * i) + threadCol], xTile[i],
+            //aTile[(a_rows * i) + threadCol] * xTile[i]);
+          //printf("Sum = %5.5f Row: %i Col %i tx: %i %5.5f * %5.5f = %5.5f\n", sum, xGIndex,
+           //yGIndex, threadCol, aTile[(a_rows *i) + threadCol], xTile[i],
+           //aTile[(a_rows *i) + threadCol] * xTile[i]);
+          atomicAdd(&d_y[threadCol + (blockRow * BLOCK_SIZE)], aTile[(a_rows *i) + threadCol] * xTile[i]);
         }
         __syncthreads();
       }
+      //printf("%i: %5.5f\n", threadCol + (blockRow * BLOCK_SIZE), sum);
       __syncthreads();
-      d_y[threadCol + (blockRow * BLOCK_SIZE)] += sum;
+      //d_y[threadCol + (blockRow * BLOCK_SIZE)] += sum;
   }
 
   template <typename T>
@@ -81,7 +91,7 @@ namespace Nice {
       // Launch kernel here
       dim3 dimBlock(BLOCK_SIZE);
       dim3 dimGrid(std::ceil((float)m / (BLOCK_SIZE)), std::ceil((float)k / (BLOCK_SIZE)));
-      //std::cout << dimGrid.x << " | " << dimGrid.y <<std::endl;
+      std::cout << std::ceil((float)m / (BLOCK_SIZE)) << " " << std::ceil((float)k / (BLOCK_SIZE)) <<"\n";
 
       CudaSharedMVKernel<<<dimGrid, dimBlock, BLOCK_SIZE * sizeof(T)>>>
         (d_a, d_x, d_y, m, k);
