@@ -127,6 +127,7 @@ BOOST_PYTHON_MODULE(Nice4Py) {
         ("Spectral")
         .def("Fit", &Nice::SpectralInterface<float>::Fit)
         .def("GetLabels", &Nice::SpectralInterface<float>::GetLabels)
+        .def("FitPredict", &Nice::SpectralInterface<float>::FitPredict)
         .def("SetSigma", &Nice::SpectralInterface<float>::SetSigma);
 //  boost::python::class_<Nice::CpuOperationsInterface<float>::GenKernelMatrix
 }

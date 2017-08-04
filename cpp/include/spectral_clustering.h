@@ -88,6 +88,11 @@ class SpectralClustering {
     laplacian_.resize(similarity_.rows(), similarity_.rows());
     laplacian_ = degrees_ - similarity_;
   }
+  Matrix <T> FitPredict(const Matrix<T> &input_data, int k)
+  {
+    Fit(input_data, k);
+    return GetLabels(); 
+  }
   Matrix <T> GetLabels() {
     return labels_;
   }
