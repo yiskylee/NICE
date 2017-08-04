@@ -95,7 +95,7 @@ if (CUDA_AND_GPU)
   include(FindCUDA)
 
   # Set NVCC flags
-  set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -std=c++11 -O3  
+  set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -std=c++11 -O3
 #          -gencode arch=compute_20,code=sm_20
 #          -gencode arch=compute_30,code=sm_30
 #          -gencode arch=compute_35,code=sm_35
@@ -166,7 +166,7 @@ if (enable-test)
          test/matrix_vector_mult_test/*.cc
          test/shared_MV_mult_test/*.cc
          //test/model_test/*.cc
-	 test/LogisticRegressionBenchmark/*.cc
+       	 test/LogisticRegressionBenchmark/*.cc
          )
   else()
   message("NO GPU TEST MADE")

@@ -73,7 +73,9 @@ class CudaSharedMVMultiplyTest : public ::testing::Test {
     // Create matrix
     a_ = Nice::Matrix<T>::Random(row_, col_);
     b_ = Nice::Vector<T>::Random(col_);
-    //std::cout << a_ << "\n" << b_ << "\n";
+    //std::cout << a_ << std::endl;
+    //std::cout << b_ << std::endl;
+
     Nice::CpuOperations<T> cpu_op;
     std::cout << a_ << "\n" << b_ << "\n";
     // Solve in CPU
@@ -82,18 +84,18 @@ class CudaSharedMVMultiplyTest : public ::testing::Test {
 };
 // Establishes a test case with the given types, Char and short types will
 // Throw compiler errors
-typedef ::testing::Types<float, double> dataTypes;
+typedef ::testing::Types<float> dataTypes;
 TYPED_TEST_CASE(CudaSharedMVMultiplyTest, dataTypes);
 
 TYPED_TEST(CudaSharedMVMultiplyTest, FunctionalityTest) {
   // Create test data
-  int m = 4;
-  int n = 4;
+  int m = 284324;
+  int n = 423;
   srand(time(NULL));
   this->CreateTestData(m, n);
   Nice::Vector<TypeParam> gpu_c(m);
   // Test gpu matrix matrix multiply in Nice
-  Nice::CudaSharedMVMultiply<TypeParam> gpu_op(16);
+  Nice::CudaSharedMVMultiply<TypeParam> gpu_op(1);
   gpu_c = gpu_op.Multiply(this->a_, this->b_);
   // Verify the result
   for (int i = 0; i < m; i++) {
