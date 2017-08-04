@@ -29,41 +29,26 @@ namespace Nice {
     int blockCol = blockIdx.y;
     int threadCol = threadIdx.x;
 
+    T * aTile = &d_a[(blockCol * BLOCK_SIZE * a_rows) + (BLOCK_SIZE * blockRow)]; 
+    extern __shared__ T xTile[];
+    xTile[threadCol] = d_x[BLOCK_SIZE * blockCol + threadCol];
 
-    //if (threadRow >= x_size || threadCol >= a_rows) return;
-      T * aTile = &d_a[(blockCol * BLOCK_SIZE * a_rows) + (BLOCK_SIZE * blockRow)]; // ACCESSES ALL DO NOT CHANGE
-      //T * xTile = &d_x[BLOCK_SIZE * blockCol]; // ACCESSES ALL DO NOT CHANGE
-      extern __shared__ T xTile[];
-      xTile[threadCol] = d_x[BLOCK_SIZE * blockCol + threadCol];
-
-      __syncthreads();
-      float sum = 0.0f;
-      for (int i = 0; i < BLOCK_SIZE; i++){
-        int xGIndex = blockIdx.y * BLOCK_SIZE + i;
-        int yGIndex = blockIdx.x * BLOCK_SIZE + threadIdx.x;
-        //int xGIndex = ceil((double)((blockCol * BLOCK_SIZE * a_rows) + (BLOCK_SIZE * blockRow)) / a_rows);
-        //int yGIndex = ceil((double)((blockCol * BLOCK_SIZE * a_rows) + (BLOCK_SIZE * blockRow)) / x_size);
-        if (xGIndex < x_size && yGIndex < a_rows){
-          //printf("Sum = %5.5f pos-add (%i) br: %i bc: %i i = %i tC = %i xG = %i yG = %i : %5.5f * %5.5f = %5.5f\n",
-            //sum, threadCol + (blockRow * BLOCK_SIZE), blockRow, blockCol, i, threadCol, xGIndex,
-            //yGIndex, aTile[(a_rows * i) + threadCol], xTile[i],
-            //aTile[(a_rows * i) + threadCol] * xTile[i]);
-          //printf("Sum = %5.5f Row: %i Col %i tx: %i %5.5f * %5.5f = %5.5f\n", sum, xGIndex,
-           //yGIndex, threadCol, aTile[(a_rows *i) + threadCol], xTile[i],
-           //aTile[(a_rows *i) + threadCol] * xTile[i]);
-          atomicAdd(&d_y[threadCol + (blockRow * BLOCK_SIZE)], aTile[(a_rows *i) + threadCol] * xTile[i]);
-        }
-        __syncthreads();
+    __syncthreads();
+    float sum = 0.0f;
+    for (int i = 0; i < BLOCK_SIZE; i++){
+      int xGIndex = blockIdx.y * BLOCK_SIZE + i;
+      int yGIndex = blockIdx.x * BLOCK_SIZE + threadIdx.x;
+      if (xGIndex < x_size && yGIndex < a_rows){
+        atomicAdd(&d_y[threadCol + (blockRow * BLOCK_SIZE)], aTile[(a_rows *i) + threadCol] * xTile[i]);
       }
-      //printf("%i: %5.5f\n", threadCol + (blockRow * BLOCK_SIZE), sum);
-      __syncthreads();
-      //d_y[threadCol + (blockRow * BLOCK_SIZE)] += sum;
+        __syncthreads();
+    }
+    __syncthreads();
   }
 
   template <typename T>
   Vector<T> CudaSharedMVMultiply<T>::Multiply(const Matrix<T> &a, const Vector<T> &b) {
     if (a.cols() == b.rows() && !a.isZero()) {
-      // Allocate and transfer memories
       int m = a.rows();
       int n = b.cols();
       int k = a.cols();
@@ -91,7 +76,6 @@ namespace Nice {
       // Launch kernel here
       dim3 dimBlock(BLOCK_SIZE);
       dim3 dimGrid(std::ceil((float)m / (BLOCK_SIZE)), std::ceil((float)k / (BLOCK_SIZE)));
-      std::cout << std::ceil((float)m / (BLOCK_SIZE)) << " " << std::ceil((float)k / (BLOCK_SIZE)) <<"\n";
 
       CudaSharedMVKernel<<<dimGrid, dimBlock, BLOCK_SIZE * sizeof(T)>>>
         (d_a, d_x, d_y, m, k);
