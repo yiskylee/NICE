@@ -82,6 +82,18 @@ class SpectralInterface {
     l = spectral_->GetLabels();
     PyBuffer_Release(&l_buf);
   }
+  void FitPredict(PyObject *input_obj, int row_i, int col_i, unsigned int k,
+                  PyObject *l_obj, int row_l, int col_l) {
+    Py_buffer input_buf, l_buf;
+    PyObject_GetBuffer(input_obj, &input_buf, PyBUF_SIMPLE);
+    PyObject_GetBuffer(l_obj, &l_buf, PyBUF_SIMPLE);
+    MatrixMap<T> input(reinterpret_cast<T *>(input_buf.buf), row_i, col_i);
+    MatrixMap<T> l(reinterpret_cast<T *>(l_buf.buf), row_l, col_l);
+    spectral_->Fit(input, k);
+    l = spectral_->GetLabels();
+    PyBuffer_Release(&input_buf);
+    PyBuffer_Release(&l_buf);
+  }
  protected:
   std::shared_ptr<Nice::SpectralClustering<T>> spectral_;
 };
