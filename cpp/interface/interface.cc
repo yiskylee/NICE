@@ -122,13 +122,14 @@ BOOST_PYTHON_MODULE(Nice4Py) {
         ("KMean", boost::python::init<std::string>())
         .def("fit", &Nice::KmeansInterface<float>::fit)
         .def("getLabels", &Nice::KmeansInterface<float>::getLabels)
-        .def("getCenters", &Nice::KmeansInterface<float>::getCenters);
+        .def("getCenters", &Nice::KmeansInterface<float>::getCenters)
+        .def("predict", &Nice::KmeansInterface<float>::predict);
     boost::python::class_<Nice::SpectralInterface<float>>
         ("Spectral")
         .def("Fit", &Nice::SpectralInterface<float>::Fit)
         .def("GetLabels", &Nice::SpectralInterface<float>::GetLabels)
-        .def("FitPredict", &Nice::SpectralInterface<float>::FitPredict)
-        .def("SetSigma", &Nice::SpectralInterface<float>::SetSigma);
+        .def("SetSigma", &Nice::SpectralInterface<float>::SetSigma)
+        .def("FitPredict", &Nice::SpectralInterface<float>::FitPredict);
 //  boost::python::class_<Nice::CpuOperationsInterface<float>::GenKernelMatrix
 }
 //  //Use float by default
