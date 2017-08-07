@@ -43,19 +43,32 @@ namespace Nice {
   template <typename T>
   __global__ void PredictKernel(T *d_theta, T *d_inputs, T *d_predictions,
       int input_x, int input_y, T theta_0){
-    extern __shared__ float yhat[];
+    extern __shared__ T theta_tile[];
     int row = blockIdx.y * blockDim.y + threadIdx.y;
     int col = blockIdx.x * blockDim.x + threadIdx.x;
+
+    int blockRow = blockIdx.x;
+    int threadCol = threadIdx.x;
+
     float sum = 0.0f;
     if (col >= input_x) return;
-    for (int k = 0; k < input_y; k++) {
-      sum += (d_inputs[k * input_x + col] * d_theta[row * input_x + k]);
+    for (int p = 0; p < std::ceil((float)input_y / (blockDim.x)); p++){
+      for (int i = 0; i < blockDim.x; i++){
+        T * d_input_tile = &d_inputs[(p * blockDim.x * input_x) + (blockDim.x * blockRow)];
+        theta_tile[threadCol] = d_theta[blockDim.x * p + threadCol];
+
+        int xGIndex = p * blockDim.x + i;
+        int yGIndex = blockIdx.x * blockDim.x + threadIdx.x;
+        if (xGIndex < input_y && yGIndex < input_x){
+          sum += d_input_tile[(input_x * i) + threadCol] * theta_tile[i];
+        }
+      }
+      __syncthreads();
     }
     __syncthreads();
-    yhat[row * input_x + col] = sum + theta_0;
-    d_predictions[row * input_x + col] = h(yhat[row * input_x + col]);
-    __syncthreads();
+    d_predictions[row * input_x + col] = 1 / ((exp(-1 * (sum + theta_0)) + 1));
   }
+
 
   /// Work in progress CUDA kernel for Fit functionality
   template <typename T>
@@ -109,9 +122,6 @@ namespace Nice {
       if (col < input_y + 1){
         theta[col] = theta[col] - ((alpha / input_x) * gradient[col]);
       }
-      if (col < 5){
-        printf("i: %i theta: %5.5f\n", i, theta[col]);
-      }
     }
     if (col < input_y + 1){
       d_theta[col] = theta[col];
@@ -162,7 +172,8 @@ namespace Nice {
     dim3 dimGrid(std::ceil((float)m / (BLOCK_SIZE)));
 
     high_resolution_clock::time_point t1 = high_resolution_clock::now();
-    PredictKernel<<<dimGrid, dimBlock, m * sizeof(T)>>>(d_theta, d_inputs,
+
+    PredictKernel<<<dimGrid, dimBlock, (m + 1) * sizeof(T)>>>(d_theta, d_inputs,
       d_predictions, m, k, theta_0);
     CUDA_CALL(cudaDeviceSynchronize());
     high_resolution_clock::time_point t2 = high_resolution_clock::now();
