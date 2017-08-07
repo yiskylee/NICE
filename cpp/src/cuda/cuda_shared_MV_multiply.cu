@@ -20,31 +20,32 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 #include "include/cuda_shared_MV_multiply.h"
-#define BLOCK_SIZE 17
+#define BLOCK_SIZE 32
 namespace Nice {
 
   template <typename T>
   __global__ void CudaSharedMVKernel(T *d_a, T *d_x, T *d_y, int const a_rows, int const x_size) {
     int blockRow = blockIdx.x;
-    int blockCol = blockIdx.y;
     int threadCol = threadIdx.x;
 
-    T * aTile = &d_a[(blockCol * BLOCK_SIZE * a_rows) + (BLOCK_SIZE * blockRow)];
     extern __shared__ T xTile[];
-    xTile[threadCol] = d_x[BLOCK_SIZE * blockCol + threadCol];
 
     __syncthreads();
     float sum = 0.0f;
-    for (int i = 0; i < BLOCK_SIZE; i++){
-      int xGIndex = blockIdx.y * BLOCK_SIZE + i;
-      int yGIndex = blockIdx.x * BLOCK_SIZE + threadIdx.x;
-      if (xGIndex < x_size && yGIndex < a_rows){
-        sum += aTile[(a_rows *i) + threadCol] * xTile[i];
+    for (int p = 0; p < std::ceil((float)x_size / (BLOCK_SIZE)); p++){
+      for (int i = 0; i < BLOCK_SIZE; i++){
+        T * aTile = &d_a[(p * BLOCK_SIZE * a_rows) + (BLOCK_SIZE * blockRow)];
+        extern __shared__ T xTile[];
+        xTile[threadCol] = d_x[BLOCK_SIZE * p + threadCol];
+        int xGIndex = p * BLOCK_SIZE + i;
+        int yGIndex = blockIdx.x * BLOCK_SIZE + threadIdx.x;
+        if (xGIndex < x_size && yGIndex < a_rows){
+          sum += aTile[(a_rows *i) + threadCol] * xTile[i];
+        }
       }
-      __syncthreads();
     }
-    d_y[threadCol + (blockRow * BLOCK_SIZE)] += sum;
     __syncthreads();
+    d_y[threadCol + (blockRow * BLOCK_SIZE)] += sum;
   }
 
   template <typename T>
@@ -76,7 +77,7 @@ namespace Nice {
 
       // Launch kernel here
       dim3 dimBlock(BLOCK_SIZE);
-      dim3 dimGrid(std::ceil((float)m / (BLOCK_SIZE)), std::ceil((float)k / (BLOCK_SIZE)));
+      dim3 dimGrid(std::ceil((float)m / (BLOCK_SIZE)));
 
       CudaSharedMVKernel<<<dimGrid, dimBlock, BLOCK_SIZE * sizeof(T)>>>
         (d_a, d_x, d_y, m, k);

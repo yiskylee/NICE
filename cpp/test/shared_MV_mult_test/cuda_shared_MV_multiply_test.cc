@@ -88,8 +88,8 @@ TYPED_TEST_CASE(CudaSharedMVMultiplyTest, dataTypes);
 
 TYPED_TEST(CudaSharedMVMultiplyTest, FunctionalityTest) {
   // Create test data
-  int m = 284324;
-  int n = 423;
+  int m = 256;
+  int n = 256;
   srand(time(NULL));
   this->CreateTestData(m, n);
   Nice::Vector<TypeParam> gpu_c(m);
