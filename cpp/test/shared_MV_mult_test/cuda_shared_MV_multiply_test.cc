@@ -76,7 +76,9 @@ class CudaSharedMVMultiplyTest : public ::testing::Test {
     //std::cout << a_ << std::endl;
     //std::cout << b_ << std::endl;
 
-
+    Nice::CpuOperations<T> cpu_op;
+    // Solve in CPU
+    c_ = cpu_op.Multiply(a_, b_);
   }
 };
 // Establishes a test case with the given types, Char and short types will
@@ -86,30 +88,21 @@ TYPED_TEST_CASE(CudaSharedMVMultiplyTest, dataTypes);
 
 TYPED_TEST(CudaSharedMVMultiplyTest, FunctionalityTest) {
   // Create test data
-  int m = 10000;
-  int n = 2000;
+  int m = 512000;
+  int n = 256;
   srand(time(NULL));
+  this->CreateTestData(m, n);
   Nice::Vector<TypeParam> gpu_c(m);
   Nice::Vector<TypeParam> cublas_c(m);
-  Nice::Vector<TypeParam> map_c(m);
-  for (int i = 0; i < 10; i++){
-    std::cout << "Run " << i << ": " << std::endl;
-    this->CreateTestData(m, n);
-    // Test gpu matrix matrix multiply in Nice
-    Nice::CpuOperations<TypeParam> cpu_op;
-    Nice::CudaSharedMVMultiply<TypeParam> gpu_op(1);
-    Nice::CudaSharedMVMultiply<TypeParam> map_op(1);
-    Nice::GpuOperations<TypeParam> cublas_op;
-    this->c_ = cpu_op.Multiply(this->a_, this->b_);
-    gpu_c = gpu_op.Multiply(this->a_, this->b_);
-    cublas_c = cublas_op.Multiply(this->a_, this->b_);
-    map_c = map_op.MapMultiply(this->a_, this->b_);
-  }
+  // Test gpu matrix matrix multiply in Nice
+  Nice::CudaSharedMVMultiply<TypeParam> gpu_op(1);
+  Nice::GpuOperations<TypeParam> cublas_op;
+  gpu_c = gpu_op.Multiply(this->a_, this->b_);
+  cublas_c = cublas_op.Multiply(this->a_, this->b_);
   // Verify the result
   for (int i = 0; i < m; i++) {
     EXPECT_NEAR(this->c_(i), gpu_c(i), 0.001);
     EXPECT_NEAR(this->c_(i), cublas_c(i), 0.001);
-    EXPECT_NEAR(this->c_(i), map_c(i), 0.001);
   }
 }
 
