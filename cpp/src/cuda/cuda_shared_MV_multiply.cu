@@ -29,7 +29,7 @@ namespace Nice {
     int blockCol = blockIdx.y;
     int threadCol = threadIdx.x;
 
-    T * aTile = &d_a[(blockCol * BLOCK_SIZE * a_rows) + (BLOCK_SIZE * blockRow)]; 
+    T * aTile = &d_a[(blockCol * BLOCK_SIZE * a_rows) + (BLOCK_SIZE * blockRow)];
     extern __shared__ T xTile[];
     xTile[threadCol] = d_x[BLOCK_SIZE * blockCol + threadCol];
 
@@ -39,10 +39,11 @@ namespace Nice {
       int xGIndex = blockIdx.y * BLOCK_SIZE + i;
       int yGIndex = blockIdx.x * BLOCK_SIZE + threadIdx.x;
       if (xGIndex < x_size && yGIndex < a_rows){
-        atomicAdd(&d_y[threadCol + (blockRow * BLOCK_SIZE)], aTile[(a_rows *i) + threadCol] * xTile[i]);
+        sum += aTile[(a_rows *i) + threadCol] * xTile[i];
       }
-        __syncthreads();
+      __syncthreads();
     }
+    d_y[threadCol + (blockRow * BLOCK_SIZE)] += sum;
     __syncthreads();
   }
 
