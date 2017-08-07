@@ -41,6 +41,7 @@ class CudaSharedMVMultiply{
   public:
     CudaSharedMVMultiply(int inBlock){block_size = inBlock;}
     Vector<T> Multiply(const Matrix<T> &a, const Vector<T> &b);
+    Vector<T> MapMultiply(const Matrix<T> &a, const Vector<T> &b);
 };
 
 }  // namespace Nice
