@@ -81,9 +81,9 @@ TYPED_TEST(Benchmark, Heart) {
   high_resolution_clock::time_point t2 = high_resolution_clock::now();
   auto duration = duration_cast<microseconds>( t2 - t1 ).count();
   std::cout << "CPU Logistic Regression - Fit: " << (long)duration << std::endl;
-  //this->gpuModel.GpuFit(this->training_x, this->training_y, this->iterations,
-    //this->alpha);
-  this->gpuModel.setTheta(this->model.getTheta());
+  this->gpuModel.GpuFit(this->training_x, this->training_y, this->iterations,
+    this->alpha);
+  //this->gpuModel.setTheta(this->model.getTheta());
   // Setup for the Predict function
   this->predict_x = this->filler("heart_predict.txt", ",");
 

@@ -78,8 +78,7 @@ namespace Nice {
     // Variables are hard coded for development only
     T * theta = (T*)shared;
     T * gradient = (T*)&theta[input_y + 1];
-    T * new_theta = (T*)&gradient[input_y + 1];
-    T * temp = (T*)&new_theta[input_x];
+    T * temp = (T*)&gradient[input_y + 1];
 
     // Corresponding row/col variables
     int col = blockIdx.x * blockDim.x + threadIdx.x;
@@ -91,10 +90,8 @@ namespace Nice {
     // iterations loop for Fit kernel. The two is hard-coded for testing
     // purposes, it will be replaced by the iterations variable
     for (int i = 0; i < iterations; i++) {
-
       if(col < input_y + 1){
         gradient[col] = 0.0;
-        new_theta[col] = 0.0;
         temp[col] = 0.0;
       }
       float sum = 0.0f;
@@ -102,14 +99,12 @@ namespace Nice {
         sum += (d_xin[j * input_x + col] * theta[j+ 1]);
       }
       __syncthreads();
-      new_theta[col] = sum;
       // Adds the value of theta(0) to every value of new_theta
-      new_theta[col] = theta[0] + new_theta[col];
       // Generates hypothesis from new_theta and subtracts them from y values
-      temp[col] = h(new_theta[col]) - d_y[col];
+      temp[col] = h(sum + theta[0]) - d_y[col];
+      sum = 0.0f;
       for (int j = 0; j < (input_y); j++) {
-        float num = (d_xin[j * input_x + col] * temp[col]);
-        atomicAdd(&gradient[j + 1], num);
+        atomicAdd(&gradient[j + 1], (d_xin[j * input_x + col] * temp[col]));
       }
       /// Sums up theta and sets it to gradient[0]
       sum = 0.0f;
@@ -126,7 +121,6 @@ namespace Nice {
     if (col < input_y + 1){
       d_theta[col] = theta[col];
     }
-
   }
 
   /// Given a set of features and parameters creates a vector of target outputs
