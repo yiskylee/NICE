@@ -49,7 +49,7 @@ class GpuLogisticRegression {
 
 
  public:
-  GpuLogisticRegression() {BLOCK_SIZE = 25;}
+  GpuLogisticRegression() {BLOCK_SIZE = 32;}
   GpuLogisticRegression(int inBlock) {BLOCK_SIZE = inBlock;}
   /// Sets the theta for the model from an external Vector
   ///

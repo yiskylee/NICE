@@ -68,7 +68,6 @@ TYPED_TEST_CASE(Benchmark, MyTypes);
 
 TYPED_TEST(Benchmark, Heart) {
   // Setup for the Fit function
-  //this->training_x.resize(10, 2);
   this->iterations = 10000;
   this->alpha = 0.001;
   this->training_x = this->filler("heart_x.txt", ",");
@@ -83,22 +82,15 @@ TYPED_TEST(Benchmark, Heart) {
   std::cout << "CPU Logistic Regression - Fit: " << (long)duration << std::endl;
   this->gpuModel.GpuFit(this->training_x, this->training_y, this->iterations,
     this->alpha);
-  //this->gpuModel.setTheta(this->model.getTheta());
   // Setup for the Predict function
   this->predict_x = this->filler("heart_predict.txt", ",");
-
   t1 = high_resolution_clock::now();
-
   this->predictions = this->model.Predict(this->predict_x);
-
   t2 = high_resolution_clock::now();
   duration = duration_cast<microseconds>( t2 - t1 ).count();
   std::cout << "CPU Logistic Regression - Predict: " << (long)duration << std::endl;
-
   this->gpuPredictions = this->gpuModel.GpuPredict(this->predict_x);
-
   this->expected_vals = this->filler("heart_expected.txt", " ");
-  //std::cout << this->predictions << std::endl;
   this->resultsCheck(this->gpuPredictions, "GPU");
   this->resultsCheck(this->predictions, "CPU");
   ASSERT_TRUE(true);
@@ -106,8 +98,7 @@ TYPED_TEST(Benchmark, Heart) {
 
 TYPED_TEST(Benchmark, MNIST) {
   // Setup for the Fit function
-  //this->training_x.resize(10, 2);
-  this->iterations = 1000;
+  this->iterations = 100;
   this->alpha = 0.001;
   this->training_x = this->filler("mnist_x.txt", ",");
   this->training_y = this->filler("mnist_y.txt", " ");
@@ -120,11 +111,8 @@ TYPED_TEST(Benchmark, MNIST) {
   auto duration = duration_cast<microseconds>( t2 - t1 ).count();
 
   std::cout << "CPU Logistic Regression - Fit: " << (long)duration << std::endl;
-
-
-  //std::cout << this->model.getTheta() << "\n";
-  //this->gpuModel.GpuFit(this->training_x, this->training_y, this->iterations,
-    //this->alpha);
+  this->gpuModel.GpuFit(this->training_x, this->training_y, this->iterations,
+    this->alpha);
   // Setup for the Predict function
   this->predict_x = this->filler("mnist_predict.txt", ",");
   t1 = high_resolution_clock::now();
@@ -132,11 +120,8 @@ TYPED_TEST(Benchmark, MNIST) {
   t2 = high_resolution_clock::now();
   duration = duration_cast<microseconds>( t2 - t1 ).count();
   std::cout << "CPU Logistic Regression - Predict: " << (long)duration << std::endl;
-
-  this->gpuModel.setTheta(this->model.getTheta());
   this->gpuPredictions = this->gpuModel.GpuPredict(this->predict_x);
   this->expected_vals = this->filler("mnist_expected.txt", " ");
-  //std::cout << this->predictions << std::endl;
   this->resultsCheck(this->gpuPredictions, "GPU");
   this->resultsCheck(this->predictions, "CPU");
   ASSERT_TRUE(true);
