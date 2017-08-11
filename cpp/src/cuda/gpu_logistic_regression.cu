@@ -71,39 +71,91 @@ namespace Nice {
   template <typename T>
   __global__ void FitKernel(T *d_xin, T *d_y, T *d_theta, T *d_storage,
     int iterations, T alpha, int input_x, int input_y){
-    extern __shared__ float shared[];
+    extern __shared__ T theta_tile[];
+
     int col = blockIdx.x * blockDim.x + threadIdx.x;
+    int blockRow = blockIdx.x;
+    int threadCol = threadIdx.x;
+
     if (col >= input_x) return;
     if (iterations == 0 && col < input_y){
       d_theta[col] = 0.0;
     }
     float sum = 0.0f;
+
+    for (int p = 0; p < std::ceil((float)input_y / (blockDim.x)); p++){
+      T * d_input_tile = &d_xin[(p * blockDim.x * input_x) + (blockDim.x * blockRow)];
+      theta_tile[threadCol] = d_theta[blockDim.x * p + threadCol + 1];
+      __syncthreads();
+      for (int i = 0; i < blockDim.x; i++){
+        int xGIndex = p * blockDim.x + i;
+        int yGIndex = col;
+        if (xGIndex < input_y && yGIndex < input_x){
+          sum += d_input_tile[(input_x * i) + threadCol] * theta_tile[i];
+        }
+      }
+    }
+    /**
     for (int j = 0; j < input_y; j++) {
       sum += (d_xin[j * input_x + col] * d_theta[j+ 1]);
-    }
+    }**/
     __syncthreads();
     d_storage[col] = h(sum + d_theta[0]) - d_y[col];
     __syncthreads();
   }
 
+
   template <typename T>
   __global__ void FitKernelHelper(T *d_xin, T *d_y, T *d_theta, T *d_storage,
     int iterations, T alpha, int input_x, int input_y){
+
     int col = blockIdx.x * blockDim.x + threadIdx.x;
+    int blockRow = blockIdx.x;
+    int threadCol = threadIdx.x;
+
     if (col > input_y) return;
-    extern __shared__ float shared[];
-    T * gradient = (T*)&shared;
+    extern __shared__ T storage[];
+    T * theta_tile = (T*)storage;
+    T * gradient = (T*)&theta_tile[blockDim.x];
+
     float sum = 0.0f;
+
     gradient[col] = 0.0;
-    for (int j = 0; j < input_x; j++) {
-      sum += d_xin[col * input_x + j] * d_storage[j];
+
+    if (threadCol < input_y){
+      for (int j = 0; j < input_x; j++) {
+        sum += d_xin[col * input_x + j] * d_storage[j];
+        //printf("%5.5f * %5.5f = %5.5f \n",
+         //d_xin[col * input_x + j], d_storage[j],
+         //d_xin[col * input_x + j] * d_storage[j]);
+      }
+
+      /**
+      for (int j = 0; j < input_y; j++) {
+        sum += (d_xin[j * input_x + col] * d_theta[j+ 1]);
+      }**/
+
+      /**for (int p = 0; p < std::ceil((float)input_y / (blockDim.x)); p++){
+        T * d_input_tile = &d_xin[(p * blockDim.x * input_x) + (blockDim.x * blockRow)];
+        theta_tile[threadCol] = d_storage[blockDim.x * p + threadCol + 1];
+        __syncthreads();
+        for (int i = 0; i < blockDim.x; i++){
+          int xGIndex = p * blockDim.x + i;
+          int yGIndex = col;
+          if (xGIndex < input_y && yGIndex < input_x){
+            sum += d_input_tile[threadCol * input_x + i] * theta_tile[i];
+            //printf("%5.5f * %5.5f = %5.5f \n",
+              //d_input_tile[(input_x * i) + threadCol], theta_tile[i],
+              //d_input_tile[(input_x * i) + threadCol] * theta_tile[i]);
+          }
+        }
+      }**/
     }
+
     gradient[col + 1] += sum;
     sum = 0.0f;
-    for (int j = 0; j < input_y + 1; j++){
-      sum += d_theta[j];
-    }
-    gradient[0] = sum;
+    gradient[0] += d_theta[col];
+
     __syncthreads();
     d_theta[col] = d_theta[col] - ((alpha / input_x) * gradient[col]);
   }
@@ -150,9 +202,11 @@ namespace Nice {
     dim3 dimGrid(std::ceil((float) m / (BLOCK_SIZE * BLOCK_SIZE)));
 
     high_resolution_clock::time_point t1 = high_resolution_clock::now();
-    PredictKernel<<<dimGrid, dimBlock, (m + 1) * sizeof(T)>>>(d_theta, d_inputs,
+
+    PredictKernel<<<dimGrid, dimBlock, BLOCK_SIZE * BLOCK_SIZE * sizeof(T)>>>(d_theta, d_inputs,
       d_predictions, m, k, theta_0);
     CUDA_CALL(cudaDeviceSynchronize());
+
     high_resolution_clock::time_point t2 = high_resolution_clock::now();
     auto duration = duration_cast<microseconds>( t2 - t1 ).count();
     std::cout << "CUDA Logistic Regression - Predict: " << (long)duration << std::endl;
@@ -212,10 +266,10 @@ namespace Nice {
       high_resolution_clock::time_point t1 = high_resolution_clock::now();
 
       for (int i = 0; i < iterations; i++) {
-        FitKernel<<<dimGrid, dimBlock, m * sizeof(T)>>>(d_xin, d_y,
+        FitKernel<<<dimGrid, dimBlock, BLOCK_SIZE * BLOCK_SIZE * sizeof(T)>>>(d_xin, d_y,
           d_theta, d_storage, i, alpha, m, k);
         //CUDA_CALL(cudaDeviceSynchronize());
-        FitKernelHelper<<<dimHelperG, dimHelperB, k * sizeof(T)>>>(d_xin, d_y,
+        FitKernelHelper<<<dimHelperG, dimHelperB, (BLOCK_SIZE * BLOCK_SIZE + m) * sizeof(T)>>>(d_xin, d_y,
           d_theta, d_storage, i, alpha, m, k);
       }
       CUDA_CALL(cudaDeviceSynchronize());
