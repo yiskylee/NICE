@@ -98,7 +98,7 @@ TYPED_TEST(Benchmark, Heart) {
 
 TYPED_TEST(Benchmark, MNIST) {
   // Setup for the Fit function
-  this->iterations = 500;
+  this->iterations = 10;
   this->alpha = 0.001;
   this->training_x = this->filler("mnist_x.txt", ",");
   this->training_y = this->filler("mnist_y.txt", " ");

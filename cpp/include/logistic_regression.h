@@ -39,6 +39,7 @@ using namespace std::chrono;
 
 namespace Nice {
 
+
 // Abstract class of common logistic regression functions
 template<typename T>
 class LogisticRegression {

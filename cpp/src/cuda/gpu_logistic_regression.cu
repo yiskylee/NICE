@@ -53,6 +53,11 @@ namespace Nice {
 
     float sum = 0.0f;
     if (col >= input_x) return;
+
+    /**for (int k = 0; k < input_y; k++) {
+      sum += (d_inputs[k * input_x + col] * d_theta[row * input_x + k]);
+    }**/
+
     for (int p = 0; p < std::ceil((float)input_y / (blockDim.x)); p++){
       T * d_input_tile = &d_inputs[(p * blockDim.x * input_x) + (blockDim.x * blockRow)];
       theta_tile[threadCol] = d_theta[blockDim.x * p + threadCol];
@@ -65,7 +70,8 @@ namespace Nice {
         }
       }
     }
-    d_predictions[row * input_x + col] = 1 / ((exp(-1 * (sum + theta_0)) + 1));
+
+    d_predictions[row * input_x + col] = h(sum + theta_0);
   }
 
   template <typename T>
@@ -95,12 +101,14 @@ namespace Nice {
         }
       }
     }
-    /**
-    for (int j = 0; j < input_y; j++) {
+
+    /**for (int j = 0; j < input_y; j++) {
       sum += (d_xin[j * input_x + col] * d_theta[j+ 1]);
     }**/
+
     __syncthreads();
     d_storage[col] = h(sum + d_theta[0]) - d_y[col];
+
     __syncthreads();
   }
 
@@ -112,49 +120,24 @@ namespace Nice {
     int col = blockIdx.x * blockDim.x + threadIdx.x;
     int blockRow = blockIdx.x;
     int threadCol = threadIdx.x;
-
     if (col > input_y) return;
-    extern __shared__ T storage[];
-    T * theta_tile = (T*)storage;
-    T * gradient = (T*)&theta_tile[blockDim.x];
+    extern __shared__ T gradient[];
+    //T * theta_tile = (T*)storage;
+    //T * gradient = (T*)&theta_tile[blockDim.x];
 
     float sum = 0.0f;
 
     gradient[col] = 0.0;
 
-    if (threadCol < input_y){
+    if (col < input_y){
       for (int j = 0; j < input_x; j++) {
-        sum += d_xin[col * input_x + j] * d_storage[j];
-        //printf("%5.5f * %5.5f = %5.5f \n",
-         //d_xin[col * input_x + j], d_storage[j],
-         //d_xin[col * input_x + j] * d_storage[j]);
+        sum += d_xin[threadCol * input_x + j] * d_storage[j];
       }
-
-      /**
-      for (int j = 0; j < input_y; j++) {
-        sum += (d_xin[j * input_x + col] * d_theta[j+ 1]);
-      }**/
-
-      /**for (int p = 0; p < std::ceil((float)input_y / (blockDim.x)); p++){
-        T * d_input_tile = &d_xin[(p * blockDim.x * input_x) + (blockDim.x * blockRow)];
-        theta_tile[threadCol] = d_storage[blockDim.x * p + threadCol + 1];
-        __syncthreads();
-        for (int i = 0; i < blockDim.x; i++){
-          int xGIndex = p * blockDim.x + i;
-          int yGIndex = col;
-          if (xGIndex < input_y && yGIndex < input_x){
-            sum += d_input_tile[threadCol * input_x + i] * theta_tile[i];
-            //printf("%5.5f * %5.5f = %5.5f \n",
-              //d_input_tile[(input_x * i) + threadCol], theta_tile[i],
-              //d_input_tile[(input_x * i) + threadCol] * theta_tile[i]);
-          }
-        }
-      }**/
+      gradient[col + 1] += sum;
     }
 
-    gradient[col + 1] += sum;
     sum = 0.0f;
-    gradient[0] += d_theta[col];
+    atomicAdd(&gradient[0], d_theta[col]);
 
     __syncthreads();
     d_theta[col] = d_theta[col] - ((alpha / input_x) * gradient[col]);
@@ -261,16 +244,17 @@ namespace Nice {
       dim3 dimGrid(std::ceil((float)m / (BLOCK_SIZE * BLOCK_SIZE)));
 
       dim3 dimHelperB(BLOCK_SIZE * BLOCK_SIZE);
-      dim3 dimHelperG(std::ceil((float)(k) / (BLOCK_SIZE * BLOCK_SIZE)));
+      dim3 dimHelperG(std::ceil((float)k / (BLOCK_SIZE * BLOCK_SIZE)));
 
       high_resolution_clock::time_point t1 = high_resolution_clock::now();
 
       for (int i = 0; i < iterations; i++) {
-        FitKernel<<<dimGrid, dimBlock, BLOCK_SIZE * BLOCK_SIZE * sizeof(T)>>>(d_xin, d_y,
+        FitKernel<<<dimGrid, dimBlock, BLOCK_SIZE * BLOCK_SIZE * sizeof(T) >>>(d_xin, d_y,
           d_theta, d_storage, i, alpha, m, k);
-        //CUDA_CALL(cudaDeviceSynchronize());
-        FitKernelHelper<<<dimHelperG, dimHelperB, (BLOCK_SIZE * BLOCK_SIZE + m) * sizeof(T)>>>(d_xin, d_y,
+        CUDA_CALL(cudaDeviceSynchronize());
+        FitKernelHelper<<<dimHelperG, dimHelperB, k * sizeof(T) >>>(d_xin, d_y,
           d_theta, d_storage, i, alpha, m, k);
+        CUDA_CALL(cudaDeviceSynchronize());
       }
       CUDA_CALL(cudaDeviceSynchronize());
 
