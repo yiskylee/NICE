@@ -82,4 +82,3 @@ TYPED_TEST(GpuTraceTest, FuncionalityTest) {
   // Verify
   EXPECT_EQ(this->gpu_result, this->cpu_result);
 }
-

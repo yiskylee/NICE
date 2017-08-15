@@ -85,6 +85,9 @@ if (CUDA_AND_GPU)
   # Set source files
   file(GLOB_RECURSE SOURCES RELATIVE ${CMAKE_SOURCE_DIR} src/*.cc src/*.cu)
 
+  # Set source files
+  file(GLOB_RECURSE SOURCES RELATIVE ${CMAKE_SOURCE_DIR} src/*.cc src/cuda/*.cu)
+
   # Add definition
   add_definitions(-DCUDA_AND_GPU)
 
@@ -149,20 +152,27 @@ if (enable-test)
   include_directories(${GTEST_INCLUDE_DIRS})
 
   # Add source files according to machine setup
-  if (CUDA_HAVE_GPU)
+  if (CUDA_AND_GPU)
+  message("MAKING GPU TESTS")
     file(GLOB_RECURSE TEST_SRC_FILES RELATIVE
          ${PROJECT_SOURCE_DIR}
          test/cpu_operations_test/*.cc
-         test/util_test/*.cc
+         test/logistic_regression_test/*.cc
+         test/gpu_logistic_regression_test/*.cc
+	       test/util_test/*.cc
          test/cpu_solver_test/*.cc
          test/gpu_operations_test/*.cc
          test/gpu_solver_test/*.cc
-         test/model_test/*.cc
+         test/matrix_vector_mult_test/*.cc
+         test/shared_MV_mult_test/*.cc
+         //test/model_test/*.cc
          )
   else()
+  message("NO GPU TEST MADE")
     file(GLOB_RECURSE TEST_SRC_FILES RELATIVE
          ${PROJECT_SOURCE_DIR}
          test/cpu_operations_test/*.cc
+	 test/logistic_regression_test/*.cc
          test/util_test/*.cc
          test/cpu_solver_test/*.cc
          test/model_test/*.cc
