@@ -102,12 +102,9 @@ namespace Nice {
       }
     }
 
-    /**for (int j = 0; j < input_y; j++) {
-      sum += (d_xin[j * input_x + col] * d_theta[j+ 1]);
-    }**/
-
     __syncthreads();
     d_storage[col] = h(sum + d_theta[0]) - d_y[col];
+    printf("d_stor at %i : %5.5f\n", col, d_storage[col]);
 
     __syncthreads();
   }
@@ -120,27 +117,31 @@ namespace Nice {
     int col = blockIdx.x * blockDim.x + threadIdx.x;
     int blockRow = blockIdx.x;
     int threadCol = threadIdx.x;
-    if (col > input_y) return;
     extern __shared__ T gradient[];
-    //T * theta_tile = (T*)storage;
-    //T * gradient = (T*)&theta_tile[blockDim.x];
+
+    if (col <= input_y){
+      atomicAdd(&gradient[0], d_theta[col]);
+    }
 
     float sum = 0.0f;
 
-    gradient[col] = 0.0;
-
     if (col < input_y){
-      for (int j = 0; j < input_x; j++) {
-        sum += d_xin[threadCol * input_x + j] * d_storage[j];
+      T * d_input_tile = &d_xin[(blockRow * blockDim.x * input_x) + (threadCol * input_x)];
+      for (int i = 0; i < input_x; i++){
+        //printf("iter: %i i: %i p: %i %5.5f* %5.5f = %5.5f \n", iterations, i, blockRow,
+          //d_input_tile[i], d_storage[i],
+          //d_input_tile[i] * d_storage[i]);
+        sum += d_input_tile[i] * d_storage[i];
       }
-      gradient[col + 1] += sum;
+      __syncthreads();
+      gradient[col + 1] = sum;
     }
 
-    sum = 0.0f;
-    atomicAdd(&gradient[0], d_theta[col]);
-
     __syncthreads();
-    d_theta[col] = d_theta[col] - ((alpha / input_x) * gradient[col]);
+    if (col <= input_y){
+      d_theta[col] = d_theta[col] - ((alpha / input_x) * gradient[col]);
+    }
+
   }
 
   /// Given a set of features and parameters creates a vector of target outputs
@@ -252,7 +253,7 @@ namespace Nice {
         FitKernel<<<dimGrid, dimBlock, BLOCK_SIZE * BLOCK_SIZE * sizeof(T) >>>(d_xin, d_y,
           d_theta, d_storage, i, alpha, m, k);
         CUDA_CALL(cudaDeviceSynchronize());
-        FitKernelHelper<<<dimHelperG, dimHelperB, k * sizeof(T) >>>(d_xin, d_y,
+        FitKernelHelper<<<dimHelperG, dimHelperB, (k + 1) * sizeof(T) >>>(d_xin, d_y,
           d_theta, d_storage, i, alpha, m, k);
         CUDA_CALL(cudaDeviceSynchronize());
       }
