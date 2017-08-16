@@ -45,7 +45,7 @@ TYPED_TEST(GpuLogisticRegressionTest, MatrixLogisticRegressionOneModel) {
   Nice::GpuLogisticRegression<TypeParam> testModel1;
   // Setup for the Fit function
   this->training_x.resize(10, 2);
-  this->iterations = 5;
+  this->iterations = 10000;
   this->alpha = 0.3;
   this->training_x << 2.781, 2.550,
           1.465, 2.362,
