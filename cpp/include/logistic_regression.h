@@ -98,7 +98,7 @@ class LogisticRegression {
     return predictions;
   }
 
-  /// Generates a set of parameters from a given training set
+  /// Generates a set of parameters from a given training sets
   ///
   /// \param xin
   /// Matrix of features
@@ -116,7 +116,7 @@ class LogisticRegression {
       Vector<T> Xtheta = (xin * (theta.bottomRows(theta.rows() - 1)));
       Xtheta = Xtheta.array() + theta(0);
       gradient.bottomRows(gradient.rows() - 1) =
-      xin.transpose() * (h(Xtheta) - y);
+        xin.transpose() * (h(Xtheta) - y);
       gradient(0) = theta.sum();
       theta = theta - ((alpha/ y.size()) * gradient);
     }
