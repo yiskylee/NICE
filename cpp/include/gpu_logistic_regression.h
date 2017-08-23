@@ -66,6 +66,9 @@ class GpuLogisticRegression {
   void GpuFit(const Matrix<T> &xin, const Vector<T> &y,
       int iterations, T alpha);
 
+  void GpuFitMV(const Matrix<T> &xin, const Vector<T> &y,
+      const Matrix<T> &predict_inputs, int iterations, T alpha);
+
   Vector<T> GpuPredict(const Matrix<T> &inputs);
 };
 }  // namespace Nice
