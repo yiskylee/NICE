@@ -78,6 +78,11 @@ class LogisticRegression {
     return theta;
   }
 
+  Vector<T> truncate(Vector<T> input) {
+    Vector<T> small = (input * 100000).unaryExpr(std::ptr_fun<T,T>(std::floor));
+    return (small / 100000);
+  }
+
   /// Given a set of features and parameters creates a vector of target outputs
   ///
   /// \param inputs
@@ -105,9 +110,9 @@ class LogisticRegression {
   ///
   /// \param y
   /// Vector of target variables for each set of features
-  void Fit(const Matrix<T> &xin, const Vector<T> &y,
+  Vector<T> Fit(const Matrix<T> &xin, const Vector<T> &y, const Matrix<T> &inputs,
     int iterations, T alpha){
-    Vector<T> gradient;
+    Vector<T> gradient, predictions;
     theta.resize(xin.cols() + 1);
     gradient.resize(theta.rows());
     theta.setZero();
@@ -119,7 +124,15 @@ class LogisticRegression {
         xin.transpose() * (h(x_theta_mult) - y);
       gradient(0) = theta.sum();
       theta = theta - ((alpha/ y.size()) * gradient);
+      predictions = Predict(inputs);
+      predictions = predictions.unaryExpr(std::ptr_fun<T,T>(std::round));
+      if (((predictions - y).squaredNorm() / predictions.size()) <= .07){
+        std::cout << "Ended at i = " << i << "\n";
+        std::cout << ((predictions - y).squaredNorm() / predictions.size()) << "\n";
+        i = iterations;
+      }
     }
+    return predictions;
   }
 };
 }  // namespace Nice

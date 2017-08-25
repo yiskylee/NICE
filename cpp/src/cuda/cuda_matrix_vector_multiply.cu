@@ -72,14 +72,7 @@ namespace Nice {
       // Launch kernel here
       //dim3 dimBlock(BLOCK_SIZE *BLOCK_SIZE);
       //dim3 dimGrid((a.rows() / dimBlock.x) * (a.cols() / dimBlock.y));
-      high_resolution_clock::time_point t1 = high_resolution_clock::now();
       CudaMVKernel<<<m, 256>>>(d_a, d_x, d_y, m, k);
-
-            // Device sync
-      CUDA_CALL(cudaDeviceSynchronize());
-      high_resolution_clock::time_point t2 = high_resolution_clock::now();
-      auto duration = duration_cast<microseconds>( t2 - t1 ).count();
-      std::cout << "CUDA global time: " << (long)duration << std::endl;
 
       // Device sync
       CUDA_CALL(cudaDeviceSynchronize());

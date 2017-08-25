@@ -47,6 +47,11 @@ class GpuLogisticRegression {
       return input.array().inverse();
     }
 
+    Vector<T> truncate(Vector<T> input) {
+      Vector<T> small = (input * 10000).unaryExpr(std::ptr_fun<T,T>(std::floor));
+      return (small / 10000);
+    }
+
 
  public:
   GpuLogisticRegression() {BLOCK_SIZE = 32;}
@@ -66,7 +71,7 @@ class GpuLogisticRegression {
   void GpuFit(const Matrix<T> &xin, const Vector<T> &y,
       int iterations, T alpha);
 
-  void GpuFitMV(const Matrix<T> &xin, const Vector<T> &y,
+  Vector<T> GpuFitMV(const Matrix<T> &xin, const Vector<T> &y,
       const Matrix<T> &predict_inputs, int iterations, T alpha);
 
   Vector<T> GpuPredict(const Matrix<T> &inputs);

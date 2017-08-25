@@ -82,12 +82,13 @@ TYPED_TEST(Benchmark, Heart) {
   this->alpha = 0.001;
   this->training_x = this->filler("heart_x.txt", ",");
   this->training_y = this->filler("heart_y.txt", " ");
+  this->predict_x = this->filler("heart_predict.txt", ",");
   std::cout << "Fitting the data" << "\n";
 
   // CPU Fit with timing functionality around it
   high_resolution_clock::time_point t1 = high_resolution_clock::now();
-  this->model.Fit(this->training_x, this->training_y, this->iterations,
-    this->alpha);
+  this->model.Fit(this->training_x, this->training_y, this->predict_x,
+    this->iterations, this->alpha);
   high_resolution_clock::time_point t2 = high_resolution_clock::now();
   auto duration = duration_cast<microseconds>( t2 - t1 ).count();
   std::cout << "CPU Logistic Regression - Fit: " << (long)duration << std::endl;
@@ -96,7 +97,7 @@ TYPED_TEST(Benchmark, Heart) {
 
 
   // Setup for the Predict function
-  this->predict_x = this->filler("heart_predict.txt", ",");
+
 
   // CPU Predict function with timing
   t1 = high_resolution_clock::now();
@@ -122,16 +123,17 @@ TYPED_TEST(Benchmark, Heart) {
 
 TYPED_TEST(Benchmark, MNIST) {
   // Setup for the Fit function
-  this->iterations = 10;
+  this->iterations = 100;
   this->alpha = 0.01;
   this->training_x = this->filler("mnist_x.txt", ",");
   this->training_y = this->filler("mnist_y.txt", " ");
+  this->predict_x = this->filler("mnist_predict.txt", ",");
   std::cout << "Fitting the data" << "\n";
 
   // CPU Fit with timing functionality around it
   high_resolution_clock::time_point t1 = high_resolution_clock::now();
-  this->model.Fit(this->training_x, this->training_y, this->iterations,
-    this->alpha);
+  Nice::Vector<TypeParam> cpu = this->model.Fit(this->training_x, this->training_y, this->predict_x,
+    this->iterations, this->alpha);
   high_resolution_clock::time_point t2 = high_resolution_clock::now();
   auto duration = duration_cast<microseconds>( t2 - t1 ).count();
   std::cout << "CPU Logistic Regression - Fit: " << (long)duration << std::endl;
@@ -140,7 +142,7 @@ TYPED_TEST(Benchmark, MNIST) {
 
 
   // Setup for the Predict function
-  this->predict_x = this->filler("mnist_predict.txt", ",");
+
 
   // CPU Predict function with timing
   t1 = high_resolution_clock::now();
@@ -149,7 +151,7 @@ TYPED_TEST(Benchmark, MNIST) {
   duration = duration_cast<microseconds>( t2 - t1 ).count();
   std::cout << "CPU Logistic Regression - Predict: " << (long)duration << std::endl;
 
-  this->gpuModel.GpuFitMV(this->training_x, this->training_y, this->predict_x,
+  Nice::Vector<TypeParam> gpu = this->gpuModel.GpuFitMV(this->training_x, this->training_y, this->predict_x,
     this->iterations, this->alpha);
   // Checks prediction results against ground truth
   this->gpuPredictions = this->gpuModel.GpuPredict(this->predict_x);
@@ -158,7 +160,7 @@ TYPED_TEST(Benchmark, MNIST) {
   // this->resultsCheck(this->predictions, "CPU");
 
   this->thetaCompare(this->model.getTheta(), this->gpuModel.getTheta());
-
+  std::cout << ((cpu - gpu).squaredNorm()) << "\n";
   // Prints out the first 20 values of predict vectors
   for (int i = 0; i < 20; i++){
     std::cout << this->gpuPredictions(i) << " :: " << this->predictions(i) << std::endl;
