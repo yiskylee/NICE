@@ -55,7 +55,7 @@ class CpuOperations {
   }
 
   /// This is a function that calculates the transpose Vector of the
-  // input Vecto
+  /// input Vector
   ///
   /// \param a
   /// Input Vector
@@ -93,13 +93,7 @@ class CpuOperations {
   /// This function returns a Matrix of type T
   static Matrix<T> Multiply(const Matrix<T> &a, const Matrix<T> &b) {
     // Matrix-matrix multiplication
-    Matrix<T> result;
-    high_resolution_clock::time_point t1 = high_resolution_clock::now();
-    result = a * b;
-    high_resolution_clock::time_point t2 = high_resolution_clock::now();
-    auto duration = duration_cast<microseconds>( t2 - t1 ).count();
-    std::cout << "CPU Time: " << (long)duration << std::endl;
-    return result;
+    return a * b;
   }
   /// This is a function that adds each element in the matrix to a scalar and
   /// returns the resulting matrix.

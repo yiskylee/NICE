@@ -19,7 +19,7 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-#include "include/cuda_shared_MV_multiply.h"
+#include "include/cuda_matrix_vector_multiply_shared_memory.h"
 #define BLOCK_SIZE 32
 
 using namespace std::chrono;
@@ -81,16 +81,11 @@ namespace Nice {
       // Launch kernel here
       dim3 dimBlock(BLOCK_SIZE);
       dim3 dimGrid(std::ceil((float)m / (BLOCK_SIZE)));
-      high_resolution_clock::time_point t1 = high_resolution_clock::now();
 
       CudaSharedMVKernel<<<dimGrid, dimBlock, BLOCK_SIZE * sizeof(T)>>>
         (d_a, d_x, d_y, m, k);
       // Device sync
       CUDA_CALL(cudaDeviceSynchronize());
-
-      high_resolution_clock::time_point t2 = high_resolution_clock::now();
-      auto duration = duration_cast<microseconds>( t2 - t1 ).count();
-      std::cout << "CUDA time: " << (long)duration << std::endl;
 
       // Transfer memories back, clear memrory, and return result
       CUDA_CALL(cudaMemcpy(&h_y(0), d_y, m * sizeof(T),

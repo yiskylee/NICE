@@ -74,21 +74,13 @@ TYPED_TEST(Benchmark, Heart) {
   this->training_y = this->filler("heart_y.txt", " ");
   std::cout << "Fitting the data" << "\n";
 
-  high_resolution_clock::time_point t1 = high_resolution_clock::now();
   this->model.Fit(this->training_x, this->training_y, this->iterations,
     this->alpha);
-  high_resolution_clock::time_point t2 = high_resolution_clock::now();
-  auto duration = duration_cast<microseconds>( t2 - t1 ).count();
-  std::cout << "CPU Logistic Regression - Fit: " << (long)duration << std::endl;
   this->gpuModel.GpuFit(this->training_x, this->training_y, this->iterations,
     this->alpha);
   // Setup for the Predict function
   this->predict_x = this->filler("heart_predict.txt", ",");
-  t1 = high_resolution_clock::now();
   this->predictions = this->model.Predict(this->predict_x);
-  t2 = high_resolution_clock::now();
-  duration = duration_cast<microseconds>( t2 - t1 ).count();
-  std::cout << "CPU Logistic Regression - Predict: " << (long)duration << std::endl;
   this->gpuPredictions = this->gpuModel.GpuPredict(this->predict_x);
   this->expected_vals = this->filler("heart_expected.txt", " ");
   this->resultsCheck(this->gpuPredictions, "GPU");
@@ -104,22 +96,13 @@ TYPED_TEST(Benchmark, MNIST) {
   this->training_y = this->filler("mnist_y.txt", " ");
   std::cout << "Fitting the data" << "\n";
 
-  high_resolution_clock::time_point t1 = high_resolution_clock::now();
   this->model.Fit(this->training_x, this->training_y, this->iterations,
     this->alpha);
-  high_resolution_clock::time_point t2 = high_resolution_clock::now();
-  auto duration = duration_cast<microseconds>( t2 - t1 ).count();
-
-  std::cout << "CPU Logistic Regression - Fit: " << (long)duration << std::endl;
   this->gpuModel.GpuFit(this->training_x, this->training_y, this->iterations,
     this->alpha);
   // Setup for the Predict function
   this->predict_x = this->filler("mnist_predict.txt", ",");
-  t1 = high_resolution_clock::now();
   this->predictions = this->model.Predict(this->predict_x);
-  t2 = high_resolution_clock::now();
-  duration = duration_cast<microseconds>( t2 - t1 ).count();
-  std::cout << "CPU Logistic Regression - Predict: " << (long)duration << std::endl;
   this->gpuPredictions = this->gpuModel.GpuPredict(this->predict_x);
   this->expected_vals = this->filler("mnist_expected.txt", " ");
   this->resultsCheck(this->gpuPredictions, "GPU");

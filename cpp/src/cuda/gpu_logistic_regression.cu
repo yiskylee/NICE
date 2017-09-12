@@ -184,15 +184,10 @@ namespace Nice {
     dim3 dimBlock(BLOCK_SIZE * BLOCK_SIZE);
     dim3 dimGrid(std::ceil((float) m / (BLOCK_SIZE * BLOCK_SIZE)));
 
-    high_resolution_clock::time_point t1 = high_resolution_clock::now();
 
     PredictKernel<<<dimGrid, dimBlock, BLOCK_SIZE * BLOCK_SIZE * sizeof(T)>>>(d_theta, d_inputs,
       d_predictions, m, k, theta_0);
     CUDA_CALL(cudaDeviceSynchronize());
-
-    high_resolution_clock::time_point t2 = high_resolution_clock::now();
-    auto duration = duration_cast<microseconds>( t2 - t1 ).count();
-    std::cout << "CUDA Logistic Regression - Predict: " << (long)duration << std::endl;
 
     CUDA_CALL(cudaMemcpy(&h_predictions(0), d_predictions, m * sizeof(T),
       cudaMemcpyDeviceToHost));
@@ -246,7 +241,6 @@ namespace Nice {
       dim3 dimHelperB(BLOCK_SIZE * BLOCK_SIZE);
       dim3 dimHelperG(std::ceil((float)k / (BLOCK_SIZE * BLOCK_SIZE)));
 
-      high_resolution_clock::time_point t1 = high_resolution_clock::now();
 
       for (int i = 0; i < iterations; i++) {
         FitKernel<<<dimGrid, dimBlock, BLOCK_SIZE * BLOCK_SIZE * sizeof(T) >>>(d_xin, d_y,
@@ -257,10 +251,6 @@ namespace Nice {
         CUDA_CALL(cudaDeviceSynchronize());
       }
       CUDA_CALL(cudaDeviceSynchronize());
-
-      high_resolution_clock::time_point t2 = high_resolution_clock::now();
-      auto duration = duration_cast<microseconds>( t2 - t1 ).count();
-      std::cout << "CUDA Logistic Regression - Fit: " << (long)duration << std::endl;
 
       CUDA_CALL(cudaMemcpy(&h_theta(0), d_theta, (k + 1) * sizeof(T),
         cudaMemcpyDeviceToHost));
