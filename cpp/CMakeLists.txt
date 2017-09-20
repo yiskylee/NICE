@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.9)
+cmake_minimum_required(VERSION 3.0.0)
 set(PROJECT_NAME Nice)
 project(Nice)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
@@ -38,16 +38,28 @@ include_directories(./build/gtest/src/googletest/googletest/include)
 set(enable-mkl)
 option (enable-mkl "Compile NICE library with MKL" OFF)
 
+#add_definitions(-DEIGEN_USE_LAPACKE)
+#find_library(OPENBLAS openblas HINTS /home/xiangyu/anaconda/lib)
+
 # Locate MKL
-if (enable-mkl AND EXISTS ${MKL_ROOT})
+if (enable-mkl AND DEFINED ENV{MKLROOT})
+# AND EXISTS ${MKLROOT})
   message(STATUS "MKL Found")
+#  message(STATUS ${MKLROOT})
+  message(STATUS $ENV{MKLROOT})
   add_definitions(-m64 -DEIGEN_USE_MKL_ALL -Wno-unused-local-typedefs)
-  include_directories(${MKL_ROOT}/include)
-  find_library(MKL_LP64 mkl_intel_lp64 HINTS ${MKL_ROOT}/lib/intel64)
-  find_library(MKL_CORE mkl_core HINTS ${MKL_ROOT}/lib/intel64)
-  find_library(MKL_THREAD mkl_intel_thread HINTS ${MKL_ROOT}/lib/intel64)
-  get_filename_component(INTEL_DIR ${MKL_ROOT} PATH)
-  find_library(INTEL_OMP iomp5 HINTS ${INTEL_DIR}/compilers_and_libraries/linux/lib/intel64_lin)
+  include_directories($ENV{MKLROOT}/include)
+  find_library(MKL_LP64 mkl_intel_lp64 HINTS $ENV{MKLROOT}/lib/intel64)
+  find_library(MKL_CORE mkl_core HINTS $ENV{MKLROOT}/lib/intel64)
+  find_library(MKL_THREAD mkl_intel_thread HINTS $ENV{MKLROOT}/lib/intel64)
+  find_library(GNU_THREAD mkl_gnu_thread HINTS $ENV{MKLROOT}/lib/intel64)
+  get_filename_component(INTEL_DIR $ENV{MKLROOT} DIRECTORY)
+  message(STATUS ${INTEL_DIR})
+  find_library(INTEL_OMP iomp5 HINTS ${INTEL_DIR}/compiler/lib/intel64)
+#  find_library(INTEL_OMP iomp5 HINTS ${MKLROOT}/lib/intel64)
+#  message(STATUS "INTEL_DIR: ${INTEL_DIR}")
+else()
+  message(STATUS "MKL NOT FOUND")
 endif()
 
 # Locate CUDA package
@@ -113,9 +125,11 @@ if (CUDA_HAVE_GPU)
                         ${CUDA_SOLVER_LIBRARY} 
                         ${CUDA_BLAS_LIBRARY} 
                         ${CUDA_LIBRARIES} 
+                        ${OPENBLAS}
                         ${MKL_LP64} 
                         ${MKL_CORE} 
                         ${MKL_THREAD}
+                        ${GNU_THREAD}
                         ${INTEL_OMP}
                         pthread m dl gomp)
 
@@ -133,6 +147,7 @@ else()
                         ${MKL_CORE}
                         ${MKL_THREAD}
                         ${INTEL_OMP}
+                        ${OPENBLAS}
                         pthread m dl)
 
 endif()

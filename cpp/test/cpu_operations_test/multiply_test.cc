@@ -23,10 +23,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
-#include "Eigen/Dense"
+#include "include/matrix.h"
+//#include "Eigen/Dense"
 #include "gtest/gtest.h"
 #include "include/cpu_operations.h"
-#include "include/matrix.h"
+
 
 template<typename T>
 class MatrixMultiplyTest : public ::testing::Test {
@@ -79,3 +80,21 @@ TYPED_TEST(MatrixMultiplyTest, MatrixMatrixMultiply) {
   this->MatrixMatrixMultiplier();
   ASSERT_TRUE(this->correct_ans.isApprox(this->answer));
 }
+
+TYPED_TEST(MatrixMultiplyTest, MatrixMatrixTransposeMultiply) {
+  this->a.resize(2, 2);
+  this->a << 1, 2,
+             3, 4;
+  this->a = this->a * this->a.transpose();
+  this->correct_ans.resize(2, 2);
+  this->correct_ans << 5, 11,
+                       11, 25;
+  EXPECT_TRUE(this->a.isApprox(this->correct_ans));
+}
+
+TYPED_TEST(MatrixMultiplyTest, BlasTest) {
+  Nice::Matrix<TypeParam> m1(1000, 1000);
+  Nice::Matrix<TypeParam> m2(1000, 1000);
+  Nice::Matrix<TypeParam> m3 = m1 * m2;
+}
+

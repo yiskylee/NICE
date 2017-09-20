@@ -31,10 +31,8 @@
 
 
 #include <stdio.h>
-
 #include <iostream>
 #include <cmath>
-
 #include "Eigen/Dense"
 #include "gtest/gtest.h"
 #include "include/svd_solver.h"
@@ -114,6 +112,7 @@ TYPED_TEST(CpuSvdSolverTest, FuncionalityTest) {
     EXPECT_NEAR(this->s_(i), result_s(i), 0.1);
 }
 
+
 TYPED_TEST(CpuSvdSolverTest, RankTest) {
   // Create test data
   this->CreateTestData();
@@ -125,4 +124,3 @@ TYPED_TEST(CpuSvdSolverTest, RankTest) {
   // Verify the rank
   EXPECT_EQ(5, rank);
 }
-

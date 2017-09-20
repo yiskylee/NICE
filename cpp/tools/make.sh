@@ -17,5 +17,6 @@ done
 
 NICE_BUILD_PATH=${NICE_HOME}/cpp/build
 cd ${NICE_BUILD_PATH}
+rm CMakeCache.txt
 cmake -Denable-mkl=$mkl -Denable-test=$doTest -Denable-interface=$interface ..
 make -j 16

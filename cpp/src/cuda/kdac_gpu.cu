@@ -257,9 +257,9 @@ __global__ void GenPhiCoeffKernel(const T *x_matrix_d,
 }
 
 template<typename T>
-__global__ void GenPhiKernel(const T alpha,
-                             const T sqrt_one_minus_alpha,
-                             const T denom,
+__global__ void GenPhiKernel(const float alpha,
+                             const float sqrt_one_minus_alpha,
+                             const float denom,
                              const T *waw_matrix_d,
                              const T *waf_matrix_d,
                              const T *faf_matrix_d,
@@ -421,6 +421,9 @@ void KDACGPU<T>::GenPhiCoeff(const Vector <T> &w_l,
 template
 void KDACGPU<float>::GenPhiCoeff(const Vector<float> &w_l,
                                  const Vector<float> &gradient);
+template
+void KDACGPU<double>::GenPhiCoeff(const Vector<double> &w_l,
+                                 const Vector<double> &gradient);
 
 // Generate phi(alpha), phi(0) and phi'(0) for LineSearch
 // If this is the first time to generate phi(), then w_l_changed is true
@@ -509,6 +512,12 @@ void KDACGPU<float>::GenPhi(const Vector<float> &w_l,
                             const Vector<float> &gradient,
                             bool w_l_changed);
 
+template
+void KDACGPU<double>::GenPhi(const Vector<double> &w_l,
+                            const Vector<double> &gradient,
+                            bool w_l_changed);
+
+
 template<typename T>
 Vector <T> KDACGPU<T>::GenWGradient(const Vector <T> &w_l) {
   this->profiler_.gen_grad.Start();
@@ -561,6 +570,8 @@ Vector <T> KDACGPU<T>::GenWGradient(const Vector <T> &w_l) {
 
 template
 Vector<float> KDACGPU<float>::GenWGradient(const Vector<float> &w_l);
+template
+Vector<double> KDACGPU<double>::GenWGradient(const Vector<double> &w_l);
 
 
 template<typename T>
@@ -590,4 +601,6 @@ void KDACGPU<T>::UpdateGOfW(const Vector<T> &w_l) {
 
 template
 void KDACGPU<float>::UpdateGOfW(const Vector<float> &w_l);
+template
+void KDACGPU<double>::UpdateGOfW(const Vector<double> &w_l);
 }  // Namespace NICE

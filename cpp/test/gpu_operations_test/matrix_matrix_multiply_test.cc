@@ -93,4 +93,3 @@ TYPED_TEST(GpuMatrixMatrixMultiplyTest, FuncionalityTest) {
     for (int j = 0; j < m; j++)
       EXPECT_NEAR(this->c_(i, j), gpu_c(i, j), 0.001);
 }
-

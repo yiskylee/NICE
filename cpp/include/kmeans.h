@@ -211,8 +211,6 @@ class KMeans {
     std::cerr << "randomValue: " << random_value << std::endl;
     throw std::runtime_error(
       "SelectWeightedIndex() reached end, we should never get here.");
-  
-    return 0;
   }
 
   void KMeansPPInit(const Matrix<T> &input_data) {

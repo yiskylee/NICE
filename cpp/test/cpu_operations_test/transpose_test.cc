@@ -109,3 +109,13 @@ TYPED_TEST(TransposeTest, TransposeZeroRows) {
   // Legal, and could potentially disrupt future operations
 }
 
+// This function tests if adding a matrix to its transpose
+// yields a symmetric matrix, see
+// https://eigen.tuxfamily.org/dox/group__TutorialMatrixArithmetic.html
+TYPED_TEST(TransposeTest, AddMatrixWithItsTranspose) {
+  this->matrix_eigen_.setRandom(4, 4);
+  this->matrix_nice_ = this->matrix_eigen_.transpose() + this->matrix_eigen_;
+  this->matrix_eigen_ = this->matrix_nice_;
+  EXPECT_TRUE(this->matrix_eigen_.isApprox(this->matrix_eigen_.transpose()));
+}
+
