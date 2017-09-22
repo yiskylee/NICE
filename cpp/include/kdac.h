@@ -611,14 +611,17 @@ class KDAC {
 #endif
 
     if (debug_) {
-      int num_col = 5;
-      Matrix<T> test_mat = Matrix<T>::Zero(n_, num_col);
-      for (int i = 0; i < num_col; i++) {
-        eigen_vector = solver.eigenvectors().col(idx[i]).real();
-        test_mat.col(i) = eigen_vector;
-      }
-      util::Print(test_mat, "U");
-      exit(-1);
+//      int num_col = 5;
+//      Matrix<T> test_mat = Matrix<T>::Zero(n_, num_col);
+//      for (int i = 0; i < num_col; i++) {
+//        eigen_vector = solver.eigenvectors().col(idx[i]).real();
+//        test_mat.col(i) = eigen_vector;
+//      }
+//      printf("Eigen Values: \n");
+//      for (int i = 0; i < num_col; i++)
+//        printf("%f, ", eigen_values(idx[i]));
+//      util::Print(test_mat, "U");
+//      exit(-1);
     }
 //    util::Print(u_matrix_.block(0, 0, n_, c_), "U");
 //    exit(-1);
