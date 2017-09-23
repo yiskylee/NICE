@@ -47,10 +47,9 @@
 #include "include/matrix.h"
 #include "include/vector.h"
 #include "include/gpu_util.h"
+#include "include/cuda_matrix_vector_multiply.h"
 #include "include/cuda_matrix_vector_multiply_shared_memory.h"
 
-#include "include/gpu_util.h"
-#include "include/cuda_matrix_vector_multiply.h"
 
 // This is a template test fixture class containing test matrices
 template<typename T>  // Template
@@ -86,13 +85,13 @@ class CudaSharedMVMultiplyTest : public ::testing::Test {
 };
 // Establishes a test case with the given types, Char and short types will
 // Throw compiler errors
-typedef ::testing::Types<float> dataTypes;
+typedef ::testing::Types<float, double> dataTypes;
 TYPED_TEST_CASE(CudaSharedMVMultiplyTest, dataTypes);
 
 TYPED_TEST(CudaSharedMVMultiplyTest, FunctionalityTest) {
   // Create test data
-  int m = 23234;
-  int n = 43;
+  int m = 12;
+  int n = 12;
   srand(time(NULL));
   this->CreateTestData(m, n);
   Nice::Vector<TypeParam> shared_c(m);
@@ -111,7 +110,7 @@ TYPED_TEST(CudaSharedMVMultiplyTest, FunctionalityTest) {
   }**/
   std::cout << "Cublas and cuBlas" << std::endl;
   for (int i = 0; i < m; i++) {
-    EXPECT_NEAR(this->c_(i), shared_c(i), 0.0000001);
+    EXPECT_NEAR(this->c_(i), shared_c(i), 0.000001);
     //EXPECT_NEAR(this->c_(i), shared_c(i), 0.0000001);
   }
 

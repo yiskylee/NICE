@@ -67,68 +67,27 @@ class Benchmark: public ::testing::Test {
 
   void thetaCompare(Nice::Vector<T> cpu, Nice::Vector<T> gpu){
     for (int i = 0; i < cpu.size(); i++){
+      if (i > 30 && i < 50){
+        std::cout << "CPU: " << cpu(i) << " GPU: " << gpu(i) << "\n";
+      }
       EXPECT_NEAR(cpu(i), gpu(i), 0.001);
     }
   }
 };
 
-typedef ::testing::Types<float> MyTypes;
+typedef ::testing::Types<float, double> MyTypes;
 TYPED_TEST_CASE(Benchmark, MyTypes);
 
 
 TYPED_TEST(Benchmark, Heart) {
   // Setup for the Fit function
-  this->iterations = 10000;
+  this->iterations = 25000;
   this->alpha = 0.001;
+
+  // Populates matrix with values from txt files
   this->training_x = this->filler("heart_x.txt", ",");
   this->training_y = this->filler("heart_y.txt", " ");
   this->predict_x = this->filler("heart_predict.txt", ",");
-  std::cout << "Fitting the data" << "\n";
-
-  // CPU Fit with timing functionality around it
-  high_resolution_clock::time_point t1 = high_resolution_clock::now();
-  this->model.Fit(this->training_x, this->training_y, this->predict_x,
-    this->iterations, this->alpha);
-  high_resolution_clock::time_point t2 = high_resolution_clock::now();
-  auto duration = duration_cast<microseconds>( t2 - t1 ).count();
-  std::cout << "CPU Logistic Regression - Fit: " << (long)duration << std::endl;
-
-  // Calls GPU fit function
-
-
-  // Setup for the Predict function
-
-
-  // CPU Predict function with timing
-  t1 = high_resolution_clock::now();
-  this->predictions = this->model.Predict(this->predict_x);
-  t2 = high_resolution_clock::now();
-  duration = duration_cast<microseconds>( t2 - t1 ).count();
-  std::cout << "CPU Logistic Regression - Predict: " << (long)duration << std::endl;
-  this->gpuModel.GpuFitMV(this->training_x, this->training_y, this->predict_x,
-    this->iterations,this->alpha);
-  // Checks prediction results against ground truth
-  this->gpuPredictions = this->gpuModel.GpuPredict(this->predict_x);
-  this->expected_vals = this->filler("heart_expected.txt", " ");
-  // this->resultsCheck(this->gpuPredictions, "GPU");
-  // this->resultsCheck(this->predictions, "CPU");
-
-  this->thetaCompare(this->model.getTheta(), this->gpuModel.getTheta());
-
-  // Prints out the first 20 values of predict vectors
-  for (int i = 0; i < 20; i++){
-    std::cout << this->gpuPredictions(i) << " :: " << this->predictions(i) << std::endl;
-  }
-}
-
-TYPED_TEST(Benchmark, MNIST) {
-  // Setup for the Fit function
-  this->iterations = 100;
-  this->alpha = 0.01;
-  this->training_x = this->filler("mnist_x.txt", ",");
-  this->training_y = this->filler("mnist_y.txt", " ");
-  this->predict_x = this->filler("mnist_predict.txt", ",");
-  std::cout << "Fitting the data" << "\n";
 
   // CPU Fit with timing functionality around it
   high_resolution_clock::time_point t1 = high_resolution_clock::now();
@@ -138,11 +97,13 @@ TYPED_TEST(Benchmark, MNIST) {
   auto duration = duration_cast<microseconds>( t2 - t1 ).count();
   std::cout << "CPU Logistic Regression - Fit: " << (long)duration << std::endl;
 
-  // Calls GPU fit function
-
-
-  // Setup for the Predict function
-
+  // GPU Fit with timing functionality around it
+  t1 = high_resolution_clock::now();
+  Nice::Vector<TypeParam> gpu = this->gpuModel.GpuFitMV(this->training_x, this->training_y, this->predict_x,
+    this->iterations,this->alpha);
+  t2 = high_resolution_clock::now();
+  duration = duration_cast<microseconds>( t2 - t1 ).count();
+  std::cout << "GPU Logistic Regression - Fit: " << (long)duration << std::endl;
 
   // CPU Predict function with timing
   t1 = high_resolution_clock::now();
@@ -151,16 +112,79 @@ TYPED_TEST(Benchmark, MNIST) {
   duration = duration_cast<microseconds>( t2 - t1 ).count();
   std::cout << "CPU Logistic Regression - Predict: " << (long)duration << std::endl;
 
+  // GPU Predict function with timing
+  t1 = high_resolution_clock::now();
+  this->gpuPredictions = this->gpuModel.GpuPredict(this->predict_x);
+  t2 = high_resolution_clock::now();
+  duration = duration_cast<microseconds>( t2 - t1 ).count();
+  std::cout << "GPU Logistic Regression - Predict: " << (long)duration << std::endl;
+
+  // Compares CPU and GPU values against ground truth
+  this->expected_vals = this->filler("heart_expected.txt", " ");
+  this->resultsCheck(this->gpuPredictions, "GPU");
+  this->resultsCheck(this->predictions, "CPU");
+
+  // Compares the CPU and GPU theta value with each other
+  this->thetaCompare(this->model.getTheta(), this->gpuModel.getTheta());
+  std::cout << "Number of differences between CPU and GPU Thetas : " << ((cpu - gpu).squaredNorm()) << "\n";
+
+  // Prints out the first 20 values of predict vectors
+  for (int i = 0; i < 20; i++){
+    std::cout << this->gpuPredictions(i) << " :: " << this->predictions(i) << std::endl;
+  }
+}
+
+TYPED_TEST(Benchmark, MNIST) {
+  // Setup for the Fit function
+  this->iterations = 30;
+  this->alpha = 0.01;
+
+  // Populates matrix with values from txt files
+  this->training_x = this->filler("mnist_x.txt", ",");
+  this->training_y = this->filler("mnist_y.txt", " ");
+  this->predict_x = this->filler("mnist_predict.txt", ",");
+
+  // CPU Fit with timing functionality around it
+  high_resolution_clock::time_point t1 = high_resolution_clock::now();
+  Nice::Vector<TypeParam> cpu = this->model.Fit(this->training_x, this->training_y, this->predict_x,
+    this->iterations, this->alpha);
+  high_resolution_clock::time_point t2 = high_resolution_clock::now();
+  auto duration = duration_cast<microseconds>( t2 - t1 ).count();
+  std::cout << "CPU Logistic Regression - Fit: " << (long)duration << std::endl;
+
+  // CPU Predict with timing functionality around it
+  t1 = high_resolution_clock::now();
+  this->predictions = this->model.Predict(this->predict_x);
+  t2 = high_resolution_clock::now();
+  duration = duration_cast<microseconds>( t2 - t1 ).count();
+  std::cout << "CPU Logistic Regression - Predict: " << (long)duration << std::endl;
+
+  // GPU Fit with timing functionality around it
+  t1 = high_resolution_clock::now();
   Nice::Vector<TypeParam> gpu = this->gpuModel.GpuFitMV(this->training_x, this->training_y, this->predict_x,
     this->iterations, this->alpha);
-  // Checks prediction results against ground truth
+  t2 = high_resolution_clock::now();
+  duration = duration_cast<microseconds>( t2 - t1 ).count();
+  std::cout << "GPU Logistic Regression - Fit: " << (long)duration << std::endl;
+
+  // GPU Predict with timing functionality around it
+  t1 = high_resolution_clock::now();
   this->gpuPredictions = this->gpuModel.GpuPredict(this->predict_x);
+  t2 = high_resolution_clock::now();
+  duration = duration_cast<microseconds>( t2 - t1 ).count();
+  std::cout << "GPU Logistic Regression - Predict: " << (long)duration << std::endl;
+
+  // Checks prediction results against ground truth
   this->expected_vals = this->filler("mnist_expected.txt", " ");
   // this->resultsCheck(this->gpuPredictions, "GPU");
   // this->resultsCheck(this->predictions, "CPU");
 
+  // Compares the theta values generated from CPU and GPU
   this->thetaCompare(this->model.getTheta(), this->gpuModel.getTheta());
-  std::cout << ((cpu - gpu).squaredNorm()) << "\n";
+
+  // Prints out the number of errors
+  std::cout << "Errors: " << ((cpu - gpu).squaredNorm()) << "\n";
+
   // Prints out the first 20 values of predict vectors
   for (int i = 0; i < 20; i++){
     std::cout << this->gpuPredictions(i) << " :: " << this->predictions(i) << std::endl;

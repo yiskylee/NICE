@@ -126,11 +126,11 @@ class LogisticRegression {
       theta = theta - ((alpha/ y.size()) * gradient);
       predictions = Predict(inputs);
       predictions = predictions.unaryExpr(std::ptr_fun<T,T>(std::round));
-      if (((predictions - y).squaredNorm() / predictions.size()) <= .07){
-        std::cout << "Ended at i = " << i << "\n";
-        std::cout << ((predictions - y).squaredNorm() / predictions.size()) << "\n";
-        i = iterations;
-      }
+      //if (((predictions - y).squaredNorm() / predictions.size()) <= .05){
+        //std::cout << "Ended at i = " << i << "\n";
+        //std::cout << ((predictions - y).squaredNorm() / predictions.size()) << "\n";
+        //i = iterations;
+      //}
     }
     return predictions;
   }

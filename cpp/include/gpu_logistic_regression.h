@@ -27,7 +27,6 @@
 
 #include <iostream>
 #include "include/gpu_util.h"
-
 namespace Nice {
 
 template <typename T>
@@ -51,7 +50,6 @@ class GpuLogisticRegression {
       Vector<T> small = (input * 10000).unaryExpr(std::ptr_fun<T,T>(std::floor));
       return (small / 10000);
     }
-
 
  public:
   GpuLogisticRegression() {BLOCK_SIZE = 32;}

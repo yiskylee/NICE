@@ -37,7 +37,7 @@ class GpuLogisticRegressionTest: public ::testing::Test {
   Nice::GpuLogisticRegression<T> testModel2;
 };
 
-typedef ::testing::Types<float> MyTypes;
+typedef ::testing::Types<float, double> MyTypes;
 TYPED_TEST_CASE(GpuLogisticRegressionTest, MyTypes);
 
 // Runs both the fit and predict function on a single model.
@@ -46,7 +46,7 @@ TYPED_TEST(GpuLogisticRegressionTest, MatrixLogisticRegressionOneModel) {
   // Setup for the Fit function
   this->training_x.resize(10, 2);
   this->iterations = 10000;
-  this->alpha = 0.3;
+  this->alpha = 0.001;
   this->training_x << 2.781, 2.550,
           1.465, 2.362,
           3.396, 4.400,
