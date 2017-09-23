@@ -44,10 +44,11 @@
 
 // This is a template test fixture class containing test matrices
 template<class T>  // Template
-class GpuMatrixVectorMultiplyTest : public ::testing::Test {
+class RepeatedMultiplyTest : public ::testing::Test {
  public:  // Members must be public to be accessed by tests
   Nice::Matrix<T> a_;
-  Nice::Vector<T> b_;
+  Nice::Vector<T> b_cpu;
+  Nice::Vector<T> b_gpu;
   Nice::Vector<T> c_;
 
   int row_;
@@ -65,81 +66,36 @@ class GpuMatrixVectorMultiplyTest : public ::testing::Test {
 
     // Create matrix
     a_ = Nice::Matrix<T>::Random(row_, col_);
-    b_ = Nice::Vector<T>::Random(col_);
+    b_cpu = Nice::Vector<T>::Random(col_);
+    b_gpu = b_cpu;
 
-    Nice::CpuOperations<T> cpu_op;
     // Solve in CPU
-    c_ = cpu_op.Multiply(a_, b_);
   }
 };
 // Establishes a test case with the given types, Char and short types will
 // Throw compiler errors
-typedef ::testing::Types<float, double> dataTypes;
-TYPED_TEST_CASE(GpuMatrixVectorMultiplyTest, dataTypes);
+typedef ::testing::Types<double> dataTypes;
+TYPED_TEST_CASE(RepeatedMultiplyTest, dataTypes);
 
-TYPED_TEST(GpuMatrixVectorMultiplyTest, FunctionalityTest) {
+TYPED_TEST(RepeatedMultiplyTest, FunctionalityTest) {
   // Create test data
-  int m = 23234;
-  int n = 43;
+  int m = 500;
+  int n = 500;
   srand(time(NULL));
+  Nice::CpuOperations<TypeParam> cpu_op;
   this->CreateTestData(m, n);
-  Nice::Vector<TypeParam> gpu_c(m);
-  // Test gpu matrix matrix multiply in Nice
-  Nice::GpuOperations<TypeParam> gpu_op;
-  gpu_c = gpu_op.Multiply(this->a_, this->b_);
+  for (int i = 0; i < 11; i++){
+    std::cout << "i = " << i << "\n";
+    Nice::Vector<TypeParam> gpu_c(m);
+    // Test gpu matrix matrix multiply in Nice
+    Nice::GpuOperations<TypeParam> gpu_op;
+    this->c_ = cpu_op.Multiply(this->a_, this->b_cpu);
+    gpu_c = gpu_op.Multiply(this->a_, this->b_gpu);
+    for (int j = 0; j < gpu_c.size(); j++) {
+      EXPECT_NEAR(this->c_(j), gpu_c(j), 0.001);
+    }
 
-  // Verify the result
-  for (int i = 0; i < n; i++) {
-    EXPECT_NEAR(this->c_(i), gpu_c(i), 0.001);
+    this->b_cpu = this->c_;
+    this->b_gpu = gpu_c;
   }
-}
-
-TYPED_TEST(GpuMatrixVectorMultiplyTest, SizeTest) {
-  // Create test data
-  int m = 5;
-  int n = 10;
-  srand(time(NULL));
-  this->CreateTestData(m, n);
-  Nice::Vector<TypeParam> gpu_c(m);
-  // Test gpu matrix matrix multiply in Nice
-  Nice::GpuOperations<TypeParam> gpu_op;
-  ASSERT_DEATH(gpu_op.Multiply(this->a_, this->b_), ".*");
-}
-
-TYPED_TEST(GpuMatrixVectorMultiplyTest, MatrixAndVectorEmptyTest) {
-  // Create test data
-  int m = 0;
-  int n = 0;
-  srand(time(NULL));
-  this->CreateTestData(m, n);
-  Nice::Vector<TypeParam> gpu_c(m);
-  // Test gpu matrix matrix multiply in Nice
-  Nice::GpuOperations<TypeParam> gpu_op;
-  ASSERT_DEATH(gpu_op.Multiply(this->a_, this->b_), ".*");
-}
-
-TYPED_TEST(GpuMatrixVectorMultiplyTest, MatrixEmptyTest) {
-  // Create test data
-  int m = 10;
-  int n = 5;
-  srand(time(NULL));
-  this->CreateTestData(m, n);
-  this->a_ = Nice::Matrix<TypeParam>::Zero(m, n);
-  Nice::Vector<TypeParam> gpu_c(m);
-  // Test gpu matrix matrix multiply in Nice
-  Nice::GpuOperations<TypeParam> gpu_op;
-  ASSERT_DEATH(gpu_op.Multiply(this->a_, this->b_), ".*");
-}
-
-TYPED_TEST(GpuMatrixVectorMultiplyTest, VectorEmptyTest) {
-  // Create test data
-  int m = 0;
-  int n = 0;
-  srand(time(NULL));
-  this->CreateTestData(m, n);
-  this->b_ = Nice::Vector<TypeParam>::Zero(n);
-  Nice::Vector<TypeParam> gpu_c(m);
-  // Test gpu matrix matrix multiply in Nice
-  Nice::GpuOperations<TypeParam> gpu_op;
-  ASSERT_DEATH(gpu_op.Multiply(this->a_, this->b_), ".*");
 }

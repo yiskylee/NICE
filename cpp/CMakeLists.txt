@@ -97,9 +97,9 @@ if (CUDA_AND_GPU)
   # Set NVCC flags
   set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -std=c++11 -O3
 #          -gencode arch=compute_20,code=sm_20
-#          -gencode arch=compute_30,code=sm_30
-#          -gencode arch=compute_35,code=sm_35
-#          -gencode arch=compute_37,code=sm_37
+          -gencode arch=compute_30,code=sm_30
+          -gencode arch=compute_35,code=sm_35
+          -gencode arch=compute_37,code=sm_37
           -gencode arch=compute_50,code=sm_50
 #          -gencode arch=compute_52,code=sm_52
           )
@@ -157,16 +157,12 @@ if (enable-test)
     file(GLOB_RECURSE TEST_SRC_FILES RELATIVE
          ${PROJECT_SOURCE_DIR}
          test/cpu_operations_test/*.cc
-         test/logistic_regression_test/*.cc
-         test/gpu_logistic_regression_test/*.cc
 	       test/util_test/*.cc
          test/cpu_solver_test/*.cc
          test/gpu_operations_test/*.cc
          test/gpu_solver_test/*.cc
-         test/matrix_vector_mult_test/*.cc
-         test/shared_MV_mult_test/*.cc
-         //test/model_test/*.cc
-       	 test/LogisticRegressionBenchmark/*.cc
+         test/model_test/gpu*.cc
+         test/model_test/logistic*.cc
          )
   else()
   message("NO GPU TEST MADE")

@@ -78,6 +78,11 @@ class LogisticRegression {
     return theta;
   }
 
+  Vector<T> truncate(Vector<T> input) {
+    Vector<T> small = (input * 100000).unaryExpr(std::ptr_fun<T,T>(std::floor));
+    return (small / 100000);
+  }
+
   /// Given a set of features and parameters creates a vector of target outputs
   ///
   /// \param inputs
@@ -98,28 +103,36 @@ class LogisticRegression {
     return predictions;
   }
 
-  /// Generates a set of parameters from a given training set
+  /// Generates a set of parameters from a given training sets
   ///
   /// \param xin
   /// Matrix of features
   ///
   /// \param y
   /// Vector of target variables for each set of features
-  void Fit(const Matrix<T> &xin, const Vector<T> &y,
+  Vector<T> Fit(const Matrix<T> &xin, const Vector<T> &y, const Matrix<T> &inputs,
     int iterations, T alpha){
-    Vector<T> gradient;
+    Vector<T> gradient, predictions;
     theta.resize(xin.cols() + 1);
     gradient.resize(theta.rows());
     theta.setZero();
     gradient.setZero();
     for (int i = 0; i < iterations; i++) {
-      Vector<T> x_theta = (xin * (theta.bottomRows(theta.rows() - 1)));
-      x_theta = x_theta.array() + theta(0);
+      Vector<T> x_theta_mult = (xin * (theta.bottomRows(theta.rows() - 1)));
+      x_theta_mult = x_theta_mult.array() + theta(0);
       gradient.bottomRows(gradient.rows() - 1) =
-      xin.transpose() * (h(x_theta) - y);
+        xin.transpose() * (h(x_theta_mult) - y);
       gradient(0) = theta.sum();
       theta = theta - ((alpha/ y.size()) * gradient);
+      predictions = Predict(inputs);
+      predictions = predictions.unaryExpr(std::ptr_fun<T,T>(std::round));
+      //if (((predictions - y).squaredNorm() / predictions.size()) <= .05){
+        //std::cout << "Ended at i = " << i << "\n";
+        //std::cout << ((predictions - y).squaredNorm() / predictions.size()) << "\n";
+        //i = iterations;
+      //}
     }
+    return predictions;
   }
 };
 }  // namespace Nice

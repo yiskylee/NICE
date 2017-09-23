@@ -19,32 +19,61 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-#include "include/cuda_matrix_vector_multiply.h"
-#include <chrono>
-#define BLOCK_SIZE 16
+#include "include/cuda_matrix_vector_multiply_shared_memory.h"
+#define BLOCK_SIZE 32
 
-using namespace std::chrono;
 
 namespace Nice {
 
+  // Used to be able to use templates with shared memory
+  template <>
+  struct SharedMemory <float>
+  {
+      __device__ float *getPointer()
+      {
+          extern __shared__ float s_float[];
+          return s_float;
+      }
+  };
+
+  // Used to be able to use templates with shared memory
+  template <>
+  struct SharedMemory <double>
+  {
+      __device__ double *getPointer()
+      {
+          extern __shared__ double s_double[];
+          return s_double;
+      }
+  };
   template <typename T>
-  __global__ void CudaMVKernel(T *d_a, T *d_x, T *d_y, int a_rows, int x_size) {
-    int row = blockIdx.y * blockDim.y + threadIdx.y;
-    int col = blockIdx.x * blockDim.x + threadIdx.x;
-    float sum = 0.0f;
-    if (row >= x_size || col >= a_rows) return;
-    for (int k = 0; k < x_size; k++) {
-      sum += (d_a[k * a_rows + col] * d_x[row * a_rows + k]);
+  __global__ void CudaSharedMVKernel(T *d_a, T *d_x, T *d_y, int const a_rows, int const x_size) {
+    int blockRow = blockIdx.x;
+    int threadCol = threadIdx.x;
+    SharedMemory<T> shared;
+    T* xTile = shared.getPointer();
+    //extern __shared__ double xTile[];
+
+    __syncthreads();
+    T sum = 0.0f;
+    for (int p = 0; p < std::ceil((T)x_size / (BLOCK_SIZE)); p++){
+      for (int i = 0; i < BLOCK_SIZE; i++){
+        T * aTile = &d_a[(p * BLOCK_SIZE * a_rows) + (BLOCK_SIZE * blockRow)];
+        xTile[threadCol] = d_x[BLOCK_SIZE * p + threadCol];
+        int xGIndex = p * BLOCK_SIZE + i;
+        int yGIndex = blockIdx.x * BLOCK_SIZE + threadIdx.x;
+        if (xGIndex < x_size && yGIndex < a_rows){
+          sum += aTile[(a_rows *i) + threadCol] * xTile[i];
+        }
+      }
     }
     __syncthreads();
-    d_y[row * a_rows + col] = sum;
-    __syncthreads();
+    d_y[threadCol + (blockRow * BLOCK_SIZE)] += sum;
   }
 
   template <typename T>
-  Vector<T> CudaMatrixVectorMultiply<T>::Multiply(const Matrix<T> &a, const Vector<T> &b) {
+  Vector<T> CudaSharedMVMultiply<T>::Multiply(const Matrix<T> &a, const Vector<T> &b) {
     if (a.cols() == b.rows() && !a.isZero()) {
-      // Allocate and transfer memories
       int m = a.rows();
       int n = b.cols();
       int k = a.cols();
@@ -56,10 +85,9 @@ namespace Nice {
       T * d_a;
       T * d_x;
       T * d_y;
-
       // Setup GPU memory
-      CUDA_CALL(cudaMalloc(&d_a, (m * k) * sizeof(T)));
-      CUDA_CALL(cudaMemcpy(d_a, h_a, (m * k) * sizeof(T),
+      CUDA_CALL(cudaMalloc(&d_a, m * k * sizeof(T)));
+      CUDA_CALL(cudaMemcpy(d_a, h_a, m * k * sizeof(T),
         cudaMemcpyHostToDevice));
 
       CUDA_CALL(cudaMalloc(&d_x, k * sizeof(T)));
@@ -70,9 +98,11 @@ namespace Nice {
       CUDA_CALL(cudaMemset(d_y, 0, m * sizeof(T)));
 
       // Launch kernel here
-      //dim3 dimBlock(BLOCK_SIZE *BLOCK_SIZE);
-      //dim3 dimGrid((a.rows() / dimBlock.x) * (a.cols() / dimBlock.y));
-      CudaMVKernel<<<m, 256>>>(d_a, d_x, d_y, m, k);
+      dim3 dimBlock(BLOCK_SIZE);
+      dim3 dimGrid(std::ceil((T)m / (BLOCK_SIZE)));
+
+      CudaSharedMVKernel<<<dimGrid, dimBlock, BLOCK_SIZE * sizeof(T)>>>
+        (d_a, d_x, d_y, m, k);
 
       // Device sync
       CUDA_CALL(cudaDeviceSynchronize());
@@ -108,9 +138,8 @@ namespace Nice {
     }
   }
   template
-  Vector<float> CudaMatrixVectorMultiply<float>::Multiply(const Matrix<float> &a, const Vector<float> &b);
+  Vector<float> CudaSharedMVMultiply<float>::Multiply(const Matrix<float> &a, const Vector<float> &b);
 
   template
-  Vector<double> CudaMatrixVectorMultiply<double>::Multiply(const Matrix<double> &a, const Vector<double> &b);
-
+  Vector<double> CudaSharedMVMultiply<double>::Multiply(const Matrix<double> &a, const Vector<double> &b);
 }
