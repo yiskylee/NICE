@@ -121,7 +121,7 @@ class GpuOperations {
   ///
   /// \return
   /// This function returns a Matrix of type T
-  /**static Matrix<T> Multiply(const Matrix<T> &a, const Matrix<T> &b) {
+  static Matrix<T> Multiply(const Matrix<T> &a, const Matrix<T> &b) {
     if (a.cols() == b.rows()) {  // Check if matricies k vals are equal
       // Allocate and transfer memories
       int m = a.rows();
@@ -160,7 +160,7 @@ class GpuOperations {
                 << std::endl;
       exit(1);
     }
-  }**/
+  }
 
   /// This function multiplies an input Matrix and a Vector
   ///
