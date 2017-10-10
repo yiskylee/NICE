@@ -26,16 +26,12 @@
 #include <string>
 #include <iostream>
 #include <cmath>
-#include <chrono>
 #include "include/matrix.h"
 #include "include/vector.h"
 #include "include/kernel_types.h"
 #include "Eigen/SVD"
 #include "include/svd_solver.h"
 #include "include/util.h"
-
-
-using namespace std::chrono;
 
 namespace Nice {
 
@@ -126,11 +122,9 @@ class LogisticRegression {
       theta = theta - ((alpha/ y.size()) * gradient);
       predictions = Predict(inputs);
       predictions = predictions.unaryExpr(std::ptr_fun<T,T>(std::round));
-      //if (((predictions - y).squaredNorm() / predictions.size()) <= .05){
-        //std::cout << "Ended at i = " << i << "\n";
-        //std::cout << ((predictions - y).squaredNorm() / predictions.size()) << "\n";
-        //i = iterations;
-      //}
+      if (((predictions - y).squaredNorm() / predictions.size()) <= .05){
+        i = iterations;
+      }
     }
     return predictions;
   }

@@ -20,10 +20,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 #include "include/cuda_matrix_vector_multiply.h"
-#include <chrono>
-#define BLOCK_SIZE 16
-
-using namespace std::chrono;
 
 namespace Nice {
 
@@ -36,9 +32,7 @@ namespace Nice {
     for (int k = 0; k < x_size; k++) {
       sum += (d_a[k * a_rows + col] * d_x[row * a_rows + k]);
     }
-    __syncthreads();
     d_y[row * a_rows + col] = sum;
-    __syncthreads();
   }
 
   template <typename T>

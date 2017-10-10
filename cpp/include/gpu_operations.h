@@ -34,7 +34,6 @@
 #include <cusolverDn.h>
 #include <unistd.h>
 #include <stdexcept>
-#include <chrono>
 
 #include <iostream>
 
@@ -42,8 +41,6 @@
 #include "include/vector.h"
 #include "include/gpu_util.h"
 #include "include/gpu_svd_solver.h"
-
-using namespace std::chrono;
 
 namespace Nice {
 
