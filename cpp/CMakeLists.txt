@@ -85,9 +85,6 @@ if (CUDA_AND_GPU)
   # Set source files
   file(GLOB_RECURSE SOURCES RELATIVE ${CMAKE_SOURCE_DIR} src/*.cc src/*.cu)
 
-  # Set source files
-  file(GLOB_RECURSE SOURCES RELATIVE ${CMAKE_SOURCE_DIR} src/.cc src/.cu src/cuda/.cu)
-
   # Add definition
   add_definitions(-DCUDA_AND_GPU)
 
