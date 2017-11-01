@@ -69,21 +69,21 @@ typedef ::testing::Types<float> FloatTypes;
 TYPED_TEST_CASE(SpectralClusteringTest, FloatTypes);
 
 
-TYPED_TEST(SpectralClusteringTest, CPU5_10_3) {
-  std::string base_dir = "../test/data_for_test/";
-  // std::string file_name = "clustering_k5_10_d3.txt";
-  // std::string file_name = "data_k50_p10000_d100_c1.txt";
-  // std::string file_name = "data_k5_p500_d10_c1.txt";
-  std::string file_name = "data_k5_p10_d3_c1.txt";
-  this->SetupInputData(5, base_dir, file_name, "cpu");
-  this->spectralclustering_->Fit(this->data_, this->k_);
-  this->labels_ = this->spectralclustering_->GetLabels();
-  int num_cluster = 5;
-  int num_data_sample = 10 / num_cluster;
-  for (int k = 0; k < num_cluster; k++) {
-    int label = this->labels_(k * num_data_sample);
-    for (int i = 0; i < num_data_sample; i++) {
-      EXPECT_EQ(this->labels_(i), label);
-    }
-  }
-}
+//TYPED_TEST(SpectralClusteringTest, CPU5_10_3) {
+//  std::string base_dir = "../test/data_for_test/";
+//  // std::string file_name = "clustering_k5_10_d3.txt";
+//  // std::string file_name = "data_k50_p10000_d100_c1.txt";
+//  // std::string file_name = "data_k5_p500_d10_c1.txt";
+//  std::string file_name = "data_k5_p10_d3_c1.txt";
+//  this->SetupInputData(5, base_dir, file_name, "cpu");
+//  this->spectralclustering_->Fit(this->data_, this->k_);
+//  this->labels_ = this->spectralclustering_->GetLabels();
+//  int num_cluster = 5;
+//  int num_data_sample = 10 / num_cluster;
+//  for (int k = 0; k < num_cluster; k++) {
+//    int label = this->labels_(k * num_data_sample);
+//    for (int i = 0; i < num_data_sample; i++) {
+//      EXPECT_EQ(this->labels_(i), label);
+//    }
+//  }
+//}
