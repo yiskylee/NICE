@@ -105,7 +105,7 @@ TYPED_TEST(CudaSharedMVMultiplyTest, GlobalMemTest) {
 
 TYPED_TEST(CudaSharedMVMultiplyTest, SharedMemTest) {
   // Create test data
-  int m = 10000;
+  int m = 60000;
   int n = 1000;
   srand(time(NULL));
   this->CreateTestData(m, n);
@@ -120,7 +120,7 @@ TYPED_TEST(CudaSharedMVMultiplyTest, SharedMemTest) {
 
 TYPED_TEST(CudaSharedMVMultiplyTest, CublasTest) {
   // Create test data
-  int m = 10000;
+  int m = 60000;
   int n = 1000;
   srand(time(NULL));
   this->CreateTestData(m, n);
