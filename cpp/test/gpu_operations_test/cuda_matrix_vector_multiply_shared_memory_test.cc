@@ -90,8 +90,8 @@ TYPED_TEST_CASE(CudaSharedMVMultiplyTest, dataTypes);
 
 TYPED_TEST(CudaSharedMVMultiplyTest, FunctionalityTest) {
   // Create test data
-  int m = 12;
-  int n = 12;
+  int m = 100;
+  int n = 100;
   srand(time(NULL));
   this->CreateTestData(m, n);
   Nice::Vector<TypeParam> shared_c(m);
@@ -111,10 +111,77 @@ TYPED_TEST(CudaSharedMVMultiplyTest, FunctionalityTest) {
   std::cout << "Cublas and cuBlas" << std::endl;
   for (int i = 0; i < m; i++) {
     EXPECT_NEAR(this->c_(i), shared_c(i), 0.000001);
-    //EXPECT_NEAR(this->c_(i), shared_c(i), 0.0000001);
+    EXPECT_NEAR(this->c_(i), global_c(i), 0.000001);
+    EXPECT_NEAR(this->c_(i), cublas_c(i), 0.000001);
   }
-
 }
+
+TYPED_TEST(CudaSharedMVMultiplyTest, GlobalMemTest) {
+  // Create test data
+  int m = 1000;
+  int n = 1000;
+  srand(time(NULL));
+  this->CreateTestData(m, n);
+  Nice::Vector<TypeParam> global_c(m);
+  // Test gpu matrix matrix multiply in Nice
+  Nice::CudaMatrixVectorMultiply<TypeParam> global_op;
+  global_c = global_op.Multiply(this->a_, this->b_);
+  for (int i = 0; i < m; i++) {
+    EXPECT_NEAR(this->c_(i), global_c(i), 1e-5) << "Differ at index " << i;
+  }
+}
+
+TYPED_TEST(CudaSharedMVMultiplyTest, SharedMemTest) {
+  // Create test data
+  int m = 10000;
+  int n = 1000;
+  srand(time(NULL));
+  this->CreateTestData(m, n);
+  Nice::Vector<TypeParam> shared_c(m);
+  // Test gpu matrix matrix multiply in Nice
+  Nice::CudaSharedMVMultiply<TypeParam> shared_op(32);
+  shared_c = shared_op.Multiply(this->a_, this->b_);
+  for (int i = 0; i < m; i++) {
+    EXPECT_NEAR(this->c_(i), shared_c(i), 1e-5) << "Differ at index " << i;
+  }
+}
+
+TYPED_TEST(CudaSharedMVMultiplyTest, CublasTest) {
+  // Create test data
+  int m = 10000;
+  int n = 1000;
+  srand(time(NULL));
+  this->CreateTestData(m, n);
+  Nice::Vector<TypeParam> cublas_c(m);
+  // Test gpu matrix matrix multiply in Nice
+  Nice::GpuOperations<TypeParam> cublas_op;
+  cublas_c = cublas_op.Multiply(this->a_, this->b_);
+  for (int i = 0; i < m; i++) {
+    EXPECT_NEAR(this->c_(i), cublas_c(i), 1e-5) << "Differ at index " << i;
+  }
+}
+
+
+TYPED_TEST(CudaSharedMVMultiplyTest, GloVsSharedTest) {
+  // Create test data
+  int m = 1000;
+  int n = 1000;
+  srand(time(NULL));
+  this->CreateTestData(m, n);
+  Nice::Vector<TypeParam> shared_c(m);
+  Nice::Vector<TypeParam> global_c(m);
+  // Test gpu matrix matrix multiply in Nice
+  Nice::CudaSharedMVMultiply<TypeParam> shared_op(32);
+  Nice::CudaMatrixVectorMultiply<TypeParam> global_op;
+  shared_c = shared_op.Multiply(this->a_, this->b_);
+  global_c = global_op.Multiply(this->a_, this->b_);
+  for (int i = 0; i < m; i++) {
+    EXPECT_NEAR(global_c(i), shared_c(i), 1e-5) << "Differ at index " << i;
+  }
+}
+
+
+
 
 TYPED_TEST(CudaSharedMVMultiplyTest, OnesTest) {
   int m = 16;
