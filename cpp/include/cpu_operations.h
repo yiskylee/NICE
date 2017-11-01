@@ -33,8 +33,6 @@
 #include "include/svd_solver.h"
 #include "include/util.h"
 
-using namespace std::chrono;
-
 namespace Nice {
 
 // Abstract class of common matrix operation interface
