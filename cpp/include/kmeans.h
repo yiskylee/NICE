@@ -231,6 +231,19 @@ class KMeans {
     return centers_;
   }
 
+  Matrix <T> Predict(const Matrix<T> &input_data) {
+    Vector<T> labels_new_data_;
+    Matrix<T> data = input_data.transpose();
+    labels_new_data_.resize(data.cols());
+    // Assign each point to the closest cluster
+    for (unsigned int point = 0; point < data.cols(); ++point) {
+      unsigned int closest_cluster =
+          FindClosestCluster(data.col(point), k_);
+      labels_new_data_(point) = (T)closest_cluster;
+    }
+    return labels_new_data_;
+  }
+
  private:
   Vector<T> labels_;
   bool random_ = true;

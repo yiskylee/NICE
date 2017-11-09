@@ -19,17 +19,71 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-// #include <iostream>
-// #include "include/util.h"
-// #include "gtest/gtest.h"
-// #include "include/spectral_clustering.h"
-//
-// TEST(SpectralClusteringTest, SimpleTest) {
-//  Nice::Matrix<double> m = Nice::util::FromFile<double>(
-//      "../test/data_for_test/spectral_clustering/"
-//      "SimpleTest/data_matrix_input_40_2.txt", 40, 2);
-//  Nice::SpectralClustering<double> model;
-//  Nice::Vector<int> assignments = model.FitPredict(m, 2);
-////  for (int i = 0; i < assignments.rows(); i++)
-////    std::cout << assignments[i] << std::endl;
-// }
+
+#include <stdio.h>
+#include <iostream>
+#include <memory>
+#include "Eigen/Dense"
+#include "gtest/gtest.h"
+#include "include/spectral_clustering.h"
+#include "include/util.h"
+#include "include/matrix.h"
+#include "include/vector.h"
+#include "include/kernel_types.h"
+#include "include/stop_watch.h"
+
+template<typename T>
+class SpectralClusteringTest : public ::testing::Test {
+ protected:
+//  Nice::Matrix<T> data_matrix_;
+  std::shared_ptr<Nice::SpectralClustering<T>> spectralclustering_;
+  int k_;
+  std::string device_type_;
+  std::string data_file_path_;
+  Nice::Matrix<T> data_;
+  Nice::Vector<T> labels_;
+
+
+  virtual void SetUp() {
+  }
+
+  void SetupInputData(int k, std::string base_dir,
+                      std::string file_name,
+                      std::string device_type) {
+    k_ = k;
+    device_type_ = device_type;
+
+    if (device_type_ == "cpu")
+      spectralclustering_ = std::make_shared<Nice::SpectralClustering<T>>();
+    else if (device_type_ == "gpu")
+      spectralclustering_ = nullptr;
+
+    data_file_path_ = base_dir + file_name;
+    std::cout << "data_file_path: " << data_file_path_ << std::endl;
+    data_ = Nice::util::FromFile<T>(data_file_path_, ",");
+  }
+};
+
+typedef ::testing::Types<float> FloatTypes;
+
+TYPED_TEST_CASE(SpectralClusteringTest, FloatTypes);
+
+
+//TYPED_TEST(SpectralClusteringTest, CPU5_10_3) {
+//  std::string base_dir = "../test/data_for_test/";
+//  // std::string file_name = "clustering_k5_10_d3.txt";
+//  // std::string file_name = "data_k50_p10000_d100_c1.txt";
+//  // std::string file_name = "data_k5_p500_d10_c1.txt";
+//  std::string file_name = "data_k5_p10_d3_c1.txt";
+//  this->SetupInputData(5, base_dir, file_name, "cpu");
+//  this->spectralclustering_->Fit(this->data_, this->k_);
+//  this->labels_ = this->spectralclustering_->GetLabels();
+//  int num_cluster = 5;
+//  int num_data_sample = 10 / num_cluster;
+//  for (int k = 0; k < num_cluster; k++) {
+//    int label = this->labels_(k * num_data_sample);
+//    for (int i = 0; i < num_data_sample; i++) {
+//      EXPECT_EQ(this->labels_(i), label);
+//    }
+//  }
+//}

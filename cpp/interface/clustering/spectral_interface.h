@@ -20,8 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef CPP_INTERFACE_CLUSTERING_KMEANS_INTERFACE_H_
-#define CPP_INTERFACE_CLUSTERING_KMEANS_INTERFACE_H_
+#ifndef CPP_INTERFACE_CLUSTERING_SPECTRAL_INTERFACE_H_
+#define CPP_INTERFACE_CLUSTERING_SPECTRAL_INTERFACE_H_
 
 #include <boost/python.hpp>
 
@@ -37,9 +37,8 @@
 #include "include/vector.h"
 #include "include/cpu_operations.h"
 #include "include/gpu_operations.h"
-#include "include/kmeans.h"
+#include "include/spectral_clustering.h"
 #include "include/util.h"
-#include "include/kdac_profiler.h"
 
 namespace Nice {
 // The numpy array is stored in row major
@@ -58,53 +57,46 @@ using VectorMap = Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic,
                                            1, Eigen::ColMajor>>;
 
 template<typename T>
-class KmeansInterface {
+class SpectralInterface {
  public:
-  explicit KmeansInterface(std::string device_type) {
-    kmeans_ = std::make_shared<Nice::KMeans<T>>();
+  explicit SpectralInterface() {
+    spectral_ = std::make_shared<Nice::SpectralClustering<T>>();
   }
 
-  ~KmeansInterface() {}
+  ~SpectralInterface() {}
 
-  void fit(PyObject *input_obj, int row_1, int col_1, unsigned int k) {
+  void Fit(PyObject *input_obj, int row_1, int col_1, unsigned int k) {
     Py_buffer input_buf;
     PyObject_GetBuffer(input_obj, &input_buf, PyBUF_SIMPLE);
     MatrixMap<T> input(reinterpret_cast<T *>(input_buf.buf), row_1, col_1);
-    kmeans_->Fit(input, k);
+    spectral_->Fit(input, k);
     PyBuffer_Release(&input_buf);
   }
-
-  void getLabels(PyObject *u_obj, int row, int col) {
-    Py_buffer u_buf;
-    PyObject_GetBuffer(u_obj, &u_buf, PyBUF_SIMPLE);
-    MatrixMap<T> u(reinterpret_cast<T *>(u_buf.buf), row, col);
-    u = kmeans_->GetLabels();
-    PyBuffer_Release(&u_buf);
+  void SetSigma(T sigma) {
+    spectral_->SetSigma(sigma);
   }
-
-  void getCenters(PyObject *u_obj, int row, int col) {
-    Py_buffer u_buf;
-    PyObject_GetBuffer(u_obj, &u_buf, PyBUF_SIMPLE);
-    MatrixMap<T> u(reinterpret_cast<T *>(u_buf.buf), row, col);
-    u = kmeans_->GetCenters();
-    PyBuffer_Release(&u_buf);
+  void GetLabels(PyObject *l_obj, int row, int col) {
+    Py_buffer l_buf;
+    PyObject_GetBuffer(l_obj, &l_buf, PyBUF_SIMPLE);
+    MatrixMap<T> l(reinterpret_cast<T *>(l_buf.buf), row, col);
+    l = spectral_->GetLabels();
+    PyBuffer_Release(&l_buf);
   }
-
-  void predict(PyObject *input_obj, int row_i, int col_i,
-               PyObject *l_obj, int row_l, int col_l) {
+  void FitPredict(PyObject *input_obj, int row_i, int col_i, unsigned int k,
+                  PyObject *l_obj, int row_l, int col_l) {
     Py_buffer input_buf, l_buf;
     PyObject_GetBuffer(input_obj, &input_buf, PyBUF_SIMPLE);
     PyObject_GetBuffer(l_obj, &l_buf, PyBUF_SIMPLE);
     MatrixMap<T> input(reinterpret_cast<T *>(input_buf.buf), row_i, col_i);
     MatrixMap<T> l(reinterpret_cast<T *>(l_buf.buf), row_l, col_l);
-    l = kmeans_->Predict(input);
+    spectral_->Fit(input, k);
+    l = spectral_->GetLabels();
     PyBuffer_Release(&input_buf);
     PyBuffer_Release(&l_buf);
   }
-
  protected:
-  std::shared_ptr<Nice::KMeans<T>> kmeans_;
+  std::shared_ptr<Nice::SpectralClustering<T>> spectral_;
 };
 
 }  // namespace Nice
-#endif  //  CPP_INTERFACE_CLUSTERING_KMEANS_INTERFACE_H_
+#endif  //  CPP_INTERFACE_CLUSTERING_SPECTRAL_INTERFACE_H_
