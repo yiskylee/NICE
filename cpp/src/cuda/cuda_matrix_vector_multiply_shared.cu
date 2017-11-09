@@ -34,7 +34,7 @@ namespace Nice {
     extern __shared__ T xTile[];
 
     __syncthreads();
-    float sum = 0.0f;
+    T sum = 0.0f;
     for (int p = 0; p < std::ceil((float)x_size / (BLOCK_SIZE)); p++){
       for (int i = 0; i < BLOCK_SIZE; i++){
         T * aTile = &d_a[(p * BLOCK_SIZE * a_rows) + (BLOCK_SIZE * blockRow)];

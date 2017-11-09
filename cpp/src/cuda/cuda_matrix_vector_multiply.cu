@@ -20,17 +20,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 #include "include/cuda_matrix_vector_multiply.h"
-
+#define BLOCK_SIZE 7
 namespace Nice {
 
   template <typename T>
   __global__ void CudaMVKernel(T *d_a, T *d_x, T *d_y, int a_rows, int x_size) {
     int row = blockIdx.y * blockDim.y + threadIdx.y;
     int col = blockIdx.x * blockDim.x + threadIdx.x;
-    float sum = 0.0f;
+    T sum = 0.0f;
     if (row >= x_size || col >= a_rows) return;
     for (int k = 0; k < x_size; k++) {
-      sum += (d_a[k * a_rows + col] * d_x[row * a_rows + k]);
+      sum += (d_a[col + (k * a_rows)] * d_x[k]);
+      //printf("k: %i %3.3f * %3.3f  sum: %i r:%i, c:%i x:%i, y:%i \n", k, d_a[col + (k * a_rows)], d_x[k], threadIdx.x, row, col, col, k);
     }
     d_y[row * a_rows + col] = sum;
   }
@@ -50,7 +51,8 @@ namespace Nice {
       T * d_a;
       T * d_x;
       T * d_y;
-
+      //std::cout << a << std::endl;
+      //std::cout << b << std::endl;
       // Setup GPU memory
       CUDA_CALL(cudaMalloc(&d_a, (m * k) * sizeof(T)));
       CUDA_CALL(cudaMemcpy(d_a, h_a, (m * k) * sizeof(T),
@@ -64,9 +66,9 @@ namespace Nice {
       CUDA_CALL(cudaMemset(d_y, 0, m * sizeof(T)));
 
       // Launch kernel here
-      //dim3 dimBlock(BLOCK_SIZE *BLOCK_SIZE);
-      //dim3 dimGrid((a.rows() / dimBlock.x) * (a.cols() / dimBlock.y));
-      CudaMVKernel<<<m, 256>>>(d_a, d_x, d_y, m, k);
+      dim3 dimBlock(BLOCK_SIZE);
+      dim3 dimGrid(std::ceil((float)m / (BLOCK_SIZE)));
+      CudaMVKernel<<<dimGrid, dimBlock>>>(d_a, d_x, d_y, m, k);
 
       // Device sync
       CUDA_CALL(cudaDeviceSynchronize());

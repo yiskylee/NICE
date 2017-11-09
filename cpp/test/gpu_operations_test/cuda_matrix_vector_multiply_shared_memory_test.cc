@@ -1,4 +1,4 @@
-// The MIT License (MIT)
+ // The MIT License (MIT)
 //
 // Copyright (c) 2016 Northeastern University
 //
@@ -90,7 +90,7 @@ TYPED_TEST_CASE(CudaSharedMVMultiplyTest, dataTypes);
 
 TYPED_TEST(CudaSharedMVMultiplyTest, GlobalMemTest) {
   // Create test data
-  int m = 1000;
+  int m = 60000;
   int n = 1000;
   srand(time(NULL));
   this->CreateTestData(m, n);
