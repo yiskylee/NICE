@@ -27,6 +27,11 @@
 #include "include/vector.h"
 #include <cmath>
 #include <chrono>
+#include "include/cuda_matrix_vector_multiply.h"
+#include "include/cuda_matrix_vector_multiply_shared_memory.h"
+#include "include/gpu_operations.h"
+#include "include/gpu_util.h"
+
 
 using namespace std::chrono;
 
@@ -348,7 +353,7 @@ namespace Nice {
       T * d_predict_inputs;
 
       // Setup GPU memory
-      CUDA_CALL(cudaMalloc(&d_xin, xin.size() * sizeof(T)));
+      /**CUDA_CALL(cudaMalloc(&d_xin, xin.size() * sizeof(T)));
       CUDA_CALL(cudaMemcpy(d_xin, h_xin, xin.size() * sizeof(T),
         cudaMemcpyHostToDevice));
 
@@ -373,11 +378,11 @@ namespace Nice {
       CUDA_CALL(cudaMalloc(&d_theta, theta.size() * sizeof(T)));
       CUDA_CALL(cudaMemset(d_theta, 0, theta.size() * sizeof(T)));
 
-      CUDA_CALL(cudaMalloc(&d_predictions, predict_inputs.rows() * sizeof(T)));
+      CUDA_CALL(cudaMalloc(&d_predictions, predict_inputs.rows() * sizeof(T)));**/
 
       for (int i = 0; i < iterations; i++) {
         bottom_theta = theta.bottomRows(theta.rows() - 1);
-        CUDA_CALL(cudaMemcpy(d_bottom_theta, h_bottom_theta, bottom_theta.rows() * sizeof(T),
+        /**CUDA_CALL(cudaMemcpy(d_bottom_theta, h_bottom_theta, bottom_theta.rows() * sizeof(T),
           cudaMemcpyHostToDevice));
         CUDA_CALL(cudaMemset(d_result, 0, xin.rows() * sizeof(T)));
 
@@ -388,10 +393,14 @@ namespace Nice {
           (d_xin, d_bottom_theta, d_result, xin.rows(), xin.cols());
 
         CUDA_CALL(cudaMemcpy(&h_result(0), d_result, xin.rows() * sizeof(T),
-          cudaMemcpyDeviceToHost));
+          cudaMemcpyDeviceToHost));**/
+        Nice::CudaSharedMVMultiply<T> global_op(1024);
+        h_result = global_op.Multiply(xin, bottom_theta);
+        // h_result = xin * bottom_theta;
         h_result = h_result.array() + theta(0);
         gradient.bottomRows(gradient.rows() - 1) =
-          xin.transpose() * (h(h_result) - y);
+          global_op.Multiply(xin.transpose(), (h(h_result) - y));
+          // xin.transpose() * (h(h_result) - y);
         gradient(0) = theta.sum();
         theta = theta - ((alpha/ y.size()) * gradient);
 
@@ -423,11 +432,6 @@ namespace Nice {
         yhat = yhat.array() + theta(0);
         h_predictions = h(yhat);
         h_predictions = h_predictions.unaryExpr(std::ptr_fun<T,T>(std::round));
-        /**if (((h_predictions - y).squaredNorm() / predict_inputs.rows()) <= .05){
-          std::cout << "Ended at i = " << i << "\n";
-          std::cout << ((h_predictions - y).squaredNorm() / predict_inputs.rows()) << std::endl;
-          i = iterations;
-        }**/
       }
 
       CUDA_CALL(cudaDeviceSynchronize());

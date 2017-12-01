@@ -33,6 +33,7 @@
 #include "include/svd_solver.h"
 #include "include/util.h"
 
+
 namespace Nice {
 
 
@@ -122,9 +123,9 @@ class LogisticRegression {
       theta = theta - ((alpha/ y.size()) * gradient);
       predictions = Predict(inputs);
       predictions = predictions.unaryExpr(std::ptr_fun<T,T>(std::round));
-      if (((predictions - y).squaredNorm() / predictions.size()) <= .05){
-        i = iterations;
-      }
+      // if (((predictions - y).squaredNorm() / predictions.size()) <= .05){
+      //   i = iterations;
+      // }
     }
     return predictions;
   }
