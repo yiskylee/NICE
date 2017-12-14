@@ -65,12 +65,9 @@ class KMeans {
       throw std::runtime_error(ss.str());
     }
     // Seed a random number generator
-    if (random_) {
-      unsigned int t = time(NULL);
-      srand48(t);
-    } else {
-      srand48(0);
-    }
+    unsigned int t = time(NULL);
+    srand48(t);
+    srand(t);
     KMeansPPInit(input_data);
 
     // We must store the labels at the previous iteration to
@@ -191,8 +188,7 @@ class KMeans {
 
   void KMeansPPInit(const Matrix<T> &input_data) {
     // Assign one center at random
-    unsigned int seed = 1234;
-    unsigned int random_id = rand_r(&seed) % input_data.cols();
+    unsigned int random_id = rand() % input_data.cols();
     Vector<T> p = input_data.col(random_id);
     centers_.col(0) = p;
     // Assign the rest of the initial centers using a
@@ -214,7 +210,7 @@ class KMeans {
   }
 
   void SetRandom(const bool r) {
-    this->Random = r;
+    this->random_ = r;
   }
 
   void SetNInit(int n) {
