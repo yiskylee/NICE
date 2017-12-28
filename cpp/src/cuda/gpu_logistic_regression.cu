@@ -27,8 +27,8 @@
 #include "include/vector.h"
 #include <cmath>
 #include <chrono>
-#include "include/cuda_matrix_vector_multiply.h"
-#include "include/cuda_matrix_vector_multiply_shared_memory.h"
+//#include "include/cuda_matrix_vector_multiply.h"
+//#include "include/cuda_matrix_vector_multiply_shared_memory.h"
 #include "include/gpu_operations.h"
 #include "include/gpu_util.h"
 
@@ -36,6 +36,7 @@
 using namespace std::chrono;
 
 namespace Nice {
+
   /// Calculates the hypothesis of a given input Vector
   ///
   /// \param input
@@ -157,20 +158,33 @@ namespace Nice {
   }
 
   template <typename T>
-  __global__ void CudaMVKernel(T *d_a, T *d_x, T *d_y, int a_rows, int x_size) {
-    int row = blockIdx.y * blockDim.y + threadIdx.y;
-    int col = blockIdx.x * blockDim.x + threadIdx.x;
+  __global__ void CudaMVKernel(T *d_a, T *d_x, T *d_y, int const a_rows, int const x_size) {
+    int blockRow = blockIdx.x;
+    int threadCol = threadIdx.x;
+    SharedMemory<T> shared;
+    T* xTile = shared.getPointer();
+    //extern __shared__ double xTile[];
+
+    __syncthreads();
     T sum = 0.0f;
-    if (row >= x_size || col >= a_rows) return;
-    for (int k = 0; k < x_size; k++) {
-      sum += (d_a[col + (k * a_rows)] * d_x[k]);
+    for (int p = 0; p < std::ceil((T)x_size / (BLOCK_SIZE)); p++){
+      for (int i = 0; i < BLOCK_SIZE; i++){
+        T * aTile = &d_a[(p * BLOCK_SIZE * a_rows) + (BLOCK_SIZE * blockRow)];
+        xTile[threadCol] = d_x[BLOCK_SIZE * p + threadCol];
+        int xGIndex = p * BLOCK_SIZE + i;
+        int yGIndex = blockIdx.x * BLOCK_SIZE + threadIdx.x;
+        if (xGIndex < x_size && yGIndex < a_rows){
+          sum += aTile[(a_rows *i) + threadCol] * xTile[i];
+        }
+      }
     }
-    d_y[row * a_rows + col] = sum;
+    __syncthreads();
+    d_y[threadCol + (blockRow * BLOCK_SIZE)] += sum;
   }
 
 
   template <typename T>
-  Vector<T> GpuLogisticRegression<T>::GpuFitMV(const Matrix<T> &xin, const Vector<T> &y,
+  Vector<T> GpuLogisticRegression<T>::GpuFit(const Matrix<T> &xin, const Vector<T> &y,
     const Matrix<T> &predict_inputs, int iterations, T alpha){
       Vector<T> gradient;
       theta.resize(xin.cols() + 1);
@@ -260,20 +274,18 @@ namespace Nice {
       h_predictions = h(yhat);
       h_predictions = h_predictions.unaryExpr(std::ptr_fun<T,T>(std::round));
 
-
       return h_predictions;
   }
 
-
   template
-  Vector<float> GpuLogisticRegression<float>::GpuFitMV(const Matrix<float> &xin, const Vector<float> &y,
+  Vector<float> GpuLogisticRegression<float>::GpuFit(const Matrix<float> &xin, const Vector<float> &y,
       const Matrix<float> &predict_inputs, int iterations, float alpha);
 
   template
   Vector<float> GpuLogisticRegression<float>::GpuPredict(const Matrix<float> &inputs);
 
   template
-  Vector<double> GpuLogisticRegression<double>::GpuFitMV(const Matrix<double> &xin, const Vector<double> &y,
+  Vector<double> GpuLogisticRegression<double>::GpuFit(const Matrix<double> &xin, const Vector<double> &y,
       const Matrix<double> &predict_inputs, int iterations, double alpha);
 
   template

@@ -115,7 +115,7 @@ TYPED_TEST(GpuLogisticRegressionTest, Basic) {
           6.922, 1.771,
           8.675, -0.242,
           7.673, 3.508;
-  testModel1.GpuFitMV(this->training_x, this->training_y,
+  testModel1.GpuFit(this->training_x, this->training_y,
     this->predict_x, this->iterations, this->alpha);
   this->predictions = testModel1.GpuPredict(this->predict_x);
   this->predictions.resize(10);
@@ -148,9 +148,10 @@ TYPED_TEST(GpuLogisticRegressionTest, Heart) {
  auto duration = duration_cast<microseconds>( t2 - t1 ).count();
  std::cout << "CPU Logistic Regression - Fit: " << (long)duration << std::endl;
 
+
  // GPU Fit with timing functionality around it
  t1 = high_resolution_clock::now();
- Nice::Vector<TypeParam> gpu = this->gpuModel.GpuFitMV(this->training_x, this->training_y, this->predict_x,
+ Nice::Vector<TypeParam> gpu = this->gpuModel.GpuFit(this->training_x, this->training_y, this->predict_x,
    this->iterations,this->alpha);
  t2 = high_resolution_clock::now();
  duration = duration_cast<microseconds>( t2 - t1 ).count();
@@ -177,7 +178,7 @@ TYPED_TEST(GpuLogisticRegressionTest, Heart) {
 
  // Compares the CPU and GPU theta value with each other
  this->thetaCompare(this->model.getTheta(), this->gpuModel.getTheta());
- std::cout << "Number of differences between CPU and GPU Thetas : " << ((cpu - gpu).squaredNorm()) << "\n";
+ std::cout << "Number of differences between global and shared Thetas : " << ((cpu - gpu).squaredNorm()) << "\n";
 
  // Prints out the first 20 values of predict vectors
  for (int i = 0; i < 20; i++){
@@ -205,7 +206,7 @@ TYPED_TEST(GpuLogisticRegressionTest, MNIST) {
 
  // GPU Fit with timing functionality around it
  t1 = high_resolution_clock::now();
- Nice::Vector<TypeParam> gpu = this->gpuModel.GpuFitMV(this->training_x, this->training_y, this->predict_x,
+ Nice::Vector<TypeParam> gpu = this->gpuModel.GpuFit(this->training_x, this->training_y, this->predict_x,
    this->iterations,this->alpha);
  t2 = high_resolution_clock::now();
  duration = duration_cast<microseconds>( t2 - t1 ).count();

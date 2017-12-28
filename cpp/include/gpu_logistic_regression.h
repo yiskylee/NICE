@@ -66,10 +66,7 @@ class GpuLogisticRegression {
   /// A Vector containing the current theta values
   Vector<T> getTheta() {return theta;}
 
-  void GpuFit(const Matrix<T> &xin, const Vector<T> &y,
-      int iterations, T alpha);
-
-  Vector<T> GpuFitMV(const Matrix<T> &xin, const Vector<T> &y,
+  Vector<T> GpuFit(const Matrix<T> &xin, const Vector<T> &y,
       const Matrix<T> &predict_inputs, int iterations, T alpha);
 
   Vector<T> GpuPredict(const Matrix<T> &inputs);
