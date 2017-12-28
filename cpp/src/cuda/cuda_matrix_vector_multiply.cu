@@ -24,7 +24,7 @@
 namespace Nice {
 
   template <typename T>
-  __global__ void CudaMVKernel(T *d_a, T *d_x, T *d_y, int a_rows, int x_size) {
+  __global__ void CudaKernel(T *d_a, T *d_x, T *d_y, int a_rows, int x_size) {
     int row = blockIdx.y * blockDim.y + threadIdx.y;
     int col = blockIdx.x * blockDim.x + threadIdx.x;
     T sum = 0.0f;
@@ -68,7 +68,7 @@ namespace Nice {
       // Launch kernel here
       dim3 dimBlock(BLOCK_SIZE);
       dim3 dimGrid(std::ceil((float)m / (BLOCK_SIZE)));
-      CudaMVKernel<<<dimGrid, dimBlock>>>(d_a, d_x, d_y, m, k);
+      CudaKernel<<<dimGrid, dimBlock>>>(d_a, d_x, d_y, m, k);
 
       // Device sync
       CUDA_CALL(cudaDeviceSynchronize());

@@ -21,21 +21,40 @@
 // SOFTWARE.
 #ifdef CUDA_AND_GPU
 #include "include/gpu_logistic_regression.h"
-#include "src/cuda/cuda_matrix_vector_multiply_shared_memory.cu"
 #include "include/util.h"
 #include "include/matrix.h"
 #include "include/vector.h"
 #include <cmath>
 #include <chrono>
-//#include "include/cuda_matrix_vector_multiply.h"
-//#include "include/cuda_matrix_vector_multiply_shared_memory.h"
 #include "include/gpu_operations.h"
 #include "include/gpu_util.h"
+#define BLOCK_SIZE 32
 
 
 using namespace std::chrono;
 
 namespace Nice {
+  // Used to be able to use templates with shared memory
+  template <>
+  struct SharedMemory <float>
+  {
+      __device__ float *getPointer()
+      {
+          extern __shared__ float s_float[];
+          return s_float;
+      }
+  };
+
+  // Used to be able to use templates with shared memory
+  template <>
+  struct SharedMemory <double>
+  {
+      __device__ double *getPointer()
+      {
+          extern __shared__ double s_double[];
+          return s_double;
+      }
+  };
 
   /// Calculates the hypothesis of a given input Vector
   ///
@@ -158,7 +177,7 @@ namespace Nice {
   }
 
   template <typename T>
-  __global__ void CudaMVKernel(T *d_a, T *d_x, T *d_y, int const a_rows, int const x_size) {
+  __global__ void CudaSharedKernel(T *d_a, T *d_x, T *d_y, int const a_rows, int const x_size) {
     int blockRow = blockIdx.x;
     int threadCol = threadIdx.x;
     SharedMemory<T> shared;
@@ -182,6 +201,17 @@ namespace Nice {
     d_y[threadCol + (blockRow * BLOCK_SIZE)] += sum;
   }
 
+    template <typename T>
+    __global__ void CudaGlobalKernel(T *d_a, T *d_x, T *d_y, int a_rows, int x_size) {
+      int row = blockIdx.y * blockDim.y + threadIdx.y;
+      int col = blockIdx.x * blockDim.x + threadIdx.x;
+      T sum = 0.0f;
+      if (row >= x_size || col >= a_rows) return;
+      for (int k = 0; k < x_size; k++) {
+        sum += (d_a[col + (k * a_rows)] * d_x[k]);
+      }
+      d_y[row * a_rows + col] = sum;
+    }
 
   template <typename T>
   Vector<T> GpuLogisticRegression<T>::GpuFit(const Matrix<T> &xin, const Vector<T> &y,
@@ -237,19 +267,26 @@ namespace Nice {
       T * d_bottom_theta;
 
 
+      dim3 dimBlock(BLOCK_SIZE);
+      dim3 dimGrid(std::ceil((T)xin.rows() / (BLOCK_SIZE)));
+
       for (int i = 0; i < iterations; i++) {
         bottom_theta = theta.bottomRows(theta.rows() - 1);
         CUDA_CALL(cudaMalloc(&d_bottom_theta, xin.cols() * sizeof(T)));
         CUDA_CALL(cudaMemcpy(d_bottom_theta, &bottom_theta(0), xin.cols() * sizeof(T),
           cudaMemcpyHostToDevice));
 
-        dim3 dimBlock(BLOCK_SIZE);
-        dim3 dimGrid(std::ceil((float)xin.rows() / (BLOCK_SIZE)));
-        CudaMVKernel<<<dimGrid, dimBlock>>>(d_xin, d_bottom_theta, d_result, xin.rows(), xin.cols());
+        CudaGlobalKernel<<<dimGrid, dimBlock, BLOCK_SIZE * sizeof(T)>>>(d_xin, d_bottom_theta, d_result, xin.rows(), xin.cols());
+
+        CUDA_CALL(cudaDeviceSynchronize());
+
 
         preMultiply<<<dimGrid,dimBlock>>>(d_result, d_y, d_temp, theta(0));
 
-        CudaMVKernel<<<dimGrid, dimBlock>>>(d_xin_trans, d_temp, d_end, xin.cols(), xin.rows());
+        CudaGlobalKernel<<<dimGrid, dimBlock, BLOCK_SIZE * sizeof(T)>>>(d_xin_trans, d_temp, d_end, xin.cols(), xin.rows());
+
+        CUDA_CALL(cudaDeviceSynchronize());
+
 
         CUDA_CALL(cudaMemcpy(&h_end(0), d_end, xin.cols() * sizeof(T), cudaMemcpyDeviceToHost));
 
