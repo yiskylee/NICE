@@ -105,24 +105,6 @@ namespace Nice {
     d_temp[col] = h(value) - d_y[col];
   }
 
-  template <typename T>
-  __global__ void calculateTheta(T *d_gradient, T *d_theta, T factor, int theta_size){
-    int col = blockIdx.x * blockDim.x + threadIdx.x;
-    __shared__ T theta_0;
-    theta_0 = 0;
-    if (col < theta_size){
-      atomicAdd(&theta_0, d_theta[col]);
-      if (col == 0){
-        d_theta[0] = d_theta[0] - (factor * theta_0);
-      }
-      else{
-        d_theta[col] = d_theta[col] - (factor * d_gradient[col - 1]);
-      }
-    }
-
-  }
-
-
   /// Given a set of features and parameters creates a vector of target outputs
   ///
   /// \param inputs
@@ -182,7 +164,6 @@ namespace Nice {
     int threadCol = threadIdx.x;
     SharedMemory<T> shared;
     T* xTile = shared.getPointer();
-    //extern __shared__ double xTile[];
 
     __syncthreads();
     T sum = 0.0f;
@@ -236,6 +217,15 @@ namespace Nice {
     }
 }
 
+template <typename T>
+__global__ void calculateTheta(T *d_gradient, T *d_theta, T factor, int theta_size){
+  int col = blockIdx.x * blockDim.x + threadIdx.x;
+  __shared__ T theta_0;
+  theta_0 = 0;
+  if (col < theta_size){
+    d_theta[col] = d_theta[col] - (factor * d_gradient[col]);
+  }
+}
 
   template <typename T>
   Vector<T> GpuLogisticRegression<T>::GpuFit(const Matrix<T> &xin, const Vector<T> &y,
@@ -296,6 +286,7 @@ namespace Nice {
 
       T * d_bottom_theta;
 
+      T * d_gradient;
 
       dim3 dimBlock(BLOCK_SIZE);
       dim3 dimGrid(std::ceil((T)xin.rows() / (BLOCK_SIZE)));
@@ -332,7 +323,13 @@ namespace Nice {
 
         gradient(0) = h_sum;
 
-        theta = theta - ((alpha/ y.size()) * gradient);
+        CUDA_CALL(cudaMalloc(&d_gradient, gradient.size() * sizeof(T)));
+        CUDA_CALL(cudaMemcpy(d_gradient, &gradient(0), gradient.size() * sizeof(T),
+          cudaMemcpyHostToDevice));
+
+        calculateTheta<<< dimGrid, dimBlock>>>(d_gradient, d_theta, alpha/ y.size(), theta.size());
+
+        CUDA_CALL(cudaMemcpy(&theta(0), d_theta, theta.size() * sizeof(T), cudaMemcpyDeviceToHost));
       }
 
       CUDA_CALL(cudaFree(d_xin));
