@@ -214,23 +214,28 @@ namespace Nice {
     }
 
   template <typename T>
-  __global__ void reduce(T *g_idata, T *g_odata, unsigned int n){
-    // Handle to thread block group
+   __global__ void reduce(T *in_vector, T *sum, int n){
     SharedMemory<T> shared;
-    T *sdata = shared.getPointer();
-    // load shared mem
-    unsigned int tid = threadIdx.x;
-    unsigned int i = blockIdx.x*blockDim.x + threadIdx.x;
-    sdata[tid] = (i < n) ? g_idata[i] : 0;
-    // do reduction in shared mem
-    for (unsigned int s=1; s < blockDim.x; s *= 2){
-        int index = 2 * s * tid;
-        if (index < blockDim.x){
-            sdata[index] += sdata[index + s];
+    T *shared_data = shared.getPointer();
+    int i = blockIdx.x * (blockDim.x * 2) + threadIdx.x;
+
+    T end_sum = (i < n) ? in_vector[i] : 0;
+
+    if (i + blockDim.x < n) end_sum += in_vector[i + blockDim.x];
+    shared_data[threadIdx.x] = end_sum;
+
+    for (int pos = blockDim.x / 2; pos>0; pos >>= 1)
+    {
+        if (threadIdx.x < pos){
+            shared_data[threadIdx.x] = end_sum = end_sum +
+              shared_data[threadIdx.x + pos];
         }
     }
-    if (tid == 0) g_odata[blockIdx.x] = sdata[0];
-  }
+    if (threadIdx.x == 0){
+      sum[blockIdx.x] = end_sum;
+    }
+}
+
 
   template <typename T>
   Vector<T> GpuLogisticRegression<T>::GpuFit(const Matrix<T> &xin, const Vector<T> &y,
