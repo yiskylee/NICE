@@ -214,6 +214,25 @@ namespace Nice {
     }
 
   template <typename T>
+  __global__ void reduce(T *g_idata, T *g_odata, unsigned int n){
+    // Handle to thread block group
+    SharedMemory<T> shared;
+    T *sdata = shared.getPointer();
+    // load shared mem
+    unsigned int tid = threadIdx.x;
+    unsigned int i = blockIdx.x*blockDim.x + threadIdx.x;
+    sdata[tid] = (i < n) ? g_idata[i] : 0;
+    // do reduction in shared mem
+    for (unsigned int s=1; s < blockDim.x; s *= 2){
+        int index = 2 * s * tid;
+        if (index < blockDim.x){
+            sdata[index] += sdata[index + s];
+        }
+    }
+    if (tid == 0) g_odata[blockIdx.x] = sdata[0];
+  }
+
+  template <typename T>
   Vector<T> GpuLogisticRegression<T>::GpuFit(const Matrix<T> &xin, const Vector<T> &y,
     const Matrix<T> &predict_inputs, int iterations, T alpha){
       Vector<T> gradient;
@@ -232,7 +251,7 @@ namespace Nice {
       Vector<T> h_temp(xin.rows());
       Vector<T> h_gradient(xin.cols() + 1);
       Vector<T> h_theta(xin.cols() + 1);
-
+      T h_sum;
       const T * h_xin = &xin(0);
       const T * h_y = &y(0);
       const T * h_xin_trans = &xin_trans(0);
@@ -252,6 +271,8 @@ namespace Nice {
       CUDA_CALL(cudaMemcpy(d_xin_trans, h_xin_trans, xin_trans.size() * sizeof(T),
         cudaMemcpyHostToDevice));
 
+      T * d_theta;
+
       T * d_temp;
       CUDA_CALL(cudaMalloc(&d_temp, xin.rows() * sizeof(T)));
       CUDA_CALL(cudaMemset(d_temp, 0, xin.rows() * sizeof(T)));
@@ -264,35 +285,48 @@ namespace Nice {
       CUDA_CALL(cudaMalloc(&d_end, xin.cols() * sizeof(T)));
       CUDA_CALL(cudaMemset(d_end, 0, xin.cols() * sizeof(T)));
 
+      T * d_sum;
+      CUDA_CALL(cudaMalloc(&d_sum, sizeof(T)));
+      CUDA_CALL(cudaMemset(d_end, 0, sizeof(T)));
+
       T * d_bottom_theta;
 
 
       dim3 dimBlock(BLOCK_SIZE);
       dim3 dimGrid(std::ceil((T)xin.rows() / (BLOCK_SIZE)));
 
+      dim3 dimBlockTrans(BLOCK_SIZE);
+      dim3 dimGridTrans(std::ceil((T)(xin.cols() - 1) / (BLOCK_SIZE)));
+
       for (int i = 0; i < iterations; i++) {
         bottom_theta = theta.bottomRows(theta.rows() - 1);
         CUDA_CALL(cudaMalloc(&d_bottom_theta, xin.cols() * sizeof(T)));
         CUDA_CALL(cudaMemcpy(d_bottom_theta, &bottom_theta(0), xin.cols() * sizeof(T),
           cudaMemcpyHostToDevice));
-
-        CudaGlobalKernel<<<dimGrid, dimBlock, BLOCK_SIZE * sizeof(T)>>>(d_xin, d_bottom_theta, d_result, xin.rows(), xin.cols());
-
         CUDA_CALL(cudaDeviceSynchronize());
 
+        CudaGlobalKernel<<<dimGrid, dimBlock, BLOCK_SIZE * sizeof(T)>>>(d_xin, d_bottom_theta, d_result, xin.rows(), bottom_theta.rows());
 
         preMultiply<<<dimGrid,dimBlock>>>(d_result, d_y, d_temp, theta(0));
 
-        CudaGlobalKernel<<<dimGrid, dimBlock, BLOCK_SIZE * sizeof(T)>>>(d_xin_trans, d_temp, d_end, xin.cols(), xin.rows());
-
         CUDA_CALL(cudaDeviceSynchronize());
-
+        CudaGlobalKernel<<<dimGridTrans, dimBlockTrans, BLOCK_SIZE * sizeof(T)>>>(d_xin_trans, d_temp, d_end, bottom_theta.rows(), xin.rows());
 
         CUDA_CALL(cudaMemcpy(&h_end(0), d_end, xin.cols() * sizeof(T), cudaMemcpyDeviceToHost));
 
         gradient.bottomRows(gradient.rows() - 1) = h_end;
 
-        gradient(0) = theta.sum();
+
+        CUDA_CALL(cudaMalloc(&d_theta, theta.size() * sizeof(T)));
+        CUDA_CALL(cudaMemcpy(d_theta, &theta(0), theta.size() * sizeof(T),
+          cudaMemcpyHostToDevice));
+
+        reduce<<< dimGrid, dimBlock, BLOCK_SIZE * sizeof(T)>>>(d_theta, d_sum, theta.size());
+
+        CUDA_CALL(cudaMemcpy(&h_sum, d_sum, sizeof(T), cudaMemcpyDeviceToHost));
+
+        gradient(0) = h_sum;
+
         theta = theta - ((alpha/ y.size()) * gradient);
       }
 
