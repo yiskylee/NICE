@@ -38,37 +38,23 @@ namespace Nice {
 template<typename T>
 class KMeans {
  public:
-//  void Fit1(const Matrix<T> &input_data, int k) {
-//    int num_features = input_data.cols();
-//    int num_samples = input_data.rows();
-//    typedef dlib::matrix<T> sample_type;
-//    typedef dlib::radial_basis_kernel<sample_type> kernel_type;
-//    std::vector<sample_type> samples;
-//    std::vector<sample_type> initial_centers;
-//    sample_type m;
-//    m.set_size(num_features, 1);
-//    for (long i = 0; i < num_samples; i++) {
-//      for (long j = 0; j < num_features; j++)
-//        m(j) = input_data(i, j);
-//      samples.push_back(m);
-//    }
-//    dlib::kcentroid<kernel_type> kc(kernel_type(0.01), 0.0001, 20);
-//    dlib::kkmeans<kernel_type> km(kc);
-//    km.set_number_of_centers(k);
-//    dlib::pick_initial_centers(k, initial_centers, samples, km.get_kernel());
-//    km.train(samples, initial_centers);
-////    Vector<T> assignments(num_samples);
-//    labels_ = Vector<T>::Zero(num_samples);
-//    for (long i = 0; i < num_samples; i++) {
-////      std::cout << samples[i] << std::endl;
-//      labels_(i) = km(samples[i]);
-//    }
-//  }
-
   void Fit(const Matrix<T> &input_data, int k) {
     k_ = k;
     centers_.resize(input_data.cols(), k_);
-    Run(input_data.transpose());
+    T ref_sse = std::numeric_limits<T>::infinity();
+    Vector<T> running_labels = Vector<T>::Zero(input_data.cols());
+    Vector<T> running_centers = Vector<T>::Zero(k);
+    for (unsigned int round = 0; round < n_init_; round++) {
+      Run(input_data.transpose());
+      T current_sse = GetSSE(input_data.transpose());
+      if (current_sse < ref_sse) {
+        ref_sse = current_sse;
+        running_labels = labels_;
+        running_centers = centers_;
+      }
+    }
+    labels_ = running_labels;
+    centers_ = running_centers;
   }
 
   void Run(const Matrix<T> &input_data) {
@@ -79,12 +65,9 @@ class KMeans {
       throw std::runtime_error(ss.str());
     }
     // Seed a random number generator
-    if (random_) {
-      unsigned int t = time(NULL);
-      srand48(t);
-    } else {
-      srand48(0);
-    }
+    unsigned int t = time(NULL);
+    srand48(t);
+    srand(t);
     KMeansPPInit(input_data);
 
     // We must store the labels at the previous iteration to
@@ -107,6 +90,14 @@ class KMeans {
       old_labels = labels_;
       iter++;
     } while (changed);
+  }
+  T GetSSE(const Matrix<T> &input_data) {
+    T sse = 0.0;
+    for (unsigned int i = 0; i < input_data.cols(); i++) {
+      sse += (centers_.col(labels_(i)) - input_data.col(i)).squaredNorm();
+    }
+    sse /= input_data.cols();
+    return sse;
   }
   unsigned int FindClosestCluster(const Vector<T>& query_point,
                                   unsigned int num_cluster) {
@@ -197,8 +188,7 @@ class KMeans {
 
   void KMeansPPInit(const Matrix<T> &input_data) {
     // Assign one center at random
-    unsigned int seed = 1234;
-    unsigned int random_id = rand_r(&seed) % input_data.cols();
+    unsigned int random_id = rand() % input_data.cols();
     Vector<T> p = input_data.col(random_id);
     centers_.col(0) = p;
     // Assign the rest of the initial centers using a
@@ -220,7 +210,11 @@ class KMeans {
   }
 
   void SetRandom(const bool r) {
-    this->Random = r;
+    this->random_ = r;
+  }
+
+  void SetNInit(int n) {
+    this->n_init_ = n;
   }
 
   Matrix <T> GetLabels() {
@@ -247,6 +241,8 @@ class KMeans {
  private:
   Vector<T> labels_;
   bool random_ = true;
+  unsigned int n_init_ = 10;
+  T sse_ = 0.0;
   // The number of clusters to find.
   unsigned int k_;
   // The current cluster centers.
