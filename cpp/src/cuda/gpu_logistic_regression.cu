@@ -243,7 +243,7 @@ __global__ void calculateTheta(T *d_gradient, T *d_theta, T factor, int theta_si
       Vector<T> h_temp(xin.rows());
       Vector<T> h_gradient(xin.cols() + 1);
       Vector<T> h_theta(xin.cols() + 1);
-      T h_sum;
+
       const T * h_xin = &xin(0);
       const T * h_y = &y(0);
       const T * h_xin_trans = &xin_trans(0);
@@ -274,14 +274,8 @@ __global__ void calculateTheta(T *d_gradient, T *d_theta, T factor, int theta_si
       CUDA_CALL(cudaMemset(d_result, 0, xin.rows() * sizeof(T)));
 
       T * d_end;
-      CUDA_CALL(cudaMalloc(&d_end, xin.cols() * sizeof(T)));
-      CUDA_CALL(cudaMemset(d_end, 0, xin.cols() * sizeof(T)));
-
-      T * d_sum;
-      CUDA_CALL(cudaMalloc(&d_sum, sizeof(T)));
-      CUDA_CALL(cudaMemset(d_end, 0, sizeof(T)));
-
-      T * d_gradient;
+      CUDA_CALL(cudaMalloc(&d_end, (xin.cols() + 1) * sizeof(T)));
+      CUDA_CALL(cudaMemset(d_end, 0, (xin.cols() + 1) * sizeof(T)));
 
       dim3 dimBlock(BLOCK_SIZE);
       dim3 dimGrid(std::ceil((T)xin.rows() / (BLOCK_SIZE)));
@@ -294,30 +288,11 @@ __global__ void calculateTheta(T *d_gradient, T *d_theta, T factor, int theta_si
         cudaMemcpyHostToDevice));
 
       for (int i = 0; i < iterations; i++) {
-
         CudaGlobalKernel<<<dimGrid, dimBlock, BLOCK_SIZE * sizeof(T)>>>(d_xin, d_theta + 1, d_result, xin.rows(), xin.cols());
-
         preMultiply<<<dimGrid,dimBlock>>>(d_result, d_y, d_temp, d_theta);
-
-        CudaGlobalKernel<<<dimGridTrans, dimBlockTrans, BLOCK_SIZE * sizeof(T)>>>(d_xin_trans, d_temp, d_end, xin.cols(), xin.rows());
-
-        CUDA_CALL(cudaMemcpy(&h_end(0), d_end, xin.cols() * sizeof(T), cudaMemcpyDeviceToHost));
-
-        gradient.bottomRows(gradient.rows() - 1) = h_end;
-
-
-        reduce<<< dimGrid, dimBlock, BLOCK_SIZE * sizeof(T)>>>(d_theta, d_sum, theta.size());
-
-        CUDA_CALL(cudaMemcpy(&h_sum, d_sum, sizeof(T), cudaMemcpyDeviceToHost));
-
-        gradient(0) = h_sum;
-
-        CUDA_CALL(cudaMalloc(&d_gradient, gradient.size() * sizeof(T)));
-        CUDA_CALL(cudaMemcpy(d_gradient, &gradient(0), gradient.size() * sizeof(T),
-          cudaMemcpyHostToDevice));
-
-        calculateTheta<<< dimGrid, dimBlock>>>(d_gradient, d_theta, alpha/ y.size(), theta.size());
-
+        reduce<<< dimGrid, dimBlock, BLOCK_SIZE * sizeof(T)>>>(d_theta, d_end, theta.size());
+        CudaGlobalKernel<<<dimGridTrans, dimBlockTrans, BLOCK_SIZE * sizeof(T)>>>(d_xin_trans, d_temp, d_end + 1, xin.cols(), xin.rows());
+        calculateTheta<<< dimGrid, dimBlock>>>(d_end, d_theta, alpha/ y.size(), theta.size());
       }
 
       CUDA_CALL(cudaMemcpy(&theta(0), d_theta, theta.size() * sizeof(T), cudaMemcpyDeviceToHost));
