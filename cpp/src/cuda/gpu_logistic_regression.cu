@@ -99,9 +99,9 @@ namespace Nice {
   }
 
   template <typename T>
-  __global__ void preMultiply(T * d_result, T *d_y, T *d_temp, T theta_0){
+  __global__ void preMultiply(T * d_result, T *d_y, T *d_temp, T *d_theta){
     int col = blockIdx.x * blockDim.x + threadIdx.x;
-    T value = d_result[col] + theta_0;
+    T value = d_result[col] + d_theta[0];
     d_temp[col] = h(value) - d_y[col];
   }
 
@@ -289,13 +289,16 @@ __global__ void calculateTheta(T *d_gradient, T *d_theta, T factor, int theta_si
       dim3 dimBlockTrans(BLOCK_SIZE);
       dim3 dimGridTrans(std::ceil((T)(xin.cols() - 1) / (BLOCK_SIZE)));
 
+      CUDA_CALL(cudaMalloc(&d_theta, theta.size() * sizeof(T)));
+      CUDA_CALL(cudaMemcpy(d_theta, &theta(0), theta.size() * sizeof(T),
+        cudaMemcpyHostToDevice));
+
       for (int i = 0; i < iterations; i++) {
-        CUDA_CALL(cudaMalloc(&d_theta, theta.size() * sizeof(T)));
-        CUDA_CALL(cudaMemcpy(d_theta, &theta(0), theta.size() * sizeof(T),
-          cudaMemcpyHostToDevice));
 
         CudaGlobalKernel<<<dimGrid, dimBlock, BLOCK_SIZE * sizeof(T)>>>(d_xin, d_theta + 1, d_result, xin.rows(), xin.cols());
-        preMultiply<<<dimGrid,dimBlock>>>(d_result, d_y, d_temp, theta(0));
+
+        preMultiply<<<dimGrid,dimBlock>>>(d_result, d_y, d_temp, d_theta);
+
         CudaGlobalKernel<<<dimGridTrans, dimBlockTrans, BLOCK_SIZE * sizeof(T)>>>(d_xin_trans, d_temp, d_end, xin.cols(), xin.rows());
 
         CUDA_CALL(cudaMemcpy(&h_end(0), d_end, xin.cols() * sizeof(T), cudaMemcpyDeviceToHost));
@@ -315,8 +318,9 @@ __global__ void calculateTheta(T *d_gradient, T *d_theta, T factor, int theta_si
 
         calculateTheta<<< dimGrid, dimBlock>>>(d_gradient, d_theta, alpha/ y.size(), theta.size());
 
-        CUDA_CALL(cudaMemcpy(&theta(0), d_theta, theta.size() * sizeof(T), cudaMemcpyDeviceToHost));
       }
+
+      CUDA_CALL(cudaMemcpy(&theta(0), d_theta, theta.size() * sizeof(T), cudaMemcpyDeviceToHost));
 
       CUDA_CALL(cudaFree(d_xin));
       CUDA_CALL(cudaFree(d_y));
