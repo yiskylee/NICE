@@ -179,7 +179,7 @@ namespace Nice {
       }
     }
     __syncthreads();
-    d_y[threadCol + (blockRow * BLOCK_SIZE)] += sum;
+    d_y[threadCol + (blockRow * BLOCK_SIZE)] = sum;
   }
 
     template <typename T>
@@ -288,10 +288,14 @@ __global__ void calculateTheta(T *d_gradient, T *d_theta, T factor, int theta_si
         cudaMemcpyHostToDevice));
 
       for (int i = 0; i < iterations; i++) {
-        CudaGlobalKernel<<<dimGrid, dimBlock, BLOCK_SIZE * sizeof(T)>>>(d_xin, d_theta + 1, d_result, xin.rows(), xin.cols());
+        CUDA_CALL(cudaDeviceSynchronize());
+        CudaSharedKernel<<<dimGrid, dimBlock, BLOCK_SIZE * sizeof(T)>>>(d_xin, d_theta + 1, d_result, xin.rows(), xin.cols());
+        CUDA_CALL(cudaDeviceSynchronize());
         preMultiply<<<dimGrid,dimBlock>>>(d_result, d_y, d_temp, d_theta);
         reduce<<< dimGrid, dimBlock, BLOCK_SIZE * sizeof(T)>>>(d_theta, d_end, theta.size());
-        CudaGlobalKernel<<<dimGridTrans, dimBlockTrans, BLOCK_SIZE * sizeof(T)>>>(d_xin_trans, d_temp, d_end + 1, xin.cols(), xin.rows());
+        CUDA_CALL(cudaDeviceSynchronize());
+        CudaSharedKernel<<<dimGridTrans, dimBlockTrans, BLOCK_SIZE * sizeof(T)>>>(d_xin_trans, d_temp, d_end + 1, xin.cols(), xin.rows());
+        CUDA_CALL(cudaDeviceSynchronize());
         calculateTheta<<< dimGrid, dimBlock>>>(d_end, d_theta, alpha/ y.size(), theta.size());
       }
 
@@ -299,7 +303,11 @@ __global__ void calculateTheta(T *d_gradient, T *d_theta, T factor, int theta_si
 
       CUDA_CALL(cudaFree(d_xin));
       CUDA_CALL(cudaFree(d_y));
-
+      CUDA_CALL(cudaFree(d_xin_trans));
+      CUDA_CALL(cudaFree(d_theta));
+      CUDA_CALL(cudaFree(d_temp));
+      CUDA_CALL(cudaFree(d_result));
+      CUDA_CALL(cudaFree(d_end));
       // Predict
       Vector<T> h_predictions(predict_inputs.rows());
 
