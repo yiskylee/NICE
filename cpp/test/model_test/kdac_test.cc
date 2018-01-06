@@ -51,7 +51,6 @@ class KDACTest : public ::testing::Test {
   Nice::Matrix<T> data_matrix_;
   Nice::Matrix<T> existing_y_;
 
-
   virtual void SetUp() {
   }
 

@@ -88,5 +88,3 @@ TYPED_TEST(KMeansTest, CPU5_10_3) {
   this->labels_ = this->kmeans_->GetLabels();
   //std::cout << this->labels_ << std::endl;
 }
-
-

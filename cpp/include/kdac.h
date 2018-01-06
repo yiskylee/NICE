@@ -68,8 +68,8 @@ class KDAC {
       u_converge_(false),
       w_converge_(false),
       u_w_converge_(false),
-      threshold1_(0.01),
-      threshold2_(0.01),
+      threshold1_(0.0001),
+      threshold2_(0.001),
       x_matrix_(),
       w_matrix_(),
       pre_w_matrix_(),
@@ -96,7 +96,7 @@ class KDAC {
       max_time_exceeded_(false),
       max_time_(10),
       method_("KDAC"),
-      vectorization_(false),
+      vectorization_(true),
       first_time_gen_u_(true) {}
 
   ~KDAC() {}
@@ -136,6 +136,8 @@ class KDAC {
   }
 
   void SetVerbose(bool verbose) { verbose_ = verbose; }
+
+  void SetVectorization(bool vectorization) { vectorization_ = vectorization; }
 
   void SetDebug(bool debug) { debug_ = debug; }
 
@@ -217,7 +219,12 @@ class KDAC {
     // kernel matrix
     // Because Fit(X) is called when there is no w_matrix generated
     // the kernel matrix is then just the Kernel of X itself
-    GenKernelMatrix(x_matrix_);
+    // If vectorization is enabled,
+    // Q matrix is generated along with the Kernel Matrix
+    if (vectorization_)
+      GenKernelAndQMatrix(x_matrix_);
+    else
+      GenKernelMatrix(x_matrix_);
     GenDegreeMatrix();
     PROFILE(OptimizeU(), profiler_.u);
     PROFILE(RunKMeans(), profiler_.kmeans);
@@ -253,7 +260,6 @@ class KDAC {
         std::cerr << "Use either KDAC or ISM as the method, exiting\n";
         exit(1);
       }
-
       u_converge_ = util::CheckConverged(u_matrix_, pre_u_matrix_, threshold2_);
       w_converge_ = util::CheckConverged(w_matrix_, pre_w_matrix_, threshold2_);
       u_w_converge_ = u_converge_ && w_converge_;
@@ -368,6 +374,7 @@ class KDAC {
   Matrix<T> u_matrix_normalized_;  // Row-wise normalized U
   Matrix<T> l_matrix_;  // D^(-1/2) * K * D^(-1/2)
   Matrix<T> h_matrix_;  // Centering matrix (n by n)
+  Matrix<T> psi_matrix_;  // Psi used in vectorized ISM
   Matrix<T> gamma_matrix_;  // The nxn gamma matrix used in gamma_ij
   Matrix<T> g_of_w_;  // g(w) for updating gradient
   // in formula 5
@@ -385,6 +392,10 @@ class KDAC {
   std::string method_;
   // Vetorize ISM or not
   bool vectorization_;
+  // Q matrix when we do ISM vectorization
+  Matrix<T> q_matrix_;
+  // Q matrix transpose
+  Matrix<T> qt_matrix_;
   // If this is the first time to generate a matrix U
   // If this is true, it means the kernel matrix is generated directly from
   // the input matrix X
@@ -466,6 +477,23 @@ class KDAC {
     }
   }
 
+  void GenKernelAndQMatrix(Matrix<T> &input) {
+    if (kernel_type_ == kGaussianKernel) {
+      float sigma_sq = constant_ * constant_;
+      int q_i = 0;
+      for (int i = 0; i < n_; i++) {
+        for (int j = 0; j < n_; j++) {
+          Vector<T> delta_ij = input.row(i) - input.row(j);
+          T i_j_dist = delta_ij.squaredNorm();
+          k_matrix_(i, j) = exp(-i_j_dist / (2 * sigma_sq));
+          q_matrix_.row(q_i) = delta_ij;
+          q_i++;
+        }
+      }
+      qt_matrix_ = q_matrix_.transpose();
+    }
+  }
+
   // Check if q is not bigger than c
   void CheckQD() {
     if (q_ > d_) {
@@ -477,6 +505,7 @@ class KDAC {
   /// This function runs KMeans on the normalized U
   void RunKMeans() {
     KMeans<T> kms;
+    kms.SetNInit(20);
     T eps = std::numeric_limits<T>::min();
     // Add a very small number to the l2 norm of each row in case it is 0
     u_matrix_normalized_ = u_matrix_.array().colwise() /
@@ -484,6 +513,7 @@ class KDAC {
 //    util::Print(u_matrix_normalized_.block(0, 0, 5, c_), "U_Normalized");
     kms.Fit(u_matrix_normalized_, c_);
     clustering_result_ = kms.GetLabels();
+
     if (y_matrix_.cols() == 0) {
       // When this is calculating Y0
       y_matrix_ = Matrix<T>::Zero(n_, c_);
@@ -505,9 +535,17 @@ class KDAC {
     if (vectorization_) {
       // Vectorization solution, where we convert the conventional for loop
       // solution to matrix multiplications
-      Matrix<T> psi = h_matrix_ * (u_matrix_ * u_matrix_.transpose() -
-          k_matrix_y_ * lambda_) * h_matrix_;
-      return psi;
+      float sigma_sq = pow(constant_, 2);
+      Matrix<T> ddt = d_i_ * d_i_.transpose();
+      Matrix<T> tau = ddt.cwiseProduct(psi_matrix_).cwiseProduct(k_matrix_);
+      *objective = -tau.sum();
+//      Vector<T> test_vector = Vector<T>::Constant(n_*n_, 1);
+      Eigen::Map<Vector<T>> tau_map(tau.data(), tau.size());
+//      Vector<T> tau_vector = tau_map;
+//      qt_matrix_.rowwise() *= test_vector.transpose();
+      Matrix<T> phi_w0 = (q_matrix_.array().colwise() * tau_map.array()).matrix().transpose() * q_matrix_;
+      Matrix<T> phi_w = phi_w0.array() / sigma_sq;
+      return phi_w;
     } else {
       // For loop solution
       float sigma_sq = pow(constant_, 2);
@@ -527,9 +565,8 @@ class KDAC {
       }
       phi_w /= sigma_sq;
       if (debug_) {
-        util::Print(phi_w, "phi_w");
+//        util::Print(phi_w, "phi_w");
       }
-
       return phi_w;
     }
   }
@@ -552,10 +589,6 @@ class KDAC {
               [&v](size_t t1, size_t t2) { return v[t1] < v[t2]; });
     for (int i = 0; i < q_; i++)
       w_matrix_.col(i) = solver.eigenvectors().col(idx[i]).real();
-
-    if (debug_) {
-      util::Print(w_matrix_.block(0, 0, 4, w_matrix_.cols()), "W_matrix");
-    }
   }
 
   void OptimizeU(void) {
@@ -571,7 +604,8 @@ class KDAC {
 //    l_matrix_ = d_matrix_to_the_minus_half_ *
 //        k_matrix_ * d_matrix_to_the_minus_half_;
 
-    Eigen::EigenSolver<Matrix<T>> solver(l_matrix_);
+//    Eigen::EigenSolver<Matrix<T>> solver(l_matrix_);
+    Eigen::SelfAdjointEigenSolver<Matrix<T>> solver(l_matrix_);
     Vector<T> eigen_values = solver.eigenvalues().real();
 
 
@@ -598,30 +632,27 @@ class KDAC {
 //      }
 //      last_eigen_value = eigen_values(idx[i]);
 //    }
+
+    // Hack to test using all 3 eigen vectors for matrix U
+    int c_for_u = c_;
+    u_matrix_ = Matrix<T>::Zero(n_, c_for_u);
     Vector<T> eigen_vector = Vector<T>::Zero(n_);
-    for (int i = 0; i < c_; i++) {
+    for (int i = 0; i < c_for_u; i++) {
       eigen_vector = solver.eigenvectors().col(idx[i]).real();
       u_matrix_.col(i) = eigen_vector;
     }
 
-#ifdef EIGEN_USE_LAPACKE
-    std::cout << "LAPACK ENABLED" << std::endl;
-#else
-    std::cout << "LAPACK DISABLED" << std::endl;
-#endif
-
     if (debug_) {
-//      int num_col = 5;
-//      Matrix<T> test_mat = Matrix<T>::Zero(n_, num_col);
-//      for (int i = 0; i < num_col; i++) {
-//        eigen_vector = solver.eigenvectors().col(idx[i]).real();
-//        test_mat.col(i) = eigen_vector;
-//      }
-//      printf("Eigen Values: \n");
+      int num_col = 5;
+      Matrix<T> test_mat = Matrix<T>::Zero(n_, num_col);
+      for (int i = 0; i < num_col; i++) {
+        eigen_vector = solver.eigenvectors().col(idx[i]).real();
+        test_mat.col(i) = eigen_vector;
+      }
 //      for (int i = 0; i < num_col; i++)
 //        printf("%f, ", eigen_values(idx[i]));
-//      util::Print(test_mat, "U");
-//      exit(-1);
+//      util::Print(test_mat, "\nU");
+      util::ToFile(test_mat, "/home/xiangyu/Dropbox/git_project/NICE/python/test_kdac/mklU.txt");
     }
 //    util::Print(u_matrix_.block(0, 0, n_, c_), "U");
 //    exit(-1);
@@ -634,6 +665,8 @@ class KDAC {
 
   virtual void OptimizeWISM(void) {
     Matrix<T> pre_w_matrix;
+    psi_matrix_ = h_matrix_ * (u_matrix_ * u_matrix_.transpose() -
+        k_matrix_y_ * lambda_) * h_matrix_;
     bool converge = false;
     int i = 0;
     int max_iter = 10;
@@ -641,20 +674,36 @@ class KDAC {
       pre_w_matrix = w_matrix_;
       T objective = 0.0;
       Matrix<T> phi_w = GenPhiOfW(&objective);
-      if (debug_)
-        std::cout << "GenPhiOfW Done, Cost: " << objective << std::endl;
-      UpdateW(phi_w);
-      converge = util::CheckConverged(w_matrix_, pre_w_matrix, threshold2_);
-      if (i >= max_iter) {
-        std::cout << "Still not converging after "<< max_iter
-                  <<" iterations, exiting...\n";
-        exit(-1);
+      if (debug_) {
+        std::cout << "Round " << i << ", ";
+        std::cout << "Cost: " << objective;
+//        util::ToFile(phi_w, "/home/xiangyu/Dropbox/git_project/NICE/python/test_kdac/mklPhi" + std::to_string(i) + ".csv");
       }
-      if (debug_)
-        std::cout << "Round " << i++ << ", ";
+      UpdateW(phi_w);
+      if (debug_) {
+//        util::ToFile(w_matrix_, "/home/xiangyu/Dropbox/git_project/NICE/python/test_kdac/mklW" + std::to_string(i) + ".csv");
+      }
+      converge = util::CheckConverged(w_matrix_, pre_w_matrix, threshold1_);
+      if (!converge) {
+        Matrix<T> projected_matrix = x_matrix_ * w_matrix_;
+        GenKernelMatrix(projected_matrix);
+        GenDegreeMatrix();
+        std::cout << std::endl;
+      }
+      i += 1;
+      if (i >= max_iter) {
+        break;
+      }
     }
-    if (debug_)
-      std::cout << "\nRound " << i++ << ": Converged" << std::endl;
+    if (debug_) {
+      if (converge) {
+        std::cout << " Converged" << std::endl;
+      } else {
+        std::cout << "Not converging after "<< max_iter
+                  <<" iterations, but we jump out of the loop anyway\n";
+      }
+    }
+
   }
 
   virtual void OptimizeW(void) {
@@ -780,6 +829,10 @@ class KDAC {
     k_matrix_ = Matrix<T>::Zero(n_, n_);
     u_matrix_ = Matrix<T>::Zero(n_, c_);
     max_time_exceeded_ = false;
+
+    // Generate Q matrix if vectorization is true
+    if (vectorization_)
+      q_matrix_ = Matrix<T>::Zero(n_*n_, d_);
   }
 
   // Initialization for generating alternative views with a given Y

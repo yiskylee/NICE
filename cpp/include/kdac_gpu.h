@@ -32,6 +32,7 @@
 #ifndef CPP_INCLUDE_KDAC_GPU_H
 #define CPP_INCLUDE_KDAC_GPU_H
 
+#ifdef CUDA_AND_GPU
 
 #include "include/kdac.h"
 #include "include/gpu_util.h"
@@ -159,6 +160,7 @@ class KDACGPU: public KDAC<T> {
     KDAC<T>::OptimizeW();
   }
 };
-}  // namespace NICE
+}  // namespace Nice
 
-#endif  // CPP_INCLUDE_KDAC_GPU_H
+#endif  // CUDA_AND_GPU
+#endif  // CPP_INCLUDE_KDAC_GPU_H_

@@ -35,16 +35,18 @@ include_directories(./build/gtest/src/googletest/googletest/include)
 #  message(STATUS "dir='${dir}'")
 #endforeach()
 
-set(enable-mkl)
-option (enable-mkl "Compile NICE library with MKL" OFF)
+set(enable-intelmkl)
+option (enable-intelmkl "Compile NICE library with Intel MKL" OFF)
+set(enable-condamkl)
+option (enable-condamkl "Compile NICE library with Intel MKL in Anaconda" OFF)
 
 #add_definitions(-DEIGEN_USE_LAPACKE)
 #find_library(OPENBLAS openblas HINTS /home/xiangyu/anaconda/lib)
 
-# Locate MKL
-if (enable-mkl AND DEFINED ENV{MKLROOT})
+# Locate MKL in Intel dir
+if (enable-intelmkl AND DEFINED ENV{MKLROOT})
 # AND EXISTS ${MKLROOT})
-  message(STATUS "MKL Found")
+  message(STATUS "INTEL MKL Found")
 #  message(STATUS ${MKLROOT})
   message(STATUS $ENV{MKLROOT})
   add_definitions(-m64 -DEIGEN_USE_MKL_ALL -Wno-unused-local-typedefs)
@@ -52,21 +54,37 @@ if (enable-mkl AND DEFINED ENV{MKLROOT})
   find_library(MKL_LP64 mkl_intel_lp64 HINTS $ENV{MKLROOT}/lib/intel64)
   find_library(MKL_CORE mkl_core HINTS $ENV{MKLROOT}/lib/intel64)
   find_library(MKL_THREAD mkl_intel_thread HINTS $ENV{MKLROOT}/lib/intel64)
-  find_library(GNU_THREAD mkl_gnu_thread HINTS $ENV{MKLROOT}/lib/intel64)
+#  find_library(GNU_THREAD mkl_gnu_thread HINTS $ENV{MKLROOT}/lib/intel64)
   get_filename_component(INTEL_DIR $ENV{MKLROOT} DIRECTORY)
   message(STATUS INTEL_DIR: ${INTEL_DIR})
   find_library(INTEL_OMP iomp5 HINTS ${INTEL_DIR}/compiler/lib/intel64_lin)
 #  find_library(INTEL_OMP iomp5 HINTS ${MKLROOT}/lib/intel64)
 #  message(STATUS "INTEL_DIR: ${INTEL_DIR}")
 else()
-  message(STATUS "MKL NOT FOUND")
+  message(STATUS "INTEL MKL NOT FOUND")
 endif()
 
+# Locate MKL in Anaconda
+if (enable-condamkl AND DEFINED ENV{MKLROOTCONDA})
+  message(STATUS "CONDA MKL Found")
+  message(STATUS $ENV{MKLROOTCONDA})
+  add_definitions(-m64 -DEIGEN_USE_MKL_ALL -Wno-unused-local-typedefs)
+  include_directories($ENV{MKLROOT}/include)
+  find_library(MKL_LP64 mkl_intel_lp64 HINTS $ENV{MKLROOTCONDA})
+  find_library(MKL_CORE mkl_core HINTS $ENV{MKLROOTCONDA})
+  find_library(MKL_THREAD mkl_intel_thread HINTS $ENV{MKLROOTCONDA})
+#  find_library(GNU_THREAD mkl_gnu_thread HINTS $ENV{MKLROOT}/lib/intel64)
+  find_library(INTEL_OMP iomp5 HINTS $ENV{MKLROOTCONDA})
+else()
+  message(STATUS "CONDA MKL NOT FOUND")
+endif()
 # Locate CUDA package
 find_package(CUDA)
 
 # Detect GPU device
+# Dirty Hack to disable GPU
 if(CUDA_FOUND)
+  message("CUDA_FOUND")
   try_run(RUN_RESULT_VAR COMPILE_RESULT_VAR
     ${CMAKE_BINARY_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/tools/has_cuda_gpu.c
@@ -82,23 +100,25 @@ if(CUDA_FOUND)
   # COMPILE_RESULT_VAR is TRUE when compile succeeds
   # RUN_RESULT_VAR is zero when a GPU is found
   if(COMPILE_RESULT_VAR AND NOT RUN_RESULT_VAR)
-      set(CUDA_HAVE_GPU TRUE CACHE BOOL "Whether CUDA-capable GPU is present")
+      set(CUDA_AND_GPU TRUE CACHE BOOL "Whether CUDA-capable GPU is present")
   else()
-      set(CUDA_HAVE_GPU FALSE CACHE BOOL "Whether CUDA-capable GPU is present")
+      set(CUDA_AND_GPU FALSE CACHE BOOL "Whether CUDA-capable GPU is present")
   endif()
 else()
-  set(CUDA_HAVE_GPU FALSE CACHE BOOL "Whether CUDA-capable GPU is present")
+  set(CUDA_AND_GPU FALSE CACHE BOOL "Whether CUDA-capable GPU is present")
 endif()
 
+# Dirty hack to not compile CUDA code
+set(CUDA_AND_GPU FALSE)
 # Build NICE library with/without CUDA
-if (CUDA_HAVE_GPU)
+if (CUDA_AND_GPU)
 #   Print messge to indicate that CUDA exists
   message(STATUS "GPU device exists")
   # Set source files
   file(GLOB_RECURSE SOURCES RELATIVE ${CMAKE_SOURCE_DIR} src/*.cc src/*.cu)
 
   # Add definition
-  add_definitions(-DNEED_CUDA)
+  add_definitions(-DCUDA_AND_GPU)
 
   #include the built-in findCUDA cmake scripts
   include(FindCUDA)
@@ -129,7 +149,7 @@ if (CUDA_HAVE_GPU)
                         ${MKL_LP64} 
                         ${MKL_CORE} 
                         ${MKL_THREAD}
-                        ${GNU_THREAD}
+                        #${GNU_THREAD}
                         ${INTEL_OMP}
                         pthread m dl gomp)
 
@@ -164,7 +184,7 @@ if (enable-test)
   include_directories(${GTEST_INCLUDE_DIRS})
 
   # Add source files according to machine setup
-  if (CUDA_HAVE_GPU)
+  if (CUDA_AND_GPU)
     file(GLOB_RECURSE TEST_SRC_FILES RELATIVE
          ${PROJECT_SOURCE_DIR}
          test/cpu_operations_test/*.cc

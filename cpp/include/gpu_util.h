@@ -22,6 +22,8 @@
 #ifndef CPP_INCLUDE_GPU_UTIL_H_
 #define CPP_INCLUDE_GPU_UTIL_H_
 
+#ifdef CUDA_AND_GPU
+
 #include <cuda_runtime_api.h>
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
@@ -482,5 +484,5 @@ void GpuFrobeniusNorm(cublasHandle_t handle,
                                 double * a,
                                 double * c);
 }  // namespace Nice
-
+#endif  // CUDA_AND_GPU
 #endif  // CPP_INCLUDE_GPU_UTIL_H_

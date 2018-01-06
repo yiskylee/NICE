@@ -60,11 +60,13 @@ using VectorMap = Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic,
 template<typename T>
 class KDACInterface {
  public:
-  KDACInterface(std::string device_type) {
+  explicit KDACInterface(std::string device_type) {
     if (device_type == "cpu")
       kdac_ = std::make_shared<Nice::KDACCPU<T>>();
+#ifdef CUDA_AND_GPU
     else if (device_type == "gpu")
       kdac_ = std::make_shared<Nice::KDACGPU<T>>();
+#endif
   }
 
   ~KDACInterface() {}
@@ -99,6 +101,10 @@ class KDACInterface {
       } else if (strcmp("verbose", param) == 0) {
         bool verbose = boost::python::extract<double>(params["verbose"]);
         kdac_ -> SetVerbose(verbose);
+      } else if (strcmp("vectorization", param) == 0) {
+        bool vectorization =
+            boost::python::extract<double>(params["vectorization"]);
+        kdac_ -> SetVectorization(vectorization);
       } else if (strcmp("debug", param) == 0) {
         bool debug = boost::python::extract<double>(params["debug"]);
         kdac_ -> SetDebug(debug);

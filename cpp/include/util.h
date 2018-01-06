@@ -41,6 +41,7 @@
 #include <sstream>
 #include <vector>
 #include <math.h>
+#include <iomanip>
 
 #include "include/matrix.h"
 #include "include/vector.h"
@@ -216,7 +217,7 @@ void ToFile(const Matrix<T> a,
   if (output) {
     for (int i = 0; i < a.rows(); i++) {
       for (int j = 0; j < a.cols(); j++) {
-        output << a(i, j);
+        output << std::setprecision(8) << a(i, j);
         if (j == a.cols() - 1)
           output << std::endl;
         else
