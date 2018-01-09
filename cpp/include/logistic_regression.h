@@ -63,7 +63,7 @@ class LogisticRegression {
   ///
   /// \param input
   /// A Vector containing the theta to manually set the model
-  void setTheta(const Vector<T> &input) {
+  void SetTheta(const Vector<T> &input) {
     theta = input;
   }
 
@@ -71,13 +71,8 @@ class LogisticRegression {
   ///
   /// \return
   /// A Vector containing the current theta values
-  Vector<T> getTheta() {
+  Vector<T> GetTheta() {
     return theta;
-  }
-
-  Vector<T> truncate(Vector<T> input) {
-    Vector<T> small = (input * 100000).unaryExpr(std::ptr_fun<T,T>(std::floor));
-    return (small / 100000);
   }
 
   /// Given a set of features and parameters creates a vector of target outputs
@@ -107,7 +102,7 @@ class LogisticRegression {
   ///
   /// \param y
   /// Vector of target variables for each set of features
-  Vector<T> Fit(const Matrix<T> &xin, const Vector<T> &y, const Matrix<T> &inputs,
+  void Fit(const Matrix<T> &xin, const Vector<T> &y, const Matrix<T> &inputs,
     int iterations, T alpha){
     Vector<T> gradient, predictions;
     theta.resize(xin.cols() + 1);
@@ -121,13 +116,7 @@ class LogisticRegression {
         xin.transpose() * (h(x_theta_mult) - y);
       gradient(0) = theta.sum();
       theta = theta - ((alpha/ y.size()) * gradient);
-      predictions = Predict(inputs);
-      predictions = predictions.unaryExpr(std::ptr_fun<T,T>(std::round));
-      // if (((predictions - y).squaredNorm() / predictions.size()) <= .05){
-      //   i = iterations;
-      // }
     }
-    return predictions;
   }
 };
 }  // namespace Nice
