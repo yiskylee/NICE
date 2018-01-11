@@ -27,7 +27,6 @@
 
 #include <iostream>
 #include <cmath>
-#include <chrono>
 #include "include/gpu_util.h"
 
 namespace Nice {

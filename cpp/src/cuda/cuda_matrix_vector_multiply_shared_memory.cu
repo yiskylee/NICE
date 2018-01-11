@@ -100,7 +100,6 @@ namespace Nice {
       // Launch kernel here
       dim3 dimBlock(BLOCK_SIZE);
       dim3 dimGrid(std::ceil((T)m / (BLOCK_SIZE)));
-      printf("%i, %lf\n", BLOCK_SIZE, (std::ceil((T)m / (BLOCK_SIZE))));
       CudaSharedMVKernel<<<dimGrid, dimBlock, BLOCK_SIZE * sizeof(T)>>>
         (d_a, d_x, d_y, m, k);
 

@@ -22,8 +22,6 @@
 #include "include/cuda_matrix_vector_multiply_shared_memory.h"
 #define BLOCK_SIZE 32
 
-using namespace std::chrono;
-
 namespace Nice {
 
   template <typename T>
