@@ -42,6 +42,8 @@ template<typename T>
 class LogisticRegression {
  private:
   Vector<T> theta;
+  T alpha_;
+  int iterations_;
   /// Calculates the hypothesis of a given input Vector
   ///
   /// \param input
@@ -57,6 +59,11 @@ class LogisticRegression {
 
  public:
   LogisticRegression() {
+  }
+
+  LogisticRegression(int in_block, int in_iterations, T in_alpha) {
+    iterations_ = in_iterations;
+    alpha_ = in_alpha;
   }
 
   /// Sets the theta for the model from an external Vector
@@ -75,6 +82,10 @@ class LogisticRegression {
     return theta;
   }
 
+  void SetAlpha(T in_alpha) {alpha_ = in_alpha;}
+  void SetIterations(int in_iterations) {iterations_ = in_iterations;}
+  T GetAlpha() {return alpha_;}
+  int GetIterations() {return iterations_;}
   /// Given a set of features and parameters creates a vector of target outputs
   ///
   /// \param inputs
@@ -102,20 +113,19 @@ class LogisticRegression {
   ///
   /// \param y
   /// Vector of target variables for each set of features
-  void Fit(const Matrix<T> &xin, const Vector<T> &y, const Matrix<T> &inputs,
-    int iterations, T alpha){
+  void Fit(const Matrix<T> &xin, const Vector<T> &y){
     Vector<T> gradient, predictions;
     theta.resize(xin.cols() + 1);
     gradient.resize(theta.rows());
     theta.setZero();
     gradient.setZero();
-    for (int i = 0; i < iterations; i++) {
+    for (int i = 0; i < iterations_; i++) {
       Vector<T> x_theta_mult = (xin * (theta.bottomRows(theta.rows() - 1)));
       x_theta_mult = x_theta_mult.array() + theta(0);
       gradient.bottomRows(gradient.rows() - 1) =
         xin.transpose() * (h(x_theta_mult) - y);
       gradient(0) = theta.sum();
-      theta = theta - ((alpha/ y.size()) * gradient);
+      theta = theta - ((alpha_/ y.size()) * gradient);
     }
   }
 };

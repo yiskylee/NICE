@@ -225,8 +225,7 @@ __global__ void calculateTheta(T *d_gradient, T *d_theta, T factor, int theta_si
 }
 
   template <typename T>
-  void GpuLogisticRegression<T>::GpuFit(const Matrix<T> &xin, const Vector<T> &y,
-    const Matrix<T> &predict_inputs, int iterations, T alpha){
+  void GpuLogisticRegression<T>::GpuFit(const Matrix<T> &xin, const Vector<T> &y){
       Vector<T> gradient;
       theta_.resize(xin.cols() + 1);
       gradient.resize(theta_.rows());
@@ -286,7 +285,7 @@ __global__ void calculateTheta(T *d_gradient, T *d_theta, T factor, int theta_si
       CUDA_CALL(cudaMemcpy(d_theta, &theta_(0), theta_.size() * sizeof(T),
         cudaMemcpyHostToDevice));
 
-      for (int i = 0; i < iterations; i++) {
+      for (int i = 0; i < iterations_; i++) {
         CUDA_CALL(cudaDeviceSynchronize());
         CudaGlobalKernel<<<dimGrid, dimBlock, block_size_ * sizeof(T)>>>(d_xin, d_theta + 1, d_result, xin.rows(), xin.cols());
         CUDA_CALL(cudaDeviceSynchronize());
@@ -295,7 +294,7 @@ __global__ void calculateTheta(T *d_gradient, T *d_theta, T factor, int theta_si
         CUDA_CALL(cudaDeviceSynchronize());
         CudaGlobalKernel<<<dimGridTrans, dimBlockTrans, block_size_ * sizeof(T)>>>(d_xin_trans, d_temp, d_end + 1, xin.cols(), xin.rows());
         CUDA_CALL(cudaDeviceSynchronize());
-        calculateTheta<<< dimGrid, dimBlock>>>(d_end, d_theta, alpha/ y.size(), theta_.size());
+        calculateTheta<<< dimGrid, dimBlock>>>(d_end, d_theta, alpha_/ y.size(), theta_.size());
       }
 
       CUDA_CALL(cudaMemcpy(&theta_(0), d_theta, theta_.size() * sizeof(T), cudaMemcpyDeviceToHost));
@@ -310,15 +309,13 @@ __global__ void calculateTheta(T *d_gradient, T *d_theta, T factor, int theta_si
   }
 
   template
-  void GpuLogisticRegression<float>::GpuFit(const Matrix<float> &xin, const Vector<float> &y,
-      const Matrix<float> &predict_inputs, int iterations, float alpha);
+  void GpuLogisticRegression<float>::GpuFit(const Matrix<float> &xin, const Vector<float> &y);
 
   template
   Vector<float> GpuLogisticRegression<float>::GpuPredict(const Matrix<float> &inputs);
 
   template
-  void GpuLogisticRegression<double>::GpuFit(const Matrix<double> &xin, const Vector<double> &y,
-      const Matrix<double> &predict_inputs, int iterations, double alpha);
+  void GpuLogisticRegression<double>::GpuFit(const Matrix<double> &xin, const Vector<double> &y);
 
   template
   Vector<double> GpuLogisticRegression<double>::GpuPredict(const Matrix<double> &inputs);

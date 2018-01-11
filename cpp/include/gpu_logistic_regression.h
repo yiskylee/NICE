@@ -34,7 +34,8 @@ class GpuLogisticRegression {
  private:
   Vector<T> theta_;
   int block_size_;
-  int alpha_;
+  T alpha_;
+  int iterations_;
   /// Calculates the hypothesis of a given input Vector
   ///
   /// \param input
@@ -52,9 +53,28 @@ class GpuLogisticRegression {
     block_size_ = 32;
   }
 
-  GpuLogisticRegression(int in_block, int iteations_, T alpha) {
-    block_size_ = inBlock;
+  GpuLogisticRegression(int in_block, int in_iterations, T in_alpha) {
+    block_size_ = in_block;
+    iterations_ = in_iterations;
+    alpha_ = in_alpha;
   }
+
+  void SetAlpha(T in_alpha) {
+    alpha_ = in_alpha;
+  }
+
+  void SetIterations(int in_iterations) {
+    iterations_ = in_iterations;
+  }
+
+  T GetAlpha() {
+    return alpha_;
+  }
+
+  int GetIterations() {
+    return iterations_;
+  }
+
   /// Sets the theta for the model from an external Vector
   ///
   /// \param input
@@ -67,8 +87,7 @@ class GpuLogisticRegression {
   /// A Vector containing the current theta values
   Vector<T> GetTheta() {return theta_;}
 
-  void GpuFit(const Matrix<T> &xin, const Vector<T> &y,
-      const Matrix<T> &predict_inputs, int iterations, T alpha);
+  void GpuFit(const Matrix<T> &xin, const Vector<T> &y);
 
   Vector<T> GpuPredict(const Matrix<T> &inputs);
 };

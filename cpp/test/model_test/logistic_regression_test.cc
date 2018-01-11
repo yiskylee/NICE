@@ -76,8 +76,9 @@ TYPED_TEST(LogisticRegressionTest, MatrixLogisticRegressionOneModel) {
           6.922, 1.771,
           8.675, -0.242,
           7.673, 3.508;
-  this->testModel1.Fit(this->training_x, this->training_y, this->predict_x, this->iterations,
-        this->alpha);
+  this->testModel1.SetIterations(this->iterations);
+  this->testModel1.SetAlpha(this->alpha);
+  this->testModel1.Fit(this->training_x, this->training_y);
   this->predictions = this->testModel1.Predict(this->predict_x);
   this->predictions.resize(10);
   std::cout << this->predictions << std::endl;

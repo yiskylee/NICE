@@ -20,30 +20,32 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef CPP_INCLUDE_CUDA_MATRIX_VECTOR_MULTIPLY_SHARED_H_
-#define CPP_INCLUDE_CUDA_MATRIX_VECTOR_MULTIPLY_SHARED_H_
+#ifndef CPP_INCLUDE_CUDA_MATRIX_VECTOR_MULTIPLY_SHARED_MEMORY_H_
+#define CPP_INCLUDE_CUDA_MATRIX_VECTOR_MULTIPLY_SHARED_MEMORY_H_
 
 #ifdef CUDA_AND_GPU
 
 #include <iostream>
-#include <chrono>
 #include <cmath>
+#include <chrono>
 #include "include/gpu_util.h"
-
-
 
 namespace Nice {
 
 template<typename T>
-class CudaSharedMVMultiply{
-  private:
-    int block_size;
-  public:
-    CudaSharedMVMultiply(int inBlock){block_size = inBlock;}
-    Vector<T> Multiply(const Matrix<T> &a, const Vector<T> &b);
-    Vector<T> MapMultiply(const Matrix<T> &a, const Vector<T> &b);
+class CudaSharedMVMultiply {
+ private:
+  int block_size;
+
+ public:
+  explicit CudaSharedMVMultiply(int inBlock) {
+     block_size = inBlock;
+  }
+
+  Vector<T> Multiply(const Matrix<T> &a, const Vector<T> &b);
+  Vector<T> MapMultiply(const Matrix<T> &a, const Vector<T> &b);
 };
 
 }  // namespace Nice
 #endif  // NEED_CUDA
-#endif  // CPP_INCLUDE_CUDA_MATRIX_VECTOR_MULTIPLY_SHARED_H_
+#endif  // CPP_INCLUDE_CUDA_MATRIX_VECTOR_MULTIPLY_SHARED_MEMORY_H_

@@ -1,4 +1,4 @@
- // The MIT License (MIT)
+// The MIT License (MIT)
 //
 // Copyright (c) 2016 Northeastern University
 //
@@ -75,8 +75,6 @@ class CudaSharedMVMultiplyTest : public ::testing::Test {
     // Create matrix
     a_ = Nice::Matrix<T>::Random(row_, col_);
     b_ = Nice::Vector<T>::Random(col_);
-    //std::cout << a_ << std::endl;
-    //std::cout << b_ << std::endl;
 
     Nice::CpuOperations<T> cpu_op;
     // Solve in CPU
