@@ -295,16 +295,21 @@ class KDAC {
     while (!u_w_converge_ && !max_time_exceeded_) {
       pre_u_matrix_ = u_matrix_;
       pre_w_matrix_ = w_matrix_;
-      // When Fit(X, y) is called, we already have a w matrix
-      // we project X to subspace W (n * d to d * q)
-      // Generate the kernel matrix based on kernel type from projected X
-      Matrix<T> projected_matrix = x_matrix_ * w_matrix_;
-      GenKernelMatrix(projected_matrix);
+      // When Fit(X, y) is called, we don't already have a w matrix
+      // the kernel matrix is then just the Kernel of X itself
+      // If vectorization is enabled,
+      // Q matrix is generated along with the Kernel Matrix
+      if (vectorization_)
+        GenKernelAndQMatrix(x_matrix_);
+      else
+        GenKernelMatrix(x_matrix_);
       GenDegreeMatrix();
-      PROFILE(OptimizeU(), profiler_.u);
       if (method_ == "KDAC") {
+        PROFILE(OptimizeU(), profiler_.u);
         PROFILE(OptimizeW(), profiler_.w);
       } else if (method_ == "ISM") {
+        // Still need to optimize U first when it doesn't exist
+        PROFILE(OptimizeU(), profiler_.u);
         PROFILE(OptimizeWISM(), profiler_.w);
       } else {
         std::cerr << "Use either KDAC or ISM as the method, exiting" << std::endl;
@@ -676,7 +681,7 @@ class KDAC {
       Matrix<T> phi_w = GenPhiOfW(&objective);
       if (debug_) {
         std::cout << "Round " << i << ", ";
-        std::cout << "Cost: " << objective;
+        std::cout << "Cost: " << objective << std::endl;
 //        util::ToFile(phi_w, "/home/xiangyu/Dropbox/git_project/NICE/python/test_kdac/mklPhi" + std::to_string(i) + ".csv");
       }
       UpdateW(phi_w);
@@ -688,7 +693,6 @@ class KDAC {
         Matrix<T> projected_matrix = x_matrix_ * w_matrix_;
         GenKernelMatrix(projected_matrix);
         GenDegreeMatrix();
-        std::cout << std::endl;
       }
       i += 1;
       if (i >= max_iter) {
@@ -842,6 +846,7 @@ class KDAC {
     n_ = input_matrix.rows();
     d_ = input_matrix.cols();
     CheckQD();
+
     InitWMatrix();
     h_matrix_ = Matrix<T>::Identity(n_, n_)
         - Matrix<T>::Constant(n_, n_, 1) / static_cast<T>(n_);
@@ -857,6 +862,10 @@ class KDAC {
     w_converge_ = false;
     u_w_converge_ = false;
     max_time_exceeded_ = false;
+
+    // Generate Q matrix if vectorization is true
+    if (vectorization_)
+      q_matrix_ = Matrix<T>::Zero(n_*n_, d_);
   }
 
   virtual void UpdateGOfW(const Vector<T> &w_l) = 0;
