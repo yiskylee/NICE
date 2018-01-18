@@ -67,33 +67,29 @@ namespace Nice {
   }
   /// CUDA kernel for predict functionality
   template <typename T>
-  __global__ void PredictKernel(T *d_theta, T *d_inputs, T *d_predictions,
-    int input_x, int input_y, T theta_0){
-    //extern __shared__ T theta_tile[];
-    SharedMemory<T> shared;
-    T* theta_tile = shared.getPointer();
-    int row = blockIdx.y * blockDim.y + threadIdx.y;
-    int col = blockIdx.x * blockDim.x + threadIdx.x;
-
+  __global__ void PredictKernel(T *d_x, T *d_a, T *d_y,
+    int const a_rows, int const x_size, T theta_0){
     int blockRow = blockIdx.x;
     int threadCol = threadIdx.x;
+    int block_size = blockDim.x * blockDim.y;
+    SharedMemory<T> shared;
+    T* xTile = shared.getPointer();
 
+    __syncthreads();
     T sum = 0.0f;
-    if (col >= input_x) return;
-
-    for (int p = 0; p < std::ceil((T)input_y / (blockDim.x)); p++){
-      T * d_input_tile = &d_inputs[(p * blockDim.x * input_x) + (blockDim.x * blockRow)];
-      theta_tile[threadCol] = d_theta[blockDim.x * p + threadCol];
-      __syncthreads();
-      for (int i = 0; i < blockDim.x; i++){
-        int xGIndex = p * blockDim.x + i;
-        int yGIndex = col;
-        if (xGIndex < input_y && yGIndex < input_x){
-          sum += d_input_tile[(input_x * i) + threadCol] * theta_tile[i];
+    for (int p = 0; p < std::ceil((T)x_size / (block_size)); p++){
+      for (int i = 0; i < block_size; i++){
+        T * aTile = &d_a[(p * block_size * a_rows) + (block_size * blockRow)];
+        xTile[threadCol] = d_x[block_size * p + threadCol];
+        int xGIndex = p * block_size + i;
+        int yGIndex = blockIdx.x * block_size + threadIdx.x;
+        if (xGIndex < x_size && yGIndex < a_rows){
+          sum += aTile[(a_rows *i) + threadCol] * xTile[i];
         }
       }
     }
-    d_predictions[row * input_x + col] = h(sum + theta_0);
+    __syncthreads();
+    d_y[threadCol + (blockRow * block_size)] = h(sum + theta_0);
   }
 
   template <typename T>
@@ -127,7 +123,6 @@ namespace Nice {
     T * d_theta;
     T * d_inputs;
     T * d_predictions;
-
     // Setup GPU memory
     CUDA_CALL(cudaMalloc(&d_inputs, (m * k) * sizeof(T)));
     CUDA_CALL(cudaMemcpy(d_inputs, h_inputs, (m * k) * sizeof(T),
@@ -141,11 +136,12 @@ namespace Nice {
     CUDA_CALL(cudaMemset(d_predictions, 0, m * sizeof(T)));
 
     // Launch kernel here
-    dim3 dimBlock(block_size_ * block_size_);
-    dim3 dimGrid(std::ceil((T) m / (block_size_ * block_size_)));
+    dim3 dimBlock(block_size_);
+    dim3 dimGrid(std::ceil((T) m / block_size_));
 
     PredictKernel<<<dimGrid, dimBlock, block_size_ * block_size_ * sizeof(T)>>>(d_theta, d_inputs,
       d_predictions, m, k, theta_0);
+
     CUDA_CALL(cudaDeviceSynchronize());
 
     CUDA_CALL(cudaMemcpy(&h_predictions(0), d_predictions, m * sizeof(T),
@@ -296,6 +292,8 @@ __global__ void calculateTheta(T *d_gradient, T *d_theta, T factor, int theta_si
         CUDA_CALL(cudaDeviceSynchronize());
         calculateTheta<<< dimGrid, dimBlock>>>(d_end, d_theta, alpha_/ y.size(), theta_.size());
       }
+
+      CUDA_CALL(cudaDeviceSynchronize());
 
       CUDA_CALL(cudaMemcpy(&theta_(0), d_theta, theta_.size() * sizeof(T), cudaMemcpyDeviceToHost));
 
