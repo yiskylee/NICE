@@ -49,6 +49,17 @@
 #include "include/kernel_types.h"
 #include "include/kdac_profiler.h"
 
+// Hot fix for windows clion
+//#include "../../../../../../../MinGW/lib/gcc/mingw32/6.3.0/include/c++/iostream"
+//#include "matrix.h"
+//#include "util.h"
+//#include "kernel_types.h"
+//#include "../../../../../../../MinGW/lib/gcc/mingw32/6.3.0/include/c++/cstdlib"
+//#include "../../../../../../../MinGW/lib/gcc/mingw32/6.3.0/include/c++/ostream"
+//#include "vector.h"
+//#include "../../../../../../../MinGW/lib/gcc/mingw32/6.3.0/include/c++/limits"
+//#include "../build/eigen/src/eigen/unsupported/test/mpreal/mpreal.h"
+//#include "../../../../../../../MinGW/lib/gcc/mingw32/6.3.0/include/c++/cmath"
 
 namespace Nice {
 template<typename T>
@@ -288,13 +299,38 @@ class KDAC {
     // This is called when we have existing labels Y
     // now we are generating an alternative view with a
     // given Y_previous by doing Optimize both W and U until they converge
-    // Following the pseudo code in Algorithm 1 in the paper
+    // KDAC method follows the pseudo code in Algorithm 1 in the paper
+    // ISM method follows the Appendix I in Chieh's paper
     profiler_.fit.Start();
     profiler_.exit_timer.Start();
     PROFILE(Init(input_matrix, y_matrix), profiler_.init);
-    while (!u_w_converge_ && !max_time_exceeded_) {
-      pre_u_matrix_ = u_matrix_;
-      pre_w_matrix_ = w_matrix_;
+
+    if (method_ == "KDAC") {
+      while (!u_w_converge_ && !max_time_exceeded_) {
+        pre_u_matrix_ = u_matrix_;
+        pre_w_matrix_ = w_matrix_;
+        // When Fit(X, y) is called, we don't already have a w matrix
+        // the kernel matrix is then just the Kernel of X itself
+        // If vectorization is enabled,
+        // Q matrix is generated along with the Kernel Matrix
+        GenKernelMatrix(x_matrix_);
+        GenDegreeMatrix();
+        PROFILE(OptimizeU(), profiler_.u);
+        PROFILE(OptimizeW(), profiler_.w);
+
+        u_converge_ =
+            util::CheckConverged(u_matrix_, pre_u_matrix_, threshold2_);
+        w_converge_ =
+            util::CheckConverged(w_matrix_, pre_w_matrix_, threshold2_);
+        u_w_converge_ = u_converge_ && w_converge_;
+        if (verbose_)
+          OutputProgress();
+      }
+    } else if (method_ == "ISM") {
+      // Set the iteration number, we don't need to generate Kernel and
+      // Degree Matrix inside the loop in the first iteration
+      int iter_num = 0;
+      // Need to generate U first
       // When Fit(X, y) is called, we don't already have a w matrix
       // the kernel matrix is then just the Kernel of X itself
       // If vectorization is enabled,
@@ -304,22 +340,34 @@ class KDAC {
       else
         GenKernelMatrix(x_matrix_);
       GenDegreeMatrix();
-      if (method_ == "KDAC") {
-        PROFILE(OptimizeU(), profiler_.u);
-        PROFILE(OptimizeW(), profiler_.w);
-      } else if (method_ == "ISM") {
+      PROFILE(OptimizeU(), profiler_.u);
+
+      while (!u_w_converge_ && !max_time_exceeded_ && iter_num < 20) {
+        pre_u_matrix_ = u_matrix_;
+        pre_w_matrix_ = w_matrix_;
+
+        Matrix<T> projected_matrix = x_matrix_ * w_matrix_;
+        GenKernelMatrix(projected_matrix);
+        GenDegreeMatrix();
+
         // Still need to optimize U first when it doesn't exist
-        PROFILE(OptimizeU(), profiler_.u);
         PROFILE(OptimizeWISM(), profiler_.w);
-      } else {
-        std::cerr << "Use either KDAC or ISM as the method, exiting" << std::endl;
-        exit(1);
+        PROFILE(OptimizeU(), profiler_.u);
+        u_converge_ =
+            util::CheckConverged(u_matrix_, pre_u_matrix_, threshold2_);
+        w_converge_ =
+            util::CheckConverged(w_matrix_, pre_w_matrix_, threshold2_);
+        u_w_converge_ = u_converge_ && w_converge_;
+        if (verbose_)
+          OutputProgress();
+        iter_num ++;
       }
-      u_converge_ = util::CheckConverged(u_matrix_, pre_u_matrix_, threshold2_);
-      w_converge_ = util::CheckConverged(w_matrix_, pre_w_matrix_, threshold2_);
-      u_w_converge_ = u_converge_ && w_converge_;
-      if (verbose_)
-        OutputProgress();
+      if (iter_num >= 20) {
+        std::cout << "Reached 20 iterations" << std::endl;
+      }
+    } else {
+      std::cerr << "Use either KDAC or ISM as the method, exiting" << std::endl;
+      exit(1);
     }
     PROFILE(RunKMeans(), profiler_.kmeans);
     if (verbose_)
@@ -543,6 +591,19 @@ class KDAC {
       float sigma_sq = pow(constant_, 2);
       Matrix<T> ddt = d_i_ * d_i_.transpose();
       Matrix<T> tau = ddt.cwiseProduct(psi_matrix_).cwiseProduct(k_matrix_);
+      if (debug_) {
+//        util::ToFile(l_matrix_, "/home/xiangyu/Dropbox/git_project/NICE/python/test_kdac/l.csv");
+//        util::ToFile(u_matrix_, "/home/xiangyu/Dropbox/git_project/NICE/python/test_kdac/u.csv");
+//        Matrix<T> uut = u_matrix_ * u_matrix_.transpose();
+//        util::ToFile(uut, "/home/xiangyu/Dropbox/git_project/NICE/python/test_kdac/uut.csv");
+//        util::ToFile(psi_matrix_, "/home/xiangyu/Dropbox/git_project/NICE/python/test_kdac/psi.csv");
+//        util::ToFile(k_matrix_, "/home/xiangyu/Dropbox/git_project/NICE/python/test_kdac/k.csv");
+//        util::ToFile(ddt, "/home/xiangyu/Dropbox/git_project/NICE/python/test_kdac/ddt.csv");
+//        util::ToFile(k_matrix_y_, "/home/xiangyu/Dropbox/git_project/NICE/python/test_kdac/yyt.csv");
+//        util::ToFile(y_matrix_, "/home/xiangyu/Dropbox/git_project/NICE/python/test_kdac/y.csv");
+//        exit(-1);
+      }
+
       *objective = -tau.sum();
 //      Vector<T> test_vector = Vector<T>::Constant(n_*n_, 1);
       Eigen::Map<Vector<T>> tau_map(tau.data(), tau.size());
@@ -657,7 +718,7 @@ class KDAC {
 //      for (int i = 0; i < num_col; i++)
 //        printf("%f, ", eigen_values(idx[i]));
 //      util::Print(test_mat, "\nU");
-      util::ToFile(test_mat, "/home/xiangyu/Dropbox/git_project/NICE/python/test_kdac/mklU.txt");
+//      util::ToFile(test_mat, "/home/xiangyu/Dropbox/git_project/NICE/python/test_kdac/u.csv");
     }
 //    util::Print(u_matrix_.block(0, 0, n_, c_), "U");
 //    exit(-1);
@@ -701,7 +762,7 @@ class KDAC {
     }
     if (debug_) {
       if (converge) {
-        std::cout << " Converged" << std::endl;
+        std::cout << "WISM Converged" << std::endl;
       } else {
         std::cout << "Not converging after "<< max_iter
                   <<" iterations, but we jump out of the loop anyway\n";
@@ -863,8 +924,8 @@ class KDAC {
     u_w_converge_ = false;
     max_time_exceeded_ = false;
 
-    // Generate Q matrix if vectorization is true
-    if (vectorization_)
+    // Generate Q matrix if using ISM method and vectorization is true
+    if (method_ == "ISM" && vectorization_)
       q_matrix_ = Matrix<T>::Zero(n_*n_, d_);
   }
 
