@@ -95,6 +95,7 @@ TYPED_TEST(GpuLogisticRegressionTest, Basic) {
        6.922, 1.771,
        8.675, -0.242,
        7.673, 3.508;
+
   // CPU Fit with timing functionality around it
   this->model_.SetIterations(this->iterations);
   this->model_.SetAlpha(this->alpha);
@@ -127,8 +128,6 @@ TYPED_TEST(GpuLogisticRegressionTest, Heart) {
   this->test_x_ = this->Filler("heart_predict.txt", ",");
 
   // CPU Fit with timing functionality around it
-  // this->model_.SetIterations(this->iterations);
-  // this->model_.SetAlpha(this->alpha);
   this->model_.SetIterations(this->iterations);
   this->model_.SetAlpha(this->alpha);
   this->model_.Fit(this->training_x_, this->training_y_);
@@ -136,6 +135,7 @@ TYPED_TEST(GpuLogisticRegressionTest, Heart) {
   // GPU Fit with timing functionality around it
   this->gpu_model_.SetIterations(this->iterations);
   this->gpu_model_.SetAlpha(this->alpha);
+  this->gpu_model_.SetMemType("shared");
   this->gpu_model_.GpuFit(this->training_x_, this->training_y_);
 
   // CPU Predict function with timing
@@ -153,38 +153,6 @@ TYPED_TEST(GpuLogisticRegressionTest, Heart) {
 }
 
 TYPED_TEST(GpuLogisticRegressionTest, MNIST) {
-  // // Setup for the Fit function
-  // this->iterations = 100;
-  // this->alpha = 0.001;
-  //
-  // // Populates matrix with values from txt files
-  // this->training_x_ = this->Filler("mnist_x.txt", ",");
-  // this->training_y_ = this->Filler("mnist_y.txt", " ");
-  // this->test_x_ = this->Filler("mnist_predict.txt", ",");
-  //
-  // // CPU Fit with timing functionality around it
-  // this->model_.SetIterations(this->iterations);
-  // this->model_.SetAlpha(this->alpha);
-  // this->model_.Fit(this->training_x_, this->training_y_);
-  //
-  //
-  // // GPU Fit with timing functionality around it
-  // this->gpu_model_.SetIterations(this->iterations);
-  // this->gpu_model_.SetAlpha(this->alpha);
-  // this->gpu_model_.GpuFit(this->training_x_, this->training_y_);
-  //
-  // // CPU Predict function with timing
-  // this->predictions_ = this->model_.Predict(this->test_x_);
-  //
-  // // GPU Predict function witgpu_modelh timing
-  // this->gpu_predictions_ = this->gpu_model_.GpuPredict(this->test_x_);
-  //
-  // // Compares CPU and GPU values against ground truth
-  // this->test_y_ = this->Filler("mnist_expected.txt", " ");
-  //
-  // // Compares the CPU and GPU theta value with each other
-  // this->Compare(this->model_.GetTheta(), this->gpu_model_.GetTheta());
-  // this->Compare(this->predictions_, this->gpu_predictions_);
   // Setup for the Fit function
   this->iterations = 1000;
   this->alpha = 0.001;
@@ -195,8 +163,6 @@ TYPED_TEST(GpuLogisticRegressionTest, MNIST) {
   this->test_x_ = this->Filler("mnist_predict.txt", ",");
 
   // CPU Fit with timing functionality around it
-  // this->model_.SetIterations(this->iterations);
-  // this->model_.SetAlpha(this->alpha);
   this->model_.SetIterations(this->iterations);
   this->model_.SetAlpha(this->alpha);
   this->model_.Fit(this->training_x_, this->training_y_);
@@ -204,6 +170,7 @@ TYPED_TEST(GpuLogisticRegressionTest, MNIST) {
   // GPU Fit with timing functionality around it
   this->gpu_model_.SetIterations(this->iterations);
   this->gpu_model_.SetAlpha(this->alpha);
+  this->gpu_model_.SetMemType("shared");
   this->gpu_model_.GpuFit(this->training_x_, this->training_y_);
 
   // CPU Predict function with timing

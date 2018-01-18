@@ -20,8 +20,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+
 #include <stdio.h>
-#include <stdlib.h>
+#include <cmath>
 #include <iostream>
 #include "Eigen/Dense"
 #include "gtest/gtest.h"
@@ -33,122 +34,135 @@ class LogisticRegressionTest: public ::testing::Test {
  public:
   int iterations;
   T alpha;
-  Nice::Matrix<T> training_x;
-  Nice::Vector<T> training_y;
-  Nice::Matrix<T> predict_x;
-  Nice::Vector<T> predictions;
-  Nice::LogisticRegression<T> testModel1;
-  Nice::LogisticRegression<T> testModel2;
+  Nice::Matrix<T> training_x_;
+  Nice::Vector<T> training_y_;
+  Nice::Matrix<T> test_x_;
+  Nice::Vector<T> predictions_;
+  Nice::Vector<T> test_y_;
+  Nice::LogisticRegression<T> model_;
+
+  // Loads data from file
+  Nice::Matrix<T> Filler(std::string fileName, std::string d) {
+    std::string folder = "../test/data_for_test/logistic_regression_benchmark/";
+    std::string testName = ::testing::UnitTest::GetInstance()->
+      current_test_info()->name();
+    return Nice::util::FromFile<T>(folder + testName + "/" + fileName, d);
+  }
+
+  void Compare(Nice::Vector<T> vector_1, Nice::Vector<T> vector_2) {
+    int counter = 0;
+    for (int i = 0; i < vector_2.size() && i < vector_1.size(); i++){
+      if (vector_1(i) < 0.5 && vector_2(i) > 0.5){
+          counter++;
+      }
+      else if (vector_1(i) < 0.5 && vector_2(i) > 0.5){
+          counter++;
+      }
+    }
+    if (counter != 0){
+      EXPECT_TRUE(false) << "The accuracy of the model is " <<
+        (float)counter / (float)vector_1.size() << std::endl;
+    }
+    else{
+      EXPECT_TRUE(true);
+    }
+  }
 };
 
 typedef ::testing::Types<float, double> MyTypes;
 TYPED_TEST_CASE(LogisticRegressionTest, MyTypes);
 
-// Runs both the fit and predict function on a single model.
-TYPED_TEST(LogisticRegressionTest, MatrixLogisticRegressionOneModel) {
+TYPED_TEST(LogisticRegressionTest, Basic) {
   // Setup for the Fit function
-  this->training_x.resize(10, 2);
+  this->training_x_.resize(10, 2);
   this->iterations = 10000;
-  this->alpha = 0.001;
-  this->training_x << 2.781, 2.550,
-          1.465, 2.362,
-          3.396, 4.400,
-          1.388, 1.850,
-          3.064, 3.005,
-          7.627, 2.759,
-          5.332, 2.088,
-          6.922, 1.771,
-          8.675, -0.242,
-          7.673, 3.508;
-  this->training_y.resize(10);
-  this->training_y << 0, 0, 0, 0, 0, 1, 1, 1, 1, 1;
+  this->alpha = 0.01;
+  // Populates matrix with values from txt files
+  this->training_x_ << 2.781, 2.550,
+        1.465, 2.362,
+        3.396, 4.400,
+        1.388, 1.850,
+        3.064, 3.005,
+        7.627, 2.759,
+        5.332, 2.088,
+        6.922, 1.771,
+        8.675, -0.242,
+        7.673, 3.508;
+  this->training_y_.resize(10);
+  this->training_y_ << 0, 0, 0, 0, 0, 1, 1, 1, 1, 1;
 
+  this->test_y_.resize(10);
+  this->test_y_ << 0, 0, 0, 0, 0, 1, 1, 1, 1, 1;
 
-  // Setup for the Predict function
-  this->predict_x.resize(10, 2);
-  this->predict_x << 2.781, 2.550,
-          1.465, 2.362,
-          3.396, 4.400,
-          1.388, 1.850,
-          3.064, 3.005,
-          7.627, 2.759,
-          5.332, 2.088,
-          6.922, 1.771,
-          8.675, -0.242,
-          7.673, 3.508;
-  this->testModel1.SetIterations(this->iterations);
-  this->testModel1.SetAlpha(this->alpha);
-  this->testModel1.Fit(this->training_x, this->training_y);
-  this->predictions = this->testModel1.Predict(this->predict_x);
-  this->predictions.resize(10);
-  std::cout << this->predictions << std::endl;
-  ASSERT_TRUE(true);
+  this->test_x_.resize(10, 2);
+  this->test_x_ << 2.781, 2.550,
+       1.465, 2.362,
+       3.396, 4.400,
+       1.388, 1.850,
+       3.064, 3.005,
+       7.627, 2.759,
+       5.332, 2.088,
+       6.922, 1.771,
+       8.675, -0.242,
+       7.673, 3.508;
+  // CPU Fit with timing functionality around it
+  this->model_.SetIterations(this->iterations);
+  this->model_.SetAlpha(this->alpha);
+  this->model_.Fit(this->training_x_, this->training_y_);
+
+  // CPU Predict function with timing
+  this->predictions_ = this->model_.Predict(this->test_x_);
+
+  // Compares the CPU and GPU prediction values with each other
+  // this->Compare(this->predictions_, this->test_y_);
 }
 
-/*// Runs both the fit and predict function on two separate models in
-// the same test.
-TYPED_TEST(LogisticRegressionTest, MatrixLogisticRegressionTwoModels) {
-  // Setup for Model 1's Fit function
-  this->training_x.resize(10, 2);
-  this->iterations = 10000;
-  this->alpha = 0.3;
-  this->training_x << 2.781, 2.550,
-          1.465, 2.362,
-          3.396, 4.400,
-          1.388, 1.850,
-          3.064, 3.005,
-          7.627, 2.759,
-          5.332, 2.088,
-          6.922, 1.771,
-          8.675, -0.242,
-          7.673, 3.508;
-  this->training_y.resize(10);
-  this->training_y << 0, 0, 0, 0, 0, 1, 1, 1, 1, 1;
-  this->testModel1.Fit(this->training_x, this->training_y, this->iterations,
-    this->alpha);
+TYPED_TEST(LogisticRegressionTest, Heart) {
+  // Setup for the Fit function
+  this->iterations = 1000;
+  this->alpha = 0.001;
 
-  // Setup for Model 2's Fit function
-  this->training_x << 2, .5,
-               2, 0,
-               4, 1,
-               5, 2,
-               7, 3,
-               1, 3,
-               2, 2,
-               4, 3,
-               3, 5,
-               6, 3.5;
-  this->testModel2.Fit(this->training_x, this->training_y,
-    this->iterations, this->alpha);
+  // Populates matrix with values from txt files
+  this->training_x_ = this->Filler("heart_x.txt", ",");
+  this->training_y_ = this->Filler("heart_y.txt", " ");
+  this->test_x_ = this->Filler("heart_predict.txt", ",");
 
-  // Setup for Model 1's Predict function
-  this->predict_x.resize(10, 2);
-  this->predict_x << 2.781, 2.550,
-          1.465, 2.362,
-          3.396, 4.400,
-          1.388, 1.850,
-          3.064, 3.005,
-          7.627, 2.759,
-          5.332, 2.088,
-          6.922, 1.771,
-          8.675, -0.242,
-          7.673, 3.508;
-  this->predictions = this->testModel1.Predict(this->predict_x);
+  // CPU Fit with timing functionality around it
+  this->model_.SetIterations(this->iterations);
+  this->model_.SetAlpha(this->alpha);
+  this->model_.Fit(this->training_x_, this->training_y_);
 
-  // Setup for Model 2's Fit function
-  this->predictions.resize(10);
-  std::cout << this->predictions << std::endl;
-  this->predict_x << 2, .5,
-               2, 0,
-               4, 1,
-               5, 2,
-               7, 3,
-               1, 3,
-               2, 2,
-               4, 3,
-               3, 5,
-               6, 3.5;
-  this->predictions = this->testModel2.Predict(this->predict_x);
-  std::cout << this->predictions << std::endl;
-  ASSERT_TRUE(true);
-}**/
+  // CPU Predict function with timing
+  this->predictions_ = this->model_.Predict(this->test_x_);
+
+  // Compares CPU and GPU values against ground truth
+  this->test_y_ = this->Filler("heart_expected.txt", " ");
+
+  // Compares the CPU and GPU theta value with each other
+  // this->Compare(this->predictions_, this->test_y_);
+}
+
+TYPED_TEST(LogisticRegressionTest, MNIST) {
+  // Setup for the Fit function
+  this->iterations = 1000;
+  this->alpha = 0.001;
+
+  // Populates matrix with values from txt files
+  this->training_x_ = this->Filler("mnist_x.txt", ",");
+  this->training_y_ = this->Filler("mnist_y.txt", " ");
+  this->test_x_ = this->Filler("mnist_predict.txt", ",");
+
+  // CPU Fit with timing functionality around it
+  this->model_.SetIterations(this->iterations);
+  this->model_.SetAlpha(this->alpha);
+  this->model_.Fit(this->training_x_, this->training_y_);
+
+  // CPU Predict function with timing
+  this->predictions_ = this->model_.Predict(this->test_x_);
+
+  // Compares CPU and GPU values against ground truth
+  this->test_y_ = this->Filler("mnist_expected.txt", " ");
+
+  // Compares the CPU and GPU theta value with each other
+  // this->Compare(this->predictions_, this->test_y_);
+}

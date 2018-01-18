@@ -280,17 +280,31 @@ __global__ void calculateTheta(T *d_gradient, T *d_theta, T factor, int theta_si
       CUDA_CALL(cudaMalloc(&d_theta, theta_.size() * sizeof(T)));
       CUDA_CALL(cudaMemcpy(d_theta, &theta_(0), theta_.size() * sizeof(T),
         cudaMemcpyHostToDevice));
-
-      for (int i = 0; i < iterations_; i++) {
-        CUDA_CALL(cudaDeviceSynchronize());
-        CudaGlobalKernel<<<dimGrid, dimBlock, block_size_ * sizeof(T)>>>(d_xin, d_theta + 1, d_result, xin.rows(), xin.cols());
-        CUDA_CALL(cudaDeviceSynchronize());
-        preMultiply<<<dimGrid,dimBlock>>>(d_result, d_y, d_temp, d_theta);
-        reduce<<< dimGrid, dimBlock, block_size_ * sizeof(T)>>>(d_theta, d_end, theta_.size());
-        CUDA_CALL(cudaDeviceSynchronize());
-        CudaGlobalKernel<<<dimGridTrans, dimBlockTrans, block_size_ * sizeof(T)>>>(d_xin_trans, d_temp, d_end + 1, xin.cols(), xin.rows());
-        CUDA_CALL(cudaDeviceSynchronize());
-        calculateTheta<<< dimGrid, dimBlock>>>(d_end, d_theta, alpha_/ y.size(), theta_.size());
+      if (mem_type_ == "shared"){
+        for (int i = 0; i < iterations_; i++) {
+          CUDA_CALL(cudaDeviceSynchronize());
+          CudaSharedKernel<<<dimGrid, dimBlock, block_size_ * sizeof(T)>>>(d_xin, d_theta + 1, d_result, xin.rows(), xin.cols());
+          CUDA_CALL(cudaDeviceSynchronize());
+          preMultiply<<<dimGrid,dimBlock>>>(d_result, d_y, d_temp, d_theta);
+          reduce<<< dimGrid, dimBlock, block_size_ * sizeof(T)>>>(d_theta, d_end, theta_.size());
+          CUDA_CALL(cudaDeviceSynchronize());
+          CudaSharedKernel<<<dimGridTrans, dimBlockTrans, block_size_ * sizeof(T)>>>(d_xin_trans, d_temp, d_end + 1, xin.cols(), xin.rows());
+          CUDA_CALL(cudaDeviceSynchronize());
+          calculateTheta<<< dimGrid, dimBlock>>>(d_end, d_theta, alpha_/ y.size(), theta_.size());
+        }
+      }
+      else{
+        for (int i = 0; i < iterations_; i++) {
+          CUDA_CALL(cudaDeviceSynchronize());
+          CudaGlobalKernel<<<dimGrid, dimBlock, block_size_ * sizeof(T)>>>(d_xin, d_theta + 1, d_result, xin.rows(), xin.cols());
+          CUDA_CALL(cudaDeviceSynchronize());
+          preMultiply<<<dimGrid,dimBlock>>>(d_result, d_y, d_temp, d_theta);
+          reduce<<< dimGrid, dimBlock, block_size_ * sizeof(T)>>>(d_theta, d_end, theta_.size());
+          CUDA_CALL(cudaDeviceSynchronize());
+          CudaGlobalKernel<<<dimGridTrans, dimBlockTrans, block_size_ * sizeof(T)>>>(d_xin_trans, d_temp, d_end + 1, xin.cols(), xin.rows());
+          CUDA_CALL(cudaDeviceSynchronize());
+          calculateTheta<<< dimGrid, dimBlock>>>(d_end, d_theta, alpha_/ y.size(), theta_.size());
+        }
       }
 
       CUDA_CALL(cudaDeviceSynchronize());

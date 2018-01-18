@@ -41,7 +41,7 @@ namespace Nice {
 template<typename T>
 class LogisticRegression {
  private:
-  Vector<T> theta;
+  Vector<T> theta_;
   T alpha_;
   int iterations_;
   /// Calculates the hypothesis of a given input Vector
@@ -71,7 +71,7 @@ class LogisticRegression {
   /// \param input
   /// A Vector containing the theta to manually set the model
   void SetTheta(const Vector<T> &input) {
-    theta = input;
+    theta_ = input;
   }
 
   /// Returns the current theta for the specific model
@@ -79,7 +79,7 @@ class LogisticRegression {
   /// \return
   /// A Vector containing the current theta values
   Vector<T> GetTheta() {
-    return theta;
+    return theta_;
   }
 
   void SetAlpha(T in_alpha) {alpha_ = in_alpha;}
@@ -99,9 +99,9 @@ class LogisticRegression {
   Vector<T> Predict(const Matrix<T> &inputs) {
     Vector<T> predictions, yhat;
     Matrix<T> product;
-    product = inputs * theta.bottomRows(theta.rows()-1);
+    product = inputs * theta_.bottomRows(theta_.rows()-1);
     yhat = product.rowwise().sum();
-    yhat = yhat.array() + theta(0);
+    yhat = yhat.array() + theta_(0);
     predictions = h(yhat);
     return predictions;
   }
@@ -115,17 +115,17 @@ class LogisticRegression {
   /// Vector of target variables for each set of features
   void Fit(const Matrix<T> &xin, const Vector<T> &y){
     Vector<T> gradient, predictions;
-    theta.resize(xin.cols() + 1);
-    gradient.resize(theta.rows());
-    theta.setZero();
+    theta_.resize(xin.cols() + 1);
+    gradient.resize(theta_.rows());
+    theta_.setZero();
     gradient.setZero();
     for (int i = 0; i < iterations_; i++) {
-      Vector<T> x_theta_mult = (xin * (theta.bottomRows(theta.rows() - 1)));
-      x_theta_mult = x_theta_mult.array() + theta(0);
+      Vector<T> x_theta_mult = (xin * (theta_.bottomRows(theta_.rows() - 1)));
+      x_theta_mult = x_theta_mult.array() + theta_(0);
       gradient.bottomRows(gradient.rows() - 1) =
         xin.transpose() * (h(x_theta_mult) - y);
-      gradient(0) = theta.sum();
-      theta = theta - ((alpha_/ y.size()) * gradient);
+      gradient(0) = theta_.sum();
+      theta_ = theta_ - ((alpha_/ y.size()) * gradient);
     }
   }
 };

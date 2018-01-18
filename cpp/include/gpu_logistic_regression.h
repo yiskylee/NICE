@@ -27,6 +27,7 @@
 
 #include <iostream>
 #include "include/gpu_util.h"
+#include <string>
 namespace Nice {
 
 template <typename T>
@@ -36,6 +37,7 @@ class GpuLogisticRegression {
   int block_size_;
   T alpha_;
   int iterations_;
+  std::string mem_type_;
   /// Calculates the hypothesis of a given input Vector
   ///
   /// \param input
@@ -67,12 +69,20 @@ class GpuLogisticRegression {
     iterations_ = in_iterations;
   }
 
+  void SetMemType(std::string in_mem_type) {
+    mem_type_ = in_mem_type;
+  }
+
   T GetAlpha() {
     return alpha_;
   }
 
   int GetIterations() {
     return iterations_;
+  }
+
+  std::string GetMemType() {
+    return mem_type_;
   }
 
   /// Sets the theta for the model from an external Vector
