@@ -97,7 +97,7 @@ TYPED_TEST(CudaSharedMVMultiplyTest, GlobalMemTest) {
   Nice::CudaMatrixVectorMultiply<TypeParam> global_op;
   global_c = global_op.Multiply(this->a_, this->b_);
   for (int i = 0; i < m; i++) {
-    EXPECT_NEAR(this->c_(i), global_c(i), 1e-5) << "Differ at index " << i;
+    EXPECT_NEAR(this->c_(i), global_c(i), 1e-3) << "Differ at index " << i;
   }
 }
 
@@ -112,7 +112,7 @@ TYPED_TEST(CudaSharedMVMultiplyTest, SharedMemTest) {
   Nice::CudaSharedMVMultiply<TypeParam> shared_op(32);
   shared_c = shared_op.Multiply(this->a_, this->b_);
   for (int i = 0; i < m; i++) {
-    EXPECT_NEAR(this->c_(i), shared_c(i), 1e-5) << "Differ at index " << i;
+    EXPECT_NEAR(this->c_(i), shared_c(i), 1e-3) << "Differ at index " << i;
   }
 }
 
@@ -127,7 +127,7 @@ TYPED_TEST(CudaSharedMVMultiplyTest, CublasTest) {
   Nice::GpuOperations<TypeParam> cublas_op;
   cublas_c = cublas_op.Multiply(this->a_, this->b_);
   for (int i = 0; i < m; i++) {
-    EXPECT_NEAR(this->c_(i), cublas_c(i), 1e-5) << "Differ at index " << i;
+    EXPECT_NEAR(this->c_(i), cublas_c(i), 1e-3) << "Differ at index " << i;
   }
 }
 

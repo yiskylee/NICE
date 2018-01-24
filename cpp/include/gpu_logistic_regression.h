@@ -51,9 +51,7 @@ class GpuLogisticRegression {
     }
 
  public:
-  GpuLogisticRegression() {
-    block_size_ = 32;
-  }
+  GpuLogisticRegression(): block_size_(32), alpha_(0.001), iterations_(1000){}
 
   GpuLogisticRegression(int in_block, int in_iterations, T in_alpha) {
     block_size_ = in_block;
