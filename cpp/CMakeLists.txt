@@ -149,7 +149,7 @@ if (enable-test)
   include_directories(${GTEST_INCLUDE_DIRS})
 
   # Add source files according to machine setup
-  if (CUDA_HAVE_GPU)
+  if (CUDA_AND_GPU)
     file(GLOB_RECURSE TEST_SRC_FILES RELATIVE
          ${PROJECT_SOURCE_DIR}
          test/cpu_operations_test/*.cc
