@@ -23,21 +23,21 @@
 #ifndef CPP_INCLUDE_SPECTRAL_CLUSTERING_H_
 #define CPP_INCLUDE_SPECTRAL_CLUSTERING_H_
 
+#include <Eigen/Dense>
+#include <vector>
 #include "include/matrix.h"
 #include "include/vector.h"
 #include "include/kmeans.h"
 #include "include/svd_solver.h"
-#include <vector>
-#include <Eigen/Dense> 
 
 namespace Nice {
 
 template<typename T>
 class SpectralClustering {
- public: 
+ public:
   SpectralClustering()
-  :
-  sigma_(1.0), kmeans_(), svd_() {}
+      :
+      sigma_(1.0), kmeans_(), svd_() {}
 
   void Fit(const Matrix<T> &input_data, int k) {
     k_ = k;
@@ -45,10 +45,10 @@ class SpectralClustering {
     ComputeLaplacian();
     int n_ = similarity_.rows();
     u_.resize(n_, n_);
-    y_.resize(n_, k_); 
-    svd_.Compute(laplacian_); 
+    y_.resize(n_, k_);
+    svd_.Compute(laplacian_);
     u_ = svd_.MatrixV();
-    y_ = u_.block(0, n_-k_, n_, k_);
+    y_ = u_.block(0, n_ - k_, n_, k_);
     kmeans_.Fit(y_, k_);
     labels_.resize(n_, 1);
     labels_ = kmeans_.GetLabels();
@@ -60,25 +60,25 @@ class SpectralClustering {
     int rows = input_data.rows();
     similarity_.resize(rows, rows);
     degrees_.resize(rows, rows);
-    for(int i = 0; i < rows; i++) {
-      for(int j = 0; j < rows; j++) {
+    for (int i = 0; i < rows; i++) {
+      for (int j = 0; j < rows; j++) {
         degrees_(i, j) = 0;
       }
     }
     int counter = 0;
-    for(int i = 0; i < rows; i++) {
-      for(int j = counter; j < rows; j++) {
+    for (int i = 0; i < rows; i++) {
+      for (int j = counter; j < rows; j++) {
         Vector<T> x_i = input_data.row(i);
         Vector<T> x_j = input_data.row(j);
-        double sim = exp(0 - (x_i - x_j).norm())/(2*sigma_);
+        double sim = exp(0 - (x_i - x_j).norm()) / (2 * sigma_);
         similarity_(i, j) = sim;
         similarity_(j, i) = sim;
       }
       counter++;
     }
-    for(int i = 0; i < rows; i++) {
+    for (int i = 0; i < rows; i++) {
       T sum = 0;
-      for(int j = 0; j < rows; j++) {
+      for (int j = 0; j < rows; j++) {
         sum += similarity_(i, j);
       }
       degrees_(i, i) = sum;
@@ -88,14 +88,14 @@ class SpectralClustering {
     laplacian_.resize(similarity_.rows(), similarity_.rows());
     laplacian_ = degrees_ - similarity_;
   }
-  Matrix <T> FitPredict(const Matrix<T> &input_data, int k)
-  {
+  Matrix<T> FitPredict(const Matrix<T> &input_data, int k) {
     Fit(input_data, k);
-    return GetLabels(); 
+    return GetLabels();
   }
-  Matrix <T> GetLabels() {
+  Matrix<T> GetLabels() {
     return labels_;
   }
+
  private:
   int k_;
   T sigma_;
@@ -108,6 +108,6 @@ class SpectralClustering {
   Vector<T> y_;
   Matrix<T> labels_;
 };
-}
+}  // namespace Nice
 
 #endif  // CPP_INCLUDE_SPECTRAL_CLUSTERING_H_

@@ -94,6 +94,7 @@ class SpectralInterface {
     PyBuffer_Release(&input_buf);
     PyBuffer_Release(&l_buf);
   }
+
  protected:
   std::shared_ptr<Nice::SpectralClustering<T>> spectral_;
 };

@@ -60,7 +60,6 @@ class KMeansTest : public ::testing::Test {
       kmeans_ = nullptr;
 
     data_file_path_ = base_dir + file_name;
-    std::cout << "data_file_path: " << data_file_path_ << std::endl;
     data_ = Nice::util::FromFile<T>(data_file_path_, ",");
   }
 };
@@ -70,14 +69,14 @@ typedef ::testing::Types<float> FloatTypes;
 TYPED_TEST_CASE(KMeansTest, FloatTypes);
 
 
-//TYPED_TEST(KMeansTest, CPU5_10_3) {
-//  std::string base_dir = "../test/data_for_test/";
-//  // std::string file_name = "clustering_k5_10_d3.txt";
-//  // std::string file_name = "data_k50_p10000_d100_c1.txt";
-//  // std::string file_name = "data_k5_p500_d10_c1.txt";
-//  std::string file_name = "data_k5_p10_d3_c1.txt";
-//  this->SetupInputData(5, base_dir, file_name, "cpu");
-//  this->kmeans_->Fit(this->data_, this->k_);
-//  this->labels_ = this->kmeans_->GetLabels();
-//  // std::cout << this->labels_ << std::endl;
-//}
+TYPED_TEST(KMeansTest, CPU5_10_3) {
+  std::string base_dir = "../test/data_for_test/";
+  // std::string file_name = "clustering_k5_10_d3.txt";
+  // std::string file_name = "data_k50_p10000_d100_c1.txt";
+  // std::string file_name = "data_k5_p500_d10_c1.txt";
+  std::string file_name = "data_k5_p10_d3_c1.txt";
+  this->SetupInputData(5, base_dir, file_name, "cpu");
+  this->kmeans_->Fit(this->data_, this->k_);
+  this->labels_ = this->kmeans_->GetLabels();
+  // std::cout << this->labels_ << std::endl;
+}
