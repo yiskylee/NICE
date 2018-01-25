@@ -150,11 +150,11 @@ class KDACGPU: public KDAC<T> {
 
   void OptimizeW(void) {
     KDAC<T>::GenGammaMatrix();
-    CUDA_CALL(cudaMemcpy(gamma_matrix_d_, &(this->gamma_matrix_)(0),
+    CUDA_CALL(cudaMemcpy(gamma_matrix_d_, &(this->gamma_matrix_(0)),
                          this->n_ * this->n_ * sizeof(T),
                          cudaMemcpyHostToDevice));
     KDAC<T>::GenGofW();
-    CUDA_CALL(cudaMemcpy(g_of_w_d_, &(this->g_of_w_)(0),
+    CUDA_CALL(cudaMemcpy(g_of_w_d_, &(this->g_of_w_(0)),
                          this->n_ * this->n_ * sizeof(T),
                          cudaMemcpyHostToDevice));
     KDAC<T>::OptimizeW();

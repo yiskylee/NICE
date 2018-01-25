@@ -69,7 +69,7 @@ typedef ::testing::Types<float> FloatTypes;
 TYPED_TEST_CASE(SpectralClusteringTest, FloatTypes);
 
 
-//TYPED_TEST(SpectralClusteringTest, CPU5_10_3) {
+TYPED_TEST(SpectralClusteringTest, CPU5_10_3) {
 //  std::string base_dir = "../test/data_for_test/";
 //  // std::string file_name = "clustering_k5_10_d3.txt";
 //  // std::string file_name = "data_k50_p10000_d100_c1.txt";
@@ -86,4 +86,4 @@ TYPED_TEST_CASE(SpectralClusteringTest, FloatTypes);
 //      EXPECT_EQ(this->labels_(i), label);
 //    }
 //  }
-//}
+}
