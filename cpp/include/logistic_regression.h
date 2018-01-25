@@ -58,7 +58,7 @@ class LogisticRegression {
 
 
  public:
-  LogisticRegression(): alpha_(0.001), iterations_(1000){}
+  LogisticRegression(): alpha_(0.001), iterations_(1000) {}
 
   LogisticRegression(int in_iterations, T in_alpha) {
     iterations_ = in_iterations;

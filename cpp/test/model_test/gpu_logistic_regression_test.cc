@@ -45,9 +45,10 @@ class GpuLogisticRegressionTest: public ::testing::Test {
   Nice::GpuLogisticRegression<T> gpu_model_;
 
   // Loads data from file
-  Nice::Matrix<T> Filler(std::string fileName, std::string d, std::string testName) {
+  Nice::Matrix<T> Filler(std::string file_name, std::string d,
+    std::string test_name) {
     std::string folder = "../test/data_for_test/logistic_regression_benchmark/";
-    return Nice::util::FromFile<T>(folder + testName + "/" + fileName, d);
+    return Nice::util::FromFile<T>(folder + test_name + "/" + file_name, d);
   }
 
   void Compare(Nice::Vector<T> vector_1, Nice::Vector<T> vector_2) {

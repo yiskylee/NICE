@@ -26,8 +26,9 @@
 #ifdef CUDA_AND_GPU
 
 #include <iostream>
-#include "include/gpu_util.h"
 #include <string>
+#include "include/gpu_util.h"
+
 namespace Nice {
 
 template <typename T>
@@ -51,7 +52,7 @@ class GpuLogisticRegression {
     }
 
  public:
-  GpuLogisticRegression(): block_size_(32), alpha_(0.001), iterations_(1000){}
+  GpuLogisticRegression(): block_size_(32), alpha_(0.001), iterations_(1000) {}
 
   GpuLogisticRegression(int in_block, int in_iterations, T in_alpha) {
     block_size_ = in_block;

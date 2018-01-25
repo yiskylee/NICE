@@ -51,19 +51,18 @@ class LogisticRegressionTest: public ::testing::Test {
 
   void Compare(Nice::Vector<T> vector_1, Nice::Vector<T> vector_2) {
     int counter = 0;
-    for (int i = 0; i < vector_2.size() && i < vector_1.size(); i++){
-      if (vector_1(i) < 0.5 && vector_2(i) > 0.5){
+    for (int i = 0; i < vector_2.size() && i < vector_1.size(); i++) {
+      if (vector_1(i) < 0.5 && vector_2(i) > 0.5) {
           counter++;
-      }
-      else if (vector_1(i) < 0.5 && vector_2(i) > 0.5){
+      } else if (vector_1(i) < 0.5 && vector_2(i) > 0.5) {
           counter++;
       }
     }
-    if (counter != 0){
+    if (counter != 0) {
       EXPECT_TRUE(false) << "The accuracy of the model is " <<
-        (float)counter / (float)vector_1.size() << std::endl;
-    }
-    else{
+        static_cast<float>(counter) / static_cast<float>(vector_1.size()) 
+        << std::endl;
+    } else {
       EXPECT_TRUE(true);
     }
   }
