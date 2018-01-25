@@ -649,7 +649,7 @@ class CpuOperations {
   /// /return
   /// Output a vector containing the standaard deviations of the rows or columns
   /// of the input matrix
-  static Vector<T> StandardDeviation(const Matrix<T> &a, const int axis = 0){
+  static Vector<T> StandardDeviation(const Matrix<T> &a, const int axis = 0) {
     // Std = sqrt(1/n*[(x1-u)^2+(x2-u)^2...+(xn-u)^2])
     // u = average of the vector
     // n = number of the elements

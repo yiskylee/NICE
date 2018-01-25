@@ -34,7 +34,6 @@
 #include <cusolverDn.h>
 #include <unistd.h>
 #include <stdexcept>
-#include <ctime>
 
 #include <iostream>
 
@@ -52,6 +51,15 @@ class GpuOperations {
   static GpuUtil<T> *util_;
 
  public:
+  /// This function multiplies an input Matrix and a scalar
+  ///
+  /// \param a
+  /// Input Matrix
+  /// \param scalar
+  /// Input Scalar of type T
+  ///
+  /// \return
+  /// This function returns a Matrix of type T
   static Matrix<T> Multiply(const Matrix<T> &a, const T &scalar) {
     // Allocate and transfer memory
     int n = a.cols() * a.rows();
@@ -74,6 +82,15 @@ class GpuOperations {
     return h_c;
   }
 
+  /// This function multiplies an input Vector and a scalar
+  ///
+  /// \param a
+  /// Input Vector
+  /// \param scalar
+  /// Input Scalar of type T
+  ///
+  /// \return
+  /// This function returns a Vector of type T
   static Vector<T> Multiply(const Vector<T> &a, const T &scalar) {
       // Allocate and transfer memory
     int n = a.rows();
@@ -95,6 +112,15 @@ class GpuOperations {
     return h_c;
   }
 
+  /// This function multiplies an input Matrix and a Matrix
+  ///
+  /// \param a
+  /// Input Matrix of type T
+  /// \param b
+  /// Input Matrix of type T
+  ///
+  /// \return
+  /// This function returns a Matrix of type T
   static Matrix<T> Multiply(const Matrix<T> &a, const Matrix<T> &b) {
     if (a.cols() == b.rows()) {  // Check if matricies k vals are equal
       // Allocate and transfer memories
@@ -118,6 +144,8 @@ class GpuOperations {
       // Set up and do cublas matrix multiply
       GpuMatrixMatrixMul(util_->GetBlasHandle(), m, n, k, d_a, d_b, d_c);
 
+
+
       // Device sync
       util_->SyncDev();
 
@@ -129,6 +157,78 @@ class GpuOperations {
       return h_c;
     } else {
       std::cerr << "Matricies in gpu matrix multiply's sizes aren't compatible"
+                << std::endl;
+      exit(1);
+    }
+  }
+
+  /// This function multiplies an input Matrix and a Vector
+  ///
+  /// \param a
+  /// Input Matrix
+  /// \param b
+  /// Input Vector of type T
+  ///
+  /// \return
+  /// This function returns a Vector of type T
+  static Matrix<T> Multiply(const Matrix<T> &a, const Vector<T> &b) {
+    if (a.cols() == b.rows() && !a.isZero()) {
+      // Allocate and transfer memories
+      int m = a.rows();
+      int n = b.cols();
+      int k = a.cols();
+
+      const T * h_a = &a(0);
+      const T * h_x = &b(0);
+      Vector<T> h_y(m);
+
+      T * d_a;
+      T * d_x;
+      T * d_y;
+
+      // Setup GPU memory
+      util_->SetupMem(&d_a, h_a, m * k);
+      util_->SetupMem(&d_x, h_x, k * n);
+      util_->SetupMem(&d_y, nullptr, m, false);
+
+      cublasOperation_t norm = CUBLAS_OP_N;
+
+      T alpha = 1.0;
+      T beta = 0.0;
+      int lda = m;
+      int incx = 1;
+      int incy = 1;
+
+      // Set up and do cublas matrix multiply
+      GpuMatrixVectorMul(util_->GetBlasHandle(), norm, m, k, &alpha,
+                        d_a, lda, d_x, incx, &beta, d_y, incy);
+
+      // Device sync
+      util_->SyncDev();
+      // Transfer memories back, clear memrory, and return result
+      util_->SyncMem(d_a, nullptr, 0, false);
+      util_->SyncMem(d_x, nullptr, 0, false);
+      util_->SyncMem(d_y, &h_y(0), m);
+
+      return h_y;
+    } else if (a.cols() != b.rows()) {
+      std::cerr << "Matricies in gpu matrix multiply's sizes aren't compatible"
+                << std::endl;
+      exit(1);
+    } else if (a.isZero() && b.isZero()) {
+      std::cerr << "The maxtrix and the vector are empty"
+                << std::endl;
+      exit(1);
+    } else if (a.isZero()) {
+      std::cerr << "The maxtrix is empty"
+                << std::endl;
+      exit(1);
+    } else if (b.isZero()) {
+      std::cerr << "The vector is empty"
+                << std::endl;
+      exit(1);
+    } else {
+      std::cerr << "Unknown error"
                 << std::endl;
       exit(1);
     }
@@ -668,4 +768,3 @@ GpuUtil<T> *GpuOperations<T>::util_ = GpuUtil<T>::GetInstance();
 }  // namespace Nice
 #endif  // CUDA_AND_GPU
 #endif  // CPP_INCLUDE_GPU_OPERATIONS_H_
-

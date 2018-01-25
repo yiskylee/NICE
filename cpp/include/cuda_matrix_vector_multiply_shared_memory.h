@@ -20,15 +20,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "include/matrix.h"
-#include "include/vector.h"
-#include "include/cpu_operations.h"
-#include "include/gpu_operations.h"
-#include "include/svd_solver.h"
-#include "include/gpu_svd_solver.h"
-#include "include/util.h"
-#include "include/gpu_util.h"
-#include "include/cuda_matrix_vector_multiply.h"
-#include "include/kdac_cpu.h"
+#ifndef CPP_INCLUDE_CUDA_MATRIX_VECTOR_MULTIPLY_SHARED_MEMORY_H_
+#define CPP_INCLUDE_CUDA_MATRIX_VECTOR_MULTIPLY_SHARED_MEMORY_H_
 
-// Place holder
+#ifdef CUDA_AND_GPU
+
+#include <iostream>
+#include <cmath>
+#include "include/gpu_util.h"
+
+namespace Nice {
+
+template<typename T>
+class CudaSharedMVMultiply {
+ private:
+  int block_size;
+
+ public:
+  explicit CudaSharedMVMultiply(int inBlock) {
+     block_size = inBlock;
+  }
+
+  Vector<T> Multiply(const Matrix<T> &a, const Vector<T> &b);
+  Vector<T> MapMultiply(const Matrix<T> &a, const Vector<T> &b);
+};
+
+}  // namespace Nice
+#endif  // NEED_CUDA
+#endif  // CPP_INCLUDE_CUDA_MATRIX_VECTOR_MULTIPLY_SHARED_MEMORY_H_

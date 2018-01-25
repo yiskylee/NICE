@@ -165,30 +165,6 @@ void GpuDeterminant(cusolverDnHandle_t handle,
 //
 // Cublas wraper functions
 //
-void GpuMatrixVectorMul(cublasHandle_t handle,
-                                  cublasOperation_t trans,
-                                  int m, int n,
-                                  const float *alpha,
-                                  const float *A, int lda,
-                                  const float *x, int incx,
-                                  const float *beta,
-                                  float *y, int incy) {
-  CUBLAS_CALL(cublasSgemv(handle, trans, m, n, alpha,
-                     A, lda, x, incx, beta, y, incy));
-}
-
-void GpuMatrixVectorMul(cublasHandle_t handle,
-                                  cublasOperation_t trans,
-                                  int m, int n,
-                                  const double *alpha,
-                                  const double *A, int lda,
-                                  const double *x, int incx,
-                                  const double *beta,
-                                  double *y, int incy) {
-  CUBLAS_CALL(cublasDgemv(handle, trans, m, n, alpha,
-                     A, lda, x, incx, beta, y, incy));
-}
-
 void GpuMatrixScalarMul(cublasHandle_t handle,
                                   int n,
                                   const float &scalar,
@@ -201,6 +177,36 @@ void GpuMatrixScalarMul(cublasHandle_t handle,
                                   const double &scalar,
                                   double *a) {
   CUBLAS_CALL(cublasDscal(handle, n, &scalar, a, 1));
+}
+
+void GpuMatrixVectorMul(cublasHandle_t handle, cublasOperation_t norm,
+                                  int m,
+                                  int n,
+                                  const float *alpha,
+                                  const float *a,
+                                  int lda,
+                                  const float *x,
+                                  int incx,
+                                  const float *beta,
+                                  float *y,
+                                  int incy) {
+  CUBLAS_CALL(cublasSgemv(handle, norm,
+                     m, n, alpha, a, lda, x, incx, beta, y, incy));
+}
+
+void GpuMatrixVectorMul(cublasHandle_t handle, cublasOperation_t norm,
+                                  int m,
+                                  int n,
+                                  const double *alpha,
+                                  const double *a,
+                                  int lda,
+                                  const double *x,
+                                  int incx,
+                                  const double *beta,
+                                  double *y,
+                                  int incy) {
+  CUBLAS_CALL(cublasDgemv(handle, norm,
+                     m, n, alpha, a, lda, x, incx, beta, y, incy));
 }
 
 void GpuMatrixMatrixMul(cublasHandle_t handle,

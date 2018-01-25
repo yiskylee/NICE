@@ -94,4 +94,3 @@ TYPED_TEST(GpuInverseTest, FuncionalityTest) {
     for (int j = 0; j < this->col_; j++)
       EXPECT_NEAR(this->ref_result_(i, j), this->gpu_result_(i, j), 0.001);
 }
-
