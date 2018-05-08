@@ -110,6 +110,9 @@ endif()
 
 # Dirty hack to not compile CUDA code
 set(CUDA_AND_GPU FALSE)
+# Set GPU True
+# set(CUDA_AND_GPU TRUE)
+
 # Build NICE library with/without CUDA
 if (CUDA_AND_GPU)
 #   Print messge to indicate that CUDA exists
@@ -130,6 +133,7 @@ if (CUDA_AND_GPU)
 #          -gencode arch=compute_35,code=sm_35
 #          -gencode arch=compute_37,code=sm_37
           -gencode arch=compute_50,code=sm_50
+          --relaxed-constexpr
 #          -gencode arch=compute_52,code=sm_52
           )
 
@@ -175,7 +179,9 @@ endif()
 add_dependencies(${PROJECT_NAME} eigen)
 
 # Test
-option (enable-test "Compile all Nice unit tests" ON)
+option (enable-test "Compile all Nice unit tests" OFF)
+
+message(STATUS "ENABLE-TEST: ${enable-test}")
 
 if (enable-test)
   include(gtest)

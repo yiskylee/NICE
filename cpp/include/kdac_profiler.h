@@ -24,23 +24,12 @@
 #define CPP_INCLUDE_KDAC_PROFILER_H
 
 #include <vector>
-#include <numeric>
 #include "include/timer.h"
 #include "include/stop_watch.h"
 
-namespace Nice {
-// A profiler includes one timer for a function or a partition of code
-struct KDACProfiler {
-  Timer init;
-  Timer fit;
-  Timer u;
-  Timer w;
-  Timer gen_phi;
-  Timer kmeans;
-  Timer gen_grad;
-  Timer update_g_of_w;
-  Timer exit_timer;
 
-};
+
+namespace Nice {
+typedef std::map<std::string, Timer> KDACProfiler;
 } // namespace Nice
 #endif  // CPP_INCLUDE_KDAC_PROFILER_H

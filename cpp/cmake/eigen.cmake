@@ -1,7 +1,7 @@
 include(ExternalProject)
 
 ExternalProject_Add(eigen
-  URL http://bitbucket.org/eigen/eigen/get/3.2.8.tar.bz2
+  URL http://bitbucket.org/eigen/eigen/get/3.3.4.tar.bz2
   PREFIX ${CMAKE_CURRENT_BINARY_DIR}/eigen
   INSTALL_COMMAND ""
 )

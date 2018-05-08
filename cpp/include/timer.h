@@ -24,6 +24,7 @@
 #define CPP_INCLUDE_NICE_TIMER_H
 
 #include <vector>
+#include <numeric>
 #include "include/stop_watch.h"
 #include "include/matrix.h"
 
@@ -34,6 +35,9 @@ class Timer {
   std::vector<double> vec_;
   std::vector<double> vec_temp_;
 
+  Timer() {
+
+  }
 
   void Start() {
     watch_.Start();
@@ -67,6 +71,9 @@ class Timer {
   }
 
   Matrix<double> GetTimePerIter() {
+    if (vec_.size() == 0) {
+      throw "ERROR: Number of iterations equals to 0";
+    }
     Matrix<double> m(vec_.size(), 1);
     for(unsigned int i = 0; i < vec_.size(); i++)
       m(i, 0) = vec_[i];
@@ -84,4 +91,4 @@ class Timer {
 
 } // namespace Nice
 
-#endif  // CPP_INCLUDE_NICE_TIMER_H
+#endif  // CPP_INCLUDE_NICE_TIMER_HR

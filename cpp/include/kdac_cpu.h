@@ -41,9 +41,9 @@ class KDACCPU: public KDAC<T> {
  public:
   /// This is the default constructor for KDAC
   /// Number of clusters c and reduced dimension q will be both set to 2
-  KDACCPU() {}
+  KDACCPU() = default;
 
-  ~KDACCPU() {}
+  ~KDACCPU() = default;
 
   KDACCPU(const KDACCPU &rhs) {}
 //  KDACCPU &operator=(const KDACCPU &rhs) {}
@@ -71,16 +71,7 @@ class KDACCPU: public KDAC<T> {
     faf_matrix_ = Matrix<T>::Zero(this->n_, this->n_);
   }
 
-  void OptimizeWISM(void) {
-    if (KDAC<T>::vectorization_) {
-      KDAC<T>::OptimizeWISM();
-    } else {
-      KDAC<T>::GenGammaMatrix();
-      KDAC<T>::OptimizeWISM();
-    }
-  }
-
-  void OptimizeW(void) {
+  void OptimizeW() {
     KDAC<T>::GenGammaMatrix();
     KDAC<T>::GenGofW();
     KDAC<T>::OptimizeW();
@@ -123,7 +114,7 @@ class KDACCPU: public KDAC<T> {
               bool w_l_changed) {
     // Count number of times GenPhi is called inside one OptimizeW()
     if (this->kernel_type_ == kGaussianKernel) {
-      this->profiler_.gen_phi.Start();
+      this->profiler_["gen_phi"].Start();
       float alpha_square = pow(this->alpha_, 2);
       float sqrt_one_minus_alpha = pow((1 - alpha_square), 0.5);
       float denom = -1 / (2 * pow(this->constant_, 2));
@@ -165,12 +156,12 @@ class KDACCPU: public KDAC<T> {
           }
         }
       }
-      this->profiler_.gen_phi.Record();
+      this->profiler_["gen_phi"].Record();
     }
   }
 
   Vector<T> GenWGradient(const Vector<T> &w_l) {
-    this->profiler_.gen_grad.Start();
+    this->profiler_["gen_grad"].Start();
     Vector<T> w_gradient = Vector<T>::Zero(this->d_);
     float sigma_sq = pow(this->constant_, 2);
     if (this->kernel_type_ == kGaussianKernel) {
@@ -192,12 +183,12 @@ class KDACCPU: public KDAC<T> {
         }
       }
     }
-    this->profiler_.gen_grad.Record();
+    this->profiler_["gen_grad"].Record();
     return w_gradient;
   }
 
   void UpdateGOfW(const Vector<T> &w_l) {
-    this->profiler_.update_g_of_w.Start();
+    this->profiler_["update_g_of_w"].Start();
     float sigma_sq = pow(this->constant_, 2);
     for (int i = 0; i < this->n_; i++) {
       for (int j = 0; j < this->n_; j++) {
@@ -211,7 +202,7 @@ class KDACCPU: public KDAC<T> {
         }
       }
     }
-    this->profiler_.update_g_of_w.Record();
+    this->profiler_["update_g_of_w"].Record();
   }
 };
 }  // namespace NICE

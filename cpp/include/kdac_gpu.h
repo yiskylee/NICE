@@ -98,7 +98,7 @@ class KDACGPU: public KDAC<T> {
     KDAC<T>::Init(input_matrix, y_matrix);
     int n = this->n_;
     int d = this->d_;
-    this->profiler_.gen_phi.Start();
+    this->profiler_["gen_phi"].Start();
     gpu_util_->SetupMem(&x_matrix_d_,
                         &(this->x_matrix_(0)), n * d);
     gpu_util_->SetupMem(&waw_matrix_d_, nullptr, n * n, false);
@@ -118,14 +118,14 @@ class KDACGPU: public KDAC<T> {
     phi_of_zeros_h_ = new T[num_blocks];
     phi_of_zero_primes_h_ = new T[num_blocks];
     gradient_fs_h_ = new T[n * n * d];
-    this->profiler_.gen_phi.Record();
+    this->profiler_["gen_phi"].Record();
   }
 
   void Init(const Matrix<T> &input_matrix) {
     KDAC<T>::Init(input_matrix);
     int n = this->n_;
     int d = this->d_;
-    this->profiler_.gen_phi.Start();
+    this->profiler_["gen_phi"].Start();
     gpu_util_->SetupMem(&x_matrix_d_,
                         &(this->x_matrix_(0)), n * d);
     gpu_util_->SetupMem(&waw_matrix_d_, nullptr, n * n, false);
@@ -145,7 +145,7 @@ class KDACGPU: public KDAC<T> {
     phi_of_zeros_h_ = new T[num_blocks];
     phi_of_zero_primes_h_ = new T[num_blocks];
     gradient_fs_h_ = new T[n * n * d];
-    this->profiler_.gen_phi.Record();
+    this->profiler_["gen_phi"].Record();
   }
 
   void OptimizeW(void) {

@@ -441,7 +441,7 @@ void KDACGPU<T>::GenPhi(const Vector <T> &w_l,
   int d = this->d_;
 
   if (this->kernel_type_ == kGaussianKernel) {
-    this->profiler_.gen_phi.Start();
+    this->profiler_["gen_phi"].Start();
     float alpha_square = pow(this->alpha_, 2);
     float sqrt_one_minus_alpha = pow((1 - alpha_square), 0.5);
     float denom = -1 / (2 * pow(this->constant_, 2));
@@ -503,7 +503,7 @@ void KDACGPU<T>::GenPhi(const Vector <T> &w_l,
         this->phi_of_zero_prime_ += phi_of_zero_primes_h_[i];
       }
     }
-    this->profiler_.gen_phi.Record();
+    this->profiler_["gen_phi"].Record();
   }
 }
 
@@ -520,7 +520,7 @@ void KDACGPU<double>::GenPhi(const Vector<double> &w_l,
 
 template<typename T>
 Vector <T> KDACGPU<T>::GenWGradient(const Vector <T> &w_l) {
-  this->profiler_.gen_grad.Start();
+  this->profiler_["gen_grad"].Start();
   int n = this->n_;
   int d = this->d_;
   Vector <T> w_gradient = Vector<T>::Zero(d);
@@ -563,7 +563,7 @@ Vector <T> KDACGPU<T>::GenWGradient(const Vector <T> &w_l) {
       }
     }
   }
-  this->profiler_.gen_grad.Record();
+  this->profiler_["gen_grad"].Record();
   util::CheckFinite(w_gradient, "w_gradient");
   return w_gradient;
 }
@@ -576,7 +576,7 @@ Vector<double> KDACGPU<double>::GenWGradient(const Vector<double> &w_l);
 
 template<typename T>
 void KDACGPU<T>::UpdateGOfW(const Vector<T> &w_l) {
-  this->profiler_.update_g_of_w.Start();
+  this->profiler_["update_g_of_w"].Start();
   int n = this->n_;
   int d = this->d_;
   CUDA_CALL(cudaMemcpy(w_l_d_, &w_l(0), d * sizeof(T),
@@ -596,7 +596,7 @@ void KDACGPU<T>::UpdateGOfW(const Vector<T> &w_l) {
          g_of_w_d_);
     CUDA_CALL(cudaGetLastError());
   }
-  this->profiler_.update_g_of_w.Record();
+  this->profiler_["update_g_of_w"].Record();
 }
 
 template

@@ -138,18 +138,18 @@ class KDACInterface {
   }
   void GetProfiler(boost::python::dict &profile) {
     KDACProfiler profiler = kdac_ -> GetProfiler();
-    profile["init"] = profiler.init.GetTotalTime();
-    profile["u"] = profiler.u.GetTotalTime();
-    profile["w"] = profiler.w.GetTotalTime();
-    profile["u_avg"] = profiler.u.GetAvgTimePerIter();
-    profile["w_avg"] = profiler.w.GetAvgTimePerIter();
-    profile["kmeans"] = profiler.kmeans.GetTotalTime();
-    profile["fit"] = profiler.fit.GetTotalTime();
-    profile["fit_avg"] = profiler.fit.GetAvgTimePerIter();
-    profile["num_iters"] = profiler.u.GetNumIters();
-    profile["gen_phi"] = profiler.gen_phi.GetTotalTime();
-    profile["gen_grad"] = profiler.gen_grad.GetTotalTime();
-    profile["update_g_of_w"] = profiler.update_g_of_w.GetTotalTime();
+    profile["init"] = profiler["init"].GetTotalTime();
+    profile["u"] = profiler["u"].GetTotalTime();
+    profile["w"] = profiler["w"].GetTotalTime();
+    profile["u_avg"] = profiler["u"].GetAvgTimePerIter();
+    profile["w_avg"] = profiler["w"].GetAvgTimePerIter();
+    profile["kmeans"] = profiler["kmeans"].GetTotalTime();
+    profile["fit"] = profiler["fit"].GetTotalTime();
+    profile["fit_avg"] = profiler["fit"].GetAvgTimePerIter();
+    profile["num_iters"] = profiler["u"].GetNumIters();
+    profile["gen_phi"] = profiler["gen_phi"].GetTotalTime();
+    profile["gen_grad"] = profiler["gen_grad"].GetTotalTime();
+    profile["update_g_of_w"] = profiler["update_g_of_w"].GetTotalTime();
   }
   void GetTimePerIter(PyObject *time_per_iter_obj,
                       int num_iters, std::string stat_name) {
@@ -159,14 +159,12 @@ class KDACInterface {
     DMatrixMap time_per_iter(reinterpret_cast<double *>(time_per_iter_buf.buf),
                       num_iters, 1);
     profiler = kdac_ -> GetProfiler();
-    if (stat_name == "u_time_per_iter")
-      time_per_iter = profiler.u.GetTimePerIter();
-    else if (stat_name == "w_time_per_iter")
-      time_per_iter = profiler.w.GetTimePerIter();
-    else if (stat_name == "gen_phi_time_per_iter")
-      time_per_iter = profiler.gen_phi.GetTimePerIter();
-    else if (stat_name == "gen_grad_time_per_iter")
-      time_per_iter = profiler.gen_grad.GetTimePerIter();
+    try {
+      time_per_iter = profiler[stat_name].GetTimePerIter();
+    } catch (const char *msg) {
+      std::cerr << msg << " for " << stat_name << std::endl;
+      exit(-1);
+    }
     PyBuffer_Release(&time_per_iter_buf);
   }
   void Fit(PyObject *input_obj, int row, int col) {
