@@ -32,6 +32,9 @@
 #ifndef CPP_INCLUDE_KDAC_GPU_H
 #define CPP_INCLUDE_KDAC_GPU_H
 
+// Dirty Hack
+#define CUDA_AND_GPU
+
 #ifdef CUDA_AND_GPU
 
 #include "include/kdac.h"
@@ -71,8 +74,7 @@ class KDACGPU: public KDAC<T> {
   void GenPhi(const Vector<T> &w_l,
               const Vector<T> &gradient,
               bool w_l_changed);
-  Vector<T>
-  GenWGradient(const Vector<T> &w_l);
+  Vector<T> GenWGradient(const Vector<T> &w_l);
   void UpdateGOfW(const Vector<T> &w_l);
 
  private:
@@ -94,8 +96,8 @@ class KDACGPU: public KDAC<T> {
   unsigned int block_limit_;
 
   // Initialization for generating alternative views with a given Y
-  void Init(const Matrix<T> &input_matrix, const Matrix<T> &y_matrix) {
-    KDAC<T>::Init(input_matrix, y_matrix);
+  void InitXYW(const Matrix<T> &input_matrix, const Matrix<T> &y_matrix) {
+    KDAC<T>::InitXYW(input_matrix, y_matrix);
     int n = this->n_;
     int d = this->d_;
     this->profiler_["gen_phi"].Start();
@@ -121,13 +123,20 @@ class KDACGPU: public KDAC<T> {
     this->profiler_["gen_phi"].Record();
   }
 
-  void Init(const Matrix<T> &input_matrix) {
-    KDAC<T>::Init(input_matrix);
+  void InitX(const Matrix<T> &input_matrix) {
+    KDAC<T>::InitX(input_matrix);
+    int n = this->n_;
+    int d = this->d_;
+
+    gpu_util_->SetupMem(&x_matrix_d_,
+                        &(this->x_matrix_(0)), n * d);
+  }
+
+  void InitYW() {
+    KDAC<T>::InitYW();
     int n = this->n_;
     int d = this->d_;
     this->profiler_["gen_phi"].Start();
-    gpu_util_->SetupMem(&x_matrix_d_,
-                        &(this->x_matrix_(0)), n * d);
     gpu_util_->SetupMem(&waw_matrix_d_, nullptr, n * n, false);
     gpu_util_->SetupMem(&waf_matrix_d_, nullptr, n * n, false);
     gpu_util_->SetupMem(&faf_matrix_d_, nullptr, n * n, false);

@@ -51,18 +51,6 @@
 #include "include/kernel_types.h"
 #include "include/kdac_profiler.h"
 
-// Hot fix for windows clion
-//#include "../../../../../../../MinGW/lib/gcc/mingw32/6.3.0/include/c++/iostream"
-//#include "matrix.h"
-//#include "util.h"
-//#include "kernel_types.h"
-//#include "../../../../../../../MinGW/lib/gcc/mingw32/6.3.0/include/c++/cstdlib"
-//#include "../../../../../../../MinGW/lib/gcc/mingw32/6.3.0/include/c++/ostream"
-//#include "vector.h"
-//#include "../../../../../../../MinGW/lib/gcc/mingw32/6.3.0/include/c++/limits"
-//#include "../build/eigen/src/eigen/unsupported/test/mpreal/mpreal.h"
-//#include "../../../../../../../MinGW/lib/gcc/mingw32/6.3.0/include/c++/cmath"
-
 namespace Nice {
 template<typename T>
 class KDAC {
@@ -70,8 +58,8 @@ class KDAC {
   /// This is the default constructor for KDAC
   /// Number of clusters c and reduced dimension q will be both set to 2
   KDAC() :
-      c_(2),
-      q_(2),
+      c_(0),
+      q_(0),
       n_(0),
       d_(0),
       lambda_(1.0),
@@ -255,10 +243,7 @@ class KDAC {
   /// It only generates the clustering result but does not returns it
   /// Users can use Predict() to get the clustering result returned
   void Fit(const Matrix <T> &input_matrix) {
-
-    profiler_["fit"].Start();
-    profiler_["exit_timer"].Start();
-    PROFILE(Init(input_matrix), profiler_["init"]);
+    InitX(input_matrix);
     // When there is no Y, it is the the first round when the second term
     // lambda * HSIC is zero, we do not need to optimize W, and we directly
     // go to kmeans where Y_0 is generated. And both u and v are converged.
@@ -270,18 +255,13 @@ class KDAC {
     // the kernel matrix is then just the Kernel of X itself
     // If vectorization is enabled,
     // Q matrix is generated along with the Kernel Matrix
-    if (vectorization_)
+    if (method_ == "ISM" && vectorization_)
       GenKernelAndQMatrix(x_matrix_);
     else
       GenKernelMatrix(x_matrix_);
     GenDegreeMatrix();
-
-    if (verbose_)
-      OutputConfigs();
-
-    PROFILE(OptimizeU(), profiler_["u"]);
-    PROFILE(RunKMeans(), profiler_["kmeans"]);
-    profiler_["fit"].Stop();
+    OptimizeU();
+    RunKMeans();
   }
 
   // Fit() with an empty param list can only be run when the X and Y already
@@ -290,7 +270,8 @@ class KDAC {
     // Only changes w_matrix and y_tilde matrix
     profiler_["fit"].Start();
     profiler_["exit_timer"].Start();
-    PROFILE(Init(), profiler_["init"]);
+    PROFILE(InitYW(), profiler_["init"]);
+
     if (method_ == "KDAC") {
       while (!u_w_converge_ && !max_time_exceeded_) {
         pre_u_matrix_ = u_matrix_;
@@ -317,7 +298,6 @@ class KDAC {
       outer_iter_num_ = 0;
       Vector<T> pre_eigen_vals;
       while (!u_w_converge_ && !max_time_exceeded_ && outer_iter_num_ < 20) {
-
         if (verbose_)
           std::cout << "\nOuter Loop " << outer_iter_num_ << std::endl;
         pre_u_matrix_ = u_matrix_;
@@ -338,8 +318,6 @@ class KDAC {
         // we only check if w matrix converges, u matrix does not matter as
         // there are multiple local minimum points
         u_converge_ = true;
-//        w_converge_ = util::CheckConverged(w_matrix_, pre_w_matrix_,
-//                                           threshold2_);
         w_converge_ = util::CheckConverged(eigen_vals_,
                                            pre_eigen_vals, threshold1_);
         if (verbose_) {
@@ -349,6 +327,7 @@ class KDAC {
               static_cast<T>(pre_eigen_vals.norm());
           std::cout << "change in W | eigen vals: " << change1 << " | " << change2 << std::endl;
         }
+
         T mean_cost = cost_vector_.mean();
         Vector <T> temp = cost_vector_.array() - mean_cost;
         temp = temp.array() * temp.array();
@@ -359,20 +338,17 @@ class KDAC {
         w_converge_ |= std < magnitude * 0.01;
         u_w_converge_ = u_converge_ && w_converge_;
         CheckMaxTime();
+
         if (verbose_)
           OutputProgress();
         outer_iter_num_++;
       }
-      if (outer_iter_num_ >= 20 && verbose_)
+      if (outer_iter_num_ >= 20 && verbose_) {
         std::cout << "Reached 20 iterations" << std::endl;
-
-    } else {
-      std::cerr << "Use either KDAC or ISM as the method, exiting\n";
-      exit(1);
+      }
     }
     PROFILE(RunKMeans(), profiler_["kmeans"]);
-    if (verbose_)
-      std::cout << "Kmeans Done\n";
+
     profiler_["fit"].Stop();
   }
 //    while (!u_w_converge_ && !max_time_exceeded_ && iter_num < 20) {
@@ -424,18 +400,16 @@ class KDAC {
   /// It only generates the clustering result but does not returns it
   /// Users can use Predict() to get the clustering result returned
   void Fit(const Matrix <T> &input_matrix, const Matrix <T> &y_matrix) {
-    if (verbose_)
-      OutputConfigs();
     // This is called when we have existing labels Y
     // now we are generating an alternative view with a
     // given Y_previous by doing Optimize both W and U until they converge
     // KDAC method follows the pseudo code in Algorithm 1 in the paper
     // ISM method follows the Appendix I in Chieh's paper
-    profiler_["fit"].Start();
-    profiler_["exit_timer"].Start();
-    PROFILE(Init(input_matrix, y_matrix), profiler_["init"]);
-
+//    PROFILE(InitXYW(input_matrix, y_matrix), profiler_["init"]);
     if (method_ == "KDAC") {
+      profiler_["fit"].Start();
+      profiler_["exit_timer"].Start();
+      InitX(input_matrix);
       while (!u_w_converge_ && !max_time_exceeded_) {
         pre_u_matrix_ = u_matrix_;
         pre_w_matrix_ = w_matrix_;
@@ -457,80 +431,15 @@ class KDAC {
         if (verbose_)
           OutputProgress();
       }
+      PROFILE(RunKMeans(), profiler_["kmeans"]);
+      profiler_["fit"].Stop();
     } else if (method_ == "ISM") {
-      outer_iter_num_ = 0;
-      // Set the iteration number, we don't need to generate Kernel and
-      // Degree Matrix inside the loop in the first iteration
-      // Need to generate U first
-      // When Fit(X, y) is called, we don't already have a w matrix
-      // the kernel matrix is then just the Kernel of X itself
-      // If vectorization is enabled,
-      // Q matrix is generated along with the Kernel Matrix
-      if (vectorization_)
-        GenKernelAndQMatrix(x_matrix_);
-      else
-        GenKernelMatrix(x_matrix_);
-      GenDegreeMatrix();
-      // Still need to optimize U first when it doesn't exist
-      OptimizeU();
-
-      Vector<T> pre_eigen_vals;
-      while (!u_w_converge_ && !max_time_exceeded_ && outer_iter_num_ < 20) {
-
-        if (verbose_)
-          std::cout << "\nOuter Loop " << outer_iter_num_ << std::endl;
-
-        pre_u_matrix_ = u_matrix_;
-        pre_w_matrix_ = w_matrix_;
-        pre_eigen_vals = eigen_vals_;
-
-        Matrix <T> projected_matrix = x_matrix_ * w_matrix_;
-        GenKernelMatrix(projected_matrix);
-        GenDegreeMatrix();
-
-        PROFILE(OptimizeWISM(), profiler_["w"]);
-        PROFILE(OptimizeU(), profiler_["u"]);
-
-        // we only check if w matrix converges, u matrix does not matter as
-        // there are multiple local minimum points
-        u_converge_ = true;
-//            util::CheckConverged(u_matrix_, pre_u_matrix_, threshold2_);
-//        w_converge_ =
-//            util::CheckConverged(w_matrix_, pre_w_matrix_, threshold2_);
-        w_converge_ = util::CheckConverged(eigen_vals_,
-                                           pre_eigen_vals, threshold1_);
-        if (verbose_) {
-          T change1 = static_cast<T>((w_matrix_ - pre_w_matrix_).norm()) /
-              static_cast<T>(pre_w_matrix_.norm());
-          T change2 = static_cast<T>((eigen_vals_ - pre_eigen_vals).norm()) /
-              static_cast<T>(pre_eigen_vals.norm());
-          std::cout << "change in W | eigen vals: " << change1 << " | " << change2 << std::endl;
-        }
-        T mean_cost = cost_vector_.mean();
-        Vector <T> temp = cost_vector_.array() - mean_cost;
-        temp = temp.array() * temp.array();
-        T std = sqrt(temp.sum() / temp.rows());
-        T min = cost_vector_.minCoeff();
-        T max = cost_vector_.maxCoeff();
-        T magnitude = fabs(min) > fabs(max) ? fabs(min) : fabs(max);
-        w_converge_ |= std < magnitude * 0.01;
-        u_w_converge_ = u_converge_ && w_converge_;
-        CheckMaxTime();
-        if (verbose_)
-          OutputProgress();
-        outer_iter_num_++;
-      }
-      if (outer_iter_num_ >= 20 && verbose_) {
-        std::cout << "Reached 20 iterations" << std::endl;
-      }
+      Fit(input_matrix);
+      Fit();
     } else {
-      std::cerr << "Use either KDAC or ISM as the method, exiting" << std::endl;
+      std::cerr << "Use either KDAC or ISM as the method, exiting\n";
       exit(1);
     }
-    PROFILE(RunKMeans(), profiler_["kmeans"]);
-    if (verbose_)
-      std::cout << "Kmeans Done" << std::endl;
-    profiler_["fit"].Stop();
   }
 
   /// Running Predict() after Fit() returns
@@ -723,11 +632,27 @@ class KDAC {
   }
 
   // Check if q is not bigger than c
-  void CheckQD() {
+  void ValidateParams() {
+    bool validated = true;
+    if (n_ == 0 || d_ == 0 || q_ == 0 || c_ == 0) {
+      std::cerr << "One or more of n,d,q,c values are not correctly set"
+                << std::endl;
+      validated = false;
+    }
     if (q_ > d_) {
       std::cerr << "Reduced dimension q cannot > dimension d" << std::endl;
+      validated = false;
+    }
+    if (method_ != "KDAC" && method_ != "ISM") {
+      std::cerr << "Use either KDAC or ISM as the method, exiting\n";
+      validated = false;
+    }
+
+    if (!validated) {
+      OutputConfigs();
       exit(1);
     }
+
   }
 
   /// This function runs KMeans on the normalized U
@@ -763,6 +688,9 @@ class KDAC {
       y_matrix_ = y_matrix_new;
       // Reset the y_matrix_temp holder to zero
     }
+
+    if (verbose_)
+      std::cout << "Kmeans Done\n";
   }
 
   Matrix <T> GenPhiOfW(T *objective) {
@@ -979,10 +907,11 @@ class KDAC {
         grad_f_vertical =
             GenOrthonormal(w_matrix_.leftCols(l + 1), grad_f);
         LineSearch(grad_f_vertical, &w_l, &objective);
+
         w_l = sqrt(1.0 - pow(alpha_, 2)) * w_l + alpha_ * grad_f_vertical;
         w_matrix_.col(l) = w_l;
         w_l_converged =
-            util::CheckConverged(objective, pre_objective, threshold1_);
+            util::CheckConverged(objective, pre_objective, threshold2_);
       }
       UpdateGOfW(w_l);
       // TODO: Need to learn about if using Vector<T> &w_l = w_matrix_.col(l)
@@ -1030,88 +959,70 @@ class KDAC {
     util::CheckFinite(w_matrix_, "W");
   }
 
-  void InitWMatrix(void) {
+  void InitW() {
     // When the user does not initialize W using SetW()
     // W matrix is initilized to be a cut-off identity matrix in KDAC mode
     // and a d x q zero matrix in ISM mode
+    // eigen_vals to bookkeep convergence is also initialized.
     if (w_matrix_.cols() == 0) {
       if (method_ == "KDAC") {
         w_matrix_ = Matrix<T>::Identity(d_, q_);
       } else if (method_ == "ISM") {
         w_matrix_ = Matrix<T>::Zero(d_, q_);
+        eigen_vals_ = Vector<T>::Zero(q_);
       }
     }
   }
 
   // Initialization when Fit() is called, only need to update w and y_tilde
-  void Init(void) {
-    InitWMatrix();
-    k_matrix_y_ = y_matrix_ * y_matrix_.transpose();
-    y_matrix_tilde_ = h_matrix_ * k_matrix_y_ * h_matrix_;
+  virtual void InitYW() {
+    InitY(y_matrix_);
+    InitW();
+
+    // Need to reset those states because the previous Fit(X) or Fit(X, y) might
+    // change some of them to true
+    max_time_exceeded_ = false;
     u_converge_ = false;
     w_converge_ = false;
     u_w_converge_ = false;
-    max_time_exceeded_ = false;
 
-    if (method_ == "ISM")
-      eigen_vals_ = Vector<T>::Zero(q_);
   }
 
-  // Used only in Fit(const Matrix<T> &input_matrix)
-  virtual void Init(const Matrix <T> &input_matrix) {
+  // Initialize all data structures related to the input matrix X
+  virtual void InitX(const Matrix <T> &input_matrix) {
     x_matrix_ = input_matrix;
     n_ = input_matrix.rows();
     d_ = input_matrix.cols();
-    CheckQD();
-
-//    InitWMatrix();
-
+    ValidateParams();
     h_matrix_ = Matrix<T>::Identity(n_, n_)
         - Matrix<T>::Constant(n_, n_, 1) / static_cast<T>(n_);
+
     // kernel matrix
     k_matrix_ = Matrix<T>::Zero(n_, n_);
     u_matrix_ = Matrix<T>::Zero(n_, c_);
-    max_time_exceeded_ = false;
 
     // Generate Q matrix if using ISM method and vectorization is true
-    if (method_ == "ISM") {
-      eigen_vals_ = Vector<T>::Zero(q_);
-      if (vectorization_)
-        q_matrix_ = Matrix<T>::Zero(n_ * n_, d_);
+    if (method_ == "ISM" && vectorization_) {
+      q_matrix_ = Matrix<T>::Zero(n_ * n_, d_);
     }
-
   }
 
   // Initialization for generating alternative views with a given Y
-  virtual void Init(const Matrix <T> &input_matrix,
+  virtual void InitXYW(const Matrix <T> &input_matrix,
                     const Matrix <T> &y_matrix) {
-    x_matrix_ = input_matrix;
-    n_ = input_matrix.rows();
-    d_ = input_matrix.cols();
-    CheckQD();
+    InitX(input_matrix);
+    InitY(y_matrix);
+    InitW();
+  }
 
-    InitWMatrix();
-    h_matrix_ = Matrix<T>::Identity(n_, n_)
-        - Matrix<T>::Constant(n_, n_, 1) / static_cast<T>(n_);
+  // Initialization for all Y related data structures
+  virtual void InitY(const Matrix<T> &y_matrix) {
+    // The following is only called when we have y matrix
     y_matrix_ = y_matrix;
-    // kernel matrix
-    k_matrix_ = Matrix<T>::Zero(n_, n_);
     // Generate the kernel for the label matrix Y: K_y
     k_matrix_y_ = y_matrix_ * y_matrix_.transpose();
     // Generate Y tilde matrix in equation 5 from kernel matrix of Y
     y_matrix_tilde_ = h_matrix_ * k_matrix_y_ * h_matrix_;
-    u_matrix_ = Matrix<T>::Zero(n_, c_);
-    u_converge_ = false;
-    w_converge_ = false;
-    u_w_converge_ = false;
-    max_time_exceeded_ = false;
-
-    // Generate Q matrix if using ISM method and vectorization is true
-    if (method_ == "ISM") {
-      eigen_vals_ = Vector<T>::Zero(q_);
-      if (vectorization_)
-        q_matrix_ = Matrix<T>::Zero(n_ * n_, d_);
-    }
   }
 
   virtual void UpdateGOfW(const Vector <T> &w_l) = 0;

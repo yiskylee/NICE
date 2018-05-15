@@ -41,6 +41,7 @@ class KDACCPU: public KDAC<T> {
  public:
   /// This is the default constructor for KDAC
   /// Number of clusters c and reduced dimension q will be both set to 2
+//  KDACCPU() = default;
   KDACCPU() = default;
 
   ~KDACCPU() = default;
@@ -54,17 +55,17 @@ class KDACCPU: public KDAC<T> {
   Matrix<T> waf_matrix_;
   Matrix<T> faf_matrix_;
 
-  void Init(const Matrix<T> &input_matrix) {
-    KDAC<T>::Init(input_matrix);
+  void InitYW() {
+    KDAC<T>::InitYW();
     // Coefficients for calculating phi
     waw_matrix_ = Matrix<T>::Zero(this->n_, this->n_);
     waf_matrix_ = Matrix<T>::Zero(this->n_, this->n_);
     faf_matrix_ = Matrix<T>::Zero(this->n_, this->n_);
   }
 
-  // Initialization for generating alternative views with a given Y
-  void Init(const Matrix<T> &input_matrix, const Matrix<T> &y_matrix) {
-    KDAC<T>::Init(input_matrix, y_matrix);
+  void InitXYW(const Matrix <T> &input_matrix,
+               const Matrix <T> &y_matrix) {
+    KDAC<T>::InitXYW(input_matrix, y_matrix);
     // Coefficients for calculating phi
     waw_matrix_ = Matrix<T>::Zero(this->n_, this->n_);
     waf_matrix_ = Matrix<T>::Zero(this->n_, this->n_);
