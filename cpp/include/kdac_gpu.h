@@ -32,9 +32,7 @@
 #ifndef CPP_INCLUDE_KDAC_GPU_H
 #define CPP_INCLUDE_KDAC_GPU_H
 
-// Dirty Hack
 #define CUDA_AND_GPU
-
 #ifdef CUDA_AND_GPU
 
 #include "include/kdac.h"

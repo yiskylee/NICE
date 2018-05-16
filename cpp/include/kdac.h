@@ -560,10 +560,10 @@ class KDAC {
     // This is an element-wise operation
     gamma_matrix_ = ((u_matrix_ * u_matrix_.transpose()).array() /
         didj_matrix_.array()).matrix() - y_matrix_tilde_ * lambda_;
-    util::CheckFinite(u_matrix_, "u_matrix_");
-    util::CheckFinite(didj_matrix_, "didj_matrix_");
-    util::CheckFinite(y_matrix_tilde_, "y_matrix_tilde_");
     if (debug_) {
+      util::CheckFinite(u_matrix_, "u_matrix_");
+      util::CheckFinite(didj_matrix_, "didj_matrix_");
+      util::CheckFinite(y_matrix_tilde_, "y_matrix_tilde_");
       std::string out_path =
           "/home/xiangyu/Dropbox/git_project/NICE/python/debug/output/";
       util::ToFile(gamma_matrix_,
