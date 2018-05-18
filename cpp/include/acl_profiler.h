@@ -30,6 +30,6 @@
 
 
 namespace Nice {
-typedef std::map<std::string, Timer> KDACProfiler;
+typedef std::map<std::string, Timer> ACLProfiler;
 } // namespace Nice
 #endif  // CPP_INCLUDE_KDAC_PROFILER_H

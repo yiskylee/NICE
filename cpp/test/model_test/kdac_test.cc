@@ -82,7 +82,7 @@ class KDACTest : public ::testing::Test {
   }
 
   void Output() {
-    Nice::KDACProfiler profiler = kdac_->GetProfiler();
+    Nice::ACLProfiler profiler = kdac_->GetProfiler();
     std::cout << "GenPhi: "
               << profiler["gen_phi"].GetTotalTime() << std::endl;
     std::cout << "GenGradient: "
@@ -157,245 +157,108 @@ TYPED_TEST_CASE(KDACTest, BothTypes);
         EXPECT_NEAR(std::abs(a(i, j)), std::abs(ref(i, j)), error);\
 
 
-TYPED_TEST(KDACTest, CPU30_600_3_KDAC) {
-  this->SetupInputData(30, 600, 3, "cpu");
+TYPED_TEST(KDACTest, CPU_30_100_3) {
+  this->SetupInputData(30, 100, 3, "cpu");
+  this->kdac_->SetQ(3);
+  this->kdac_->SetKernel(Nice::kGaussianKernel, 1.0);
   this->kdac_->SetVerbose(true);
+  this->kdac_->SetMode("gtest");
   this->kdac_->Fit(this->data_matrix_, this->existing_y_);
   this->Output();
+  std::cout << this->kdac_->Predict();
 }
 
-TYPED_TEST(KDACTest, CPU120_100_3_ISM) {
-  this->SetupInputData(120, 100, 3, "cpu");
-  this->kdac_->SetVerbose(true);
-  this->kdac_->SetMethod("ISM");
-  this->kdac_->Fit(this->data_matrix_, this->existing_y_);
-  this->Output();
-}
-
-TYPED_TEST(KDACTest, CPU40_2_2_ISM) {
-  this->SetupInputData(40, 2, 2, "cpu", false);
+TYPED_TEST(KDACTest, CPU_40_2_2_SEP) {
+  this->SetupInputData(40, 2, 2, "cpu");
   this->kdac_->SetQ(1);
   this->kdac_->SetKernel(Nice::kGaussianKernel, 0.5);
   this->kdac_->SetVerbose(true);
-  this->kdac_->SetMethod("ISM");
   this->kdac_->SetMode("gtest");
   this->kdac_->SetDebug(true);
   this->kdac_->Fit(this->data_matrix_);
+  Nice::util::Print(this->kdac_->Predict(), "Original Solution");
   this->kdac_->Fit();
+  Nice::util::Print(this->kdac_->Predict(), "Alternative Solution");
 }
 
-TYPED_TEST(KDACTest, CPU40_2_2_KDAC) {
-  this->SetupInputData(40, 2, 2, "cpu", false);
+TYPED_TEST(KDACTest, CPU_40_2_2) {
+  this->SetupInputData(40, 2, 2, "cpu");
   this->kdac_->SetQ(1);
   this->kdac_->SetKernel(Nice::kGaussianKernel, 0.5);
   this->kdac_->SetVerbose(true);
-  this->kdac_->SetMethod("KDAC");
   this->kdac_->SetMode("gtest");
   this->kdac_->SetDebug(true);
-  this->kdac_->Fit(this->data_matrix_);
-  this->kdac_->Fit();
-}
-
-TYPED_TEST(KDACTest, CPU400_4_2_ISM) {
-  this->SetupInputData(400, 4, 2, "cpu", false);
-  this->kdac_->SetQ(1);
-  this->kdac_->SetKernel(Nice::kGaussianKernel, 2.0);
-  this->kdac_->SetVerbose(true);
-  this->kdac_->SetMethod("ISM");
-  this->kdac_->SetMode("gtest");
-//  this->kdac_->SetDebug(true);
-  this->kdac_->Fit(this->data_matrix_);
-  this->kdac_->SetKernel(Nice::kGaussianKernel, 1.0);
-  this->kdac_->Fit();
-}
-
-TYPED_TEST(KDACTest, CPU400_4_2_ISM_NON_VEC) {
-  this->SetupInputData(400, 4, 2, "cpu", false);
-  this->kdac_->SetQ(1);
-  this->kdac_->SetKernel(Nice::kGaussianKernel, 2.0);
-  this->kdac_->SetVectorization(false);
-  this->kdac_->SetVerbose(true);
-  this->kdac_->SetMethod("ISM");
-  this->kdac_->SetMode("gtest");
-//  this->kdac_->SetDebug(true);
-  this->kdac_->Fit(this->data_matrix_);
-  this->kdac_->SetKernel(Nice::kGaussianKernel, 1.0);
-  this->kdac_->Fit();
-}
-
-TYPED_TEST(KDACTest, CPU300_100_3_ISM) {
-  this->SetupInputData(300, 100, 3, "cpu");
-  this->kdac_->SetQ(3);
-  this->kdac_->SetMaxTime(300);
-  this->kdac_->SetKernel(Nice::kGaussianKernel, 1.0);
-  this->kdac_->SetMethod("ISM");
-  this->kdac_->SetMode("gtest");
-  this->kdac_->SetVerbose(true);
-  this->kdac_->SetDebug(false);
   this->kdac_->Fit(this->data_matrix_, this->existing_y_);
+  std::cout << this->kdac_->Predict();
 }
 
-TYPED_TEST(KDACTest, CPU270_100_3_ISM) {
-  this->SetupInputData(270, 100, 3, "cpu");
-  this->kdac_->SetQ(3);
-  this->kdac_->SetMaxTime(300);
-  this->kdac_->SetKernel(Nice::kGaussianKernel, 1.0);
-  this->kdac_->SetMethod("ISM");
-  this->kdac_->SetMode("gtest");
-  this->kdac_->SetVerbose(true);
-  this->kdac_->SetDebug(false);
-  this->kdac_->Fit(this->data_matrix_, this->existing_y_);
-}
+//TYPED_TEST(KDACTest, CPU400_4_2_ISM) {
+//  this->SetupInputData(400, 4, 2, "cpu", false);
+//  this->kdac_->SetQ(1);
+//  this->kdac_->SetKernel(Nice::kGaussianKernel, 2.0);
+//  this->kdac_->SetVerbose(true);
+//  this->kdac_->SetMethod("ISM");
+//  this->kdac_->SetMode("gtest");
+////  this->kdac_->SetDebug(true);
+//  this->kdac_->Fit(this->data_matrix_);
+//  this->kdac_->SetKernel(Nice::kGaussianKernel, 1.0);
+//  this->kdac_->Fit();
+//}
 
-//
-//TYPED_TEST(KDACTest, CPU3_10_600_ISM
-//) {
-//this->SetupInputData(3, 10, 600, "cpu");
-//this->kdac_->SetVerbose(true);
-//this->kdac_->SetMethod("ISM");
-//this->kdac_->Fit(this->data_matrix_, this->existing_y_);
-//this->
-//
-//Output();
-//
+//TYPED_TEST(KDACTest, CPU40_2_2_ISM) {
+//  this->SetupInputData(40, 2, 2, "cpu", false);
+//  this->kdac_->SetQ(1);
+//  this->kdac_->SetKernel(Nice::kGaussianKernel, 0.5);
+//  this->kdac_->SetVerbose(true);
+//  this->kdac_->SetMethod("ISM");
+//  this->kdac_->SetMode("gtest");
+//  this->kdac_->SetDebug(true);
+//  this->kdac_->Fit(this->data_matrix_);
+//  this->kdac_->Fit();
+//}
+
+//TYPED_TEST(KDACTest, CPU400_4_2_ISM_NON_VEC) {
+//  this->SetupInputData(400, 4, 2, "cpu", false);
+//  this->kdac_->SetQ(1);
+//  this->kdac_->SetKernel(Nice::kGaussianKernel, 2.0);
+//  this->kdac_->SetVectorization(false);
+//  this->kdac_->SetVerbose(true);
+//  this->kdac_->SetMethod("ISM");
+//  this->kdac_->SetMode("gtest");
+////  this->kdac_->SetDebug(true);
+//  this->kdac_->Fit(this->data_matrix_);
+//  this->kdac_->SetKernel(Nice::kGaussianKernel, 1.0);
+//  this->kdac_->Fit();
 //}
 //
-//TYPED_TEST(KDACTest, CPU3_10_40_ISM
-//) {
-//this->SetupInputData(3, 10, 40, "cpu");
-//this->kdac_->SetVerbose(true);
-//this->kdac_->SetMethod("ISM");
-//this->kdac_->Fit(this->data_matrix_, this->existing_y_);
-//this->
-//
-//Output();
-//
+//TYPED_TEST(KDACTest, CPU300_100_3_ISM) {
+//  this->SetupInputData(300, 100, 3, "cpu");
+//  this->kdac_->SetQ(3);
+//  this->kdac_->SetMaxTime(300);
+//  this->kdac_->SetKernel(Nice::kGaussianKernel, 1.0);
+//  this->kdac_->SetMethod("ISM");
+//  this->kdac_->SetMode("gtest");
+//  this->kdac_->SetVerbose(true);
+//  this->kdac_->SetDebug(false);
+//  this->kdac_->Fit(this->data_matrix_, this->existing_y_);
 //}
 //
-//TYPED_TEST(KDACTest, CPU3_10_30_ISM
-//) {
-//this->SetupInputData(3, 10, 30, "cpu");
-//this->kdac_->SetVerbose(true);
-//this->kdac_->SetMethod("ISM");
-//this->kdac_->Fit(this->data_matrix_, this->existing_y_);
-//this->
-//
-//Output();
-//
+//TYPED_TEST(KDACTest, CPU270_100_3_ISM) {
+//  this->SetupInputData(270, 100, 3, "cpu");
+//  this->kdac_->SetQ(3);
+//  this->kdac_->SetMaxTime(300);
+//  this->kdac_->SetKernel(Nice::kGaussianKernel, 1.0);
+//  this->kdac_->SetMethod("ISM");
+//  this->kdac_->SetMode("gtest");
+//  this->kdac_->SetVerbose(true);
+//  this->kdac_->SetDebug(false);
+//  this->kdac_->Fit(this->data_matrix_, this->existing_y_);
 //}
-//
-//TYPED_TEST(KDACTest, CPU3_10_29_ISM
-//) {
-//this->SetupInputData(3, 10, 29, "cpu");
-//this->kdac_->SetVerbose(true);
-//this->kdac_->SetMethod("ISM");
-//this->kdac_->Fit(this->data_matrix_, this->existing_y_);
-//this->
-//
-//Output();
-//
-//}
-//
-//TYPED_TEST(KDACTest, CPU3_10_20_ISM
-//) {
-//this->SetupInputData(3, 10, 20, "cpu");
-//this->kdac_->SetVerbose(true);
-//this->kdac_->SetMethod("ISM");
-//this->kdac_->Fit(this->data_matrix_, this->existing_y_);
-//this->
-//
-//Output();
-//
-//}
-//
-//TYPED_TEST(KDACTest, CPU3_10_3_ISM
-//) {
-//this->SetupInputData(3, 10, 3, "cpu");
-//this->kdac_->SetVerbose(true);
-//this->kdac_->SetMethod("ISM");
-//this->kdac_->Fit(this->data_matrix_, this->existing_y_);
-//this->
-//
-//Output();
-//
-//}
-//
-//TYPED_TEST(KDACTest, CPU3_100_10_ISM
-//) {
-//this->SetupInputData(3, 100, 10, "cpu");
-//this->kdac_->SetVerbose(true);
-//this->kdac_->SetMethod("ISM");
-//this->kdac_->Fit(this->data_matrix_, this->existing_y_);
-//this->
-//
-//Output();
-//
-//}
-//
-//TYPED_TEST(KDACTest, CPU3_100_10
-//) {
-//this->SetupInputData(3, 100, 10, "cpu");
-//this->kdac_->SetVerbose(true);
-//this->kdac_->Fit(this->data_matrix_, this->existing_y_);
-//this->
-//
-//Output();
-//
-//}
-//
-//TYPED_TEST(KDACTest, GPU3_10_600
-//) {
-//this->SetupInputData(3, 10, 600, "gpu");
-//this->kdac_->SetVerbose(true);
-//this->kdac_->Fit(this->data_matrix_, this->existing_y_);
-//this->
-//
-//Output();
-//
-//}
-//
-//TYPED_TEST(KDACTest, CPU3_20_600
-//) {
-//this->SetupInputData(3, 20, 600, "cpu");
-//this->kdac_->SetVerbose(true);
-//this->kdac_->Fit(this->data_matrix_, this->existing_y_);
-//this->
-//
-//Output();
-//
-//}
-//
-//TYPED_TEST(KDACTest, GPU3_20_600
-//) {
-//this->SetupInputData(3, 20, 600, "gpu");
-//this->kdac_->SetVerbose(true);
-//this->kdac_->Fit(this->data_matrix_, this->existing_y_);
-//this->
-//
-//Output();
-//
-//}
-//
-//TYPED_TEST(KDACTest, CPU3_30_600
-//) {
-//this->SetupInputData(3, 30, 600, "cpu");
-//this->kdac_->SetVerbose(true);
-//this->kdac_->SetDebug(true);
-//this->kdac_->Fit(this->data_matrix_, this->existing_y_);
-//this->
-//
-//Output();
-//
-//}
-//
-//TYPED_TEST(KDACTest, GPU3_30_600
-//) {
-//this->SetupInputData(3, 30, 600, "gpu");
-//this->kdac_->SetVerbose(true);
-//this->kdac_->SetDebug(true);
-//this->kdac_->Fit(this->data_matrix_, this->existing_y_);
-//this->
-//
-//Output();
-//
+
+//TYPED_TEST(KDACTest, CPU120_100_3_ISM) {
+//  this->SetupInputData(120, 100, 3, "cpu");
+//  this->kdac_->SetVerbose(true);
+//  this->kdac_->SetMethod("ISM");
+//  this->kdac_->Fit(this->data_matrix_, this->existing_y_);
+//  this->Output();
 //}
