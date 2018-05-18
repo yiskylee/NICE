@@ -160,6 +160,7 @@ class KDAC : public ACL<T> {
                                          threshold2_);
       u_w_converge_ = u_converge_ && w_converge_;
       CheckMaxTime();
+
       if (verbose_)
         OutputProgress();
     }

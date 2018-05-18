@@ -34,24 +34,40 @@ class Timer {
  public:
   std::vector<double> vec_;
   std::vector<double> vec_temp_;
+  std::string name_;
 
-  Timer() {
+  Timer() :
+      vec_(),
+      vec_temp_(),
+      name_("GenericTimer")
+  {}
 
+  void SetName(std::string name) {
+    name_ = name;
   }
-
   void Start() {
     watch_.Start();
   }
 
   // Record the current elapsed time and store it temporary in vec_temp_
   void Record() {
-    watch_.Stop();
-    vec_temp_.push_back(watch_.DiffInMs());
+    if (watch_.Stop()) {
+      vec_temp_.push_back(watch_.DiffInMs());
+    } else {
+      std::cerr << "Timer: " << name_ << ", make sure to start the timer before stopping it. "
+                << std::endl;
+      exit(1);
+    }
   }
 
   void Stop() {
-    watch_.Stop();
-    vec_.push_back(watch_.DiffInMs());
+    if (watch_.Stop()) {
+      vec_.push_back(watch_.DiffInMs());
+    } else {
+      std::cerr << "Timer: " << name_ << ", make sure to start the timer before stopping it. "
+                << std::endl;
+      exit(1);
+    }
   }
 
   // Sum up all the temporarily recorded times and store the sum to vec_

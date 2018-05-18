@@ -77,7 +77,22 @@ class ACL {
       didj_matrix_(),
       gamma_matrix_(),
       profiler_()
-  {}
+  {
+    profiler_["fit"].SetName("fit");
+    profiler_["exit_timer"].SetName("exit_timer");
+    profiler_["init"].SetName("init");
+    profiler_["u"].SetName("u");
+    profiler_["w"].SetName("w");
+    profiler_["kmeans"].SetName("kmeans");
+    profiler_["gen_phi"].SetName("gen_phi");
+    profiler_["gen_grad"].SetName("gen_grad");
+    profiler_["update_g_of_w"].SetName("update_g_of_w");
+    profiler_["update_psi"].SetName("update_psi");
+    profiler_["update_phi"].SetName("update_phi");
+    profiler_["update_w"].SetName("update_w");
+    profiler_["update_k"].SetName("update_k");
+    profiler_["update_d"].SetName("update_d");
+  }
 
   ~ACL() {}
   ACL(const ACL &rhs) {}
