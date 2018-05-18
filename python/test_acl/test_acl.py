@@ -149,8 +149,8 @@ class TestACL(unittest.TestCase):
 
   def test_8_non_vec(self):
     data = self.load_data(n=40, d=2, c=2, name='gaussian', type='float')
-    acl = ACL('float', 'cpu')
-    acl.set_params(sigma=0.5, c=2, q=1, method='ISM', vectorization=0)
+    acl = ACL('float', 'cpu', 'ISM')
+    acl.set_params(sigma=0.5, c=2, q=1)
 
     acl.Fit(data)
     pred = acl.Predict()
@@ -169,8 +169,8 @@ class TestACL(unittest.TestCase):
 
   def test_8_kdac(self):
     data = self.load_data(n=40, d=2, c=2, name='gaussian', type='float')
-    acl = ACL('float', 'cpu')
-    acl.set_params(sigma=0.5, c=2, verbose=1, q=1, debug=0, method='KDAC')
+    acl = ACL('float', 'cpu', 'KDAC')
+    acl.set_params(sigma=0.5, c=2, verbose=1, q=1, debug=0)
 
     acl.Fit(data)
     pred = acl.Predict()
@@ -191,7 +191,7 @@ class TestACL(unittest.TestCase):
   def test_8_kdac_gpu(self):
     data = self.load_data(n=40, d=2, c=2, name='gaussian', type='float')
     acl = ACL('float', 'gpu')
-    acl.set_params(sigma=0.5, c=2, verbose=1, q=1, debug=0, method='KDAC')
+    acl.set_params(sigma=0.5, c=2, verbose=1, q=1, debug=0)
 
     acl.Fit(data)
     pred = acl.Predict()
@@ -211,7 +211,7 @@ class TestACL(unittest.TestCase):
 
   def test_9(self):
     data = self.load_data(n=400, d=4, c=2, name='gaussian', type='float')
-    acl = ACL('float', 'cpu')
+    acl = ACL('float', 'cpu', 'ISM')
     acl.set_params(sigma=2.0)
     acl.Fit(data)
     pred = acl.Predict()
@@ -229,8 +229,8 @@ class TestACL(unittest.TestCase):
 
   def test_9_non_vec(self):
     data = self.load_data(n=400, d=4, c=2, name='gaussian', type='float')
-    acl = ACL('float', 'cpu')
-    acl.set_params(sigma=2.0, vectorization=0)
+    acl = ACL('float', 'cpu', 'ISM')
+    acl.set_params(sigma=2.0)
     acl.Fit(data)
     pred = acl.Predict()
     ground_truth = np.concatenate((np.zeros(200), np.ones(200)))
@@ -248,8 +248,8 @@ class TestACL(unittest.TestCase):
 
   def test_9_kdac(self):
     data = self.load_data(n=400, d=4, c=2, name='gaussian', type='float')
-    acl = ACL('float', 'cpu')
-    acl.set_params(debug=0.0, sigma=2.0, verbose=1.0, method='KDAC')
+    acl = ACL('float', 'cpu', 'KDAC')
+    acl.set_params(debug=0.0, sigma=2.0, verbose=1.0)
     acl.Fit(data)
     pred = acl.Predict()
     ground_truth = np.concatenate((np.zeros(200), np.ones(200)))
@@ -258,7 +258,7 @@ class TestACL(unittest.TestCase):
 
   def test_10(self):
     data = self.load_data(n=164, d=4, c=2, name='moon', type='double')
-    acl = ACL('double', 'cpu')
+    acl = ACL('double', 'cpu', 'ISM')
     acl.set_params(c=2, q=2, debug=0, sigma=2, verbose=1)
     acl.Fit(data)
     pred1 = acl.Predict()
@@ -275,8 +275,8 @@ class TestACL(unittest.TestCase):
 
   def test_10_non_vec(self):
     data = self.load_data(n=164, d=4, c=2, name='moon', type='double')
-    acl = ACL('double', 'cpu')
-    acl.set_params(c=2, q=2, debug=0, sigma=2, verbose=1, vectorization=0)
+    acl = ACL('double', 'cpu', 'ISM')
+    acl.set_params(c=2, q=2, debug=0, sigma=2, verbose=1)
     acl.Fit(data)
     pred1 = acl.Predict()
     label1 = self.y_to_label('moon1')
@@ -292,8 +292,8 @@ class TestACL(unittest.TestCase):
 
   def test_10_kdac(self):
     data = self.load_data(n=164, d=4, c=2, name='moon', type='double')
-    acl = ACL('double', 'cpu')
-    acl.set_params(c=2, q=2, debug=0, sigma=2, verbose=1, max_time=10, method='KDAC')
+    acl = ACL('double', 'cpu', 'KDAC')
+    acl.set_params(c=2, q=2, debug=0, sigma=2, verbose=1, max_time=10)
     acl.Fit(data)
     pred1 = acl.Predict()
     label1 = self.y_to_label('moon1')
@@ -313,7 +313,7 @@ class TestACL(unittest.TestCase):
 
   def test_11(self):
     data = self.load_data(n=683, d=9, c=2, name='breast', type='double')
-    acl = ACL('double', 'cpu')
+    acl = ACL('double', 'cpu', 'ISM')
     acl.set_params(c=2, q=2, sigma=6, verbose=1, debug=0)
     acl.Fit(data)
     pred1 = acl.Predict()
@@ -329,8 +329,8 @@ class TestACL(unittest.TestCase):
 
   def test_11_non_vec(self):
     data = self.load_data(n=683, d=9, c=2, name='breast', type='double')
-    acl = ACL('double', 'cpu')
-    acl.set_params(c=2, q=2, sigma=6, verbose=1, debug=0, vectorization=0)
+    acl = ACL('double', 'cpu', 'ISM')
+    acl.set_params(c=2, q=2, sigma=6, verbose=1, debug=0)
     acl.Fit(data)
     pred1 = acl.Predict()
     label = self.load_label('breast', 1)
@@ -345,8 +345,8 @@ class TestACL(unittest.TestCase):
 
   def test_11_kdac(self):
     data = self.load_data(n=683, d=9, c=2, name='breast', type='double')
-    acl = ACL('double', 'cpu')
-    acl.set_params(c=2, q=2, sigma=6, verbose=1, debug=0, method='KDAC')
+    acl = ACL('double', 'cpu', 'KDAC')
+    acl.set_params(c=2, q=2, sigma=6, verbose=1, debug=0)
     acl.Fit(data)
     pred1 = acl.Predict()
     label = self.load_label('breast', 1)
@@ -361,7 +361,7 @@ class TestACL(unittest.TestCase):
 
   def test_12(self):
     data = self.load_data(n=624, d=27, c=4, name='facial', type='double')
-    acl = ACL('double', 'cpu')
+    acl = ACL('double', 'cpu', 'ISM')
     label_identity = self.load_label('facial', 1)
     label_pose = self.load_label('facial', 2)
     y_identity = self.label_to_y(label_identity)
@@ -377,7 +377,7 @@ class TestACL(unittest.TestCase):
 
   def test_12_1(self):
     data = self.load_data(n=624, d=27, c=4, name='facial', type='float')
-    acl = ACL('float', 'cpu')
+    acl = ACL('float', 'cpu', 'ISM')
     label_identity = self.load_label('facial', 1)
     label_pose = self.load_label('facial', 2)
     y_identity = self.label_to_y(label_identity)
@@ -397,13 +397,13 @@ class TestACL(unittest.TestCase):
 
   def test_12_kdac(self):
     data = self.load_data(n=624, d=27, c=4, name='facial', type='double')
-    acl = ACL('double', 'cpu')
+    acl = ACL('double', 'cpu', 'KDAC')
     label_identity = self.load_label('facial', 1)
     label_pose = self.load_label('facial', 2)
     y_identity = self.label_to_y(label_identity)
     d_matrix = pairwise_distances(data, Y=None, metric='euclidean')
     acl.set_params(c=4, sigma=np.median(d_matrix), q=4,
-                   Lambda=0.1, debug=0, verbose=1, method='KDAC')
+                   Lambda=0.1, debug=0, verbose=1)
     acl.Fit(data, y_identity)
     pred = acl.Predict()
     against_identity = normalized_mutual_info_score(pred, label_identity)
@@ -418,7 +418,7 @@ class TestACL(unittest.TestCase):
     data[:, 5] = data[:, 5] / 3.0
     data[:, 4] = data[:, 4] / 3.0
 
-    acl = ACL('double', 'cpu')
+    acl = ACL('double', 'cpu', 'ISM')
     acl.set_params(c=2, sigma=2, Lambda=0.02, debug=0, verbose=1)
     acl.Fit(data)
     pred1 = acl.Predict()
@@ -443,9 +443,8 @@ class TestACL(unittest.TestCase):
     data[:, 5] = data[:, 5] / 3.0
     data[:, 4] = data[:, 4] / 3.0
 
-    acl = ACL('double', 'cpu')
-    acl.set_params(c=2, sigma=2, Lambda=0.02, debug=0, verbose=1,
-                   method='KDAC')
+    acl = ACL('double', 'cpu', 'KDAC')
+    acl.set_params(c=2, sigma=2, Lambda=0.02, debug=0, verbose=1)
     acl.Fit(data)
     pred1 = acl.Predict()
     label1 = self.y_to_label('moon1')
@@ -467,8 +466,8 @@ class TestACL(unittest.TestCase):
     data = self.load_data(n=270, d=100, c=3, name='gaussian',
                           type='float', synthetic=True)
     # data = scale(data)
-    acl = ACL('float', 'cpu')
-    acl.set_params(method='ISM', verbose=1, debug=0, sigma=1.0, q=3, c=3)
+    acl = ACL('float', 'cpu', 'ISM')
+    acl.set_params(verbose=1, debug=0, sigma=1.0, q=3, c=3)
     label1 = self.load_label('gaussian', 1, True)
     label2 = self.load_label('gaussian', 2, True)
     y1= self.label_to_y(label1)
@@ -482,8 +481,8 @@ class TestACL(unittest.TestCase):
     data = self.load_data(n=300, d=100, c=3, name='gaussian',
                           type='float', synthetic=True)
     # data = scale(data)
-    acl = ACL('float', 'cpu')
-    acl.set_params(method='ISM', verbose=1, debug=0, sigma=1.0, q=3, c=3)
+    acl = ACL('float', 'cpu', 'ISM')
+    acl.set_params(verbose=1, debug=0, sigma=1.0, q=3, c=3)
     label1 = self.load_label('gaussian', 1, True)
     label2 = self.load_label('gaussian', 2, True)
     y1= self.label_to_y(label1)
@@ -497,8 +496,8 @@ class TestACL(unittest.TestCase):
     data = self.load_data(n=300, d=6, c=3, name='gaussian',
                           type='float', synthetic=True)
     # data = scale(data)
-    acl = ACL('float', 'cpu')
-    acl.set_params(method='ISM', verbose=1, debug=0, sigma=1.0, q=3, c=3)
+    acl = ACL('float', 'cpu', 'ISM')
+    acl.set_params(verbose=1, debug=0, sigma=1.0, q=3, c=3)
     label1 = self.load_label('gaussian', 1, True)
     label2 = self.load_label('gaussian', 2, True)
     y1= self.label_to_y(label1)
@@ -513,8 +512,8 @@ class TestACL(unittest.TestCase):
     data = self.load_data(n=300, d=6, c=3, name='gaussian',
                           type='float', synthetic=True)
     # data = scale(data)
-    acl = ACL('float', 'cpu')
-    acl.set_params(method='KDAC', verbose=1, debug=0, sigma=1.0, q=3, c=3)
+    acl = ACL('float', 'cpu', 'KDAC')
+    acl.set_params(verbose=1, debug=0, sigma=1.0, q=3, c=3)
     label1 = self.load_label('gaussian', 1, True)
     label2 = self.load_label('gaussian', 2, True)
     y1= self.label_to_y(label1)
@@ -528,8 +527,8 @@ class TestACL(unittest.TestCase):
     data = self.load_data(n=30, d=6, c=3, name='gaussian',
                           type='float', synthetic=True)
     # data = scale(data)
-    acl = ACL('float', 'cpu')
-    acl.set_params(method='ISM', verbose=1, debug=0, sigma=1.0, q=3, c=3)
+    acl = ACL('float', 'cpu', 'ISM')
+    acl.set_params(verbose=1, debug=0, sigma=1.0, q=3, c=3)
     label1 = self.load_label('gaussian', 1, True)
     label2 = self.load_label('gaussian', 2, True)
     y1= self.label_to_y(label1)
@@ -544,8 +543,8 @@ class TestACL(unittest.TestCase):
     data = self.load_data(n=30, d=6, c=3, name='gaussian',
                           type='float', synthetic=True)
     # data = scale(data)
-    acl = ACL('float', 'cpu')
-    acl.set_params(method='KDAC', verbose=1, debug=0, sigma=1.0, q=3, c=3)
+    acl = ACL('float', 'cpu', 'KDAC')
+    acl.set_params(verbose=1, debug=0, sigma=1.0, q=3, c=3)
     label1 = self.load_label('gaussian', 1, True)
     label2 = self.load_label('gaussian', 2, True)
     y1= self.label_to_y(label1)
@@ -560,8 +559,8 @@ class TestACL(unittest.TestCase):
     data = self.load_data(n=30, d=6, c=3, name='gaussian',
                           type='float', synthetic=True)
     # data = scale(data)
-    acl = ACL('float', 'gpu')
-    acl.set_params(method='KDAC', verbose=1, debug=0, sigma=1.0, q=3, c=3)
+    acl = ACL('float', 'gpu', 'KDAC')
+    acl.set_params(verbose=1, debug=0, sigma=1.0, q=3, c=3)
     label1 = self.load_label('gaussian', 1, True)
     label2 = self.load_label('gaussian', 2, True)
     y1= self.label_to_y(label1)

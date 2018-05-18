@@ -24,8 +24,7 @@ class ACL(object):
     self.profiling = {}
 
   def set_params(self, c=None, q=None, kernel=None, debug=None, verbose=None,
-                 Lambda=None, sigma=None, max_time=None, method=None,
-                 vectorization=None):
+                 Lambda=None, sigma=None, max_time=None):
     if c is not None:
       self.params['c'] = c
     if q is not None:
@@ -42,10 +41,6 @@ class ACL(object):
       self.params['sigma'] = sigma
     if max_time is not None:
       self.params['max_time'] = max_time
-    if method is not None:
-      self.params['method'] = method
-    if vectorization is not None:
-      self.params['vectorization'] = vectorization
     self.acl.SetupParams(self.params)
 
   def Fit(self, X=None, y=None):
