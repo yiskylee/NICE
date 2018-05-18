@@ -7,11 +7,59 @@
 
 #include "include/acl.h"
 
-#endif  // CPP_INCLUDE_ISM_H
 namespace Nice {
 template<class T>
 class ISM : public ACL<T> {
  public:
+  using ACL<T>::c_;
+  using ACL<T>::q_;
+  using ACL<T>::n_;
+  using ACL<T>::d_;
+  using ACL<T>::lambda_;
+  using ACL<T>::alpha_;
+  using ACL<T>::kernel_type_;
+  using ACL<T>::constant_;
+  using ACL<T>::u_converge_;
+  using ACL<T>::w_converge_;
+  using ACL<T>::u_w_converge_;
+  using ACL<T>::threshold1_;
+  using ACL<T>::threshold2_;
+  using ACL<T>::x_matrix_;
+  using ACL<T>::w_matrix_;
+  using ACL<T>::pre_w_matrix_;
+  using ACL<T>::u_matrix_;
+  using ACL<T>::pre_u_matrix_;
+  using ACL<T>::verbose_;
+  using ACL<T>::debug_;
+  using ACL<T>::max_time_exceeded_;
+  using ACL<T>::max_time_;
+  using ACL<T>::method_;
+  using ACL<T>::mode_;
+  using ACL<T>::clustering_result_;
+  using ACL<T>::u_matrix_normalized_;
+  using ACL<T>::y_matrix_;
+  using ACL<T>::y_matrix_temp_;
+  using ACL<T>::d_i_;
+  using ACL<T>::l_matrix_;
+  using ACL<T>::h_matrix_;
+  using ACL<T>::k_matrix_y_;
+  using ACL<T>::k_matrix_;
+  using ACL<T>::d_matrix_;
+  using ACL<T>::d_matrix_to_the_minus_half_;
+  using ACL<T>::d_ii_;
+  using ACL<T>::didj_matrix_;
+  using ACL<T>::gamma_matrix_;
+  using ACL<T>::profiler_;
+  using ACL<T>::GenDegreeMatrix;
+  using ACL<T>::GenKernelMatrix;
+  using ACL<T>::OptimizeU;
+  using ACL<T>::RunKMeans;
+  using ACL<T>::InitYW;
+  using ACL<T>::CheckMaxTime;
+  using ACL<T>::OutputProgress;
+  using ACL<T>::InitXYW;
+
+
   ISM() :
       vectorization_(true),
       cost_vector_(),
@@ -21,7 +69,12 @@ class ISM : public ACL<T> {
       qt_matrix_(),
       outer_iter_num_(0),
       inner_iter_num_(0)
-  {}
+  {
+    method_ = "ISM";
+  }
+
+  ~ISM() {}
+  ISM(const ISM &rhs) {}
 
   void GenKernelAndQMatrix(Matrix <T> &input) {
     if (kernel_type_ == kGaussianKernel) {
@@ -318,4 +371,6 @@ class ISM : public ACL<T> {
   int inner_iter_num_;
 
 };
-}
+}  // namespace NICE
+
+#endif  // CPP_INCLUDE_ISM_H

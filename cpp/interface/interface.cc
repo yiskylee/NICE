@@ -31,69 +31,71 @@
 #include "include/cpu_operations.h"
 #include "include/gpu_operations.h"
 #include "include/timer.h"
-#include "clustering/kdac_interface.h"
+#include "clustering/acl_interface.h"
 #include "cpu_operations_interface.h"
 
 
-void (Nice::KDACInterface<float>::*Fit0Arg)()
-= &Nice::KDACInterface<float>::Fit;
-void (Nice::KDACInterface<float>::*Fit1Arg)(PyObject *, int, int)
-= &Nice::KDACInterface<float>::Fit;
-void (Nice::KDACInterface<float>::*Fit2Arg)(PyObject *, int, int,
+void (Nice::ACLInterface<float>::*Fit0Arg)()
+= &Nice::ACLInterface<float>::Fit;
+void (Nice::ACLInterface<float>::*Fit1Arg)(PyObject *, int, int)
+= &Nice::ACLInterface<float>::Fit;
+void (Nice::ACLInterface<float>::*Fit2Arg)(PyObject *, int, int,
                                             PyObject *, int, int)
-    = &Nice::KDACInterface<float>::Fit;
+    = &Nice::ACLInterface<float>::Fit;
 
-void (Nice::KDACInterface<double>::*Fit0ArgDouble)()
-= &Nice::KDACInterface<double>::Fit;
-void (Nice::KDACInterface<double>::*Fit1ArgDouble)(PyObject *, int, int)
-= &Nice::KDACInterface<double>::Fit;
-void (Nice::KDACInterface<double>::*Fit2ArgDouble)(PyObject *, int, int,
+void (Nice::ACLInterface<double>::*Fit0ArgDouble)()
+= &Nice::ACLInterface<double>::Fit;
+void (Nice::ACLInterface<double>::*Fit1ArgDouble)(PyObject *, int, int)
+= &Nice::ACLInterface<double>::Fit;
+void (Nice::ACLInterface<double>::*Fit2ArgDouble)(PyObject *, int, int,
                                             PyObject *, int, int)
-= &Nice::KDACInterface<double>::Fit;
+= &Nice::ACLInterface<double>::Fit;
 
 
 BOOST_PYTHON_MODULE(Nice4Py) {
-    boost::python::class_<Nice::KDACInterface<float>>
-        ("KDAC", boost::python::init<std::string>())
+    boost::python::class_<Nice::ACLInterface<float>>
+        ("ACL", boost::python::init<std::string, std::string>())
         .def("Fit", Fit0Arg)
         .def("Fit", Fit1Arg)
         .def("Fit", Fit2Arg)
-        .def("SetupParams", &Nice::KDACInterface<float>::SetupParams)
-        .def("Predict", &Nice::KDACInterface<float>::Predict)
-        .def("GetProfiler", &Nice::KDACInterface<float>::GetProfiler)
-        .def("GetTimePerIter", &Nice::KDACInterface<float>::GetTimePerIter)
-        .def("GetQ", &Nice::KDACInterface<float>::GetQ)
-        .def("GetD", &Nice::KDACInterface<float>::GetD)
-        .def("GetN", &Nice::KDACInterface<float>::GetN)
-        .def("GetK", &Nice::KDACInterface<float>::GetK)
-        .def("GetW", &Nice::KDACInterface<float>::GetW)
-        .def("GetU", &Nice::KDACInterface<float>::GetU)
-        .def("SetW", &Nice::KDACInterface<float>::SetW)
-        .def("DiscardLastRun", &Nice::KDACInterface<float>::DiscardLastRun);
+        .def("SetupParams", &Nice::ACLInterface<float>::SetupParams)
+        .def("Predict", &Nice::ACLInterface<float>::Predict)
+        .def("GetProfiler", &Nice::ACLInterface<float>::GetProfiler)
+        .def("GetTimePerIter", &Nice::ACLInterface<float>::GetTimePerIter)
+        .def("GetQ", &Nice::ACLInterface<float>::GetQ)
+        .def("GetD", &Nice::ACLInterface<float>::GetD)
+        .def("GetN", &Nice::ACLInterface<float>::GetN)
+        .def("GetK", &Nice::ACLInterface<float>::GetK)
+        .def("GetW", &Nice::ACLInterface<float>::GetW)
+        .def("GetU", &Nice::ACLInterface<float>::GetU)
+        .def("SetW", &Nice::ACLInterface<float>::SetW)
+        .def("DiscardLastRun", &Nice::ACLInterface<float>::DiscardLastRun);
+
     boost::python::class_<Nice::CPUOperationsInterface<float>>("CPUOp")
         .def("GenKernelMatrix",
              &Nice::CPUOperationsInterface<float>::GenKernelMatrix)
         .staticmethod("GenKernelMatrix");
 
 
-    boost::python::class_<Nice::KDACInterface<double>>
-        ("KDACDouble", boost::python::init<std::string>())
+    boost::python::class_<Nice::ACLInterface<double>>
+        ("ACLDouble", boost::python::init<std::string, std::string>())
         .def("Fit", Fit0ArgDouble)
         .def("Fit", Fit1ArgDouble)
         .def("Fit", Fit2ArgDouble)
-        .def("SetupParams", &Nice::KDACInterface<double>::SetupParams)
-        .def("Predict", &Nice::KDACInterface<double>::Predict)
-        .def("GetProfiler", &Nice::KDACInterface<double>::GetProfiler)
-        .def("GetTimePerIter", &Nice::KDACInterface<double>::GetTimePerIter)
-        .def("GetQ", &Nice::KDACInterface<double>::GetQ)
-        .def("GetD", &Nice::KDACInterface<double>::GetD)
-        .def("GetN", &Nice::KDACInterface<double>::GetN)
-        .def("GetK", &Nice::KDACInterface<double>::GetK)
-        .def("GetW", &Nice::KDACInterface<double>::GetW)
-        .def("GetU", &Nice::KDACInterface<double>::GetU)
-        .def("SetW", &Nice::KDACInterface<double>::SetW)
-        .def("DiscardLastRun", &Nice::KDACInterface<double>::DiscardLastRun);
-        boost::python::class_<Nice::CPUOperationsInterface<double>>("CPUOp")
+        .def("SetupParams", &Nice::ACLInterface<double>::SetupParams)
+        .def("Predict", &Nice::ACLInterface<double>::Predict)
+        .def("GetProfiler", &Nice::ACLInterface<double>::GetProfiler)
+        .def("GetTimePerIter", &Nice::ACLInterface<double>::GetTimePerIter)
+        .def("GetQ", &Nice::ACLInterface<double>::GetQ)
+        .def("GetD", &Nice::ACLInterface<double>::GetD)
+        .def("GetN", &Nice::ACLInterface<double>::GetN)
+        .def("GetK", &Nice::ACLInterface<double>::GetK)
+        .def("GetW", &Nice::ACLInterface<double>::GetW)
+        .def("GetU", &Nice::ACLInterface<double>::GetU)
+        .def("SetW", &Nice::ACLInterface<double>::SetW)
+        .def("DiscardLastRun", &Nice::ACLInterface<double>::DiscardLastRun);
+
+    boost::python::class_<Nice::CPUOperationsInterface<double>>("CPUOp")
         .def("GenKernelMatrix",
         &Nice::CPUOperationsInterface<double>::GenKernelMatrix)
         .staticmethod("GenKernelMatrix");

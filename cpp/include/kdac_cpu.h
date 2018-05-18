@@ -36,12 +36,10 @@
 
 
 namespace Nice {
-template<typename T>
+template<class T>
 class KDACCPU: public KDAC<T> {
  public:
   /// This is the default constructor for KDAC
-  /// Number of clusters c and reduced dimension q will be both set to 2
-//  KDACCPU() = default;
   KDACCPU() = default;
 
   ~KDACCPU() = default;

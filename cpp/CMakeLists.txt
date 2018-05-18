@@ -165,7 +165,7 @@ else()
   file(GLOB_RECURSE SOURCES RELATIVE ${CMAKE_SOURCE_DIR} src/*.cc)
 
   # Add NICE library
-  add_library(${PROJECT_NAME} SHARED ${SOURCES})
+  add_library(${PROJECT_NAME} SHARED ${SOURCES} include/ism_cpu.h)
   target_link_libraries(${PROJECT_NAME}
                         ${MKL_LP64}
                         ${MKL_CORE}

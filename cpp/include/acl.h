@@ -112,7 +112,6 @@ class ACL {
   /// when the first clustering result is generated
   virtual void Fit() = 0;
 
-
   /// Running Predict() after Fit() returns
   /// the current clustering result as a Vector of T
   /// \return
