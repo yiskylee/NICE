@@ -6,8 +6,7 @@ class ACL(object):
   def __init__(self, type, method, device):
     self.device = device
     self.params = {'q': 1, 'kernel': 'Gaussian', 'debug': 0.0,
-                   'lambda': 1.0, 'sigma': 0.5, 'verbose': 0.0, 'max_time': 30,
-                   'method': 'ISM'}
+                   'lambda': 1.0, 'sigma': 0.5, 'verbose': 0.0, 'max_time': 30}
 
     # Call this so the mkl libarary is loaded before C++ is called
     pairwise_distances(np.zeros((4,4)), Y=None, metric='euclidean')
