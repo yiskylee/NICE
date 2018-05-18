@@ -6,8 +6,7 @@ class ACL(object):
   def __init__(self, type, method, device):
     self.device = device
     self.params = {'q': 1, 'kernel': 'Gaussian', 'debug': 0.0,
-                   'lambda': 1.0, 'sigma': 0.5, 'verbose': 0.0, 'max_time': 30,
-                   'method': 'ISM'}
+                   'lambda': 1.0, 'sigma': 0.5, 'verbose': 0.0, 'max_time': 30}
 
     # Call this so the mkl libarary is loaded before C++ is called
     pairwise_distances(np.zeros((4,4)), Y=None, metric='euclidean')
@@ -24,8 +23,7 @@ class ACL(object):
     self.profiling = {}
 
   def set_params(self, c=None, q=None, kernel=None, debug=None, verbose=None,
-                 Lambda=None, sigma=None, max_time=None, method=None,
-                 vectorization=None):
+                 Lambda=None, sigma=None, max_time=None):
     if c is not None:
       self.params['c'] = c
     if q is not None:
@@ -42,10 +40,6 @@ class ACL(object):
       self.params['sigma'] = sigma
     if max_time is not None:
       self.params['max_time'] = max_time
-    if method is not None:
-      self.params['method'] = method
-    if vectorization is not None:
-      self.params['vectorization'] = vectorization
     self.acl.SetupParams(self.params)
 
   def Fit(self, X=None, y=None):

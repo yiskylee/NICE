@@ -131,6 +131,8 @@ class ISM : public ACL<T> {
   // Fit() with an empty param list can only be run when the X and Y already
   // exist from the previous round of computation
   void Fit() {
+    profiler_["fit"].Start();
+    profiler_["exit_timer"].Start();
     PROFILE(InitYW(), profiler_["init"]);
     outer_iter_num_ = 0;
     Vector<T> pre_eigen_vals;
@@ -180,6 +182,8 @@ class ISM : public ACL<T> {
         OutputProgress();
       outer_iter_num_++;
     }
+    PROFILE(RunKMeans(), profiler_["kmeans"]);
+    profiler_["fit"].Stop();
     if (outer_iter_num_ >= 20 && verbose_) {
       std::cout << "Reached 20 iterations" << std::endl;
     }

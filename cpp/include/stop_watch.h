@@ -41,13 +41,12 @@ class StopWatch {
     gettimeofday(&start_, NULL);
     started_ = true;
   }
-  void Stop() {
+  bool Stop() {
     if (started_) {
       gettimeofday(&end_, NULL);
+      return true;
     } else {
-      std::cerr << "Make sure to start the timer before stopping it. "
-                << std::endl;
-      exit(1);
+      return false;
     }
   }
   double DiffInMs() {
