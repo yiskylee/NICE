@@ -8,7 +8,7 @@ cpp/build/
 cpp/dlib/build/
 cpp/standalone_build
 # cpp/dlib/
-python
+# python
 # cpp/doc/
 .idea
 matlab
