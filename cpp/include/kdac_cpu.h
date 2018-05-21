@@ -94,25 +94,6 @@ class KDACCPU: public KDAC<T> {
     return delta_x_ij * delta_x_ij.transpose();
   }
 
-  void GenPhiCoeff(const Vector<T> &w_l, const Vector<T> &gradient) {
-    // Three terms used to calculate phi of alpha
-    // They only change if w_l or gradient change
-    for (int i = 0; i < n_; i++) {
-      for (int j = 0; j < n_; j++) {
-        Vector<T> delta_x_ij =
-            x_matrix_.row(i) - x_matrix_.row(j);
-        T delta_w = w_l.transpose() * delta_x_ij;
-        T delta_f = delta_x_ij.transpose() * gradient;
-        waw_matrix_(i, j) = delta_w * delta_w;
-        waf_matrix_(i, j) = delta_w * delta_f;
-        faf_matrix_(i, j) = delta_f * delta_f;
-//        waw_matrix_(i, j) = w_l.transpose() * a_matrix_ij * w_l;
-//        waf_matrix_(i, j) = w_l.transpose() * a_matrix_ij * gradient;
-//        faf_matrix_(i, j) = gradient.transpose() * a_matrix_ij * gradient;
-      }
-    }
-  }
-
   // Generate phi(alpha), phi(0) and phi'(0) for LineSearch
   // If this is the first time to generate phi(), then w_l_changed is true
   // Or if the w_l is negated because phi'(0) is negative,
@@ -128,8 +109,8 @@ class KDACCPU: public KDAC<T> {
     if (kernel_type_ == kGaussianKernel) {
       profiler_["gen_phi"].Start();
       float alpha_square = alpha_ * alpha_;
-      float sqrt_one_minus_alpha = 1 / std::sqrt(1 - alpha_square);
-      float denom = -1 / (2 * constant_ * constant_);
+      float sqrt_one_minus_alpha = std::sqrt(1 - alpha_square);
+      float denom = -1.f / (2 * constant_ * constant_);
       phi_of_alpha_ = 0;
       if (w_l_changed) {
         GenPhiCoeff(w_l, gradient);
@@ -169,6 +150,25 @@ class KDACCPU: public KDAC<T> {
         }
       }
       profiler_["gen_phi"].Record();
+    }
+  }
+
+  void GenPhiCoeff(const Vector<T> &w_l, const Vector<T> &gradient) {
+    // Three terms used to calculate phi of alpha
+    // They only change if w_l or gradient change
+    for (int i = 0; i < n_; i++) {
+      for (int j = 0; j < n_; j++) {
+        Vector<T> delta_x_ij =
+            x_matrix_.row(i) - x_matrix_.row(j);
+        T delta_w = w_l.transpose() * delta_x_ij;
+        T delta_f = delta_x_ij.transpose() * gradient;
+        waw_matrix_(i, j) = delta_w * delta_w;
+        waf_matrix_(i, j) = delta_w * delta_f;
+        faf_matrix_(i, j) = delta_f * delta_f;
+//        waw_matrix_(i, j) = w_l.transpose() * a_matrix_ij * w_l;
+//        waf_matrix_(i, j) = w_l.transpose() * a_matrix_ij * gradient;
+//        faf_matrix_(i, j) = gradient.transpose() * a_matrix_ij * gradient;
+      }
     }
   }
 

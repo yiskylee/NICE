@@ -482,6 +482,11 @@ class ACL {
       validated = false;
     }
 
+    if (kernel_type_ != kGaussianKernel) {
+      std::cerr << "kernel_type_: " << kernel_type_ << " does not exist\n";
+      validated = false;
+    }
+
     if (!validated) {
       OutputConfigs();
       exit(1);

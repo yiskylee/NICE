@@ -24,7 +24,8 @@ class ACL(object):
     self.profiling = {}
 
   def set_params(self, c=None, q=None, kernel=None, debug=None, verbose=None,
-                 Lambda=None, sigma=None, max_time=None, vectorization=None):
+                 Lambda=None, sigma=None, max_time=None, vectorization=None,
+                 thresh1=None, thresh2=None):
     if c is not None:
       self.params['c'] = c
     if q is not None:
@@ -43,6 +44,13 @@ class ACL(object):
       self.params['max_time'] = max_time
     if vectorization is not None:
       self.params['vectorization'] = vectorization
+    if thresh1 is not None:
+      self.params['threshold1'] = thresh1
+    if thresh2 is not None:
+      print thresh2
+      self.params['threshold2'] = thresh2
+
+
     self.acl.SetupParams(self.params)
 
   def Fit(self, X=None, y=None):
@@ -72,3 +80,6 @@ class ACL(object):
     for name in per_iter_list:
       self.acl.GetTimePerIter(time_per_iter, num_iters, name)
       self.profiling[name+'_per_iter'] = np.array(time_per_iter.copy())
+
+  def OutputConfigs(self):
+    self.acl.OutputConfigs()

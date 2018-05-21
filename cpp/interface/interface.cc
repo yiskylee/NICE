@@ -69,6 +69,7 @@ BOOST_PYTHON_MODULE(Nice4Py) {
         .def("GetW", &Nice::ACLInterface<float>::GetW)
         .def("GetU", &Nice::ACLInterface<float>::GetU)
         .def("SetW", &Nice::ACLInterface<float>::SetW)
+        .def("OutputConfigs", &Nice::ACLInterface<float>::OutputConfigs)
         .def("DiscardLastRun", &Nice::ACLInterface<float>::DiscardLastRun);
 
     boost::python::class_<Nice::CPUOperationsInterface<float>>("CPUOp")
@@ -93,6 +94,7 @@ BOOST_PYTHON_MODULE(Nice4Py) {
         .def("GetW", &Nice::ACLInterface<double>::GetW)
         .def("GetU", &Nice::ACLInterface<double>::GetU)
         .def("SetW", &Nice::ACLInterface<double>::SetW)
+        .def("OutputConfigs", &Nice::ACLInterface<double>::OutputConfigs)
         .def("DiscardLastRun", &Nice::ACLInterface<double>::DiscardLastRun);
 
     boost::python::class_<Nice::CPUOperationsInterface<double>>("CPUOp")

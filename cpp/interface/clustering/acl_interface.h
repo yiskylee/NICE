@@ -131,7 +131,7 @@ class ACLInterface {
         acl_ -> SetThreshold1(thresh1);
       } else if (strcmp("threshold2", param) == 0) {
         double thresh2 = boost::python::extract<double>(params["threshold2"]);
-        acl_ -> SetThreshold1(thresh2);
+        acl_ -> SetThreshold2(thresh2);
       } else if (strcmp("kernel", param) == 0) {
         if (strcmp("Gaussian",
                    boost::python::extract<char *>(params["kernel"])) == 0) {
@@ -264,6 +264,10 @@ class ACLInterface {
     MatrixMap<T> w_matrix(reinterpret_cast<T *>(input_buf.buf), row, col);
     acl_ -> SetW(w_matrix);
     PyBuffer_Release(&input_buf);
+  }
+
+  void OutputConfigs() {
+    acl_ -> OutputConfigs();
   }
 
  protected:

@@ -337,10 +337,6 @@ class KDAC : public ACL<T> {
         LineSearch(grad_f_vertical, &w_l, &objective);
         w_l = std::sqrt(1.0 - alpha_ * alpha_) * w_l + alpha_ * grad_f_vertical;
         Matrix<T> leftCols = w_matrix_.leftCols(l+1);
-        util::CheckFinite(leftCols, "leftCols");
-        util::CheckFinite(grad_f, "grad_f");
-        util::CheckFinite(grad_f_vertical, "grad_f_vertical");
-        util::CheckFinite(w_l, "w_l");
         w_matrix_.col(l) = w_l;
         w_l_converged =
             util::CheckConverged(objective, pre_objective, threshold2_);
@@ -349,7 +345,9 @@ class KDAC : public ACL<T> {
       // TODO: Need to learn about if using Vector<T> &w_l = w_matrix_.col(l)
       if (verbose_)
         std::cout << "Column " << l + 1 << " cost: " << objective << " | ";
-//      std::cout << objective << ", ";
+      else {
+        std::cout << objective << ", ";
+      }
     }
     if (verbose_)
       std::cout << "W Optimized" << std::endl;

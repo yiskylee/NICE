@@ -143,7 +143,8 @@ class TestACL(unittest.TestCase):
   def test_9(self):
     data = self.load_data(n=400, d=4, c=2, name='gaussian', data_type='float')
     acl = ACL('float', 'KDAC', 'cpu')
-    acl.set_params(sigma=2.0, c=2, q=1, verbose=1, vectorization=1)
+    acl.set_params(sigma=2.0, c=2, q=1, verbose=0, vectorization=1, thresh2=0.0001)
+    acl.OutputConfigs()
     acl.Fit(data)
     pred = acl.Predict()
     ground_truth = np.concatenate((np.zeros(200), np.ones(200)))
