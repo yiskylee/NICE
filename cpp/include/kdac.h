@@ -335,12 +335,12 @@ class KDAC : public ACL<T> {
         grad_f_vertical =
             GenOrthonormal(w_matrix_.leftCols(l + 1), grad_f);
         LineSearch(grad_f_vertical, &w_l, &objective);
-        w_l = sqrt(1.0 - pow(alpha_, 2)) * w_l + alpha_ * grad_f_vertical;
-//        Matrix<T> leftCols = w_matrix_.leftCols(l+1);
-//        util::CheckFinite(leftCols, "leftCols");
-//        util::CheckFinite(grad_f, "grad_f");
-//        util::CheckFinite(grad_f_vertical, "grad_f_vertical");
-//        util::CheckFinite(w_l, "w_l");
+        w_l = std::sqrt(1.0 - alpha_ * alpha_) * w_l + alpha_ * grad_f_vertical;
+        Matrix<T> leftCols = w_matrix_.leftCols(l+1);
+        util::CheckFinite(leftCols, "leftCols");
+        util::CheckFinite(grad_f, "grad_f");
+        util::CheckFinite(grad_f_vertical, "grad_f_vertical");
+        util::CheckFinite(w_l, "w_l");
         w_matrix_.col(l) = w_l;
         w_l_converged =
             util::CheckConverged(objective, pre_objective, threshold2_);

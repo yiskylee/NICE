@@ -159,7 +159,7 @@ class TestACL(unittest.TestCase):
 
   def test_10(self):
     data = self.load_data(n=164, d=4, c=2, name='moon', data_type='double')
-    acl = ACL('double', 'ISM', 'cpu')
+    acl = ACL('double', 'KDAC', 'cpu')
     acl.set_params(c=2, q=2, debug=0, sigma=2, verbose=1, vectorization=1)
     acl.Fit(data)
     pred1 = acl.Predict()

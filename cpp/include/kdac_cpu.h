@@ -48,6 +48,7 @@ class KDACCPU: public KDAC<T> {
   using KDAC<T>::g_of_w_;
   using KDAC<T>::profiler_;
   using KDAC<T>::n_;
+  using KDAC<T>::d_;
   using KDAC<T>::alpha_;
   using KDAC<T>::constant_;
 
@@ -126,9 +127,9 @@ class KDACCPU: public KDAC<T> {
     // Count number of times GenPhi is called inside one OptimizeW()
     if (kernel_type_ == kGaussianKernel) {
       profiler_["gen_phi"].Start();
-      float alpha_square = pow(alpha_, 2);
-      float sqrt_one_minus_alpha = pow((1 - alpha_square), 0.5);
-      float denom = -1 / (2 * pow(constant_, 2));
+      float alpha_square = alpha_ * alpha_;
+      float sqrt_one_minus_alpha = 1 / std::sqrt(1 - alpha_square);
+      float denom = -1 / (2 * constant_ * constant_);
       phi_of_alpha_ = 0;
       if (w_l_changed) {
         GenPhiCoeff(w_l, gradient);

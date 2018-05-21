@@ -40,7 +40,7 @@
 #include <algorithm>
 #include <sstream>
 #include <vector>
-#include <math.h>
+#include <cmath>
 #include <iomanip>
 
 #include "include/matrix.h"
