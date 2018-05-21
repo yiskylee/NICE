@@ -39,6 +39,18 @@ namespace Nice {
 template<class T>
 class KDACCPU: public KDAC<T> {
  public:
+  using KDAC<T>::phi_of_alpha_;
+  using KDAC<T>::phi_of_zero_;
+  using KDAC<T>::phi_of_zero_prime_;
+  using KDAC<T>::gamma_matrix_;
+  using KDAC<T>::x_matrix_;
+  using KDAC<T>::kernel_type_;
+  using KDAC<T>::g_of_w_;
+  using KDAC<T>::profiler_;
+  using KDAC<T>::n_;
+  using KDAC<T>::alpha_;
+  using KDAC<T>::constant_;
+
   /// This is the default constructor for KDAC
   KDACCPU() = default;
 
@@ -56,18 +68,18 @@ class KDACCPU: public KDAC<T> {
   void InitYW() {
     KDAC<T>::InitYW();
     // Coefficients for calculating phi
-    waw_matrix_ = Matrix<T>::Zero(this->n_, this->n_);
-    waf_matrix_ = Matrix<T>::Zero(this->n_, this->n_);
-    faf_matrix_ = Matrix<T>::Zero(this->n_, this->n_);
+    waw_matrix_ = Matrix<T>::Zero(n_, n_);
+    waf_matrix_ = Matrix<T>::Zero(n_, n_);
+    faf_matrix_ = Matrix<T>::Zero(n_, n_);
   }
 
   void InitXYW(const Matrix <T> &input_matrix,
                const Matrix <T> &y_matrix) {
     KDAC<T>::InitXYW(input_matrix, y_matrix);
     // Coefficients for calculating phi
-    waw_matrix_ = Matrix<T>::Zero(this->n_, this->n_);
-    waf_matrix_ = Matrix<T>::Zero(this->n_, this->n_);
-    faf_matrix_ = Matrix<T>::Zero(this->n_, this->n_);
+    waw_matrix_ = Matrix<T>::Zero(n_, n_);
+    waf_matrix_ = Matrix<T>::Zero(n_, n_);
+    faf_matrix_ = Matrix<T>::Zero(n_, n_);
   }
 
   void OptimizeW() {
@@ -77,17 +89,17 @@ class KDACCPU: public KDAC<T> {
   }
 
   Matrix<T> GenAij(int i, int j) {
-    Vector<T> delta_x_ij = this->x_matrix_.row(i) - this->x_matrix_.row(j);
+    Vector<T> delta_x_ij = x_matrix_.row(i) - x_matrix_.row(j);
     return delta_x_ij * delta_x_ij.transpose();
   }
 
   void GenPhiCoeff(const Vector<T> &w_l, const Vector<T> &gradient) {
     // Three terms used to calculate phi of alpha
     // They only change if w_l or gradient change
-    for (int i = 0; i < this->n_; i++) {
-      for (int j = 0; j < this->n_; j++) {
+    for (int i = 0; i < n_; i++) {
+      for (int j = 0; j < n_; j++) {
         Vector<T> delta_x_ij =
-            this->x_matrix_.row(i) - this->x_matrix_.row(j);
+            x_matrix_.row(i) - x_matrix_.row(j);
         T delta_w = w_l.transpose() * delta_x_ij;
         T delta_f = delta_x_ij.transpose() * gradient;
         waw_matrix_(i, j) = delta_w * delta_w;
@@ -112,96 +124,96 @@ class KDACCPU: public KDAC<T> {
               const Vector<T> &gradient,
               bool w_l_changed) {
     // Count number of times GenPhi is called inside one OptimizeW()
-    if (this->kernel_type_ == kGaussianKernel) {
-      this->profiler_["gen_phi"].Start();
-      float alpha_square = pow(this->alpha_, 2);
+    if (kernel_type_ == kGaussianKernel) {
+      profiler_["gen_phi"].Start();
+      float alpha_square = pow(alpha_, 2);
       float sqrt_one_minus_alpha = pow((1 - alpha_square), 0.5);
-      float denom = -1 / (2 * pow(this->constant_, 2));
-      this->phi_of_alpha_ = 0;
+      float denom = -1 / (2 * pow(constant_, 2));
+      phi_of_alpha_ = 0;
       if (w_l_changed) {
         GenPhiCoeff(w_l, gradient);
-        this->phi_of_zero_ = 0;
-        this->phi_of_zero_prime_ = 0;
+        phi_of_zero_ = 0;
+        phi_of_zero_prime_ = 0;
       }
 //      Matrix<T> kij_matrix =
 //          denom * ( (faf_matrix_ - waw_matrix_) * alpha_square +
-//              2 * waf_matrix_ * sqrt_one_minus_alpha * this->alpha_ +
+//              2 * waf_matrix_ * sqrt_one_minus_alpha * alpha_ +
 //              waw_matrix_);
-//      this->phi_of_alpha_ =
-//          (kij_matrix.array().exp() * this->gamma_matrix_.array()).
+//      phi_of_alpha_ =
+//          (kij_matrix.array().exp() * gamma_matrix_.array()).
 //              matrix().sum();
 //      if (w_l_changed) {
 //        Matrix<T> kij_matrix = denom * waw_matrix_.array().exp().matrix();
-//        this->phi_of_zero_ =
-//            (kij_matrix.array() * this->gamma_matrix_.array()).
+//        phi_of_zero_ =
+//            (kij_matrix.array() * gamma_matrix_.array()).
 //            matrix().sum();
-//        this->phi_of_zero_prime_ = (kij_matrix.array() * waf_matrix_.array() *
-//            this->gamma_matrix_.array() * 2 * denom).
+//        phi_of_zero_prime_ = (kij_matrix.array() * waf_matrix_.array() *
+//            gamma_matrix_.array() * 2 * denom).
 //            matrix().sum();
 //      }
-      for (int i = 0; i < this->n_; i++) {
-        for (int j = 0; j < this->n_; j++) {
+      for (int i = 0; i < n_; i++) {
+        for (int j = 0; j < n_; j++) {
           T waw = waw_matrix_(i, j);
           T waf = waf_matrix_(i, j);
           T faf = faf_matrix_(i, j);
           T kij = exp(denom * ((faf - waw) * alpha_square +
-              2 * waf * sqrt_one_minus_alpha * this->alpha_ + waw));
-          this->phi_of_alpha_ += this->gamma_matrix_(i, j) * kij;
+              2 * waf * sqrt_one_minus_alpha * alpha_ + waw));
+          phi_of_alpha_ += gamma_matrix_(i, j) * kij;
           if (w_l_changed) {
             T kij = exp(denom * waw);
-            this->phi_of_zero_ += this->gamma_matrix_(i, j) * kij;
-            this->phi_of_zero_prime_ +=
-                this->gamma_matrix_(i, j) * denom * 2 * waf * kij;
+            phi_of_zero_ += gamma_matrix_(i, j) * kij;
+            phi_of_zero_prime_ +=
+                gamma_matrix_(i, j) * denom * 2 * waf * kij;
           }
         }
       }
-      this->profiler_["gen_phi"].Record();
+      profiler_["gen_phi"].Record();
     }
   }
 
   Vector<T> GenWGradient(const Vector<T> &w_l) {
-    this->profiler_["gen_grad"].Start();
-    Vector<T> w_gradient = Vector<T>::Zero(this->d_);
-    float sigma_sq = pow(this->constant_, 2);
-    if (this->kernel_type_ == kGaussianKernel) {
-      for (int i = 0; i < this->n_; i++) {
-        for (int j = 0; j < this->n_; j++) {
+    profiler_["gen_grad"].Start();
+    Vector<T> w_gradient = Vector<T>::Zero(d_);
+    float sigma_sq = pow(constant_, 2);
+    if (kernel_type_ == kGaussianKernel) {
+      for (int i = 0; i < n_; i++) {
+        for (int j = 0; j < n_; j++) {
           Vector<T> delta_x_ij =
-              this->x_matrix_.row(i) - this->x_matrix_.row(j);
+              x_matrix_.row(i) - x_matrix_.row(j);
           T delta_w = w_l.transpose() * delta_x_ij;
           T waw = delta_w * delta_w;
           T exp_term = exp(-waw / (2.0 * sigma_sq));
-          T gamma = this->gamma_matrix_(i, j);
-          T g_of_w = this->g_of_w_(i, j);
+          T gamma = gamma_matrix_(i, j);
+          T g_of_w = g_of_w_(i, j);
           w_gradient += -exp_term * gamma * g_of_w / sigma_sq *
               delta_w * delta_x_ij;
 //          T exp_term = exp(static_cast<T>(-w_l.transpose() * a_matrix_ij * w_l)
-//                               / (2.0 * pow(this->constant_, 2)));
-//          w_gradient += -(this->gamma_matrix_(i, j)) * (this->g_of_w_(i, j))
-//              * exp_term * a_matrix_ij * w_l / pow(this->constant_, 2);
+//                               / (2.0 * pow(constant_, 2)));
+//          w_gradient += -(gamma_matrix_(i, j)) * (g_of_w_(i, j))
+//              * exp_term * a_matrix_ij * w_l / pow(constant_, 2);
         }
       }
     }
-    this->profiler_["gen_grad"].Record();
+    profiler_["gen_grad"].Record();
     return w_gradient;
   }
 
   void UpdateGOfW(const Vector<T> &w_l) {
-    this->profiler_["update_g_of_w"].Start();
-    float sigma_sq = pow(this->constant_, 2);
-    for (int i = 0; i < this->n_; i++) {
-      for (int j = 0; j < this->n_; j++) {
-        if (this->kernel_type_ == kGaussianKernel) {
+    profiler_["update_g_of_w"].Start();
+    float sigma_sq = pow(constant_, 2);
+    for (int i = 0; i < n_; i++) {
+      for (int j = 0; j < n_; j++) {
+        if (kernel_type_ == kGaussianKernel) {
           Vector<T> delta_x_ij =
-              this->x_matrix_.row(i) - this->x_matrix_.row(j);
+              x_matrix_.row(i) - x_matrix_.row(j);
           T delta_w = w_l.transpose() * delta_x_ij;
           T waw = delta_w * delta_w;
           T exp_term = exp(-waw / (2.0 * sigma_sq));
-          this->g_of_w_(i, j) *= exp_term;
+          g_of_w_(i, j) *= exp_term;
         }
       }
     }
-    this->profiler_["update_g_of_w"].Record();
+    profiler_["update_g_of_w"].Record();
   }
 };
 }  // namespace NICE

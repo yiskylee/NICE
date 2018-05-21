@@ -41,6 +41,11 @@ namespace Nice {
 template<typename T>
 class KDACGPU: public KDAC<T> {
  public:
+  using KDAC<T>::n_;
+  using KDAC<T>::d_;
+  using KDAC<T>::x_matrix_;
+  using KDAC<T>::profiler_;
+  using KDAC<T>::g_of_w_;
   /// This is the default constructor for KDACGPU
   /// Number of clusters c and reduced dimension q will be both set to 2
   KDACGPU() :
@@ -95,73 +100,66 @@ class KDACGPU: public KDAC<T> {
   // Initialization for generating alternative views with a given Y
   void InitXYW(const Matrix<T> &input_matrix, const Matrix<T> &y_matrix) {
     KDAC<T>::InitXYW(input_matrix, y_matrix);
-    int n = this->n_;
-    int d = this->d_;
-    this->profiler_["gen_phi"].Start();
+    profiler_["gen_phi"].Start();
     gpu_util_->SetupMem(&x_matrix_d_,
-                        &(this->x_matrix_(0)), n * d);
-    gpu_util_->SetupMem(&waw_matrix_d_, nullptr, n * n, false);
-    gpu_util_->SetupMem(&waf_matrix_d_, nullptr, n * n, false);
-    gpu_util_->SetupMem(&faf_matrix_d_, nullptr, n * n, false);
-    gpu_util_->SetupMem(&w_l_d_, nullptr, d, false);
-    gpu_util_->SetupMem(&gradient_d_, nullptr, d, false);
-    gpu_util_->SetupMem(&gamma_matrix_d_, nullptr, n * n, false);
-    gpu_util_->SetupMem(&g_of_w_d_, nullptr, n * n, false);
+                        &(x_matrix_(0)), n_ * d_);
+    gpu_util_->SetupMem(&waw_matrix_d_, nullptr, n_ * n_, false);
+    gpu_util_->SetupMem(&waf_matrix_d_, nullptr, n_ * n_, false);
+    gpu_util_->SetupMem(&faf_matrix_d_, nullptr, n_ * n_, false);
+    gpu_util_->SetupMem(&w_l_d_, nullptr, d_, false);
+    gpu_util_->SetupMem(&gradient_d_, nullptr, d_, false);
+    gpu_util_->SetupMem(&gamma_matrix_d_, nullptr, n_ * n_, false);
+    gpu_util_->SetupMem(&g_of_w_d_, nullptr, n_ * n_, false);
     gpu_util_->SetupMem(&gradient_fs_d_, nullptr,
-                        n * n * d, false);
-    int num_blocks = ((n - 1) / 16 + 1) * ((n - 1) / 16 + 1);
+                        n_ * n_ * d_, false);
+    int num_blocks = ((n_ - 1) / 16 + 1) * ((n_ - 1) / 16 + 1);
     gpu_util_->SetupMem(&phi_of_alphas_d_, nullptr, num_blocks, false);
     gpu_util_->SetupMem(&phi_of_zeros_d_, nullptr, num_blocks, false);
     gpu_util_->SetupMem(&phi_of_zero_primes_d_, nullptr, num_blocks, false);
     phi_of_alphas_h_ = new T[num_blocks];
     phi_of_zeros_h_ = new T[num_blocks];
     phi_of_zero_primes_h_ = new T[num_blocks];
-    gradient_fs_h_ = new T[n * n * d];
-    this->profiler_["gen_phi"].Record();
+    gradient_fs_h_ = new T[n_ * n_ * d_];
+    profiler_["gen_phi"].Record();
   }
 
   void InitX(const Matrix<T> &input_matrix) {
     KDAC<T>::InitX(input_matrix);
-    int n = this->n_;
-    int d = this->d_;
-
     gpu_util_->SetupMem(&x_matrix_d_,
-                        &(this->x_matrix_(0)), n * d);
+                        &(x_matrix_(0)), n_ * d_);
   }
 
   void InitYW() {
     KDAC<T>::InitYW();
-    int n = this->n_;
-    int d = this->d_;
-    this->profiler_["gen_phi"].Start();
-    gpu_util_->SetupMem(&waw_matrix_d_, nullptr, n * n, false);
-    gpu_util_->SetupMem(&waf_matrix_d_, nullptr, n * n, false);
-    gpu_util_->SetupMem(&faf_matrix_d_, nullptr, n * n, false);
-    gpu_util_->SetupMem(&w_l_d_, nullptr, d, false);
-    gpu_util_->SetupMem(&gradient_d_, nullptr, d, false);
-    gpu_util_->SetupMem(&gamma_matrix_d_, nullptr, n * n, false);
-    gpu_util_->SetupMem(&g_of_w_d_, nullptr, n * n, false);
+    profiler_["gen_phi"].Start();
+    gpu_util_->SetupMem(&waw_matrix_d_, nullptr, n_ * n_, false);
+    gpu_util_->SetupMem(&waf_matrix_d_, nullptr, n_ * n_, false);
+    gpu_util_->SetupMem(&faf_matrix_d_, nullptr, n_ * n_, false);
+    gpu_util_->SetupMem(&w_l_d_, nullptr, d_, false);
+    gpu_util_->SetupMem(&gradient_d_, nullptr, d_, false);
+    gpu_util_->SetupMem(&gamma_matrix_d_, nullptr, n_ * n_, false);
+    gpu_util_->SetupMem(&g_of_w_d_, nullptr, n_ * n_, false);
     gpu_util_->SetupMem(&gradient_fs_d_, nullptr,
-                        n * n * d, false);
-    int num_blocks = ((n - 1) / 16 + 1) * ((n - 1) / 16 + 1);
+                        n_ * n_ * d_, false);
+    int num_blocks = ((n_ - 1) / 16 + 1) * ((n_ - 1) / 16 + 1);
     gpu_util_->SetupMem(&phi_of_alphas_d_, nullptr, num_blocks, false);
     gpu_util_->SetupMem(&phi_of_zeros_d_, nullptr, num_blocks, false);
     gpu_util_->SetupMem(&phi_of_zero_primes_d_, nullptr, num_blocks, false);
     phi_of_alphas_h_ = new T[num_blocks];
     phi_of_zeros_h_ = new T[num_blocks];
     phi_of_zero_primes_h_ = new T[num_blocks];
-    gradient_fs_h_ = new T[n * n * d];
-    this->profiler_["gen_phi"].Record();
+    gradient_fs_h_ = new T[n_ * n_ * d_];
+    profiler_["gen_phi"].Record();
   }
 
   void OptimizeW(void) {
     KDAC<T>::GenGammaMatrix();
-    CUDA_CALL(cudaMemcpy(gamma_matrix_d_, &(this->gamma_matrix_)(0),
-                         this->n_ * this->n_ * sizeof(T),
+    CUDA_CALL(cudaMemcpy(gamma_matrix_d_, &(gamma_matrix_)(0),
+                         n_ * n_ * sizeof(T),
                          cudaMemcpyHostToDevice));
     KDAC<T>::GenGofW();
-    CUDA_CALL(cudaMemcpy(g_of_w_d_, &(this->g_of_w_)(0),
-                         this->n_ * this->n_ * sizeof(T),
+    CUDA_CALL(cudaMemcpy(g_of_w_d_, &(g_of_w_)(0),
+                         n_ * n_ * sizeof(T),
                          cudaMemcpyHostToDevice));
     KDAC<T>::OptimizeW();
   }

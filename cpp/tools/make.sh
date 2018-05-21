@@ -25,3 +25,4 @@ rm CMakeCache.txt
 cmake -Denable-condamkl=$condamkl -Denable-intelmkl=$intelmkl -Denable-test=$doTest -Denable-interface=$interface ..
 echo "cmake -Denable-condamkl=$condamkl -Denable-intelmkl=$intelmkl -Denable-test=$doTest -Denable-interface=$interface .."
 make -j 16
+cp ${NICE_BUILD_PATH}/interface/Nice4Py.so ${NICE_HOME}/python/Nice4Py/

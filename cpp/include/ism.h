@@ -58,10 +58,10 @@ class ISM : public ACL<T> {
   using ACL<T>::CheckMaxTime;
   using ACL<T>::OutputProgress;
   using ACL<T>::InitXYW;
+  using ACL<T>::vectorization_;
 
 
   ISM() :
-      vectorization_(true),
       cost_vector_(),
       eigen_vals_(),
       psi_matrix_(),
@@ -208,7 +208,7 @@ class ISM : public ACL<T> {
     ACL<T>::InitY(y_matrix);
   }
 
-  void SetVectorization(bool vectorization) { vectorization_ = vectorization; }
+
 
   void UpdateW(const Matrix <T> &phi_w) {
     Eigen::EigenSolver <Matrix<T>> solver(phi_w);
@@ -358,8 +358,6 @@ class ISM : public ACL<T> {
   }
 
  protected:
-  // Vetorize ISM or not
-  bool vectorization_;
   // A vector storing every cost in each iteration in WISM
   Vector<T> cost_vector_;
   // Eigen values to determin if W_{k} has converged in ISM

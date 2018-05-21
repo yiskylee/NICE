@@ -50,7 +50,7 @@ class ACL {
       w_converge_(false),
       u_w_converge_(false),
       threshold1_(0.0001),
-      threshold2_(0.001),
+      threshold2_(0.01),
       x_matrix_(),
       w_matrix_(),
       pre_w_matrix_(),
@@ -76,7 +76,8 @@ class ACL {
       d_ii_(),
       didj_matrix_(),
       gamma_matrix_(),
-      profiler_()
+      profiler_(),
+      vectorization_(true)
   {
     profiler_["fit"].SetName("fit");
     profiler_["exit_timer"].SetName("exit_timer");
@@ -232,6 +233,8 @@ class ACL {
     }
     w_matrix_ = w_matrix;
   }
+
+  void SetVectorization(bool vectorization) { vectorization_ = vectorization; }
 
   // Set lambda for HSIC
   void SetLambda(float lambda) { lambda_ = lambda; }
@@ -419,6 +422,8 @@ class ACL {
   Matrix <T> gamma_matrix_;  // The nxn gamma matrix used in gamma_ij
   // A map container that contains timers for different functions
   ACLProfiler profiler_;
+  // Vetorize ISM or not
+  bool vectorization_;
 
 
   /// This function runs KMeans on the normalized U

@@ -109,7 +109,7 @@ else()
 endif()
 
 # Dirty hack to not compile CUDA code
-# set(CUDA_AND_GPU FALSE)
+set(CUDA_AND_GPU FALSE)
 # Set GPU True
 # set(CUDA_AND_GPU TRUE)
 

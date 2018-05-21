@@ -102,12 +102,16 @@ class KDAC : public ACL<T> {
   using ACL<T>::CheckMaxTime;
   using ACL<T>::OutputProgress;
   using ACL<T>::InitXYW;
+  using ACL<T>::vectorization_;
 
   /// This is the default constructor for KDAC
   /// Number of clusters c and reduced dimension q will be both set to 0
   KDAC() :
       y_matrix_tilde_(),
       g_of_w_(),
+      phi_of_alpha_(0),
+      phi_of_zero_(0),
+      phi_of_zero_prime_(0),
       first_time_gen_u_(true)
   {
     method_ = "KDAC";
@@ -345,6 +349,7 @@ class KDAC : public ACL<T> {
       // TODO: Need to learn about if using Vector<T> &w_l = w_matrix_.col(l)
       if (verbose_)
         std::cout << "Column " << l + 1 << " cost: " << objective << " | ";
+//      std::cout << objective << ", ";
     }
     if (verbose_)
       std::cout << "W Optimized" << std::endl;

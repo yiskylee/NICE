@@ -63,6 +63,16 @@ template<typename T>
 class ACLInterface {
  public:
   explicit ACLInterface(std::string method, std::string device_type) {
+    if (method != "ISM" && method != "KDAC") {
+      std::cerr << "Method " << method << " is not supported!\n";
+      exit(1);
+    }
+
+    if (device_type != "cpu" && device_type != "gpu") {
+      std::cerr << "Device " << device_type << " is not supported!\n";
+      exit(1);
+    }
+
     if (method == "ISM") {
       if (device_type == "cpu")
         acl_ = std::make_shared<Nice::ISMCPU<T>>();
@@ -110,12 +120,9 @@ class ACLInterface {
         bool verbose = boost::python::extract<double>(params["verbose"]);
         acl_ -> SetVerbose(verbose);
       } else if (strcmp("vectorization", param) == 0) {
-//        bool vectorization =
-//            boost::python::extract<double>(params["vectorization"]);
-        //        acl_ -> SetVectorization(vectorization);
-        std::cerr << "No SetVectorziation at the moment";
-        exit(1);
-
+        bool vectorization =
+            boost::python::extract<double>(params["vectorization"]);
+        acl_ -> SetVectorization(vectorization);
       } else if (strcmp("debug", param) == 0) {
         bool debug = boost::python::extract<double>(params["debug"]);
         acl_ -> SetDebug(debug);
