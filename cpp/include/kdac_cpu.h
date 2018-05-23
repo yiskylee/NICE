@@ -153,6 +153,27 @@ class KDACCPU: public KDAC<T> {
     }
   }
 
+  // TODO: make GenPhiOFAlpha return phi(0), instead of modifying class member
+  // variable
+  T GenPhiOfAlpha(const Vector<T> &w_l) {
+    // TODO: Optimize g(w)
+    T phi_of_alpha = 0;
+    if (kernel_type_ == kGaussianKernel) {
+      T denom = -1.f / (2 * constant_ * constant_);
+      for (int i = 0; i < n_; i++) {
+        for (int j = 0; j < n_; j++) {
+          Vector<T> delta_x_ij = x_matrix_.row(i) - x_matrix_.row(j);
+          T projection = w_l.dot(delta_x_ij);
+          T kij = exp(denom * projection * projection);
+          // g_of_w_(i,j) is the exp(-waw/2sigma^2) for all previously genreated
+          // w columns (see equation 12)
+          phi_of_alpha += gamma_matrix_(i, j) * kij * g_of_w_(i, j);
+        }
+      }
+    }
+    return phi_of_alpha;
+  }
+
   void GenPhiCoeff(const Vector<T> &w_l, const Vector<T> &gradient) {
     // Three terms used to calculate phi of alpha
     // They only change if w_l or gradient change
@@ -175,13 +196,13 @@ class KDACCPU: public KDAC<T> {
   Vector<T> GenWGradient(const Vector<T> &w_l) {
     profiler_["gen_grad"].Start();
     Vector<T> w_gradient = Vector<T>::Zero(d_);
-    float sigma_sq = pow(constant_, 2);
+    float sigma_sq = constant_ * constant_;
     if (kernel_type_ == kGaussianKernel) {
       for (int i = 0; i < n_; i++) {
         for (int j = 0; j < n_; j++) {
           Vector<T> delta_x_ij =
               x_matrix_.row(i) - x_matrix_.row(j);
-          T delta_w = w_l.transpose() * delta_x_ij;
+          T delta_w = w_l.dot(delta_x_ij);
           T waw = delta_w * delta_w;
           T exp_term = exp(-waw / (2.0 * sigma_sq));
           T gamma = gamma_matrix_(i, j);

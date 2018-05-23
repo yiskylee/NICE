@@ -268,7 +268,7 @@ class KDAC : public ACL<T> {
     Vector <T> ortho_vector = GenOrthogonal(space, vector);
     util::CheckFinite(ortho_vector, "ortho_vector");
     T norm = ortho_vector.norm();
-    if(norm == 0) {
+    if (norm == 0) {
       return ortho_vector;
     }
     return ortho_vector.array() / norm;
@@ -324,29 +324,30 @@ class KDAC : public ACL<T> {
       }
       // Search for the w_l that maximizes formula 5
       // The initial objective is set to the lowest number
-      T objective = std::numeric_limits<T>::lowest();
+      phi_of_alpha_ = std::numeric_limits<T>::lowest();
       bool w_l_converged = false;
       while (!w_l_converged) {
         Vector <T> grad_f_vertical;
-        T pre_objective = objective;
         // Calculate the w gradient in equation 13, then find the gradient
         // that is vertical to the space spanned by w_0 to w_l
         Vector <T> grad_f = GenWGradient(w_l);
-        grad_f_vertical =
-            GenOrthonormal(w_matrix_.leftCols(l + 1), grad_f);
-        LineSearch(grad_f_vertical, &w_l, &objective);
-        w_l = std::sqrt(1.0 - alpha_ * alpha_) * w_l + alpha_ * grad_f_vertical;
-        Matrix<T> leftCols = w_matrix_.leftCols(l+1);
+        grad_f_vertical = GenOrthonormal(w_matrix_.leftCols(l + 1), grad_f);
+        // Line search a good alpha and update w_l
+        LineSearch1(grad_f, grad_f_vertical, &w_l);
+//        w_l = std::sqrt(1.0 - alpha_ * alpha_) * w_l + alpha_ * grad_f_vertical;
         w_matrix_.col(l) = w_l;
         w_l_converged =
-            util::CheckConverged(objective, pre_objective, threshold2_);
+            util::CheckConverged(phi_of_alpha_, phi_of_zero_, threshold2_);
+        std::cout << phi_of_alpha_ << ", ";
       }
+      std::cout << std::endl;
+
       UpdateGOfW(w_l);
       // TODO: Need to learn about if using Vector<T> &w_l = w_matrix_.col(l)
       if (verbose_)
-        std::cout << "Column " << l + 1 << " cost: " << objective << " | ";
+        std::cout << "Column " << l + 1 << " cost: " << phi_of_alpha_ << " | ";
       else {
-        std::cout << objective << ", ";
+//        util::Print(phi_of_alpha_, "objective");
       }
     }
     if (verbose_)
@@ -355,6 +356,80 @@ class KDAC : public ACL<T> {
     profiler_["gen_phi"].SumRecords();
     profiler_["gen_grad"].SumRecords();
     profiler_["update_g_of_w"].SumRecords();
+  }
+
+  void LineSearch1(const Vector<T> gradient,
+                   const Vector<T> &gradient_vertical,
+                   Vector<T> *w_l) {
+    alpha_ = 1.0;
+    float a1 = 0.1;
+    float rho = 0.8;
+    float alpha_square = alpha_ * alpha_;
+    float sqrt_one_minus_alpha = std::sqrt(1 - alpha_square);
+
+    if (kernel_type_ == kGaussianKernel) {
+      if (phi_of_alpha_ == std::numeric_limits<T>::lowest()) {
+        // When w_l is just initialized, we don't have phi(alpha)
+        // We first generate phi(alpha), and make it become the previous
+        // objective: phi(0)
+        phi_of_zero_ = GenPhiOfAlpha(*w_l);
+        std::cout << "Regenerating phi(0)\n";
+      } else {
+        // When we have already generated phi(alpha),
+        // we directly make phi(0) equal to the phi(alpha) from last iteration
+        phi_of_zero_ = phi_of_alpha_;
+      }
+      // phi'(0) is always generated using the gradient of current w_l
+      phi_of_zero_prime_ = gradient.dot(gradient_vertical);
+
+      Vector<T> new_w_l = *w_l * sqrt_one_minus_alpha +
+          gradient_vertical * alpha_;
+      phi_of_alpha_ = GenPhiOfAlpha(new_w_l);
+
+      while (phi_of_alpha_ <
+          phi_of_zero_ + a1 * alpha_ * phi_of_zero_prime_) {
+        alpha_ *= rho;
+        alpha_square = alpha_ * alpha_;
+        sqrt_one_minus_alpha = std::sqrt(1-alpha_square);
+        new_w_l = *w_l * sqrt_one_minus_alpha + gradient_vertical * alpha_;
+        phi_of_alpha_ = GenPhiOfAlpha(new_w_l);
+      }
+
+      // Once we have found the alpha, the corresponding new_w_l becomes the
+      // current w_l
+      *w_l = new_w_l;
+
+//      // TODO: Make phi(0), phi'(0), and phi(alpha) as local variable
+        // TODO: Put gradient inside LineSearch
+//      // Initialize phi(0)
+//      util::Print(phi_of_alpha_, "phi(alpha)");
+//      util::Print(phi_of_zero_, "phi(0)");
+//      GenPhiOfAlpha(*w_l);
+//      phi_of_zero_ = phi_of_alpha_;
+//      phi_of_zero_prime_ = gradient.dot(gradient_vertical);
+//      util::Print(phi_of_alpha_, "phi(alpha)");
+//      util::Print(phi_of_zero_, "phi(0)");
+//
+//      // In the first iteration, generate phi(alpha)
+//      Vector<T> new_w_l = *w_l * sqrt_one_minus_alpha +
+//          gradient_vertical * alpha_;
+//      GenPhiOfAlpha(new_w_l);
+//
+//      // phi_of_zero_prime_ is the derivative of phi(alpha) w.r.t. alpha
+//      // Using chain rule, we also need to calculate the derivative of phi(w)
+//      // Find out more at https://github.com/yiskylee/NICE/wiki
+//      while (phi_of_alpha_ < phi_of_zero_ +
+//          a1 * alpha_ * phi_of_zero_prime_) {
+//        alpha_ *= rho;
+//        alpha_square = alpha_ * alpha_;
+//        sqrt_one_minus_alpha = std::sqrt(1 - alpha_square);
+//        new_w_l = *w_l * sqrt_one_minus_alpha + gradient_vertical * alpha_;
+//        GenPhiOfAlpha(new_w_l);
+//      }
+//      *w_l = new_w_l;
+//      *objective = phi_of_alpha_;
+//    }
+    }
   }
 
   void LineSearch(const Vector <T> &gradient,
@@ -391,6 +466,8 @@ class KDAC : public ACL<T> {
   virtual void GenPhi(const Vector <T> &w_l,
                       const Vector <T> &gradient,
                       bool w_l_changed) = 0;
+
+  virtual T GenPhiOfAlpha(const Vector<T> &w_l) = 0;
 
   virtual void GenPhiCoeff(const Vector <T> &w_l, const Vector <T> &gradient) = 0;
   virtual Vector <T> GenWGradient(const Vector <T> &w_l) = 0;
