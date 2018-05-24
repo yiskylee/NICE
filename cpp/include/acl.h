@@ -29,6 +29,7 @@
 #include "include/matrix.h"
 #include "include/vector.h"
 #include "include/acl_profiler.h"
+#include "include/kmeans.h"
 
 
 namespace Nice {
@@ -428,7 +429,7 @@ class ACL {
 
   /// This function runs KMeans on the normalized U
   void RunKMeans() {
-    KMeans <T> kms;
+    KMeans<T> kms;
     kms.SetNInit(20);
     T eps = std::numeric_limits<T>::min();
     // Add a very small number to the l2 norm of each row in case it is 0

@@ -153,18 +153,44 @@ class KDACCPU: public KDAC<T> {
     }
   }
 
+  // Generate the term exp(-wTA_ijw) for different w, and put every kij into
+  // a nxn matrix kij_matrix
+  // Find out more at https://github.com/yiskylee/NICE/wiki
+  Matrix<T> GenKij(const Vector<T> &w_l) {
+    Matrix<T> kij_matrix = Matrix<T>::Zero(n_, n_);
+    if (kernel_type_ == kGaussianKernel) {
+      // -1 / 2 * sigma ^2
+      T denom = -1.f / (2 * constant_ * constant_);
+      for (int i = 0; i < n_; i++) {
+        for (int j = 0; j < n_; j++) {
+          Vector<T> delta_x_ij = x_matrix_.row(i) - x_matrix_.row(j);
+          T projection = w_l.dot(delta_x_ij);
+          kij_matrix(i, j) = std::exp(denom * projection * projection);
+        }
+      }
+    }
+
+
+    return kij_matrix;
+  }
+
   // TODO: make GenPhiOFAlpha return phi(0), instead of modifying class member
   // variable
   T GenPhiOfAlpha(const Vector<T> &w_l) {
     // TODO: Optimize g(w)
     T phi_of_alpha = 0;
     if (kernel_type_ == kGaussianKernel) {
+      Matrix<T> kij_matrix = GenKij(w_l);
       T denom = -1.f / (2 * constant_ * constant_);
       for (int i = 0; i < n_; i++) {
         for (int j = 0; j < n_; j++) {
           Vector<T> delta_x_ij = x_matrix_.row(i) - x_matrix_.row(j);
           T projection = w_l.dot(delta_x_ij);
-          T kij = exp(denom * projection * projection);
+          T kij = std::exp(denom * projection * projection);
+          if (kij != kij_matrix(i, j)) {
+            std::cerr << "k(" << i << ", " << j << ") does not equal:\n";
+            std::cerr << kij << ": " << kij_matrix(i, j) << std::endl;
+          }
           // g_of_w_(i,j) is the exp(-waw/2sigma^2) for all previously genreated
           // w columns (see equation 12)
           phi_of_alpha += gamma_matrix_(i, j) * kij * g_of_w_(i, j);
@@ -197,6 +223,7 @@ class KDACCPU: public KDAC<T> {
     profiler_["gen_grad"].Start();
     Vector<T> w_gradient = Vector<T>::Zero(d_);
     float sigma_sq = constant_ * constant_;
+    Matrix<T> kij_matrix = GenKij(w_l);
     if (kernel_type_ == kGaussianKernel) {
       for (int i = 0; i < n_; i++) {
         for (int j = 0; j < n_; j++) {
@@ -205,6 +232,10 @@ class KDACCPU: public KDAC<T> {
           T delta_w = w_l.dot(delta_x_ij);
           T waw = delta_w * delta_w;
           T exp_term = exp(-waw / (2.0 * sigma_sq));
+          if (exp_term != kij_matrix(i, j)) {
+            std::cerr << "k(" << i << ", " << j << ") does not equal:\n";
+            std::cerr << exp_term << ": " << kij_matrix(i, j) << std::endl;
+          }
           T gamma = gamma_matrix_(i, j);
           T g_of_w = g_of_w_(i, j);
           w_gradient += -exp_term * gamma * g_of_w / sigma_sq *
@@ -222,16 +253,19 @@ class KDACCPU: public KDAC<T> {
 
   void UpdateGOfW(const Vector<T> &w_l) {
     profiler_["update_g_of_w"].Start();
-    float sigma_sq = pow(constant_, 2);
+    Matrix<T> kij_matrix = GenKij(w_l);
+    T denom = -1.f / (2 * constant_ * constant_);
     for (int i = 0; i < n_; i++) {
       for (int j = 0; j < n_; j++) {
         if (kernel_type_ == kGaussianKernel) {
-          Vector<T> delta_x_ij =
-              x_matrix_.row(i) - x_matrix_.row(j);
-          T delta_w = w_l.transpose() * delta_x_ij;
-          T waw = delta_w * delta_w;
-          T exp_term = exp(-waw / (2.0 * sigma_sq));
-          g_of_w_(i, j) *= exp_term;
+          Vector<T> delta_x_ij = x_matrix_.row(i) - x_matrix_.row(j);
+          T projection = w_l.dot(delta_x_ij);
+          T kij = exp(denom * projection * projection);
+          if (kij != kij_matrix(i, j)) {
+            std::cerr << "k(" << i << ", " << j << ") does not equal:\n";
+            std::cerr << kij << ": " << kij_matrix(i, j) << std::endl;
+          }
+          g_of_w_(i, j) *= kij;
         }
       }
     }

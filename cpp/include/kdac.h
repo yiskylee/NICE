@@ -45,7 +45,6 @@
 #include "include/cpu_operations.h"
 #include "include/gpu_operations.h"
 #include "include/svd_solver.h"
-#include "include/kmeans.h"
 #include "Eigen/Core"
 #include "include/util.h"
 #include "include/kernel_types.h"
@@ -327,21 +326,18 @@ class KDAC : public ACL<T> {
       phi_of_alpha_ = std::numeric_limits<T>::lowest();
       bool w_l_converged = false;
       while (!w_l_converged) {
-        Vector <T> grad_f_vertical;
         // Calculate the w gradient in equation 13, then find the gradient
         // that is vertical to the space spanned by w_0 to w_l
         Vector <T> grad_f = GenWGradient(w_l);
-        grad_f_vertical = GenOrthonormal(w_matrix_.leftCols(l + 1), grad_f);
+        Vector <T> grad_f_vertical =
+            GenOrthonormal(w_matrix_.leftCols(l + 1), grad_f);
         // Line search a good alpha and update w_l
         LineSearch1(grad_f, grad_f_vertical, &w_l);
 //        w_l = std::sqrt(1.0 - alpha_ * alpha_) * w_l + alpha_ * grad_f_vertical;
         w_matrix_.col(l) = w_l;
         w_l_converged =
             util::CheckConverged(phi_of_alpha_, phi_of_zero_, threshold2_);
-        std::cout << phi_of_alpha_ << ", ";
       }
-      std::cout << std::endl;
-
       UpdateGOfW(w_l);
       // TODO: Need to learn about if using Vector<T> &w_l = w_matrix_.col(l)
       if (verbose_)
@@ -350,8 +346,12 @@ class KDAC : public ACL<T> {
 //        util::Print(phi_of_alpha_, "objective");
       }
     }
+
     if (verbose_)
       std::cout << "W Optimized" << std::endl;
+    else {
+      std::cout << phi_of_alpha_ << ", ";
+    }
 
     profiler_["gen_phi"].SumRecords();
     profiler_["gen_grad"].SumRecords();
@@ -373,7 +373,6 @@ class KDAC : public ACL<T> {
         // We first generate phi(alpha), and make it become the previous
         // objective: phi(0)
         phi_of_zero_ = GenPhiOfAlpha(*w_l);
-        std::cout << "Regenerating phi(0)\n";
       } else {
         // When we have already generated phi(alpha),
         // we directly make phi(0) equal to the phi(alpha) from last iteration
