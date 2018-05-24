@@ -6,7 +6,7 @@ class ACL(object):
   def __init__(self, type, method, device):
     self.device = device
     self.params = {'kernel': 'Gaussian', 'debug': 0.0,
-                   'lambda': 1.0, 'sigma': 0.5, 'verbose': 0.0, 'max_time': 30,
+                   'lambda': 1.0, 'sigma': 0.5, 'verbose': 0.0, 'max_time': 10,
                    'vectorization': 1.0}
 
     # Call this so the mkl libarary is loaded before C++ is called

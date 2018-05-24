@@ -169,8 +169,6 @@ class KDACCPU: public KDAC<T> {
         }
       }
     }
-
-
     return kij_matrix;
   }
 

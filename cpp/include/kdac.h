@@ -346,11 +346,13 @@ class KDAC : public ACL<T> {
 //        util::Print(phi_of_alpha_, "objective");
       }
     }
-
+    Matrix <T> projected_matrix = x_matrix_ * w_matrix_;
+    GenKernelMatrix(projected_matrix);
+    T cost = k_matrix_.cwiseProduct(gamma_matrix_).sum();
     if (verbose_)
       std::cout << "W Optimized" << std::endl;
     else {
-      std::cout << phi_of_alpha_ << ", ";
+      std::cout << phi_of_alpha_ << ": " << cost << std::endl;
     }
 
     profiler_["gen_phi"].SumRecords();

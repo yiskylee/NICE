@@ -201,6 +201,7 @@ TYPED_TEST(KDACTest, CPU_400_4_2) {
   this->kdac_->SetDebug(false);
   this->kdac_->SetThreshold2(0.0001);
   this->kdac_->Fit(this->data_matrix_);
+  this->kdac_->SetKernel(Nice::kGaussianKernel, 1.0);
   this->kdac_->Fit();
 }
 
