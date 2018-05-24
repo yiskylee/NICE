@@ -178,26 +178,13 @@ class KDACCPU: public KDAC<T> {
   // variable
   T GenPhiOfAlpha(const Vector<T> &w_l) {
     // TODO: Optimize g(w)
-    T phi_of_alpha = 0;
-    if (kernel_type_ == kGaussianKernel) {
-      Matrix<T> kij_matrix = GenKij(w_l);
-      T denom = -1.f / (2 * constant_ * constant_);
-      for (int i = 0; i < n_; i++) {
-        for (int j = 0; j < n_; j++) {
-          Vector<T> delta_x_ij = x_matrix_.row(i) - x_matrix_.row(j);
-          T projection = w_l.dot(delta_x_ij);
-          T kij = std::exp(denom * projection * projection);
-          if (kij != kij_matrix(i, j)) {
-            std::cerr << "k(" << i << ", " << j << ") does not equal:\n";
-            std::cerr << kij << ": " << kij_matrix(i, j) << std::endl;
-          }
-          // g_of_w_(i,j) is the exp(-waw/2sigma^2) for all previously genreated
-          // w columns (see equation 12)
-          phi_of_alpha += gamma_matrix_(i, j) * kij * g_of_w_(i, j);
-        }
-      }
-    }
-    return phi_of_alpha;
+    // kij_matrix corresponds to the kernel term exp(waw/-2sigma^2)
+    Matrix<T> kij_matrix = GenKij(w_l);
+    // g_of_w_(i,j) is the exp(-waw/2sigma^2) for all previously genreated
+    // w columns (see equation 12)
+    Matrix<T> temp_matrix = gamma_matrix_.cwiseProduct(kij_matrix).
+        cwiseProduct(g_of_w_);
+    return temp_matrix.sum();
   }
 
   void GenPhiCoeff(const Vector<T> &w_l, const Vector<T> &gradient) {

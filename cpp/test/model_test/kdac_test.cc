@@ -192,6 +192,18 @@ TYPED_TEST(KDACTest, CPU_40_2_2) {
   std::cout << this->kdac_->Predict();
 }
 
+TYPED_TEST(KDACTest, CPU_400_4_2) {
+  this->SetupInputData(400, 4, 2, "cpu", false);
+  this->kdac_->SetQ(1);
+  this->kdac_->SetKernel(Nice::kGaussianKernel, 2.0);
+  this->kdac_->SetVerbose(false);
+  this->kdac_->SetMode("gtest");
+  this->kdac_->SetDebug(false);
+  this->kdac_->SetThreshold2(0.0001);
+  this->kdac_->Fit(this->data_matrix_);
+  this->kdac_->Fit();
+}
+
 //TYPED_TEST(KDACTest, CPU400_4_2_ISM) {
 //  this->SetupInputData(400, 4, 2, "cpu", false);
 //  this->kdac_->SetQ(1);
