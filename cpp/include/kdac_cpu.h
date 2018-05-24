@@ -209,28 +209,16 @@ class KDACCPU: public KDAC<T> {
   Vector<T> GenWGradient(const Vector<T> &w_l) {
     profiler_["gen_grad"].Start();
     Vector<T> w_gradient = Vector<T>::Zero(d_);
-    float sigma_sq = constant_ * constant_;
     Matrix<T> kij_matrix = GenKij(w_l);
     if (kernel_type_ == kGaussianKernel) {
       for (int i = 0; i < n_; i++) {
         for (int j = 0; j < n_; j++) {
-          Vector<T> delta_x_ij =
-              x_matrix_.row(i) - x_matrix_.row(j);
-          T delta_w = w_l.dot(delta_x_ij);
-          T waw = delta_w * delta_w;
-          T exp_term = exp(-waw / (2.0 * sigma_sq));
-          if (exp_term != kij_matrix(i, j)) {
-            std::cerr << "k(" << i << ", " << j << ") does not equal:\n";
-            std::cerr << exp_term << ": " << kij_matrix(i, j) << std::endl;
-          }
-          T gamma = gamma_matrix_(i, j);
-          T g_of_w = g_of_w_(i, j);
-          w_gradient += -exp_term * gamma * g_of_w / sigma_sq *
-              delta_w * delta_x_ij;
-//          T exp_term = exp(static_cast<T>(-w_l.transpose() * a_matrix_ij * w_l)
-//                               / (2.0 * pow(constant_, 2)));
-//          w_gradient += -(gamma_matrix_(i, j)) * (g_of_w_(i, j))
-//              * exp_term * a_matrix_ij * w_l / pow(constant_, 2);
+          // scalar_term is -gamma_ij * 1/sigma^2 * g(w) * exp(-waw/2sigma^2)
+          Vector<T> delta_x_ij = x_matrix_.row(i) - x_matrix_.row(j);
+          T scalar_term = -gamma_matrix_(i, j) * g_of_w_(i, j) *
+              kij_matrix(i, j) / (constant_ * constant_);
+          // wl.dot(delta_x_ij)delta_x_ij is the Aijw term in equation 13
+          w_gradient += scalar_term * w_l.dot(delta_x_ij) * delta_x_ij;
         }
       }
     }
