@@ -229,21 +229,7 @@ class KDACCPU: public KDAC<T> {
   void UpdateGOfW(const Vector<T> &w_l) {
     profiler_["update_g_of_w"].Start();
     Matrix<T> kij_matrix = GenKij(w_l);
-    T denom = -1.f / (2 * constant_ * constant_);
-    for (int i = 0; i < n_; i++) {
-      for (int j = 0; j < n_; j++) {
-        if (kernel_type_ == kGaussianKernel) {
-          Vector<T> delta_x_ij = x_matrix_.row(i) - x_matrix_.row(j);
-          T projection = w_l.dot(delta_x_ij);
-          T kij = exp(denom * projection * projection);
-          if (kij != kij_matrix(i, j)) {
-            std::cerr << "k(" << i << ", " << j << ") does not equal:\n";
-            std::cerr << kij << ": " << kij_matrix(i, j) << std::endl;
-          }
-          g_of_w_(i, j) *= kij;
-        }
-      }
-    }
+    g_of_w_ = g_of_w_.cwiseProduct(kij_matrix);
     profiler_["update_g_of_w"].Record();
   }
 };
