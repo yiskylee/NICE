@@ -85,72 +85,8 @@ class KDACCPU: public KDAC<T> {
 
   void OptimizeW() {
     KDAC<T>::GenGammaMatrix();
-    KDAC<T>::GenGofW();
+    KDAC<T>::ResetGofW();
     KDAC<T>::OptimizeW();
-  }
-
-  Matrix<T> GenAij(int i, int j) {
-    Vector<T> delta_x_ij = x_matrix_.row(i) - x_matrix_.row(j);
-    return delta_x_ij * delta_x_ij.transpose();
-  }
-
-  // Generate phi(alpha), phi(0) and phi'(0) for LineSearch
-  // If this is the first time to generate phi(), then w_l_changed is true
-  // Or if the w_l is negated because phi'(0) is negative,
-  // then w_l_changed is true
-  // If w_l_changed is true, generate phi(0) and phi'(0), otherwise
-  // when we are only computing phi(alpha) with a different alpha in the loop
-  // of the LineSearch, the w_l_changed is false and we do not generate
-  // new waw, waf and faf
-  void GenPhi(const Vector<T> &w_l,
-              const Vector<T> &gradient,
-              bool w_l_changed) {
-    // Count number of times GenPhi is called inside one OptimizeW()
-    if (kernel_type_ == kGaussianKernel) {
-      profiler_["gen_phi"].Start();
-      float alpha_square = alpha_ * alpha_;
-      float sqrt_one_minus_alpha = std::sqrt(1 - alpha_square);
-      float denom = -1.f / (2 * constant_ * constant_);
-      phi_of_alpha_ = 0;
-      if (w_l_changed) {
-        GenPhiCoeff(w_l, gradient);
-        phi_of_zero_ = 0;
-        phi_of_zero_prime_ = 0;
-      }
-//      Matrix<T> kij_matrix =
-//          denom * ( (faf_matrix_ - waw_matrix_) * alpha_square +
-//              2 * waf_matrix_ * sqrt_one_minus_alpha * alpha_ +
-//              waw_matrix_);
-//      phi_of_alpha_ =
-//          (kij_matrix.array().exp() * gamma_matrix_.array()).
-//              matrix().sum();
-//      if (w_l_changed) {
-//        Matrix<T> kij_matrix = denom * waw_matrix_.array().exp().matrix();
-//        phi_of_zero_ =
-//            (kij_matrix.array() * gamma_matrix_.array()).
-//            matrix().sum();
-//        phi_of_zero_prime_ = (kij_matrix.array() * waf_matrix_.array() *
-//            gamma_matrix_.array() * 2 * denom).
-//            matrix().sum();
-//      }
-      for (int i = 0; i < n_; i++) {
-        for (int j = 0; j < n_; j++) {
-          T waw = waw_matrix_(i, j);
-          T waf = waf_matrix_(i, j);
-          T faf = faf_matrix_(i, j);
-          T kij = exp(denom * ((faf - waw) * alpha_square +
-              2 * waf * sqrt_one_minus_alpha * alpha_ + waw));
-          phi_of_alpha_ += gamma_matrix_(i, j) * kij;
-          if (w_l_changed) {
-            T kij = exp(denom * waw);
-            phi_of_zero_ += gamma_matrix_(i, j) * kij;
-            phi_of_zero_prime_ +=
-                gamma_matrix_(i, j) * denom * 2 * waf * kij;
-          }
-        }
-      }
-      profiler_["gen_phi"].Record();
-    }
   }
 
   // Generate the term exp(-wTA_ijw) for different w, and put every kij into

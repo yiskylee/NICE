@@ -78,7 +78,9 @@ class ACL {
       didj_matrix_(),
       gamma_matrix_(),
       profiler_(),
-      vectorization_(true)
+      vectorization_(true),
+      u_eigenvals_(),
+      pre_u_eigenvals_()
   {
     profiler_["fit"].SetName("fit");
     profiler_["exit_timer"].SetName("exit_timer");
@@ -133,7 +135,7 @@ class ACL {
   /// the current clustering result as a Vector of T
   /// \return
   /// A NICE vector of T that specifies the clustering result
-  Vector <T> Predict(void) {
+  Vector <T> Predict() {
     if (clustering_result_.rows() == 0) {
       std::cerr << "Fit() must be run before Predict(), exiting" << std::endl;
       exit(1);
@@ -155,9 +157,11 @@ class ACL {
     h_matrix_ = Matrix<T>::Identity(n_, n_)
         - Matrix<T>::Constant(n_, n_, 1) / static_cast<T>(n_);
 
-    // kernel matrix
     k_matrix_ = Matrix<T>::Zero(n_, n_);
     u_matrix_ = Matrix<T>::Zero(n_, c_);
+
+    u_eigenvals_ = Vector<T>::Zero(c_);
+
   }
 
   virtual void InitY(const Matrix<T> &y_matrix) {
@@ -333,7 +337,7 @@ class ACL {
     }
   }
 
-  void CheckFiniteOptimizeU(void) {
+  void CheckFiniteOptimizeU() {
     util::CheckFinite(k_matrix_, "Kernel");
     util::CheckFinite(d_matrix_to_the_minus_half_, "d_matrix_to_minus_half");
     util::CheckFinite(l_matrix_, "L");
@@ -341,7 +345,7 @@ class ACL {
   }
 
 
-  void OptimizeU(void) {
+  void OptimizeU() {
     l_matrix_ = h_matrix_ * d_matrix_to_the_minus_half_ *
         k_matrix_ * d_matrix_to_the_minus_half_ * h_matrix_;
     Eigen::SelfAdjointEigenSolver <Matrix<T>> solver(l_matrix_);
@@ -365,7 +369,7 @@ class ACL {
 
   /// Generates a degree matrix D from an input kernel matrix
   /// It also generates D^(-1/2) and two diagonal vectors
-  void GenDegreeMatrix(void) {
+  void GenDegreeMatrix() {
     // Generate the diagonal vector d_i and degree matrix D
     d_ii_ = k_matrix_.rowwise().sum();
     d_matrix_ = d_ii_.asDiagonal();
@@ -425,6 +429,9 @@ class ACL {
   ACLProfiler profiler_;
   // Vetorize ISM or not
   bool vectorization_;
+  // Eigenvalues of L matrix to track convergence of U matrix
+  Vector<T> u_eigenvals_;
+  Vector<T> pre_u_eigenvals_;
 
 
   /// This function runs KMeans on the normalized U

@@ -347,6 +347,8 @@ class ISM : public ACL<T> {
           Matrix <T> waw = w_matrix_.transpose() * a_ij * w_matrix_;
 //          phi_w = phi_w + a_ij * ((gamma_matrix_(i, j) / sigma_sq) *
 //              exp(-waw.trace() / (2.0 * sigma_sq)));
+
+          //TODO: Investigate if this should actually be trace()
           T value = gamma_matrix_(i, j) * exp(-waw.trace() / (2.0 * sigma_sq));
           phi_w = phi_w + a_ij * value;
           *objective -= value;
