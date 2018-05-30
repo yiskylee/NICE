@@ -317,15 +317,17 @@ bool CheckConverged(const Vector<T> &vector, const Vector<T> &pre_vector,
 
 template <typename T>
 bool CheckConverged(const T &scalar, const T &pre_scalar, const T &threshold) {
-  T change = fabs(scalar - pre_scalar) / fabs(scalar);
+  T change = fabs(scalar - pre_scalar) / fabs(pre_scalar);
   bool converged = (change < threshold);
   return converged;
 }
 
 template <typename T>
-void CheckFinite(const Matrix<T> &matrix, std::string name) {
+void CheckFinite(const Matrix<T> &matrix, std::string name, bool output=false) {
   if (!matrix.allFinite()) {
-    std::cout << name << " not finite: " << std::endl << matrix << std::endl;
+    std::cout << name << " not finite: " << std::endl;
+    if (output)
+      Print(matrix, name);
     exit(1);
   }
 }

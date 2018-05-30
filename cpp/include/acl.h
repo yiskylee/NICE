@@ -60,7 +60,7 @@ class ACL {
       verbose_(false),
       debug_(false),
       max_time_exceeded_(false),
-      max_time_(10),
+      max_time_(100),
       method_(""),
       mode_(""),
       clustering_result_(),
@@ -150,12 +150,31 @@ class ACL {
       std::cerr << "X matrix is not initialized\n";
       exit(1);
     }
-    x_matrix_ = input_matrix;
+
     n_ = input_matrix.rows();
     d_ = input_matrix.cols();
     ValidateParams();
     h_matrix_ = Matrix<T>::Identity(n_, n_)
         - Matrix<T>::Constant(n_, n_, 1) / static_cast<T>(n_);
+
+    Matrix<T> h_matrix_2 = Matrix<T>::Identity(d_, d_)
+        - Matrix<T>::Constant(d_, d_, 1) / static_cast<T>(d_);
+
+    if (input_matrix.rowwise().mean().norm() != 0 ||
+        input_matrix.colwise().mean().norm() != 0) {
+      std::cout << "Input matrix is not scaled\n";
+      x_matrix_ = h_matrix_ * input_matrix * h_matrix_2;
+    } else {
+      x_matrix_ = input_matrix;
+    }
+
+
+    if (x_matrix_.rowwise().mean().norm() != 0 ||
+        x_matrix_.colwise().mean().norm() != 0) {
+      std::cout << "Still not scaled\n";
+      std::cout << x_matrix_.rowwise().mean().norm() << std::endl;
+      std::cout << x_matrix_.colwise().mean().norm() << std::endl;
+    }
 
     k_matrix_ = Matrix<T>::Zero(n_, n_);
     u_matrix_ = Matrix<T>::Zero(n_, c_);
@@ -345,28 +364,6 @@ class ACL {
   }
 
 
-  void OptimizeU() {
-    l_matrix_ = h_matrix_ * d_matrix_to_the_minus_half_ *
-        k_matrix_ * d_matrix_to_the_minus_half_ * h_matrix_;
-    Eigen::SelfAdjointEigenSolver <Matrix<T>> solver(l_matrix_);
-    Vector <T> eigen_values = solver.eigenvalues().real();
-    std::vector <T>
-        v(eigen_values.data(), eigen_values.data() + eigen_values.size());
-    std::vector <size_t> idx(v.size());
-    std::iota(idx.begin(), idx.end(), 0);
-    std::sort(idx.begin(), idx.end(),
-              [&v](size_t t1, size_t t2) { return v[t1] > v[t2]; });
-    u_matrix_ = Matrix<T>::Zero(n_, c_);
-    Vector <T> eigen_vector = Vector<T>::Zero(n_);
-    for (int i = 0; i < c_; i++) {
-      eigen_vector = solver.eigenvectors().col(idx[i]).real();
-      u_matrix_.col(i) = eigen_vector;
-    }
-    CheckFiniteOptimizeU();
-    if (verbose_)
-      std::cout << "U Optimized\n";
-  }
-
   /// Generates a degree matrix D from an input kernel matrix
   /// It also generates D^(-1/2) and two diagonal vectors
   void GenDegreeMatrix() {
@@ -374,8 +371,21 @@ class ACL {
     d_ii_ = k_matrix_.rowwise().sum();
     d_matrix_ = d_ii_.asDiagonal();
     // Generate matrix D^(-1/2)
-    d_i_ = d_ii_.array().sqrt().unaryExpr(std::ptr_fun(util::reciprocal < T > ));
-    d_matrix_to_the_minus_half_ = d_i_.asDiagonal();
+    d_i_ = d_ii_.array().sqrt();
+
+    // didj matrix contains the element (i, j) that equal to d_i * d_j
+    didj_matrix_ = d_i_ * d_i_.transpose();
+
+//    d_i_ = d_ii_.array().sqrt().unaryExpr(std::ptr_fun(util::reciprocal < T > ));
+    d_matrix_to_the_minus_half_ =
+        d_i_.unaryExpr(std::ptr_fun(util::reciprocal < T > )).asDiagonal();
+
+    // XILI Debug
+//    util::Print(d_ii_, "d_ii_");
+//    util::Print(d_i_, "d_i_");
+//    util::Print(d_matrix_to_the_minus_half_.block(0,0,10,10), "D-1/2");
+    // XILI Debug
+
   }
 
  protected:
@@ -467,7 +477,6 @@ class ACL {
       y_matrix_ = y_matrix_new;
       // Reset the y_matrix_temp holder to zero
     }
-
     if (verbose_)
       std::cout << "Kmeans Done\n";
   }

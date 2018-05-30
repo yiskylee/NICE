@@ -118,6 +118,7 @@ class KDACCPU: public KDAC<T> {
     // w columns (see equation 12)
     Matrix<T> temp_matrix = gamma_matrix_.cwiseProduct(kij_matrix).
         cwiseProduct(g_of_w_);
+
     return temp_matrix.sum();
   }
 
@@ -140,19 +141,42 @@ class KDACCPU: public KDAC<T> {
     }
   }
 
-  Vector<T> GenWGradient(const Vector<T> &w_l) {
+  Vector<T> GenWGradient(const Vector<T> &w_l, bool output=false) {
     profiler_["gen_grad"].Start();
     Vector<T> w_gradient = Vector<T>::Zero(d_);
-    Matrix<T> kij_matrix = GenKij(w_l);
+//    Matrix<T> kij_matrix = GenKij(w_l);
     if (kernel_type_ == kGaussianKernel) {
+      T denom = -1.f / (2 * constant_ * constant_);
       for (int i = 0; i < n_; i++) {
         for (int j = 0; j < n_; j++) {
           // scalar_term is -gamma_ij * 1/sigma^2 * g(w) * exp(-waw/2sigma^2)
           Vector<T> delta_x_ij = x_matrix_.row(i) - x_matrix_.row(j);
+          T projection = w_l.dot(delta_x_ij);
+          T kij = std::exp(denom * projection * projection);
           T scalar_term = -gamma_matrix_(i, j) * g_of_w_(i, j) *
-              kij_matrix(i, j) / (constant_ * constant_);
+              kij / (constant_ * constant_);
           // wl.dot(delta_x_ij)delta_x_ij is the Aijw term in equation 13
           w_gradient += scalar_term * w_l.dot(delta_x_ij) * delta_x_ij;
+          // XILI
+          if (output) {
+            if (i < 5 && j < 5) {
+
+              T temp = w_l.dot(delta_x_ij);
+//            std::cout << "(" << i << ", " << j << "): \n";
+//            util::Print(w_l, "w_l");
+//            util::Print(delta_x_ij, "delta_x_ij");
+              std::cout << "(" << i << ", " << j << "): "
+                        << "gamma: " << gamma_matrix_(i, j)
+                        << ", g_of_w: " << g_of_w_(i, j)
+                        << ", kij: " << kij
+                        << ", projection: " << projection
+                        << ", scalar: " << scalar_term
+                        << ", w*delta: " << temp << std::endl;
+              if (i == 0 && j == 1)
+                util::Print(delta_x_ij, "delta01");
+            }
+          }
+          // XILI
         }
       }
     }

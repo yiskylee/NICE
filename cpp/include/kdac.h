@@ -95,13 +95,13 @@ class KDAC : public ACL<T> {
   using ACL<T>::profiler_;
   using ACL<T>::GenDegreeMatrix;
   using ACL<T>::GenKernelMatrix;
-  using ACL<T>::OptimizeU;
   using ACL<T>::RunKMeans;
   using ACL<T>::InitYW;
   using ACL<T>::CheckMaxTime;
   using ACL<T>::OutputProgress;
   using ACL<T>::InitXYW;
   using ACL<T>::vectorization_;
+  using ACL<T>::CheckFiniteOptimizeU;
 
   /// This is the default constructor for KDAC
   /// Number of clusters c and reduced dimension q will be both set to 0
@@ -110,14 +110,44 @@ class KDAC : public ACL<T> {
       g_of_w_(),
       phi_of_alpha_(0),
       phi_of_zero_(0),
-      phi_of_zero_prime_(0),
-      w_exists_(false)
+      phi_of_zero_prime_(0)
   {
     method_ = "KDAC";
   }
 
   ~KDAC() {}
   KDAC(const KDAC &rhs) {}
+
+  void OutputCostChieh() {
+
+    Matrix<T> hdkdh = h_matrix_ * d_matrix_to_the_minus_half_ * k_matrix_ *
+        d_matrix_to_the_minus_half_ * h_matrix_;
+    Matrix<T> uhdkdhu = u_matrix_.transpose() * hdkdh * u_matrix_;
+    Matrix<T> yhdkdhy = y_matrix_.transpose() * hdkdh * y_matrix_;
+
+    T hsic_first_term = uhdkdhu.trace();
+    T hsic_second_term = yhdkdhy.trace();
+
+    std::cout << "["
+              << hsic_first_term << ", "
+              << hsic_second_term<< "], \n ";
+  }
+
+  void OutputCostDonglin() {
+    Matrix<T> udkdu = u_matrix_.transpose() * d_matrix_to_the_minus_half_ *
+        k_matrix_ *
+        d_matrix_to_the_minus_half_ * u_matrix_;
+    Matrix<T> yhkhy = y_matrix_.transpose() * h_matrix_ *
+        k_matrix_ *
+        h_matrix_ * y_matrix_;
+
+    T hsic_first_term = udkdu.trace();
+    T hsic_second_term = yhkhy.trace();
+
+    std::cout << "["
+              << hsic_first_term << ", "
+              << hsic_second_term<< "], \n ";
+  }
 
 
 
@@ -146,9 +176,10 @@ class KDAC : public ACL<T> {
     profiler_["exit_timer"].Start();
     PROFILE(InitYW(), profiler_["init"]);
 
-    // When Fit() is called, the U matrix is alreayd generated
+    // When Fit() is called, the U matrix is already generated
     // So we optimize W first
     PROFILE(OptimizeW(), profiler_["w"]);
+    std::cout << std::endl;
 
     while (!u_w_converge_ && !max_time_exceeded_) {
       pre_u_matrix_ = u_matrix_;
@@ -158,20 +189,7 @@ class KDAC : public ACL<T> {
       GenKernelMatrix(projected_matrix);
       GenDegreeMatrix();
       PROFILE(OptimizeU(), profiler_["u"]);
-      // XILI Debug
-      Matrix<T> ulu = u_matrix_.transpose() * h_matrix_ *
-        d_matrix_to_the_minus_half_ * k_matrix_ * d_matrix_to_the_minus_half_ *
-        h_matrix_ * u_matrix_;
-      Matrix<T> hkyhk = h_matrix_ * k_matrix_y_ * h_matrix_ * k_matrix_;
-      T hsic_first_term = ulu.trace();
-      T hsic_second_term = -lambda_ * hkyhk.trace();
-      GenGammaMatrix();
-      Matrix<T> temp_matrix = gamma_matrix_.cwiseProduct(k_matrix_);
-      std::cout << "["
-                << hsic_first_term << ", "
-                << hsic_second_term << ", "
-                << temp_matrix.sum() <<"], ";
-      // XILI Debug
+      PROFILE(OptimizeW(), profiler_["w"]);
 
       u_converge_ = util::CheckConverged(u_matrix_, pre_u_matrix_,
                                          threshold2_);
@@ -241,10 +259,6 @@ class KDAC : public ACL<T> {
   Matrix <T> g_of_w_;  // g(w) for updating gradient
   // in formula 5
   T phi_of_alpha_, phi_of_zero_, phi_of_zero_prime_;
-  // If optimizeW has never been called, this is false
-  // otherwise, it is true, when it is false,
-  // we don't project X to any subspace
-  bool w_exists_;
 
   virtual void InitX(const Matrix <T> &input_matrix) {
     ACL<T>::InitX(input_matrix);
@@ -282,22 +296,30 @@ class KDAC : public ACL<T> {
     Vector <T> ortho_vector = GenOrthogonal(space, vector);
     util::CheckFinite(ortho_vector, "ortho_vector");
     T norm = ortho_vector.norm();
-    if (norm == 0) {
-      return ortho_vector;
-    }
     return ortho_vector.array() / norm;
   }
 
   void GenGammaMatrix() {
-    // didj matrix contains the element (i, j) that equal to d_i * d_j
-    didj_matrix_ = d_i_ * d_i_.transpose();
     // Generate the Gamma matrix in equation 5, which is a constant since
     // we have U fixed. Note that instead of generating one element of
     // gamma_ij on the fly as in the paper, we generate the whole gamma matrix
     // at one time and then access its entry of (i, j)
     // This is an element-wise operation
+
+    // Donglin's Gamma Matrix
     gamma_matrix_ = ((u_matrix_ * u_matrix_.transpose()).array() /
         didj_matrix_.array()).matrix() - y_matrix_tilde_ * lambda_;
+
+
+    // XILI Debug
+
+    // Chieh's Gamma Matrix
+//    Matrix<T> uu = u_matrix_ * u_matrix_.transpose();
+//    gamma_matrix_ = h_matrix_ * (uu-lambda_*k_matrix_y_) * h_matrix_;
+//    gamma_matrix_ = (gamma_matrix_.array() / didj_matrix_.array()).matrix();
+    // XILI Debug
+
+
     if (debug_) {
       util::CheckFinite(u_matrix_, "u_matrix_");
       util::CheckFinite(didj_matrix_, "didj_matrix_");
@@ -336,6 +358,29 @@ class KDAC : public ACL<T> {
     g_of_w_ = Matrix<T>::Constant(n_, n_, 1);
   }
 
+  void OptimizeU() {
+    // Chieh's
+//    l_matrix_ = h_matrix_ * d_matrix_to_the_minus_half_ * k_matrix_ * d_matrix_to_the_minus_half_ * h_matrix_;
+    // Donglin's
+    l_matrix_ = k_matrix_.array() / didj_matrix_.array();
+    Eigen::SelfAdjointEigenSolver <Matrix<T>> solver(l_matrix_);
+    Vector <T> eigen_values = solver.eigenvalues().real();
+    std::vector <T>
+        v(eigen_values.data(), eigen_values.data() + eigen_values.size());
+    std::vector <size_t> idx(v.size());
+    std::iota(idx.begin(), idx.end(), 0);
+    std::sort(idx.begin(), idx.end(),
+              [&v](size_t t1, size_t t2) { return v[t1] > v[t2]; });
+    u_matrix_ = Matrix<T>::Zero(n_, c_);
+    Vector <T> eigen_vector = Vector<T>::Zero(n_);
+    for (int i = 0; i < c_; i++) {
+      eigen_vector = solver.eigenvectors().col(idx[i]).real();
+      u_matrix_.col(i) = eigen_vector;
+    }
+    CheckFiniteOptimizeU();
+  }
+
+
   virtual void OptimizeW() {
     // We optimize each column in the W matrix
     for (int l = 0; l < w_matrix_.cols(); l++) {
@@ -349,16 +394,46 @@ class KDAC : public ACL<T> {
       } else {
         w_l = GenOrthonormal(w_matrix_.leftCols(l), w_matrix_.col(l));
       }
+      w_matrix_.col(l) = w_l;
+
       // Search for the w_l that maximizes formula 5
       // The initial objective is set to the lowest number
       phi_of_alpha_ = std::numeric_limits<T>::lowest();
       bool w_l_converged = false;
+
       while (!w_l_converged) {
         // Calculate the w gradient in equation 13, then find the gradient
         // that is vertical to the space spanned by w_0 to w_l
-        Vector <T> grad_f = GenWGradient(w_l);
+        // XILI
+
+        Vector <T> grad_f;
+//        if (l == 2)
+//          grad_f = GenWGradient(w_l, true);
+//        else
+        grad_f = GenWGradient(w_l);
+
+//        Matrix<T> leftCols = w_matrix_.leftCols(l + 1);
+//        util::Print(leftCols, "leftCols");
+//        // XILI
         Vector <T> grad_f_vertical =
             GenOrthonormal(w_matrix_.leftCols(l + 1), grad_f);
+        //XILI
+//        if (l == 2) {
+//          std::cout << "Round " << i++ << std::endl;
+//          Vector<T> w0 = w_matrix_.col(0);
+//          Vector<T> w1 = w_matrix_.col(1);
+//          Vector<T> w2 = w_matrix_.col(2);
+//          std::cout << "w0 dot w1: " << w0.dot(w1) << std::endl;
+//          std::cout << "w0 dot w0: " << w0.dot(w0) << std::endl;
+//          std::cout << "w1 dot w1: " << w1.dot(w1) << std::endl;
+//          std::cout << "w0 dot w2: " << w0.dot(w2) << std::endl;
+//          std::cout << "w1 dot w2: " << w1.dot(w2) << std::endl;
+//          std::cout << "w2 dot w2: " << w2.dot(w2) << std::endl;
+//          util::Print(w2, "w2");
+//          util::Print(grad_f, "grad_f");
+//          util::Print(grad_f_vertical, "grad_f_vertical");
+//        }
+        //XILI
         // Line search a good alpha and update w_l
         LineSearch(grad_f, grad_f_vertical, &w_l);
 //        w_l = std::sqrt(1.0 - alpha_ * alpha_) * w_l + alpha_ * grad_f_vertical;
@@ -366,16 +441,32 @@ class KDAC : public ACL<T> {
         w_l_converged =
             util::CheckConverged(phi_of_alpha_, phi_of_zero_, threshold2_);
       }
+
+
+      // TODO: Get rid of UpdateGOfW because it is already calculated in the
+      // GenPhiOfAlpha function when w_l is converged, and the final g_of_w
+      // equals to the kernel matrix of XW, so when we optimizeU, we don't need
+      // to re-generate Kernel Matrix k_matrix_
       UpdateGOfW(w_l);
       // TODO: Need to learn about if using Vector<T> &w_l = w_matrix_.col(l)
       if (verbose_)
         std::cout << "Column " << l + 1 << " cost: " << phi_of_alpha_ << " | ";
+
+      //XILI
+//      if (l == 2) {
+//        Vector<T> w0 = w_matrix_.col(0);
+//        Vector<T> w1 = w_matrix_.col(1);
+//        Vector<T> w2 = w_matrix_.col(2);
+//        std::cout << "w0 dot w1: " << w0.dot(w1) << std::endl;
+//        std::cout << "w0 dot w0: " << w0.dot(w0) << std::endl;
+//        std::cout << "w1 dot w1: " << w1.dot(w1) << std::endl;
+//        std::cout << "w0 dot w2: " << w0.dot(w2) << std::endl;
+//        std::cout << "w1 dot w2: " << w1.dot(w2) << std::endl;
+//        std::cout << "w2 dot w2: " << w2.dot(w2) << std::endl;
+//      }
+      //XILI
     }
 
-    if (verbose_)
-      std::cout << "W Optimized" << std::endl;
-    // Set status of W as existed, will use projected matrix for the future
-    w_exists_ = true;
     profiler_["gen_phi"].SumRecords();
     profiler_["gen_grad"].SumRecords();
     profiler_["update_g_of_w"].SumRecords();
@@ -384,7 +475,7 @@ class KDAC : public ACL<T> {
   void LineSearch(const Vector<T> gradient,
                   const Vector<T> &gradient_vertical,
                   Vector<T> *w_l) {
-    alpha_ = 1.0;
+    alpha_ = 1;
     float a1 = 0.1;
     float rho = 0.8;
     float alpha_square = alpha_ * alpha_;
@@ -416,6 +507,10 @@ class KDAC : public ACL<T> {
         new_w_l = *w_l * sqrt_one_minus_alpha + gradient_vertical * alpha_;
         phi_of_alpha_ = GenPhiOfAlpha(new_w_l);
       }
+//      util::Print(phi_of_alpha_, "phi(alpha)");
+//      std::cout << "phi(alpha) >= phi(0) + a1*alpha*phi'(0)\n";
+//      std::cout << "final phi(alpha): " << phi_of_alpha_ << std::endl;
+//      std::cout << "phi(0) + a1*alpha*phi'(0): " << phi_of_zero_ + a1 * alpha_ * phi_of_zero_prime_ << std::endl;
 
       // Once we have found the alpha, the corresponding new_w_l becomes the
       // current w_l
@@ -492,7 +587,7 @@ class KDAC : public ACL<T> {
   virtual T GenPhiOfAlpha(const Vector<T> &w_l) = 0;
 
   virtual void GenPhiCoeff(const Vector <T> &w_l, const Vector <T> &gradient) = 0;
-  virtual Vector <T> GenWGradient(const Vector <T> &w_l) = 0;
+  virtual Vector <T> GenWGradient(const Vector <T> &w_l, bool output=false) = 0;
 
 };
 }  // namespace NICE

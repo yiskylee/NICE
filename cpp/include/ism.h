@@ -230,6 +230,28 @@ class ISM : public ACL<T> {
     }
   }
 
+  void OptimizeU() {
+    l_matrix_ = h_matrix_ * d_matrix_to_the_minus_half_ *
+        k_matrix_ * d_matrix_to_the_minus_half_ * h_matrix_;
+    Eigen::SelfAdjointEigenSolver <Matrix<T>> solver(l_matrix_);
+    Vector <T> eigen_values = solver.eigenvalues().real();
+    std::vector <T>
+        v(eigen_values.data(), eigen_values.data() + eigen_values.size());
+    std::vector <size_t> idx(v.size());
+    std::iota(idx.begin(), idx.end(), 0);
+    std::sort(idx.begin(), idx.end(),
+              [&v](size_t t1, size_t t2) { return v[t1] > v[t2]; });
+    u_matrix_ = Matrix<T>::Zero(n_, c_);
+    Vector <T> eigen_vector = Vector<T>::Zero(n_);
+    for (int i = 0; i < c_; i++) {
+      eigen_vector = solver.eigenvectors().col(idx[i]).real();
+      u_matrix_.col(i) = eigen_vector;
+    }
+    CheckFiniteOptimizeU();
+    if (verbose_)
+      std::cout << "U Optimized\n";
+  }
+
   virtual void OptimizeWISM(void) {
     profiler_["update_psi"].Start();
     Matrix <T> pre_w_matrix;
