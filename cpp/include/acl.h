@@ -123,7 +123,7 @@ class ACL {
   /// It only generates the clustering result but does not returns it
   /// Users can use Predict() to get the clustering result returned
   virtual void Fit(const Matrix <T> &input_matrix, const Matrix <T> &y_matrix)
-      = 0;
+  = 0;
 
 
   /// This function creates an alternative clustering result
@@ -163,7 +163,7 @@ class ACL {
 //    Matrix<T> temp = h_matrix_ * input_matrix * h_matrix_2;
 //    std::string out_path =
 //        "/home/xiangyu/Dropbox/git_project/NICE/python/debug/output/";
-//      util::ToFile(temp, out_path + "temp.csv");
+//    util::ToFile(input_matrix, out_path + "temp.csv");
     // XILI
 
     x_matrix_ = input_matrix;
@@ -180,6 +180,14 @@ class ACL {
       std::cerr << "Y matrix is not initialized\n";
       exit(1);
     }
+
+    Vector<T> row_sum = y_matrix.rowwise().sum();
+    Vector<T> one_vector = Vector<T>::Constant(n_, 1);
+    if (!row_sum.isApprox(one_vector)) {
+      std::cerr << "Not all rows in the input Y matrix sum to 1\n";
+      exit(1);
+    }
+
     // The following is only called when we have y matrix
     y_matrix_ = y_matrix;
     // Generate the kernel for the label matrix Y: K_y

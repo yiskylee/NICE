@@ -189,7 +189,7 @@ class ISM : public ACL<T> {
     }
   }
 
-  void Fit(const Matrix <T> &input_matrix, const Matrix <T> &y_matrix) {
+  void Fit(const Matrix<T> &input_matrix, const Matrix<T> &y_matrix) {
     Fit(input_matrix);
     Fit();
   }

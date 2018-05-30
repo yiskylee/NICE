@@ -63,7 +63,6 @@ class KDACCPU: public KDAC<T> {
 
   void OptimizeW() {
     KDAC<T>::GenGammaMatrix();
-    KDAC<T>::ResetGofW();
     KDAC<T>::OptimizeW();
   }
 

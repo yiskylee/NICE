@@ -119,6 +119,8 @@ class KDAC : public ACL<T> {
   ~KDAC() {}
   KDAC(const KDAC &rhs) {}
 
+  Matrix <T> GetYTilde() { return y_matrix_tilde_; }
+
   void OutputCostChieh() {
 
     Matrix<T> hdkdh = h_matrix_ * d_matrix_to_the_minus_half_ * k_matrix_ *
@@ -149,8 +151,6 @@ class KDAC : public ACL<T> {
               << hsic_first_term << ", "
               << hsic_second_term<< "], \n ";
   }
-
-
 
   void Fit(const Matrix <T> &input_matrix) {
     InitX(input_matrix);
@@ -187,8 +187,14 @@ class KDAC : public ACL<T> {
       pre_u_matrix_ = u_matrix_;
       pre_w_matrix_ = w_matrix_;
 
-      Matrix<T> projected_matrix = x_matrix_ * w_matrix_;
-      GenKernelMatrix(projected_matrix);
+//      Matrix<T> projected_matrix = x_matrix_ * w_matrix_;
+//      GenKernelMatrix(projected_matrix);
+//
+//      // XILI
+//      Matrix<T> diff = (k_matrix_ - g_of_w_);
+//      util::Print(diff.norm(), "diff");
+//      // XILI
+
       GenDegreeMatrix();
       PROFILE(OptimizeU(), profiler_["u"]);
       PROFILE(OptimizeW(), profiler_["w"]);
@@ -227,7 +233,6 @@ class KDAC : public ACL<T> {
     profiler_["fit"].Start();
     profiler_["exit_timer"].Start();
     InitXYW(input_matrix, y_matrix);
-
     GenKernelMatrix(x_matrix_);
     GenDegreeMatrix();
     PROFILE(OptimizeU(), profiler_["u"]);
@@ -238,10 +243,10 @@ class KDAC : public ACL<T> {
     while (!u_w_converge_ && !max_time_exceeded_) {
       pre_u_matrix_ = u_matrix_;
       pre_w_matrix_ = w_matrix_;
-      // We first generate U and W for the first time before the loop
-      // Now with W matrix generated, we use projection matrix
-      Matrix<T> projected_matrix = x_matrix_ * w_matrix_;
-      GenKernelMatrix(projected_matrix);
+//      // We first generate U and W for the first time before the loop
+//      // Now with W matrix generated, we use projection matrix
+//      Matrix<T> projected_matrix = x_matrix_ * w_matrix_;
+//      GenKernelMatrix(projected_matrix);
       GenDegreeMatrix();
       PROFILE(OptimizeU(), profiler_["u"]);
       PROFILE(OptimizeW(), profiler_["w"]);
@@ -269,6 +274,7 @@ class KDAC : public ACL<T> {
 
   virtual void InitX(const Matrix <T> &input_matrix) {
     ACL<T>::InitX(input_matrix);
+    g_of_w_ = Matrix<T>::Constant(n_, n_, 1);
   }
 
   void InitW() {
@@ -303,6 +309,10 @@ class KDAC : public ACL<T> {
     Vector <T> ortho_vector = GenOrthogonal(space, vector);
     util::CheckFinite(ortho_vector, "ortho_vector");
     T norm = ortho_vector.norm();
+    if (std::abs(norm) < 10e-3) {
+      std::cerr << "Vector is close to zero" << std::endl;
+      exit(1);
+    }
     return ortho_vector.array() / norm;
   }
 
@@ -317,9 +327,7 @@ class KDAC : public ACL<T> {
     gamma_matrix_ = ((u_matrix_ * u_matrix_.transpose()).array() /
         didj_matrix_.array()).matrix() - y_matrix_tilde_ * lambda_;
 
-
     // XILI Debug
-
     // Chieh's Gamma Matrix
 //    Matrix<T> uu = u_matrix_ * u_matrix_.transpose();
 //    gamma_matrix_ = h_matrix_ * (uu-lambda_*k_matrix_y_) * h_matrix_;
@@ -338,31 +346,6 @@ class KDAC : public ACL<T> {
 //                       + std::to_string(outer_iter_num_) + "_"
 //                       + std::to_string(inner_iter_num_) + ".csv");
     }
-  }
-
-  void GenGammaMatrixBackup() {
-    // didj matrix contains the element (i, j) that equal to d_i * d_j
-    didj_matrix_ = d_i_ * d_i_.transpose();
-    Matrix<T> psi_matrix = h_matrix_ * (u_matrix_ * u_matrix_.transpose() -
-        k_matrix_y_ * lambda_) * h_matrix_;
-    // Generate the Gamma matrix in equation 5, which is a constant since
-    // we have U fixed. Note that instead of generating one element of
-    // gamma_ij on the fly as in the paper, we generate the whole gamma matrix
-    // at one time and then access its entry of (i, j)
-    // This is an element-wise operation
-    gamma_matrix_ = didj_matrix_.cwiseProduct(psi_matrix);
-  }
-
-  void ResetGofW() {
-    // After gamma_matrix is generated, we are optimizing gamma * kij as in 5
-    // g_of_w is g(w_l) that is multiplied by g(w_(l+1)) in each iteration
-    // of changing l.
-    // Note that here the g_of_w is a n*n matrix because it contains A_ij
-    // g_of_w(i, j) corresponding to exp(-w_T * A_ij * w / 2sigma^2)
-    // When l = 0, g_of_w is 1
-    // when l = 1, g_of_w is 1 .* g(w_1)
-    // when l = 2, g_of_w is 1 .* g(w_1) .* g(w_2)...
-    g_of_w_ = Matrix<T>::Constant(n_, n_, 1);
   }
 
   void OptimizeU() {
@@ -384,7 +367,8 @@ class KDAC : public ACL<T> {
       eigen_vector = solver.eigenvectors().col(idx[i]).real();
       u_matrix_.col(i) = eigen_vector;
     }
-    CheckFiniteOptimizeU();
+    if (verbose_)
+      std::cout << "U Optimized\n";
   }
 
 
@@ -401,8 +385,6 @@ class KDAC : public ACL<T> {
         w_l = GenOrthonormal(w_matrix_.leftCols(l), w_matrix_.col(l));
         w_matrix_.col(l) = w_l;
       }
-
-
       // Search for the w_l that maximizes formula 5
       // The initial objective is set to the lowest number
       phi_of_alpha_ = std::numeric_limits<T>::lowest();
@@ -412,8 +394,7 @@ class KDAC : public ACL<T> {
         // Calculate the w gradient in equation 13, then find the gradient
         // that is vertical to the space spanned by w_0 to w_l
         // XILI
-
-        Vector <T> grad_f = GenWGradient(w_l, false);
+        Vector <T> grad_f = GenWGradient(w_l);
 //        if (l == 2)
 //          grad_f = GenWGradient(w_l, true);
 //        else
@@ -423,6 +404,7 @@ class KDAC : public ACL<T> {
 //        // XILI
         Vector <T> grad_f_vertical =
             GenOrthonormal(w_matrix_.leftCols(l + 1), grad_f);
+
         //XILI
 //        if (l == 2) {
 //          std::cout << "Round " << i++ << std::endl;
@@ -447,13 +429,16 @@ class KDAC : public ACL<T> {
         w_l_converged =
             util::CheckConverged(phi_of_alpha_, phi_of_zero_, threshold2_);
       }
+      // After w_l is converged, the new_g_of_w becomes the current g_of_w
+      g_of_w_ = new_g_of_w_;
 
 
       // TODO: Get rid of UpdateGOfW because it is already calculated in the
       // GenPhiOfAlpha function when w_l is converged, and the final g_of_w
       // equals to the kernel matrix of XW, so when we optimizeU, we don't need
       // to re-generate Kernel Matrix k_matrix_
-      UpdateGOfW(w_l);
+//      UpdateGOfW(w_l);
+
       // TODO: Need to learn about if using Vector<T> &w_l = w_matrix_.col(l)
       if (verbose_)
         std::cout << "Column " << l + 1 << " cost: " << phi_of_alpha_ << " | ";
@@ -472,10 +457,19 @@ class KDAC : public ACL<T> {
 //      }
       //XILI
     }
+    // After all w columns have been updated, g_of_w becomes kernel
+    // matrix, we reset g_of_w to 1 matrix before OptimizeW in the next
+    // iteration
+    k_matrix_ = g_of_w_;
+    g_of_w_ = Matrix<T>::Constant(n_, n_, 1);
+
 
     profiler_["gen_phi"].SumRecords();
     profiler_["gen_grad"].SumRecords();
     profiler_["update_g_of_w"].SumRecords();
+
+    if (verbose_)
+      std::cout << "W Optimized\n";
   }
 
   void LineSearch(const Vector<T> gradient,
@@ -513,56 +507,22 @@ class KDAC : public ACL<T> {
         new_w_l = *w_l * sqrt_one_minus_alpha + gradient_vertical * alpha_;
         phi_of_alpha_ = GenPhiOfAlpha(new_w_l);
       }
-//      util::Print(phi_of_alpha_, "phi(alpha)");
-//      std::cout << "phi(alpha) >= phi(0) + a1*alpha*phi'(0)\n";
-//      std::cout << "final phi(alpha): " << phi_of_alpha_ << std::endl;
-//      std::cout << "phi(0) + a1*alpha*phi'(0): " << phi_of_zero_ + a1 * alpha_ * phi_of_zero_prime_ << std::endl;
 
       // Once we have found the alpha, the corresponding new_w_l becomes the
       // current w_l
       *w_l = new_w_l;
-
 //      // TODO: Make phi(0), phi'(0), and phi(alpha) as local variable
-        // TODO: Put gradient inside LineSearch
-//      // Initialize phi(0)
-//      util::Print(phi_of_alpha_, "phi(alpha)");
-//      util::Print(phi_of_zero_, "phi(0)");
-//      GenPhiOfAlpha(*w_l);
-//      phi_of_zero_ = phi_of_alpha_;
-//      phi_of_zero_prime_ = gradient.dot(gradient_vertical);
-//      util::Print(phi_of_alpha_, "phi(alpha)");
-//      util::Print(phi_of_zero_, "phi(0)");
-//
-//      // In the first iteration, generate phi(alpha)
-//      Vector<T> new_w_l = *w_l * sqrt_one_minus_alpha +
-//          gradient_vertical * alpha_;
-//      GenPhiOfAlpha(new_w_l);
-//
-//      // phi_of_zero_prime_ is the derivative of phi(alpha) w.r.t. alpha
-//      // Using chain rule, we also need to calculate the derivative of phi(w)
-//      // Find out more at https://github.com/yiskylee/NICE/wiki
-//      while (phi_of_alpha_ < phi_of_zero_ +
-//          a1 * alpha_ * phi_of_zero_prime_) {
-//        alpha_ *= rho;
-//        alpha_square = alpha_ * alpha_;
-//        sqrt_one_minus_alpha = std::sqrt(1 - alpha_square);
-//        new_w_l = *w_l * sqrt_one_minus_alpha + gradient_vertical * alpha_;
-//        GenPhiOfAlpha(new_w_l);
-//      }
-//      *w_l = new_w_l;
-//      *objective = phi_of_alpha_;
-//    }
+      // TODO: Put gradient inside LineSearch
     }
   }
 
-  Matrix <T> GetYTilde() { return y_matrix_tilde_; }
+
 
   void CheckFiniteOptimizeW() {
     util::CheckFinite(didj_matrix_, "didj");
     util::CheckFinite(gamma_matrix_, "Gamma");
     util::CheckFinite(w_matrix_, "W");
   }
-
 
   virtual void UpdateGOfW(const Vector <T> &w_l) = 0;
   virtual T GenPhiOfAlpha(const Vector<T> &w_l) = 0;

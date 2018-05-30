@@ -96,16 +96,17 @@ class TestACL(unittest.TestCase):
     data = scale(data)
     return data
 
-  @staticmethod
-  def label_to_y(label):
+  def label_to_y(self, label):
     n = np.size(label)
     unique_elements = np.unique(label)
     num_of_classes = len(unique_elements)
 
-    y = np.zeros(num_of_classes)
+    y = np.zeros(num_of_classes, dtype=self.data_type)
+    # y = np.zeros(num_of_classes)
     for m in label:
       class_label = np.where(unique_elements == m)[0]
-      a_row = np.zeros(num_of_classes)
+      a_row = np.zeros(num_of_classes, dtype=self.data_type)
+      # a_row = np.zeros(num_of_classes)
       a_row[class_label] = 1
       y = np.hstack((y, a_row))
 
@@ -203,7 +204,8 @@ class TestACL(unittest.TestCase):
     y_identity = self.label_to_y(label_identity)
     d_matrix = pairwise_distances(data, Y=None, metric='euclidean')
     acl.set_params(c=4, sigma=np.median(d_matrix), q=4,
-                   Lambda=0.1, debug=0, verbose=1, vectorization=1)
+                   Lambda=0.1, debug=0, verbose=1, vectorization=1,
+                   max_time=10)
     acl.Fit(data, y_identity)
     pred = acl.Predict()
     against_identity = normalized_mutual_info_score(pred, label_identity)
@@ -236,6 +238,20 @@ class TestACL(unittest.TestCase):
     self.assertAlmostEqual(nmi1, 1.0)
     self.assertAlmostEqual(nmi2, 1.0)
     self.assertAlmostEqual(nmi3, 0.0)
+
+  def cpu_30_6_3(self):
+    data = self.load_data(n=30, d=6, c=3, name='gaussian',
+                          data_type='float', synthetic=True)
+    acl = ACL('float', 'KDAC', 'cpu')
+    acl.set_params(verbose=1, debug=0, sigma=1.0, q=3, c=3)
+    label1 = self.load_label('gaussian', 1, True)
+    label2 = self.load_label('gaussian', 2, True)
+    y1 = self.label_to_y(label1)
+    acl.Fit(data, y1)
+    pred = acl.Predict()
+    nmi = normalized_mutual_info_score(pred, label2)
+    self.plot_comparison(label2, pred, 2, 3)
+    print nmi
 
   def cpu_270_100_3_ism(self):
     data = self.load_data(n=270, d=100, c=3, name='gaussian',
