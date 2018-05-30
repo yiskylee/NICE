@@ -326,25 +326,17 @@ class KDAC : public ACL<T> {
     gamma_matrix_ = ((u_matrix_ * u_matrix_.transpose()).array() /
         didj_matrix_.array()).matrix() - y_matrix_tilde_ * lambda_;
 
-    // XILI Debug
-    // Chieh's Gamma Matrix
-//    Matrix<T> uu = u_matrix_ * u_matrix_.transpose();
-//    gamma_matrix_ = h_matrix_ * (uu-lambda_*k_matrix_y_) * h_matrix_;
-//    gamma_matrix_ = (gamma_matrix_.array() / didj_matrix_.array()).matrix();
-    // XILI Debug
-
-
-    if (debug_) {
-      util::CheckFinite(u_matrix_, "u_matrix_");
-      util::CheckFinite(didj_matrix_, "didj_matrix_");
-      util::CheckFinite(y_matrix_tilde_, "y_matrix_tilde_");
-      std::string out_path =
-          "/home/xiangyu/Dropbox/git_project/NICE/python/debug/output/";
+//    if (debug_) {
+//      util::CheckFinite(u_matrix_, "u_matrix_");
+//      util::CheckFinite(didj_matrix_, "didj_matrix_");
+//      util::CheckFinite(y_matrix_tilde_, "y_matrix_tilde_");
+//      std::string out_path =
+//          "/home/xiangyu/Dropbox/git_project/NICE/python/debug/output/";
 //      util::ToFile(gamma_matrix_,
 //                   out_path + "gamma_kdac_" + mode_ + "_"
 //                       + std::to_string(outer_iter_num_) + "_"
 //                       + std::to_string(inner_iter_num_) + ".csv");
-    }
+//    }
   }
 
   void OptimizeU() {
