@@ -52,13 +52,13 @@ class ISM : public ACL<T> {
   using ACL<T>::profiler_;
   using ACL<T>::GenDegreeMatrix;
   using ACL<T>::GenKernelMatrix;
-  using ACL<T>::OptimizeU;
   using ACL<T>::RunKMeans;
   using ACL<T>::InitYW;
   using ACL<T>::CheckMaxTime;
   using ACL<T>::OutputProgress;
   using ACL<T>::InitXYW;
   using ACL<T>::vectorization_;
+  using ACL<T>::CheckFiniteOptimizeU;
 
 
   ISM() :

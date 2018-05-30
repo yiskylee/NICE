@@ -157,24 +157,16 @@ class ACL {
     h_matrix_ = Matrix<T>::Identity(n_, n_)
         - Matrix<T>::Constant(n_, n_, 1) / static_cast<T>(n_);
 
-    Matrix<T> h_matrix_2 = Matrix<T>::Identity(d_, d_)
-        - Matrix<T>::Constant(d_, d_, 1) / static_cast<T>(d_);
+    // XILI
+//    Matrix<T> h_matrix_2 = Matrix<T>::Identity(d_, d_)
+//        - Matrix<T>::Constant(d_, d_, 1) / static_cast<T>(d_);
+//    Matrix<T> temp = h_matrix_ * input_matrix * h_matrix_2;
+//    std::string out_path =
+//        "/home/xiangyu/Dropbox/git_project/NICE/python/debug/output/";
+//      util::ToFile(temp, out_path + "temp.csv");
+    // XILI
 
-    if (input_matrix.rowwise().mean().norm() != 0 ||
-        input_matrix.colwise().mean().norm() != 0) {
-      std::cout << "Input matrix is not scaled\n";
-      x_matrix_ = h_matrix_ * input_matrix * h_matrix_2;
-    } else {
-      x_matrix_ = input_matrix;
-    }
-
-
-    if (x_matrix_.rowwise().mean().norm() != 0 ||
-        x_matrix_.colwise().mean().norm() != 0) {
-      std::cout << "Still not scaled\n";
-      std::cout << x_matrix_.rowwise().mean().norm() << std::endl;
-      std::cout << x_matrix_.colwise().mean().norm() << std::endl;
-    }
+    x_matrix_ = input_matrix;
 
     k_matrix_ = Matrix<T>::Zero(n_, n_);
     u_matrix_ = Matrix<T>::Zero(n_, c_);

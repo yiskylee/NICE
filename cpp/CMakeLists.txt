@@ -28,6 +28,7 @@ include_directories(${COMMON_INCLUDES})
 # This is a Hack for Clion to know where eigen is
 include_directories(./build/eigen/src/eigen)
 include_directories(./)
+include_directories(./include)
 include_directories(./build/gtest/src/googletest/googletest/include)
 
 #get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
@@ -179,7 +180,7 @@ endif()
 add_dependencies(${PROJECT_NAME} eigen)
 
 # Test
-option (enable-test "Compile all Nice unit tests" OFF)
+option (enable-test "Compile all Nice unit tests" ON)
 
 message(STATUS "ENABLE-TEST: ${enable-test}")
 

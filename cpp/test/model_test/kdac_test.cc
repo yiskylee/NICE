@@ -168,7 +168,7 @@ TYPED_TEST(KDACTest, CPU_30_100_3) {
   Nice::util::Print(this->kdac_->Predict(), "Alternative Solution");
 }
 
-TYPED_TEST(KDACTest, CPU_40_2_2_SEP) {
+TYPED_TEST(KDACTest, CPU_40_2_2) {
   this->SetupInputData(40, 2, 2, "cpu");
   this->kdac_->SetQ(1);
   this->kdac_->SetKernel(Nice::kGaussianKernel, 0.5);
@@ -179,17 +179,6 @@ TYPED_TEST(KDACTest, CPU_40_2_2_SEP) {
   Nice::util::Print(this->kdac_->Predict(), "Original Solution");
   this->kdac_->Fit();
   Nice::util::Print(this->kdac_->Predict(), "Alternative Solution");
-}
-
-TYPED_TEST(KDACTest, CPU_40_2_2) {
-  this->SetupInputData(40, 2, 2, "cpu");
-  this->kdac_->SetQ(1);
-  this->kdac_->SetKernel(Nice::kGaussianKernel, 0.5);
-  this->kdac_->SetVerbose(true);
-  this->kdac_->SetMode("gtest");
-  this->kdac_->SetDebug(true);
-  this->kdac_->Fit(this->data_matrix_, this->existing_y_);
-  std::cout << this->kdac_->Predict();
 }
 
 TYPED_TEST(KDACTest, CPU_400_4_2) {

@@ -333,9 +333,11 @@ void CheckFinite(const Matrix<T> &matrix, std::string name, bool output=false) {
 }
 
 template <typename T>
-void CheckFinite(const Vector<T> &vector, std::string name) {
+void CheckFinite(const Vector<T> &vector, std::string name, bool output=false) {
   if (!vector.allFinite()) {
-    std::cout << name << " not finite: " << std::endl << vector << std::endl;
+    std::cout << name << " not finite: " << std::endl;
+    if (output)
+      Print(vector, name);
     exit(1);
   }
 }

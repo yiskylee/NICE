@@ -46,6 +46,7 @@ class KDACCPU: public KDAC<T> {
   using KDAC<T>::x_matrix_;
   using KDAC<T>::kernel_type_;
   using KDAC<T>::g_of_w_;
+  using KDAC<T>::new_g_of_w_;
   using KDAC<T>::profiler_;
   using KDAC<T>::n_;
   using KDAC<T>::d_;
@@ -59,29 +60,6 @@ class KDACCPU: public KDAC<T> {
 
   KDACCPU(const KDACCPU &rhs) {}
 //  KDACCPU &operator=(const KDACCPU &rhs) {}
-
-
- private:
-  Matrix<T> waw_matrix_;
-  Matrix<T> waf_matrix_;
-  Matrix<T> faf_matrix_;
-
-  void InitYW() {
-    KDAC<T>::InitYW();
-    // Coefficients for calculating phi
-    waw_matrix_ = Matrix<T>::Zero(n_, n_);
-    waf_matrix_ = Matrix<T>::Zero(n_, n_);
-    faf_matrix_ = Matrix<T>::Zero(n_, n_);
-  }
-
-  void InitXYW(const Matrix <T> &input_matrix,
-               const Matrix <T> &y_matrix) {
-    KDAC<T>::InitXYW(input_matrix, y_matrix);
-    // Coefficients for calculating phi
-    waw_matrix_ = Matrix<T>::Zero(n_, n_);
-    waf_matrix_ = Matrix<T>::Zero(n_, n_);
-    faf_matrix_ = Matrix<T>::Zero(n_, n_);
-  }
 
   void OptimizeW() {
     KDAC<T>::GenGammaMatrix();
@@ -108,37 +86,16 @@ class KDACCPU: public KDAC<T> {
     return kij_matrix;
   }
 
-  // TODO: make GenPhiOFAlpha return phi(0), instead of modifying class member
-  // variable
   T GenPhiOfAlpha(const Vector<T> &w_l) {
     // TODO: Optimize g(w)
     // kij_matrix corresponds to the kernel term exp(waw/-2sigma^2)
     Matrix<T> kij_matrix = GenKij(w_l);
+    // this is the new g_of_w, it is multiplied with the new kij matrix
+    // this new g_of_w becomes final g_of_w when w_l is converged
+    new_g_of_w_ = g_of_w_.cwiseProduct(kij_matrix);
     // g_of_w_(i,j) is the exp(-waw/2sigma^2) for all previously genreated
     // w columns (see equation 12)
-    Matrix<T> temp_matrix = gamma_matrix_.cwiseProduct(kij_matrix).
-        cwiseProduct(g_of_w_);
-
-    return temp_matrix.sum();
-  }
-
-  void GenPhiCoeff(const Vector<T> &w_l, const Vector<T> &gradient) {
-    // Three terms used to calculate phi of alpha
-    // They only change if w_l or gradient change
-    for (int i = 0; i < n_; i++) {
-      for (int j = 0; j < n_; j++) {
-        Vector<T> delta_x_ij =
-            x_matrix_.row(i) - x_matrix_.row(j);
-        T delta_w = w_l.transpose() * delta_x_ij;
-        T delta_f = delta_x_ij.transpose() * gradient;
-        waw_matrix_(i, j) = delta_w * delta_w;
-        waf_matrix_(i, j) = delta_w * delta_f;
-        faf_matrix_(i, j) = delta_f * delta_f;
-//        waw_matrix_(i, j) = w_l.transpose() * a_matrix_ij * w_l;
-//        waf_matrix_(i, j) = w_l.transpose() * a_matrix_ij * gradient;
-//        faf_matrix_(i, j) = gradient.transpose() * a_matrix_ij * gradient;
-      }
-    }
+    return gamma_matrix_.cwiseProduct(new_g_of_w_).sum();
   }
 
   Vector<T> GenWGradient(const Vector<T> &w_l, bool output=false) {

@@ -108,6 +108,7 @@ class KDAC : public ACL<T> {
   KDAC() :
       y_matrix_tilde_(),
       g_of_w_(),
+      new_g_of_w_(),
       phi_of_alpha_(0),
       phi_of_zero_(0),
       phi_of_zero_prime_(0)
@@ -179,7 +180,8 @@ class KDAC : public ACL<T> {
     // When Fit() is called, the U matrix is already generated
     // So we optimize W first
     PROFILE(OptimizeW(), profiler_["w"]);
-    std::cout << std::endl;
+    if (verbose_)
+      OutputProgress();
 
     while (!u_w_converge_ && !max_time_exceeded_) {
       pre_u_matrix_ = u_matrix_;
@@ -230,6 +232,8 @@ class KDAC : public ACL<T> {
     GenDegreeMatrix();
     PROFILE(OptimizeU(), profiler_["u"]);
     PROFILE(OptimizeW(), profiler_["w"]);
+    if (verbose_)
+      OutputProgress();
 
     while (!u_w_converge_ && !max_time_exceeded_) {
       pre_u_matrix_ = u_matrix_;
@@ -257,6 +261,9 @@ class KDAC : public ACL<T> {
  protected:
   Matrix <T> y_matrix_tilde_;  // The kernel matrix for Y
   Matrix <T> g_of_w_;  // g(w) for updating gradient
+  // new g(w) to hold g(w) * temporary exp(-waw/2sigma^2)
+  // new_g_of_w becomes g_of_w when converged w is found
+  Matrix <T> new_g_of_w_;
   // in formula 5
   T phi_of_alpha_, phi_of_zero_, phi_of_zero_prime_;
 
@@ -292,7 +299,7 @@ class KDAC : public ACL<T> {
 
   Vector <T> GenOrthonormal(const Matrix <T> &space,
                             const Vector <T> &vector) {
-    util::CheckFinite(space, "space");
+    util::CheckFinite(space, "space", true);
     Vector <T> ortho_vector = GenOrthogonal(space, vector);
     util::CheckFinite(ortho_vector, "ortho_vector");
     T norm = ortho_vector.norm();
@@ -390,11 +397,11 @@ class KDAC : public ACL<T> {
       // when l is not 0
       if (l == 0) {
         w_l = w_matrix_.col(l);
-        w_l = w_l.array() / w_l.norm();
       } else {
         w_l = GenOrthonormal(w_matrix_.leftCols(l), w_matrix_.col(l));
+        w_matrix_.col(l) = w_l;
       }
-      w_matrix_.col(l) = w_l;
+
 
       // Search for the w_l that maximizes formula 5
       // The initial objective is set to the lowest number
@@ -406,14 +413,13 @@ class KDAC : public ACL<T> {
         // that is vertical to the space spanned by w_0 to w_l
         // XILI
 
-        Vector <T> grad_f;
+        Vector <T> grad_f = GenWGradient(w_l, false);
 //        if (l == 2)
 //          grad_f = GenWGradient(w_l, true);
 //        else
-        grad_f = GenWGradient(w_l);
-
 //        Matrix<T> leftCols = w_matrix_.leftCols(l + 1);
 //        util::Print(leftCols, "leftCols");
+//        util::Print(grad_f, "grad_f");
 //        // XILI
         Vector <T> grad_f_vertical =
             GenOrthonormal(w_matrix_.leftCols(l + 1), grad_f);
@@ -549,26 +555,6 @@ class KDAC : public ACL<T> {
     }
   }
 
-//  void LineSearch(const Vector <T> &gradient,
-//                  Vector <T> *w_l, T *objective) {
-//    alpha_ = 1.0;
-//    float a1 = 0.1;
-//    float rho = 0.8;
-//
-//    if (kernel_type_ == kGaussianKernel) {
-//      GenPhi(*w_l, gradient, true);
-//      if (phi_of_zero_prime_ < 0) {
-//        *w_l = -(*w_l);
-//        GenPhi(*w_l, gradient, true);
-//      }
-//      while ((phi_of_alpha_ < phi_of_zero_ + alpha_ * a1 * phi_of_zero_prime_)) {
-//        alpha_ = alpha_ * rho;
-//        GenPhi(*w_l, gradient, false);
-//      }
-//      *objective = phi_of_alpha_;
-//    }
-//  }
-
   Matrix <T> GetYTilde() { return y_matrix_tilde_; }
 
   void CheckFiniteOptimizeW() {
@@ -579,14 +565,7 @@ class KDAC : public ACL<T> {
 
 
   virtual void UpdateGOfW(const Vector <T> &w_l) = 0;
-
-//  virtual void GenPhi(const Vector <T> &w_l,
-//                      const Vector <T> &gradient,
-//                      bool w_l_changed) = 0;
-
   virtual T GenPhiOfAlpha(const Vector<T> &w_l) = 0;
-
-  virtual void GenPhiCoeff(const Vector <T> &w_l, const Vector <T> &gradient) = 0;
   virtual Vector <T> GenWGradient(const Vector <T> &w_l, bool output=false) = 0;
 
 };
