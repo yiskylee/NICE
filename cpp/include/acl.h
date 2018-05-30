@@ -303,7 +303,7 @@ class ACL {
 
   Matrix <T> GetL() { return l_matrix_; }
 
-  Matrix <T> GetDMatrix() { return d_matrix_; }
+  Matrix <T> GetDMatrix() { return d_ii_.asDiagonal(); }
 
   Matrix <T> GetDToTheMinusHalf() { return d_matrix_to_the_minus_half_; }
 
@@ -367,25 +367,13 @@ class ACL {
   /// Generates a degree matrix D from an input kernel matrix
   /// It also generates D^(-1/2) and two diagonal vectors
   void GenDegreeMatrix() {
-    // Generate the diagonal vector d_i and degree matrix D
     d_ii_ = k_matrix_.rowwise().sum();
-    d_matrix_ = d_ii_.asDiagonal();
-    // Generate matrix D^(-1/2)
     d_i_ = d_ii_.array().sqrt();
-
     // didj matrix contains the element (i, j) that equal to d_i * d_j
     didj_matrix_ = d_i_ * d_i_.transpose();
-
-//    d_i_ = d_ii_.array().sqrt().unaryExpr(std::ptr_fun(util::reciprocal < T > ));
-    d_matrix_to_the_minus_half_ =
-        d_i_.unaryExpr(std::ptr_fun(util::reciprocal < T > )).asDiagonal();
-
-    // XILI Debug
-//    util::Print(d_ii_, "d_ii_");
-//    util::Print(d_i_, "d_i_");
-//    util::Print(d_matrix_to_the_minus_half_.block(0,0,10,10), "D-1/2");
-    // XILI Debug
-
+    // Generate matrix D^(-1/2)
+//    d_matrix_to_the_minus_half_ =
+//        d_i_.unaryExpr(std::ptr_fun(util::reciprocal < T > )).asDiagonal();
   }
 
  protected:
@@ -509,9 +497,6 @@ class ACL {
       exit(1);
     }
   }
-
-
-
 
 };
 

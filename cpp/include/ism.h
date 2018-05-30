@@ -44,8 +44,6 @@ class ISM : public ACL<T> {
   using ACL<T>::h_matrix_;
   using ACL<T>::k_matrix_y_;
   using ACL<T>::k_matrix_;
-  using ACL<T>::d_matrix_;
-  using ACL<T>::d_matrix_to_the_minus_half_;
   using ACL<T>::d_ii_;
   using ACL<T>::didj_matrix_;
   using ACL<T>::gamma_matrix_;
@@ -231,8 +229,8 @@ class ISM : public ACL<T> {
   }
 
   void OptimizeU() {
-    l_matrix_ = h_matrix_ * d_matrix_to_the_minus_half_ *
-        k_matrix_ * d_matrix_to_the_minus_half_ * h_matrix_;
+    l_matrix_ = k_matrix_.array() / didj_matrix_.array();
+    l_matrix_ = h_matrix_ * l_matrix_ * h_matrix_;
     Eigen::SelfAdjointEigenSolver <Matrix<T>> solver(l_matrix_);
     Vector <T> eigen_values = solver.eigenvalues().real();
     std::vector <T>
