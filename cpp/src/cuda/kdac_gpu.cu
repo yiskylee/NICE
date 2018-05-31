@@ -364,7 +364,6 @@ __global__ void GenWGradientKernel(const T *x_matrix_d,
   int block_size = blockDim.x;
 
 
-
   for (int k = tx; k < d; k += block_size) {
     delta_ij_s[k] = x_matrix_d[IDXC(i, k, n)] - x_matrix_d[IDXC(j, k, n)];
     // Dot product for delta' * w

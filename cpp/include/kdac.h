@@ -231,7 +231,12 @@ class KDAC : public ACL<T> {
     // given Y_previous by doing Optimize both W and U until they converge
     // KDAC method follows the pseudo code in Algorithm 1 in the paper
     // ISM method follows the Appendix I in Chieh's paper
-//    PROFILE(InitXYW(input_matrix, y_matrix), profiler_["init"]);
+
+    // XILI
+    std::cout << "In Fit(X, y)\n";
+    // XILI
+
+
     profiler_["fit"].Start();
     profiler_["exit_timer"].Start();
     PROFILE(InitXYW(input_matrix, y_matrix), profiler_["init"]);

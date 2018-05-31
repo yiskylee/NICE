@@ -111,7 +111,8 @@ endif()
 # Dirty hack to not compile CUDA code
 # set(CUDA_AND_GPU FALSE)
 # Set GPU True
-set(CUDA_AND_GPU TRUE)
+add_definitions(-DCUDA_AND_GPU)
+# set(CUDA_AND_GPU TRUE)
 
 # Build NICE library with/without CUDA
 if (CUDA_AND_GPU)

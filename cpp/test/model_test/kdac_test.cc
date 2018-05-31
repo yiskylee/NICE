@@ -62,8 +62,9 @@ class KDACTest : public ::testing::Test {
     if (device_type_ == "cpu")
       kdac_ = std::make_shared<Nice::KDACCPU<T>>();
 #ifdef CUDA_AND_GPU
-    else if (device_type_ == "gpu")
+    else if (device_type_ == "gpu") {
       kdac_ = std::make_shared<Nice::KDACGPU<T>>();
+    }
 #endif
 
     kdac_->SetQ(k_);
@@ -169,6 +170,7 @@ TYPED_TEST(KDACTest, CPU_30_100_3) {
 }
 
 TYPED_TEST(KDACTest, GPU_30_100_3) {
+
   this->SetupInputData(30, 100, 3, "gpu");
   this->kdac_->SetQ(3);
   this->kdac_->SetKernel(Nice::kGaussianKernel, 1.0);

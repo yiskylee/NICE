@@ -61,9 +61,9 @@ class KDACGPU: public KDAC<T> {
     // Free parameters, intermediate delta and parameters
     CUDA_CALL(cudaFree(x_matrix_d_));
     CUDA_CALL(cudaFree(gamma_matrix_d_));
-    CUDA_CALL(cudaFree(waw_matrix_d_));
-    CUDA_CALL(cudaFree(waf_matrix_d_));
-    CUDA_CALL(cudaFree(faf_matrix_d_));
+//    CUDA_CALL(cudaFree(waw_matrix_d_));
+//    CUDA_CALL(cudaFree(waf_matrix_d_));
+//    CUDA_CALL(cudaFree(faf_matrix_d_));
     CUDA_CALL(cudaFree(w_l_d_));
     CUDA_CALL(cudaFree(gradient_d_));
     CUDA_CALL(cudaFree(phi_of_alphas_d_));
@@ -166,13 +166,11 @@ class KDACGPU: public KDAC<T> {
 
   void OptimizeW() {
     KDAC<T>::GenGammaMatrix();
-    CUDA_CALL(cudaMemcpy(gamma_matrix_d_, &(gamma_matrix_)(0),
-                         n_ * n_ * sizeof(T),
-                         cudaMemcpyHostToDevice));
-//    gpu_util_->EigenToDevBuffer(gamma_matrix_, &gamma_matrix_d_, n_ * n_);
-//    Matrix<T> gamma_gpu = gpu_util_->DevBufferToEigen(gamma_matrix_d_, n_, n_);
-//    util::Print(gamma_gpu, "gamma_gpu");
-//    KDAC<T>::OptimizeW();
+//    CUDA_CALL(cudaMemcpy(gamma_matrix_d_, &(gamma_matrix_)(0),
+//                         n_ * n_ * sizeof(T),
+//                         cudaMemcpyHostToDevice));
+    gpu_util_->EigenToDevBuffer(gamma_matrix_, gamma_matrix_d_, n_ * n_);
+    KDAC<T>::OptimizeW();
   }
 };
 }  // namespace Nice
