@@ -649,16 +649,16 @@ class CpuOperations {
     Vector<T> calculated_std;
 
     if (axis == 0) {  // Find Standard Deviation of each column
-      b = b.array().pow(2);
-      calculated_std = b.array().colwise().sum();
+      b = b.array().pow(2).matrix();
+      calculated_std = b.array().colwise().sum().matrix();
       calculated_std *= (1.0 / num_rows);
-      calculated_std = calculated_std.array().sqrt();
+      calculated_std = calculated_std.array().sqrt().matrix();
       return calculated_std;
     } else if (axis == 1) {  // Find Standard Deviation of each row
-      b = b.array().pow(2);  // Square every element
-      calculated_std = b.array().rowwise().sum();  // Sum entire row
+      b = b.array().pow(2).matrix();  // Square every element
+      calculated_std = b.array().rowwise().sum().matrix();  // Sum entire row
       calculated_std *= (1.0 / num_cols);  // multply by 1/size
-      calculated_std = calculated_std.array().sqrt();  // take square root
+      calculated_std = calculated_std.array().sqrt().matrix();  // take square root
       return calculated_std;
     } else {  // Bad Axis
       std::cerr << "Axis must be 0 or 1!";

@@ -522,7 +522,7 @@ class KDAC : public ACL<T> {
   }
 
   virtual T GenPhiOfAlpha(const Vector<T> &w_l) = 0;
-  virtual Vector <T> GenWGradient(const Vector <T> &w_l, bool output=false) = 0;
+  virtual Vector <T> GenWGradient(const Vector <T> &w_l) = 0;
 
 };
 }  // namespace NICE

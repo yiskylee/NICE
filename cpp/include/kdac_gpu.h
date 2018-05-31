@@ -32,6 +32,10 @@
 #ifndef CPP_INCLUDE_KDAC_GPU_H
 #define CPP_INCLUDE_KDAC_GPU_H
 
+//#ifndef CUDA_AND_GPU
+//#define CUDA_AND_GPU
+//#endif
+
 #ifdef CUDA_AND_GPU
 
 #include "include/kdac.h"
@@ -46,6 +50,8 @@ class KDACGPU: public KDAC<T> {
   using KDAC<T>::x_matrix_;
   using KDAC<T>::profiler_;
   using KDAC<T>::g_of_w_;
+  using KDAC<T>::gamma_matrix_;
+
   /// This is the default constructor for KDACGPU
   /// Number of clusters c and reduced dimension q will be both set to 2
   KDACGPU() :
@@ -76,6 +82,7 @@ class KDACGPU: public KDAC<T> {
   void GenPhi(const Vector<T> &w_l,
               const Vector<T> &gradient,
               bool w_l_changed);
+  T GenPhiOfAlpha(const Vector<T> &w_l);
   Vector<T> GenWGradient(const Vector<T> &w_l);
   void UpdateGOfW(const Vector<T> &w_l);
 
@@ -96,6 +103,10 @@ class KDACGPU: public KDAC<T> {
   // GPUUtil object to setup memory etc.
   GpuUtil<T> *gpu_util_;
   unsigned int block_limit_;
+
+  T* waw_matrix_d_;
+  T* waf_matrix_d_;
+  T* faf_matrix_d_;
 
 //  // Initialization for generating alternative views with a given Y
 //  void InitXYW(const Matrix<T> &input_matrix, const Matrix<T> &y_matrix) {
@@ -155,12 +166,12 @@ class KDACGPU: public KDAC<T> {
 
   void OptimizeW() {
     KDAC<T>::GenGammaMatrix();
-//    CUDA_CALL(cudaMemcpy(gamma_matrix_d_, &(gamma_matrix_)(0),
-//                         n_ * n_ * sizeof(T),
-//                         cudaMemcpyHostToDevice));
-    gpu_util_->EigenToDevBuffer(gamma_matrix_, gamma_matrix_d_, n_ * n_);
-    Matrix<T> gamma_gpu = gpu_util_->DevBufferToEigen(gamma_matrix_d_, n_, n_);
-    util::Print(gamma_gpu, "gamma_gpu");
+    CUDA_CALL(cudaMemcpy(gamma_matrix_d_, &(gamma_matrix_)(0),
+                         n_ * n_ * sizeof(T),
+                         cudaMemcpyHostToDevice));
+//    gpu_util_->EigenToDevBuffer(gamma_matrix_, &gamma_matrix_d_, n_ * n_);
+//    Matrix<T> gamma_gpu = gpu_util_->DevBufferToEigen(gamma_matrix_d_, n_, n_);
+//    util::Print(gamma_gpu, "gamma_gpu");
 //    KDAC<T>::OptimizeW();
   }
 };

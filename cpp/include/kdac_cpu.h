@@ -98,7 +98,8 @@ class KDACCPU: public KDAC<T> {
     return result;
   }
 
-  Vector<T> GenWGradient(const Vector<T> &w_l, bool output=false) {
+  Vector<T> GenWGradient(const Vector<T> &w_l) {
+    bool output = false;
     Vector<T> w_gradient = Vector<T>::Zero(d_);
 //    Matrix<T> kij_matrix = GenKij(w_l);
     if (kernel_type_ == kGaussianKernel) {

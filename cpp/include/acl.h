@@ -153,7 +153,6 @@ class ACL {
     k_matrix_ = Matrix<T>::Zero(n_, n_);
     u_matrix_ = Matrix<T>::Zero(n_, c_);
     u_eigenvals_ = Vector<T>::Zero(c_);
-
   }
 
   virtual void InitY(const Matrix<T> &y_matrix) {
@@ -350,7 +349,7 @@ class ACL {
   /// It also generates D^(-1/2) and two diagonal vectors
   void GenDegreeMatrix() {
     d_ii_ = k_matrix_.rowwise().sum();
-    d_i_ = d_ii_.array().sqrt();
+    d_i_ = d_ii_.array().sqrt().matrix();
     // didj matrix contains the element (i, j) that equal to d_i * d_j
     didj_matrix_ = d_i_ * d_i_.transpose();
     // Generate matrix D^(-1/2)

@@ -603,4 +603,12 @@ template
 void KDACGPU<float>::UpdateGOfW(const Vector<float> &w_l);
 template
 void KDACGPU<double>::UpdateGOfW(const Vector<double> &w_l);
+
+template<typename T>
+T KDACGPU<T>::GenPhiOfAlpha(const Vector<T> &w_l) {
+  return 1.0;
+}
+template float KDACGPU<float>::GenPhiOfAlpha(const Vector<float> &w_l);
+template double KDACGPU<double>::GenPhiOfAlpha(const Vector<double> &w_l);
+
 }  // Namespace NICE
