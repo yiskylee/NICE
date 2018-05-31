@@ -37,6 +37,8 @@ template<typename T>
 class KDACTest : public ::testing::Test {
  protected:
   std::shared_ptr<Nice::KDAC<T>> kdac_;
+  std::shared_ptr<Nice::KDAC<T>> kdac_cpu_;
+  std::shared_ptr<Nice::KDAC<T>> kdac_gpu_;
   std::string device_type_;
   std::string base_dir_;
   int n_;
@@ -59,17 +61,30 @@ class KDACTest : public ::testing::Test {
     k_ = k;
     device_type_ = device_type;
 
-    if (device_type_ == "cpu")
+    if (device_type_ == "cpu") {
       kdac_ = std::make_shared<Nice::KDACCPU<T>>();
+      kdac_->SetQ(k_);
+      kdac_->SetC(k_);
+      kdac_->SetKernel(Nice::kGaussianKernel, 1.0);
+    }
 #ifdef CUDA_AND_GPU
     else if (device_type_ == "gpu") {
       kdac_ = std::make_shared<Nice::KDACGPU<T>>();
+      kdac_->SetQ(k_);
+      kdac_->SetC(k_);
+      kdac_->SetKernel(Nice::kGaussianKernel, 1.0);
+    } else if (device_type == "both") {
+      kdac_cpu_ = std::make_shared<Nice::KDACCPU<T>>();
+      kdac_gpu_ = std::make_shared<Nice::KDACGPU<T>>();
+      kdac_cpu_->SetQ(k_);
+      kdac_cpu_->SetC(k_);
+      kdac_cpu_->SetKernel(Nice::kGaussianKernel, 1.0);
+      kdac_gpu_->SetQ(k_);
+      kdac_gpu_->SetC(k_);
+      kdac_gpu_->SetKernel(Nice::kGaussianKernel, 1.0);
     }
 #endif
 
-    kdac_->SetQ(k_);
-    kdac_->SetC(k_);
-    kdac_->SetKernel(Nice::kGaussianKernel, 1.0);
     base_dir_ = "../test/data_for_test/kdac/";
     data_type_ = "data_gaussian";
     label_type_ = "y1_gaussian";
@@ -83,15 +98,19 @@ class KDACTest : public ::testing::Test {
   }
 
   void Output() {
-    Nice::ACLProfiler profiler = kdac_->GetProfiler();
-    std::cout << "GenPhi: "
-              << profiler["gen_phi"].GetTotalTime() << std::endl;
-    std::cout << "GenGradient: "
-              << profiler["gen_grad"].GetTotalTime() << std::endl;
-    std::cout << "Update g(w): "
-              << profiler["update_g_of_w"].GetTotalTime() << std::endl;
-    std::cout << "Fit: "
-              << profiler["fit"].GetTotalTime() << std::endl;
+    if (device_type_ != "both") {
+      Nice::ACLProfiler profiler = kdac_->GetProfiler();
+      std::cout << "GenPhi: "
+                << profiler["gen_phi"].GetTotalTime() << std::endl;
+      std::cout << "GenGradient: "
+                << profiler["gen_grad"].GetTotalTime() << std::endl;
+      std::cout << "Update g(w): "
+                << profiler["update_g_of_w"].GetTotalTime() << std::endl;
+      std::cout << "Fit: "
+                << profiler["fit"].GetTotalTime() << std::endl;
+    } else {
+      std::cout << "Output for both cpu and gpu has not been implemented\n";
+    }
   }
 
   Nice::Matrix<T> ReadTestData(
@@ -179,6 +198,14 @@ TYPED_TEST(KDACTest, GPU_30_100_3) {
   this->kdac_->Fit(this->data_matrix_, this->existing_y_);
   this->Output();
   Nice::util::Print(this->kdac_->Predict(), "Alternative Solution");
+}
+
+TYPED_TEST(KDACTest, BOTH_30_100_3) {
+  this->SetupInputData(30, 100, 3, "both");
+  this->kdac_cpu_->SetVerbose(true);
+  this->kdac_gpu_->SetVerbose(true);
+  this->kdac_cpu_->Fit(this->data_matrix_, this->existing_y_);
+  this->kdac_gpu_->Fit(this->data_matrix_, this->existing_y_);
 }
 
 TYPED_TEST(KDACTest, CPU_120_100_3) {

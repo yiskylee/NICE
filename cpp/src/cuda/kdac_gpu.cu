@@ -514,12 +514,13 @@ void KDACGPU<double>::GenPhi(const Vector<double> &w_l,
 
 
 template<typename T>
-Vector <T> KDACGPU<T>::GenWGradient(const Vector <T> &w_l) {
-  profiler_["gen_grad"].Start();
-  Vector <T> w_gradient = Vector<T>::Zero(d_);
+Vector<T> KDACGPU<T>::GenWGradient(const Vector <T> &w_l) {
+  Vector<T> w_gradient = Vector<T>::Zero(d_);
   if (kernel_type_ == kGaussianKernel) {
-    CUDA_CALL(cudaMemcpy(w_l_d_, &w_l(0), d_ * sizeof(T),
-                         cudaMemcpyHostToDevice));
+    gpu_util_->EigenToDevBuffer(w_l_d_, w_l);
+
+//    CUDA_CALL(cudaMemcpy(w_l_d_, &w_l(0), d_ * sizeof(T),
+//                         cudaMemcpyHostToDevice));
     // When block_limit is 512
     // If d is 128, block_size is 64
     // If d is 6, block_size is 4
@@ -540,23 +541,22 @@ Vector <T> KDACGPU<T>::GenWGradient(const Vector <T> &w_l) {
             constant_,
             n_,
             d_,
-            gradient_fs_d_);
+            grad_f_arr_d_);
     CUDA_CALL(cudaGetLastError());
-    CUDA_CALL(cudaMemcpy(gradient_fs_h_, gradient_fs_d_,
+    CUDA_CALL(cudaMemcpy(grad_f_arr_h_, grad_f_arr_d_,
                          n_ * n_ * d_ * sizeof(T),
                          cudaMemcpyDeviceToHost));
 
 
     for (int i = 0; i < n_; i++) {
       for (int j = 0; j < n_; j++) {
-        T *gradient_f_ij = gradient_fs_h_ + IDXR(i, j, n_) * d_;
-        Vector<T> grad_temp = Eigen::Map < Vector < T >> (gradient_f_ij, d_);
+        T *grad_f_ij = grad_f_arr_h_ + IDXR(i, j, n_) * d_;
+        Vector<T> grad_temp = Eigen::Map < Vector < T >> (grad_f_ij, d_);
         util::CheckFinite(grad_temp, "grad_temp_"+std::to_string(i));
         w_gradient = w_gradient + grad_temp;
       }
     }
   }
-  profiler_["gen_grad"].Record();
   util::CheckFinite(w_gradient, "w_gradient");
   return w_gradient;
 }
@@ -597,6 +597,8 @@ void KDACGPU<double>::UpdateGOfW(const Vector<double> &w_l);
 
 template<typename T>
 T KDACGPU<T>::GenPhiOfAlpha(const Vector<T> &w_l) {
+  profiler_["gen_phi(alpha)"].Start();
+  profiler_["gen_phi(alpha)"].Record();
   return 1.0;
 }
 template float KDACGPU<float>::GenPhiOfAlpha(const Vector<float> &w_l);

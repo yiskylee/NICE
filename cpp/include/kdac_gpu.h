@@ -40,6 +40,7 @@
 
 #include "include/kdac.h"
 #include "include/gpu_util.h"
+#include "../../../../../../../usr/local/cuda/include/driver_types.h"
 
 namespace Nice {
 template<typename T>
@@ -71,25 +72,27 @@ class KDACGPU: public KDAC<T> {
 //    CUDA_CALL(cudaFree(waf_matrix_d_));
 //    CUDA_CALL(cudaFree(faf_matrix_d_));
     CUDA_CALL(cudaFree(w_l_d_));
-    CUDA_CALL(cudaFree(gradient_d_));
-    CUDA_CALL(cudaFree(phi_of_alphas_d_));
-    CUDA_CALL(cudaFree(phi_of_zeros_d_));
-    CUDA_CALL(cudaFree(phi_of_zero_primes_d_));
+//    CUDA_CALL(cudaFree(gradient_d_));
+//    CUDA_CALL(cudaFree(phi_of_alphas_d_));
+//    CUDA_CALL(cudaFree(phi_of_zeros_d_));
+//    CUDA_CALL(cudaFree(phi_of_zero_primes_d_));
     CUDA_CALL(cudaFree(g_of_w_d_));
-    CUDA_CALL(cudaFree(gradient_fs_d_));
+    CUDA_CALL(cudaFree(grad_f_arr_d_));
 
-    delete [] phi_of_alphas_h_;
-    delete [] phi_of_zeros_h_;
-    delete [] phi_of_zero_primes_h_;
+//    delete [] phi_of_alphas_h_;
+//    delete [] phi_of_zeros_h_;
+//    delete [] phi_of_zero_primes_h_;
   }
   KDACGPU(const KDACGPU &rhs) {}
+
+  Vector<T> GenWGradient(const Vector<T> &w_l);
+  T GenPhiOfAlpha(const Vector<T> &w_l);
+
 
   void GenPhiCoeff(const Vector<T> &w_l, const Vector<T> &gradient);
   void GenPhi(const Vector<T> &w_l,
               const Vector<T> &gradient,
               bool w_l_changed);
-  T GenPhiOfAlpha(const Vector<T> &w_l);
-  Vector<T> GenWGradient(const Vector<T> &w_l);
   void UpdateGOfW(const Vector<T> &w_l);
 
  private:
@@ -105,7 +108,9 @@ class KDACGPU: public KDAC<T> {
   T *phi_of_alphas_d_, *phi_of_zeros_d_, *phi_of_zero_primes_d_;
   T *phi_of_alphas_h_, *phi_of_zeros_h_, *phi_of_zero_primes_h_;
 
-  T *gradient_fs_d_, *gradient_fs_h_;
+  // Store all n * n gradient before summing them up to become the
+  // final gradient
+  T *grad_f_arr_d_, *grad_f_arr_h_;
   // GPUUtil object to setup memory etc.
   GpuUtil<T> *gpu_util_;
   unsigned int block_limit_;
@@ -119,22 +124,17 @@ class KDACGPU: public KDAC<T> {
 //  void InitXYW(const Matrix<T> &input_matrix, const Matrix<T> &y_matrix) {
 //    KDAC<T>::InitXYW(input_matrix, y_matrix);
 //    profiler_["gen_phi"].Start();
-//    gpu_util_->SetupMem(&x_matrix_d_,
-//                        &(x_matrix_(0)), n_ * d_);
-//    gpu_util_->SetupMem(&w_l_d_, nullptr, d_, false);
+
 //    gpu_util_->SetupMem(&gradient_d_, nullptr, d_, false);
 //    gpu_util_->SetupMem(&gamma_matrix_d_, nullptr, n_ * n_, false);
 //    gpu_util_->SetupMem(&g_of_w_d_, nullptr, n_ * n_, false);
-//    gpu_util_->SetupMem(&gradient_fs_d_, nullptr,
-//                        n_ * n_ * d_, false);
-//    int num_blocks = ((n_ - 1) / 16 + 1) * ((n_ - 1) / 16 + 1);
+//  int num_blocks = ((n_ - 1) / 16 + 1) * ((n_ - 1) / 16 + 1);
 //    gpu_util_->SetupMem(&phi_of_alphas_d_, nullptr, num_blocks, false);
 //    gpu_util_->SetupMem(&phi_of_zeros_d_, nullptr, num_blocks, false);
 //    gpu_util_->SetupMem(&phi_of_zero_primes_d_, nullptr, num_blocks, false);
 //    phi_of_alphas_h_ = new T[num_blocks];
 //    phi_of_zeros_h_ = new T[num_blocks];
 //    phi_of_zero_primes_h_ = new T[num_blocks];
-//    gradient_fs_h_ = new T[n_ * n_ * d_];
 //    profiler_["gen_phi"].Record();
 //  }
 
@@ -149,6 +149,10 @@ class KDACGPU: public KDAC<T> {
   void InitW() {
     KDAC<T>::InitW();
     gpu_util_->SetupMem(&gamma_matrix_d_, nullptr, n_ * n_, false);
+    gpu_util_->SetupMem(&w_l_d_, nullptr, d_, false);
+    gpu_util_->SetupMem(&grad_f_arr_d_, nullptr, n_ * n_ * d_, false);
+    grad_f_arr_h_ = new T[n_ * n_ * d_];
+
   }
 
 //  void InitYW() {
@@ -158,7 +162,7 @@ class KDACGPU: public KDAC<T> {
 //    gpu_util_->SetupMem(&gradient_d_, nullptr, d_, false);
 //    gpu_util_->SetupMem(&gamma_matrix_d_, nullptr, n_ * n_, false);
 //    gpu_util_->SetupMem(&g_of_w_d_, nullptr, n_ * n_, false);
-//    gpu_util_->SetupMem(&gradient_fs_d_, nullptr,
+//    gpu_util_->SetupMem(&grad_f_arr_d_, nullptr,
 //                        n_ * n_ * d_, false);
 //    int num_blocks = ((n_ - 1) / 16 + 1) * ((n_ - 1) / 16 + 1);
 //    gpu_util_->SetupMem(&phi_of_alphas_d_, nullptr, num_blocks, false);
@@ -176,7 +180,7 @@ class KDACGPU: public KDAC<T> {
 //    CUDA_CALL(cudaMemcpy(gamma_matrix_d_, &(gamma_matrix_)(0),
 //                         n_ * n_ * sizeof(T),
 //                         cudaMemcpyHostToDevice));
-    gpu_util_->EigenToDevBuffer(gamma_matrix_, gamma_matrix_d_, n_ * n_);
+    gpu_util_->EigenToDevBuffer(gamma_matrix_d_, gamma_matrix_);
     KDAC<T>::OptimizeW();
   }
 };

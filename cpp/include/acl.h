@@ -138,9 +138,6 @@ class ACL {
 
   // Initialize all data structures related to the input matrix X
   virtual void InitX(const Matrix <T> &input_matrix) {
-    // XILI
-    std::cout << "In ACL::InitX\n";
-    // XILI
 
     if (input_matrix.rows() == 0 || input_matrix.cols() == 0) {
       std::cerr << "X matrix is not initialized\n";
@@ -158,9 +155,6 @@ class ACL {
     u_matrix_ = Matrix<T>::Zero(n_, c_);
     u_eigenvals_ = Vector<T>::Zero(c_);
 
-    // XILI
-    std::cout << "Exiting ACL::InitX\n";
-    // XILI
   }
 
   virtual void InitY(const Matrix<T> &y_matrix) {
@@ -187,10 +181,6 @@ class ACL {
   // Initialization for generating alternative views with a given Y
   virtual void InitXYW(const Matrix <T> &input_matrix,
                        const Matrix <T> &y_matrix) {
-    // XILI
-    std::cout << "In ACL::InitXYW()\n";
-    // XILI
-
     InitX(input_matrix);
     InitY(y_matrix);
     InitW();

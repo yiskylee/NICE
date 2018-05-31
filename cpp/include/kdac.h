@@ -232,11 +232,6 @@ class KDAC : public ACL<T> {
     // KDAC method follows the pseudo code in Algorithm 1 in the paper
     // ISM method follows the Appendix I in Chieh's paper
 
-    // XILI
-    std::cout << "In Fit(X, y)\n";
-    // XILI
-
-
     profiler_["fit"].Start();
     profiler_["exit_timer"].Start();
     PROFILE(InitXYW(input_matrix, y_matrix), profiler_["init"]);
@@ -244,6 +239,10 @@ class KDAC : public ACL<T> {
     GenDegreeMatrix();
     PROFILE(OptimizeU(), profiler_["u"]);
     PROFILE(OptimizeW(), profiler_["w"]);
+
+    // XILI
+    return;
+    // XILI
     if (verbose_)
       OutputProgress();
 
@@ -408,7 +407,9 @@ class KDAC : public ACL<T> {
         Vector <T> grad_f_vertical =
             GenOrthonormal(w_matrix_.leftCols(l + 1), grad_f);
         profiler_["gen_grad"].Record();
-
+        //XILI
+        util::Print(grad_f_vertical.tail(10), "grad_f_vertical");
+        return;
         //XILI
 //        if (l == 2) {
 //          std::cout << "Round " << i++ << std::endl;
