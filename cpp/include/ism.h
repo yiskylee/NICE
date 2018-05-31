@@ -69,6 +69,11 @@ class ISM : public ACL<T> {
       inner_iter_num_(0)
   {
     method_ = "ISM";
+    profiler_["update_psi"].SetName("update_psi");
+    profiler_["update_phi"].SetName("update_phi");
+    profiler_["update_w"].SetName("update_w");
+    profiler_["update_k"].SetName("update_k");
+    profiler_["update_d"].SetName("update_d");
   }
 
   ~ISM() {}

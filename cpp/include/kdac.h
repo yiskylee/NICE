@@ -108,11 +108,14 @@ class KDAC : public ACL<T> {
       y_matrix_tilde_(),
       g_of_w_(),
       new_g_of_w_(),
+      kij_matrix_(),
       phi_of_alpha_(0),
       phi_of_zero_(0),
       phi_of_zero_prime_(0)
   {
     method_ = "KDAC";
+    profiler_["gen_grad"].SetName("gen_grad");
+    profiler_["gen_phi(alpha)"].SetName("gen_phi(alpha)");
   }
 
   ~KDAC() {}
@@ -231,7 +234,7 @@ class KDAC : public ACL<T> {
 //    PROFILE(InitXYW(input_matrix, y_matrix), profiler_["init"]);
     profiler_["fit"].Start();
     profiler_["exit_timer"].Start();
-    InitXYW(input_matrix, y_matrix);
+    PROFILE(InitXYW(input_matrix, y_matrix), profiler_["init"]);
     GenKernelMatrix(x_matrix_);
     GenDegreeMatrix();
     PROFILE(OptimizeU(), profiler_["u"]);
@@ -263,17 +266,21 @@ class KDAC : public ACL<T> {
   }
 
  protected:
-  Matrix <T> y_matrix_tilde_;  // The kernel matrix for Y
-  Matrix <T> g_of_w_;  // g(w) for updating gradient
+  Matrix<T> y_matrix_tilde_;  // The kernel matrix for Y
+  Matrix<T> g_of_w_;  // g(w) for updating gradient
   // new g(w) to hold g(w) * temporary exp(-waw/2sigma^2)
   // new_g_of_w becomes g_of_w when converged w is found
-  Matrix <T> new_g_of_w_;
+  Matrix<T> new_g_of_w_;
+  // kij_matrix is used to store the kernel matrix for just one column w_l
+  // it is used as a temporary storing space
+  Matrix<T> kij_matrix_;
   // in formula 5
   T phi_of_alpha_, phi_of_zero_, phi_of_zero_prime_;
 
   virtual void InitX(const Matrix <T> &input_matrix) {
     ACL<T>::InitX(input_matrix);
     g_of_w_ = Matrix<T>::Constant(n_, n_, 1);
+    kij_matrix_ = Matrix<T>::Constant(n_, n_, 1);
   }
 
   void InitW() {
@@ -382,6 +389,7 @@ class KDAC : public ACL<T> {
         // Calculate the w gradient in equation 13, then find the gradient
         // that is vertical to the space spanned by w_0 to w_l
         // XILI
+        profiler_["gen_grad"].Start();
         Vector <T> grad_f = GenWGradient(w_l);
 //        if (l == 2)
 //          grad_f = GenWGradient(w_l, true);
@@ -392,6 +400,7 @@ class KDAC : public ACL<T> {
 //        // XILI
         Vector <T> grad_f_vertical =
             GenOrthonormal(w_matrix_.leftCols(l + 1), grad_f);
+        profiler_["gen_grad"].Record();
 
         //XILI
 //        if (l == 2) {
@@ -450,11 +459,8 @@ class KDAC : public ACL<T> {
     // iteration
     k_matrix_ = g_of_w_;
     g_of_w_ = Matrix<T>::Constant(n_, n_, 1);
-
-
-    profiler_["gen_phi"].SumRecords();
     profiler_["gen_grad"].SumRecords();
-    profiler_["update_g_of_w"].SumRecords();
+    profiler_["gen_phi(alpha)"].SumRecords();
 
     if (verbose_)
       std::cout << "W Optimized\n";
@@ -485,6 +491,7 @@ class KDAC : public ACL<T> {
 
       Vector<T> new_w_l = *w_l * sqrt_one_minus_alpha +
           gradient_vertical * alpha_;
+
       phi_of_alpha_ = GenPhiOfAlpha(new_w_l);
 
       while (phi_of_alpha_ <
@@ -512,7 +519,6 @@ class KDAC : public ACL<T> {
     util::CheckFinite(w_matrix_, "W");
   }
 
-  virtual void UpdateGOfW(const Vector <T> &w_l) = 0;
   virtual T GenPhiOfAlpha(const Vector<T> &w_l) = 0;
   virtual Vector <T> GenWGradient(const Vector <T> &w_l, bool output=false) = 0;
 

@@ -32,6 +32,8 @@
 #ifndef CPP_INCLUDE_KDAC_GPU_H
 #define CPP_INCLUDE_KDAC_GPU_H
 
+//#define CUDA_AND_GPU
+
 #ifdef CUDA_AND_GPU
 
 #include "include/kdac.h"
@@ -125,8 +127,7 @@ class KDACGPU: public KDAC<T> {
 
   void InitX(const Matrix<T> &input_matrix) {
     KDAC<T>::InitX(input_matrix);
-    gpu_util_->SetupMem(&x_matrix_d_,
-                        &(x_matrix_(0)), n_ * d_);
+    gpu_util_->SetupMem(&x_matrix_d_, &(x_matrix_(0)), n_ * d_);
   }
 
   void InitYW() {

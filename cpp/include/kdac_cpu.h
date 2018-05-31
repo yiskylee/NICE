@@ -47,6 +47,7 @@ class KDACCPU: public KDAC<T> {
   using KDAC<T>::kernel_type_;
   using KDAC<T>::g_of_w_;
   using KDAC<T>::new_g_of_w_;
+  using KDAC<T>::kij_matrix_;
   using KDAC<T>::profiler_;
   using KDAC<T>::n_;
   using KDAC<T>::d_;
@@ -69,8 +70,7 @@ class KDACCPU: public KDAC<T> {
   // Generate the term exp(-wTA_ijw) for different w, and put every kij into
   // a nxn matrix kij_matrix
   // Find out more at https://github.com/yiskylee/NICE/wiki
-  Matrix<T> GenKij(const Vector<T> &w_l) {
-    Matrix<T> kij_matrix = Matrix<T>::Zero(n_, n_);
+  void GenKij(const Vector<T> &w_l) {
     if (kernel_type_ == kGaussianKernel) {
       // -1 / 2 * sigma ^2
       T denom = -1.f / (2 * constant_ * constant_);
@@ -78,27 +78,28 @@ class KDACCPU: public KDAC<T> {
         for (int j = 0; j < n_; j++) {
           Vector<T> delta_x_ij = x_matrix_.row(i) - x_matrix_.row(j);
           T projection = w_l.dot(delta_x_ij);
-          kij_matrix(i, j) = std::exp(denom * projection * projection);
+          kij_matrix_(i, j) = std::exp(denom * projection * projection);
         }
       }
     }
-    return kij_matrix;
   }
 
   T GenPhiOfAlpha(const Vector<T> &w_l) {
     // TODO: Optimize g(w)
     // kij_matrix corresponds to the kernel term exp(waw/-2sigma^2)
-    Matrix<T> kij_matrix = GenKij(w_l);
+    profiler_["gen_phi(alpha)"].Start();
+    GenKij(w_l);
     // this is the new g_of_w, it is multiplied with the new kij matrix
     // this new g_of_w becomes final g_of_w when w_l is converged
-    new_g_of_w_ = g_of_w_.cwiseProduct(kij_matrix);
+    new_g_of_w_ = g_of_w_.cwiseProduct(kij_matrix_);
     // g_of_w_(i,j) is the exp(-waw/2sigma^2) for all previously genreated
     // w columns (see equation 12)
-    return gamma_matrix_.cwiseProduct(new_g_of_w_).sum();
+    T result = gamma_matrix_.cwiseProduct(new_g_of_w_).sum();
+    profiler_["gen_phi(alpha)"].Record();
+    return result;
   }
 
   Vector<T> GenWGradient(const Vector<T> &w_l, bool output=false) {
-    profiler_["gen_grad"].Start();
     Vector<T> w_gradient = Vector<T>::Zero(d_);
 //    Matrix<T> kij_matrix = GenKij(w_l);
     if (kernel_type_ == kGaussianKernel) {
@@ -136,16 +137,9 @@ class KDACCPU: public KDAC<T> {
         }
       }
     }
-    profiler_["gen_grad"].Record();
     return w_gradient;
   }
 
-  void UpdateGOfW(const Vector<T> &w_l) {
-    profiler_["update_g_of_w"].Start();
-    Matrix<T> kij_matrix = GenKij(w_l);
-    g_of_w_ = g_of_w_.cwiseProduct(kij_matrix);
-    profiler_["update_g_of_w"].Record();
-  }
 };
 }  // namespace NICE
 

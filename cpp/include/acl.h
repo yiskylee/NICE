@@ -88,14 +88,6 @@ class ACL {
     profiler_["u"].SetName("u");
     profiler_["w"].SetName("w");
     profiler_["kmeans"].SetName("kmeans");
-    profiler_["gen_phi"].SetName("gen_phi");
-    profiler_["gen_grad"].SetName("gen_grad");
-    profiler_["update_g_of_w"].SetName("update_g_of_w");
-    profiler_["update_psi"].SetName("update_psi");
-    profiler_["update_phi"].SetName("update_phi");
-    profiler_["update_w"].SetName("update_w");
-    profiler_["update_k"].SetName("update_k");
-    profiler_["update_d"].SetName("update_d");
   }
 
   ~ACL() {}
@@ -167,10 +159,8 @@ class ACL {
     // XILI
 
     x_matrix_ = input_matrix;
-
     k_matrix_ = Matrix<T>::Zero(n_, n_);
     u_matrix_ = Matrix<T>::Zero(n_, c_);
-
     u_eigenvals_ = Vector<T>::Zero(c_);
 
   }
@@ -193,6 +183,7 @@ class ACL {
     // Generate the kernel for the label matrix Y: K_y
     k_matrix_y_ = y_matrix_ * y_matrix_.transpose();
   }
+
   virtual void InitW() = 0;
 
   // Initialization for generating alternative views with a given Y

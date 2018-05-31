@@ -87,7 +87,7 @@ class Timer {
   }
 
   Matrix<double> GetTimePerIter() {
-    if (vec_.size() == 0) {
+    if (vec_.empty()) {
       throw "ERROR: Number of iterations equals to 0";
     }
     Matrix<double> m(vec_.size(), 1);
@@ -97,7 +97,7 @@ class Timer {
   }
 
   int GetNumIters() {
-    return vec_.size();
+    return static_cast<int>(vec_.size());
   }
 
  private:
