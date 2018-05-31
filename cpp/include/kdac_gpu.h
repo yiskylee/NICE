@@ -51,11 +51,17 @@ class KDACGPU: public KDAC<T> {
   using KDAC<T>::profiler_;
   using KDAC<T>::g_of_w_;
   using KDAC<T>::gamma_matrix_;
+  using KDAC<T>::kernel_type_;
+  using KDAC<T>::phi_of_alpha_;
+  using KDAC<T>::phi_of_zero_;
+  using KDAC<T>::phi_of_zero_prime_;
+  using KDAC<T>::constant_;
 
   /// This is the default constructor for KDACGPU
   /// Number of clusters c and reduced dimension q will be both set to 2
   KDACGPU() :
-      block_limit_(256){}
+      block_limit_(256),
+      alpha_(1) {}
 
   ~KDACGPU() {
     // Free parameters, intermediate delta and parameters
@@ -103,6 +109,7 @@ class KDACGPU: public KDAC<T> {
   // GPUUtil object to setup memory etc.
   GpuUtil<T> *gpu_util_;
   unsigned int block_limit_;
+  T alpha_;
 
   T* waw_matrix_d_;
   T* waf_matrix_d_;

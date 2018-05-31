@@ -390,27 +390,25 @@ __global__ void GenWGradientKernel(const T *x_matrix_d,
 template<typename T>
 void KDACGPU<T>::GenPhiCoeff(const Vector <T> &w_l,
                              const Vector <T> &gradient) {
-  int n = this->n_;
-  int d = this->d_;
   // Three terms used to calculate phi of alpha
   // They only change if w_l or gradient change
-  CUDA_CALL(cudaMemcpy(w_l_d_, &w_l(0), d * sizeof(T),
+  CUDA_CALL(cudaMemcpy(w_l_d_, &w_l(0), d_ * sizeof(T),
                        cudaMemcpyHostToDevice));
-  CUDA_CALL(cudaMemcpy(gradient_d_, &gradient(0), d * sizeof(T),
+  CUDA_CALL(cudaMemcpy(gradient_d_, &gradient(0), d_ * sizeof(T),
                        cudaMemcpyHostToDevice));
 
-  unsigned int block_size = (d < block_limit_ * 2) ?
-                            nextPow2((d+1)/2) : block_limit_;
+  unsigned int block_size = (d_ < block_limit_ * 2) ?
+                            nextPow2((d_+1)/2) : block_limit_;
 
-  int shared_mem_size = 2 * d * sizeof(T);
+  int shared_mem_size = 2 * d_ * sizeof(T);
   dim3 dim_block(block_size, 1);
-  dim3 dim_grid(n, n);
+  dim3 dim_grid(n_, n_);
   GenPhiCoeffKernel <<<dim_grid, dim_block, shared_mem_size>>> (
       x_matrix_d_,
       w_l_d_,
       gradient_d_,
-      n,
-      d,
+      n_,
+      d_,
       waw_matrix_d_,
       waf_matrix_d_,
       faf_matrix_d_);
@@ -436,20 +434,18 @@ template<typename T>
 void KDACGPU<T>::GenPhi(const Vector <T> &w_l,
                         const Vector <T> &gradient,
                         bool w_l_changed) {
-  int n = this->n_;
-  int d = this->d_;
 
-  if (this->kernel_type_ == kGaussianKernel) {
-    this->profiler_["gen_phi"].Start();
-    float alpha_square = pow(this->alpha_, 2);
+  if (kernel_type_ == kGaussianKernel) {
+    profiler_["gen_phi"].Start();
+    float alpha_square = pow(alpha_, 2);
     float sqrt_one_minus_alpha = pow((1 - alpha_square), 0.5);
-    float denom = -1 / (2 * pow(this->constant_, 2));
+    float denom = -1 / (2 * pow(constant_, 2));
 
-    this->phi_of_alpha_ = 0;
+    phi_of_alpha_ = 0;
     if (w_l_changed) {
       GenPhiCoeff(w_l, gradient);
-      this->phi_of_zero_ = 0;
-      this->phi_of_zero_prime_ = 0;
+      phi_of_zero_ = 0;
+      phi_of_zero_prime_ = 0;
     }
 
     int block_dim_x = 16;
@@ -457,11 +453,11 @@ void KDACGPU<T>::GenPhi(const Vector <T> &w_l,
     dim3 dim_block(block_dim_x, block_dim_y);
     // If matrix is n x m, then I need an m x n grid for contiguous
     // memory access
-    dim3 dim_grid((n - 1) / block_dim_x + 1,
-                  (n - 1) / block_dim_y + 1);
+    dim3 dim_grid((n_ - 1) / block_dim_x + 1,
+                  (n_ - 1) / block_dim_y + 1);
     int block_size = block_dim_x * block_dim_y;
     int num_blocks =
-        ((n - 1) / block_dim_x + 1) * ((n - 1) / block_dim_y + 1);
+        ((n_ - 1) / block_dim_x + 1) * ((n_ - 1) / block_dim_y + 1);
     int shared_mem_size;
     if (w_l_changed)
       shared_mem_size = 3 * block_size * sizeof(T);
@@ -469,15 +465,15 @@ void KDACGPU<T>::GenPhi(const Vector <T> &w_l,
       shared_mem_size = block_size * sizeof(T);
 
     GenPhiKernel << < dim_grid, dim_block, shared_mem_size >> >
-        (this->alpha_,
+        (alpha_,
         sqrt_one_minus_alpha,
         denom,
         waw_matrix_d_,
         waf_matrix_d_,
         faf_matrix_d_,
         gamma_matrix_d_,
-        n,
-        d,
+        n_,
+        d_,
         w_l_changed,
         phi_of_alphas_d_,
         phi_of_zeros_d_,
@@ -490,7 +486,7 @@ void KDACGPU<T>::GenPhi(const Vector <T> &w_l,
                          num_blocks * sizeof(T), cudaMemcpyDeviceToHost));
 
     for (int i = 0; i < num_blocks; i++) {
-      this->phi_of_alpha_ += phi_of_alphas_h_[i];
+      phi_of_alpha_ += phi_of_alphas_h_[i];
     }
     if (w_l_changed) {
       CUDA_CALL(cudaMemcpy(phi_of_zeros_h_, phi_of_zeros_d_,
@@ -498,11 +494,11 @@ void KDACGPU<T>::GenPhi(const Vector <T> &w_l,
       CUDA_CALL(cudaMemcpy(phi_of_zero_primes_h_, phi_of_zero_primes_d_,
                            num_blocks * sizeof(T), cudaMemcpyDeviceToHost));
       for (int i = 0; i < num_blocks; i++) {
-        this->phi_of_zero_ += phi_of_zeros_h_[i];
-        this->phi_of_zero_prime_ += phi_of_zero_primes_h_[i];
+        phi_of_zero_ += phi_of_zeros_h_[i];
+        phi_of_zero_prime_ += phi_of_zero_primes_h_[i];
       }
     }
-    this->profiler_["gen_phi"].Record();
+    profiler_["gen_phi"].Record();
   }
 }
 
@@ -519,50 +515,48 @@ void KDACGPU<double>::GenPhi(const Vector<double> &w_l,
 
 template<typename T>
 Vector <T> KDACGPU<T>::GenWGradient(const Vector <T> &w_l) {
-  this->profiler_["gen_grad"].Start();
-  int n = this->n_;
-  int d = this->d_;
-  Vector <T> w_gradient = Vector<T>::Zero(d);
-  if (this->kernel_type_ == kGaussianKernel) {
-    CUDA_CALL(cudaMemcpy(w_l_d_, &w_l(0), d * sizeof(T),
+  profiler_["gen_grad"].Start();
+  Vector <T> w_gradient = Vector<T>::Zero(d_);
+  if (kernel_type_ == kGaussianKernel) {
+    CUDA_CALL(cudaMemcpy(w_l_d_, &w_l(0), d_ * sizeof(T),
                          cudaMemcpyHostToDevice));
     // When block_limit is 512
     // If d is 128, block_size is 64
     // If d is 6, block_size is 4
     // If d is 1025, block_size is 512
-    unsigned int block_size = (d < block_limit_ * 2) ?
-                              nextPow2((d+1)/2) : block_limit_;
+    unsigned int block_size = (d_ < block_limit_ * 2) ?
+                              nextPow2((d_+1)/2) : block_limit_;
 
-    int shared_mem_size = 2 * d * sizeof(T);
+    int shared_mem_size = 2 * d_ * sizeof(T);
 
     dim3 dim_block(block_size, 1);
-    dim3 dim_grid(n, n);
+    dim3 dim_grid(n_, n_);
     GenWGradientKernel
         << < dim_grid, dim_block, shared_mem_size >> >
         (x_matrix_d_,
             g_of_w_d_,
             w_l_d_,
             gamma_matrix_d_,
-            this->constant_,
-            n,
-            d,
+            constant_,
+            n_,
+            d_,
             gradient_fs_d_);
     CUDA_CALL(cudaGetLastError());
     CUDA_CALL(cudaMemcpy(gradient_fs_h_, gradient_fs_d_,
-                         n * n * d * sizeof(T),
+                         n_ * n_ * d_ * sizeof(T),
                          cudaMemcpyDeviceToHost));
 
 
-    for (int i = 0; i < n; i++) {
-      for (int j = 0; j < n; j++) {
-        T *gradient_f_ij = gradient_fs_h_ + IDXR(i, j, n) * d;
-        Vector<T> grad_temp = Eigen::Map < Vector < T >> (gradient_f_ij, d);
+    for (int i = 0; i < n_; i++) {
+      for (int j = 0; j < n_; j++) {
+        T *gradient_f_ij = gradient_fs_h_ + IDXR(i, j, n_) * d_;
+        Vector<T> grad_temp = Eigen::Map < Vector < T >> (gradient_f_ij, d_);
         util::CheckFinite(grad_temp, "grad_temp_"+std::to_string(i));
         w_gradient = w_gradient + grad_temp;
       }
     }
   }
-  this->profiler_["gen_grad"].Record();
+  profiler_["gen_grad"].Record();
   util::CheckFinite(w_gradient, "w_gradient");
   return w_gradient;
 }
@@ -575,27 +569,25 @@ Vector<double> KDACGPU<double>::GenWGradient(const Vector<double> &w_l);
 
 template<typename T>
 void KDACGPU<T>::UpdateGOfW(const Vector<T> &w_l) {
-  this->profiler_["update_g_of_w"].Start();
-  int n = this->n_;
-  int d = this->d_;
-  CUDA_CALL(cudaMemcpy(w_l_d_, &w_l(0), d * sizeof(T),
+  profiler_["update_g_of_w"].Start();
+  CUDA_CALL(cudaMemcpy(w_l_d_, &w_l(0), d_ * sizeof(T),
                        cudaMemcpyHostToDevice));
-  if (this->kernel_type_ == kGaussianKernel) {
-    unsigned int block_size = (d < block_limit_ * 2) ?
-        nextPow2((d+1)/2) : block_limit_;
-    int shared_mem_size = d * sizeof(T);
+  if (kernel_type_ == kGaussianKernel) {
+    unsigned int block_size = (d_ < block_limit_ * 2) ?
+        nextPow2((d_+1)/2) : block_limit_;
+    int shared_mem_size = d_ * sizeof(T);
     dim3 dim_block(block_size, 1);
-    dim3 dim_grid(n, n);
+    dim3 dim_grid(n_, n_);
     UpdateGOfWKernel <<<dim_grid, dim_block, shared_mem_size>>>
         (x_matrix_d_,
          w_l_d_,
-         this->constant_,
-         n,
-         d,
+         constant_,
+         n_,
+         d_,
          g_of_w_d_);
     CUDA_CALL(cudaGetLastError());
   }
-  this->profiler_["update_g_of_w"].Record();
+  profiler_["update_g_of_w"].Record();
 }
 
 template
