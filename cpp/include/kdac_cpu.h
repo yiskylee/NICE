@@ -85,7 +85,6 @@ class KDACCPU: public KDAC<T> {
   }
 
   T GenPhiOfAlpha(const Vector<T> &w_l) {
-    // TODO: Optimize g(w)
     // kij_matrix corresponds to the kernel term exp(waw/-2sigma^2)
     profiler_["gen_phi(alpha)"].Start();
     GenKij(w_l);

@@ -83,7 +83,6 @@ endif()
 find_package(CUDA)
 
 # Detect GPU device
-# Dirty Hack to disable GPU
 if(CUDA_FOUND)
   message("CUDA_FOUND")
   try_run(RUN_RESULT_VAR COMPILE_RESULT_VAR
@@ -110,9 +109,9 @@ else()
 endif()
 
 # Dirty hack to not compile CUDA code
-set(CUDA_AND_GPU FALSE)
+# set(CUDA_AND_GPU FALSE)
 # Set GPU True
-# set(CUDA_AND_GPU TRUE)
+set(CUDA_AND_GPU TRUE)
 
 # Build NICE library with/without CUDA
 if (CUDA_AND_GPU)

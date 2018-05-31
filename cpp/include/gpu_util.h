@@ -166,6 +166,11 @@ class GpuUtil {
     CUDA_CALL(cudaFree(dev));
   }
 
+  void EigenToDevBuffer(const Matrix<T> &host, T **dev, int size) {
+    CUDA_CALL(cudaMemcpy(*dev, &host(0), size * sizeof(T),
+      cudaMemcpyHostToDevice));
+  }
+
   Matrix<T> DevBufferToEigen(T *dev, int row, int col) {
     T *host = new T[row * col];
     CUDA_CALL(cudaMemcpy(host, dev, row * col * sizeof(T),

@@ -280,6 +280,7 @@ class KDAC : public ACL<T> {
   virtual void InitX(const Matrix <T> &input_matrix) {
     ACL<T>::InitX(input_matrix);
     g_of_w_ = Matrix<T>::Constant(n_, n_, 1);
+    new_g_of_w_ = Matrix<T>::Constant(n_, n_, 1);
     kij_matrix_ = Matrix<T>::Constant(n_, n_, 1);
   }
 
@@ -289,6 +290,7 @@ class KDAC : public ACL<T> {
     if (w_matrix_.cols() == 0) {
       w_matrix_ = Matrix<T>::Identity(d_, q_);
     }
+    gamma_matrix_ = Matrix<T>::Constant(n_, n_, 1);
   }
 
   // Initialization for all Y related data structures

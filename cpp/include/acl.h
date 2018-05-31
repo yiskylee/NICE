@@ -149,15 +149,6 @@ class ACL {
     h_matrix_ = Matrix<T>::Identity(n_, n_)
         - Matrix<T>::Constant(n_, n_, 1) / static_cast<T>(n_);
 
-    // XILI
-//    Matrix<T> h_matrix_2 = Matrix<T>::Identity(d_, d_)
-//        - Matrix<T>::Constant(d_, d_, 1) / static_cast<T>(d_);
-//    Matrix<T> temp = h_matrix_ * input_matrix * h_matrix_2;
-//    std::string out_path =
-//        "/home/xiangyu/Dropbox/git_project/NICE/python/debug/output/";
-//    util::ToFile(input_matrix, out_path + "temp.csv");
-    // XILI
-
     x_matrix_ = input_matrix;
     k_matrix_ = Matrix<T>::Zero(n_, n_);
     u_matrix_ = Matrix<T>::Zero(n_, c_);
