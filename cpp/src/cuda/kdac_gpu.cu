@@ -547,6 +547,7 @@ Vector<T> KDACGPU<T>::GenWGradient(const Vector <T> &w_l) {
   Vector<T> w_gradient = Vector<T>::Zero(d_);
   if (kernel_type_ == kGaussianKernel) {
     gpu_util_->EigenToDevBuffer(w_l_d_, w_l);
+    gpu_util_->EigenToDevBuffer(g_of_w_d_, g_of_w_);
 
 //    CUDA_CALL(cudaMemcpy(w_l_d_, &w_l(0), d_ * sizeof(T),
 //                         cudaMemcpyHostToDevice));

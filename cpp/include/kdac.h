@@ -240,9 +240,6 @@ class KDAC : public ACL<T> {
     PROFILE(OptimizeU(), profiler_["u"]);
     PROFILE(OptimizeW(), profiler_["w"]);
 
-    // XILI
-    return;
-    // XILI
     if (verbose_)
       OutputProgress();
 
@@ -422,13 +419,8 @@ class KDAC : public ACL<T> {
 //          util::Print(grad_f, "grad_f");
 //          util::Print(grad_f_vertical, "grad_f_vertical");
 //        }
-        //XILI
         // Line search a good alpha and update w_l
         LineSearch(grad_f, grad_f_vertical, &w_l);
-        // XILI
-        return;
-        // XILI
-//        w_l = std::sqrt(1.0 - alpha_ * alpha_) * w_l + alpha_ * grad_f_vertical;
         w_matrix_.col(l) = w_l;
         w_l_converged =
             util::CheckConverged(phi_of_alpha_, phi_of_zero_, threshold2_);
@@ -488,9 +480,6 @@ class KDAC : public ACL<T> {
         // We first generate phi(alpha), and make it become the previous
         // objective: phi(0)
         phi_of_zero_ = GenPhiOfAlpha(*w_l);
-        // XILI
-        return;
-        // XILI
       } else {
         // When we have already generated phi(alpha),
         // we directly make phi(0) equal to the phi(alpha) from last iteration
@@ -525,10 +514,6 @@ class KDAC : public ACL<T> {
     // kij_matrix corresponds to the kernel term exp(waw/-2sigma^2)
     profiler_["gen_phi(alpha)"].Start();
     GenKij(w_l);
-    //XILI
-    util::Print(kij_matrix_.block(0,0,10,10), "kij_matrix");
-    return 0.0;
-    //XILI
     // this is the new g_of_w, it is multiplied with the new kij matrix
     // this new g_of_w becomes final g_of_w when w_l is converged
     new_g_of_w_ = g_of_w_.cwiseProduct(kij_matrix_);
