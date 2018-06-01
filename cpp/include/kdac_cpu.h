@@ -84,20 +84,6 @@ class KDACCPU: public KDAC<T> {
     }
   }
 
-  T GenPhiOfAlpha(const Vector<T> &w_l) {
-    // kij_matrix corresponds to the kernel term exp(waw/-2sigma^2)
-    profiler_["gen_phi(alpha)"].Start();
-    GenKij(w_l);
-    // this is the new g_of_w, it is multiplied with the new kij matrix
-    // this new g_of_w becomes final g_of_w when w_l is converged
-    new_g_of_w_ = g_of_w_.cwiseProduct(kij_matrix_);
-    // g_of_w_(i,j) is the exp(-waw/2sigma^2) for all previously genreated
-    // w columns (see equation 12)
-    T result = gamma_matrix_.cwiseProduct(new_g_of_w_).sum();
-    profiler_["gen_phi(alpha)"].Record();
-    return result;
-  }
-
   Vector<T> GenWGradient(const Vector<T> &w_l) {
     bool output = false;
     Vector<T> w_gradient = Vector<T>::Zero(d_);

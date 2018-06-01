@@ -407,10 +407,6 @@ class KDAC : public ACL<T> {
         Vector <T> grad_f_vertical =
             GenOrthonormal(w_matrix_.leftCols(l + 1), grad_f);
         profiler_["gen_grad"].Record();
-        //XILI
-        util::Print(grad_f_vertical.tail(10), "grad_f_vertical");
-        return;
-        //XILI
 //        if (l == 2) {
 //          std::cout << "Round " << i++ << std::endl;
 //          Vector<T> w0 = w_matrix_.col(0);
@@ -429,6 +425,9 @@ class KDAC : public ACL<T> {
         //XILI
         // Line search a good alpha and update w_l
         LineSearch(grad_f, grad_f_vertical, &w_l);
+        // XILI
+        return;
+        // XILI
 //        w_l = std::sqrt(1.0 - alpha_ * alpha_) * w_l + alpha_ * grad_f_vertical;
         w_matrix_.col(l) = w_l;
         w_l_converged =
@@ -489,6 +488,9 @@ class KDAC : public ACL<T> {
         // We first generate phi(alpha), and make it become the previous
         // objective: phi(0)
         phi_of_zero_ = GenPhiOfAlpha(*w_l);
+        // XILI
+        return;
+        // XILI
       } else {
         // When we have already generated phi(alpha),
         // we directly make phi(0) equal to the phi(alpha) from last iteration
@@ -519,7 +521,23 @@ class KDAC : public ACL<T> {
     }
   }
 
-
+  T GenPhiOfAlpha(const Vector<T> &w_l) {
+    // kij_matrix corresponds to the kernel term exp(waw/-2sigma^2)
+    profiler_["gen_phi(alpha)"].Start();
+    GenKij(w_l);
+    //XILI
+    util::Print(kij_matrix_.block(0,0,10,10), "kij_matrix");
+    return 0.0;
+    //XILI
+    // this is the new g_of_w, it is multiplied with the new kij matrix
+    // this new g_of_w becomes final g_of_w when w_l is converged
+    new_g_of_w_ = g_of_w_.cwiseProduct(kij_matrix_);
+    // g_of_w_(i,j) is the exp(-waw/2sigma^2) for all previously genreated
+    // w columns (see equation 12)
+    T result = gamma_matrix_.cwiseProduct(new_g_of_w_).sum();
+    profiler_["gen_phi(alpha)"].Record();
+    return result;
+  }
 
   void CheckFiniteOptimizeW() {
     util::CheckFinite(didj_matrix_, "didj");
@@ -527,7 +545,7 @@ class KDAC : public ACL<T> {
     util::CheckFinite(w_matrix_, "W");
   }
 
-  virtual T GenPhiOfAlpha(const Vector<T> &w_l) = 0;
+  virtual void GenKij(const Vector<T> &w_l) = 0;
   virtual Vector <T> GenWGradient(const Vector <T> &w_l) = 0;
 
 };

@@ -57,6 +57,7 @@ class KDACGPU: public KDAC<T> {
   using KDAC<T>::phi_of_zero_;
   using KDAC<T>::phi_of_zero_prime_;
   using KDAC<T>::constant_;
+  using KDAC<T>::kij_matrix_;
 
   /// This is the default constructor for KDACGPU
   /// Number of clusters c and reduced dimension q will be both set to 2
@@ -86,7 +87,7 @@ class KDACGPU: public KDAC<T> {
   KDACGPU(const KDACGPU &rhs) {}
 
   Vector<T> GenWGradient(const Vector<T> &w_l);
-  T GenPhiOfAlpha(const Vector<T> &w_l);
+  void GenKij(const Vector<T> &w_l);
 
 
   void GenPhiCoeff(const Vector<T> &w_l, const Vector<T> &gradient);
@@ -98,9 +99,12 @@ class KDACGPU: public KDAC<T> {
  private:
   T* x_matrix_d_; // Input matrix X (n by d) on device
   T* k_matrix_d_; // Kernel matrix K (n by n) on device
-  T* k_ij_matrix_d_; // Kernel matrix kij for X's projection on one column w_l
+  T* kij_matrix_d_; // Kernel matrix kij for X's projection on one column w_l
   T *g_of_w_d_;  // Temporarily store kernel matrix for converged w_ls
+  // Stores the result of current g_of_w cwiseProduct current Kij
+  // when the current Kij is finalized, new_g_of_w becomes the kernel matrix
   T* gamma_matrix_d_;
+
   // Device memory for each column (1 x d) in W,
   T* w_l_d_;
   // Device memory for gradient (1 x d) for each column in W
@@ -143,7 +147,6 @@ class KDACGPU: public KDAC<T> {
     gpu_util_->SetupMem(&x_matrix_d_, &(x_matrix_(0)), n_ * d_);
     gpu_util_->SetupMem(&g_of_w_d_, &(g_of_w_(0)), n_ * n_);
     gpu_util_->SetupMem(&k_matrix_d_, nullptr, n_ * n_, false);
-    gpu_util_->SetupMem(&k_ij_matrix_d_, nullptr, n_ * n_, false);
   }
 
   void InitW() {
@@ -152,7 +155,7 @@ class KDACGPU: public KDAC<T> {
     gpu_util_->SetupMem(&w_l_d_, nullptr, d_, false);
     gpu_util_->SetupMem(&grad_f_arr_d_, nullptr, n_ * n_ * d_, false);
     grad_f_arr_h_ = new T[n_ * n_ * d_];
-
+    gpu_util_->SetupMem(&kij_matrix_d_, nullptr, n_ * n_, false);
   }
 
 //  void InitYW() {

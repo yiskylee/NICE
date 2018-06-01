@@ -171,18 +171,21 @@ class GpuUtil {
       cudaMemcpyHostToDevice));
   }
 
-  Matrix<T> DevBufferToEigen(T *dev, int row, int col) {
+  void DevBufferToEigen(Matrix<T> &matrix, T *dev) {
+    int row = matrix.rows();
+    int col = matrix.cols();
     T *host = new T[row * col];
     CUDA_CALL(cudaMemcpy(host, dev, row * col * sizeof(T),
               cudaMemcpyDeviceToHost));
-    return Eigen::Map<Matrix<T>>(host, row, col);
+    matrix = Eigen::Map<Matrix<T>>(host, row, col);
   }
 
-  Vector<T> DevBufferToEigen(T *dev, int n) {
+  void DevBufferToEigen(Vector<T> &vector, T *dev) {
+    int n = vector.rows();
     T *host = new T[n];
     CUDA_CALL(cudaMemcpy(host, dev, n * sizeof(T),
                          cudaMemcpyDeviceToHost));
-    return Eigen::Map<Vector<T>>(host, n);
+    vector = Eigen::Map<Vector<T>>(host, n);
   }
 
 

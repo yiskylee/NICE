@@ -388,6 +388,35 @@ __global__ void GenWGradientKernel(const T *x_matrix_d,
 }
 
 template<typename T>
+__global__ void GenKijKernel(const T *x_matrix_d,
+                       const T *w_l_d,
+                       const float sigma,
+                       const int n,
+                       const int d,
+                       T *kij_matrix_d) {
+  T *delta_ij_s = SharedMemory<T>();
+  T *delta_w_s = SharedMemory<T>() + d;
+  int i = blockIdx.y;
+  int j = blockIdx.x;
+  int tx = threadIdx.x;
+  int block_size = blockDim.x;
+
+  for (int k = tx; k < d; k += block_size) {
+    delta_ij_s[k] = x_matrix_d[IDXC(i, k, n)] - x_matrix_d[IDXC(j, k, n)];
+    // Dot product for delta' * w
+    delta_w_s[k] = delta_ij_s[k] * w_l_d[k];
+  }
+  __syncthreads();
+
+  T projection = reduce_sum(delta_w_s, d);
+  T denom = -1.f / (2 * sigma * sigma);
+  int index_ij = IDXC(i, j, n);
+
+  if (tx == 0)
+    kij_matrix_d[index_ij] = expf(denom * projection * projection);
+}
+
+template<typename T>
 void KDACGPU<T>::GenPhiCoeff(const Vector <T> &w_l,
                              const Vector <T> &gradient) {
   // Three terms used to calculate phi of alpha
@@ -596,12 +625,28 @@ template
 void KDACGPU<double>::UpdateGOfW(const Vector<double> &w_l);
 
 template<typename T>
-T KDACGPU<T>::GenPhiOfAlpha(const Vector<T> &w_l) {
+void KDACGPU<T>::GenKij(const Vector<T> &w_l) {
   profiler_["gen_phi(alpha)"].Start();
+  if (kernel_type_ == kGaussianKernel) {
+    gpu_util_->EigenToDevBuffer(w_l_d_, w_l);
+    unsigned int block_size = (d_ < block_limit_ * 2) ?
+                              nextPow2(d_+1/2) : block_limit_;
+    int shared_mem_size = 2 * d_ * sizeof(T);
+    dim3 dim_block(block_size, 1);
+    dim3 dim_grid(n_, n_);
+    GenKijKernel<<<dim_grid, dim_block, shared_mem_size>>>(
+        x_matrix_d_,
+        w_l_d_,
+        constant_,
+        n_,
+        d_,
+        kij_matrix_d_);
+
+    gpu_util_->DevBufferToEigen(kij_matrix_, kij_matrix_d_);
+  }
   profiler_["gen_phi(alpha)"].Record();
-  return 1.0;
 }
-template float KDACGPU<float>::GenPhiOfAlpha(const Vector<float> &w_l);
-template double KDACGPU<double>::GenPhiOfAlpha(const Vector<double> &w_l);
+template void KDACGPU<float>::GenKij(const Vector<float> &w_l);
+template void KDACGPU<double>::GenKij(const Vector<double> &w_l);
 
 }  // Namespace NICE
