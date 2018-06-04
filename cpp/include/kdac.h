@@ -116,6 +116,7 @@ class KDAC : public ACL<T> {
     method_ = "KDAC";
     profiler_["gen_grad"].SetName("gen_grad");
     profiler_["gen_phi(alpha)"].SetName("gen_phi(alpha)");
+    profiler_["line_search"].SetName("line_search");
   }
 
   ~KDAC() {}
@@ -188,14 +189,6 @@ class KDAC : public ACL<T> {
     while (!u_w_converge_ && !max_time_exceeded_) {
       pre_u_matrix_ = u_matrix_;
       pre_w_matrix_ = w_matrix_;
-
-//      Matrix<T> projected_matrix = x_matrix_ * w_matrix_;
-//      GenKernelMatrix(projected_matrix);
-//
-//      // XILI
-//      Matrix<T> diff = (k_matrix_ - g_of_w_);
-//      util::Print(diff.norm(), "diff");
-//      // XILI
 
       GenDegreeMatrix();
       PROFILE(OptimizeU(), profiler_["u"]);
@@ -420,7 +413,9 @@ class KDAC : public ACL<T> {
 //          util::Print(grad_f_vertical, "grad_f_vertical");
 //        }
         // Line search a good alpha and update w_l
+        profiler_["line_search"].Start();
         LineSearch(grad_f, grad_f_vertical, &w_l);
+        profiler_["line_search"].Record();
         w_matrix_.col(l) = w_l;
         w_l_converged =
             util::CheckConverged(phi_of_alpha_, phi_of_zero_, threshold2_);
@@ -460,7 +455,7 @@ class KDAC : public ACL<T> {
     g_of_w_ = Matrix<T>::Constant(n_, n_, 1);
     profiler_["gen_grad"].SumRecords();
     profiler_["gen_phi(alpha)"].SumRecords();
-
+    profiler_["line_search"].SumRecords();
     if (verbose_)
       std::cout << "W Optimized\n";
   }

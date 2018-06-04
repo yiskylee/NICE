@@ -100,16 +100,35 @@ class KDACTest : public ::testing::Test {
   void Output() {
     if (device_type_ != "both") {
       Nice::ACLProfiler profiler = kdac_->GetProfiler();
-      std::cout << "GenPhi: "
-                << profiler["gen_phi"].GetTotalTime() << std::endl;
+      std::cout << "GenPhi(alpha): "
+                << profiler["gen_phi(alpha)"].GetTotalTime() << std::endl;
       std::cout << "GenGradient: "
                 << profiler["gen_grad"].GetTotalTime() << std::endl;
-      std::cout << "Update g(w): "
-                << profiler["update_g_of_w"].GetTotalTime() << std::endl;
       std::cout << "Fit: "
                 << profiler["fit"].GetTotalTime() << std::endl;
     } else {
-      std::cout << "Output for both cpu and gpu has not been implemented\n";
+      Nice::ACLProfiler profiler_cpu = kdac_cpu_->GetProfiler();
+      std::cout << "\n CPU: \n";
+      std::cout << "GenPhi(alpha): "
+                << profiler_cpu["gen_phi(alpha)"].GetTotalTime() << std::endl;
+      std::cout << "GenGradient: "
+                << profiler_cpu["gen_grad"].GetTotalTime() << std::endl;
+      std::cout << "LineSearch: "
+                << profiler_cpu["line_search"].GetTotalTime() << std::endl;
+      std::cout << "Fit: "
+                << profiler_cpu["fit"].GetTotalTime() << std::endl;
+
+
+      Nice::ACLProfiler profiler_gpu = kdac_gpu_->GetProfiler();
+      std::cout << "\n GPU: \n";
+      std::cout << "GenPhi(alpha): "
+                << profiler_gpu["gen_phi(alpha)"].GetTotalTime() << std::endl;
+      std::cout << "GenGradient: "
+                << profiler_gpu["gen_grad"].GetTotalTime() << std::endl;
+      std::cout << "LineSearch: "
+                << profiler_gpu["line_search"].GetTotalTime() << std::endl;
+      std::cout << "Fit: "
+                << profiler_gpu["fit"].GetTotalTime() << std::endl;
     }
   }
 
@@ -208,6 +227,18 @@ TYPED_TEST(KDACTest, BOTH_30_100_3) {
   this->kdac_cpu_->Fit(this->data_matrix_, this->existing_y_);
   std::cout << "\nGPU:\n";
   this->kdac_gpu_->Fit(this->data_matrix_, this->existing_y_);
+  this->Output();
+}
+
+TYPED_TEST(KDACTest, BOTH_300_100_3) {
+  this->SetupInputData(300, 100, 3, "both");
+  this->kdac_cpu_->SetVerbose(true);
+  this->kdac_gpu_->SetVerbose(true);
+  std::cout << "\nCPU:\n";
+  this->kdac_cpu_->Fit(this->data_matrix_, this->existing_y_);
+  std::cout << "\nGPU:\n";
+  this->kdac_gpu_->Fit(this->data_matrix_, this->existing_y_);
+  this->Output();
 }
 
 TYPED_TEST(KDACTest, CPU_120_100_3) {
