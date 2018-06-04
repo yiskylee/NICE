@@ -53,6 +53,9 @@ class KDACCPU: public KDAC<T> {
   using KDAC<T>::d_;
   using KDAC<T>::alpha_;
   using KDAC<T>::constant_;
+  using KDAC<T>::gamma_gw_matrix_;
+  using KDAC<T>::gamma_gw_matrix_generated_;
+  using KDAC<T>::wl_deltaxij_proj_matrix_;
 
   /// This is the default constructor for KDAC
   KDACCPU() = default;
@@ -78,6 +81,7 @@ class KDACCPU: public KDAC<T> {
         for (int j = 0; j < n_; j++) {
           Vector<T> delta_x_ij = x_matrix_.row(i) - x_matrix_.row(j);
           T projection = w_l.dot(delta_x_ij);
+          wl_deltaxij_proj_matrix_(i, j) = projection;
           kij_matrix_(i, j) = std::exp(denom * projection * projection);
         }
       }
@@ -89,6 +93,9 @@ class KDACCPU: public KDAC<T> {
     Vector<T> w_gradient = Vector<T>::Zero(d_);
 //    Matrix<T> kij_matrix = GenKij(w_l);
     if (kernel_type_ == kGaussianKernel) {
+      profiler_["gen_grad_all"].Start();
+      if (gamma_gw_matrix_generated_)
+        profiler_["gen_grad"].Start();
       T denom = -1.f / (2 * constant_ * constant_);
       for (int i = 0; i < n_; i++) {
         for (int j = 0; j < n_; j++) {
@@ -99,7 +106,7 @@ class KDACCPU: public KDAC<T> {
           T scalar_term = -gamma_matrix_(i, j) * g_of_w_(i, j) *
               kij / (constant_ * constant_);
           // wl.dot(delta_x_ij)delta_x_ij is the Aijw term in equation 13
-          w_gradient += scalar_term * w_l.dot(delta_x_ij) * delta_x_ij;
+          w_gradient += scalar_term * projection * delta_x_ij;
           // XILI
           if (output) {
             if (i < 5 && j < 5) {
@@ -122,7 +129,31 @@ class KDACCPU: public KDAC<T> {
           // XILI
         }
       }
+      if (gamma_gw_matrix_generated_)
+        profiler_["gen_grad"].Record();
+
+      if (gamma_gw_matrix_generated_) {
+        profiler_["gen_grad2"].Start();
+        Vector<T> w_gradient2 = Vector<T>::Zero(d_);
+        for (int i = 0; i < n_; i++) {
+          for (int j = 0; j < n_; j++) {
+            Vector<T> delta_x_ij = x_matrix_.row(i) - x_matrix_.row(j);
+            w_gradient2 += gamma_gw_matrix_(i, j) * wl_deltaxij_proj_matrix_(i, j) * delta_x_ij;
+          }
+        }
+        w_gradient2 /= -(constant_ * constant_);
+        profiler_["gen_grad2"].Record();
+        T diff = (w_gradient - w_gradient2).norm();
+        if (std::abs(diff) > 1e-3) {
+          std::cout << "W Gradient is incorrect\n";
+          util::Print(w_gradient, "original gradient");
+          util::Print(w_gradient2, "new gradient");
+          exit(1);
+        }
+      }
+      profiler_["gen_grad_all"].Record();
     }
+
     return w_gradient;
   }
 

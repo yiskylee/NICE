@@ -102,8 +102,14 @@ class KDACTest : public ::testing::Test {
       Nice::ACLProfiler profiler = kdac_->GetProfiler();
       std::cout << "GenPhi(alpha): "
                 << profiler["gen_phi(alpha)"].GetTotalTime() << std::endl;
+      std::cout << "GenGradientTotal: "
+                << profiler["gen_grad_all"].GetTotalTime() << std::endl;
       std::cout << "GenGradient: "
                 << profiler["gen_grad"].GetTotalTime() << std::endl;
+      std::cout << "GenGradientVert: "
+                << profiler["gen_grad_vert"].GetTotalTime() << std::endl;
+      std::cout << "GenGradientNew: "
+                << profiler["gen_grad2"].GetTotalTime() << std::endl;
       std::cout << "Fit: "
                 << profiler["fit"].GetTotalTime() << std::endl;
     } else {
@@ -229,6 +235,14 @@ TYPED_TEST(KDACTest, BOTH_30_100_3) {
   this->kdac_gpu_->Fit(this->data_matrix_, this->existing_y_);
   this->Output();
 }
+
+TYPED_TEST(KDACTest, CPU_300_100_3) {
+  this->SetupInputData(300, 100, 3, "cpu");
+  this->kdac_->SetVerbose(true);
+  this->kdac_->Fit(this->data_matrix_, this->existing_y_);
+  this->Output();
+}
+
 
 TYPED_TEST(KDACTest, BOTH_300_100_3) {
   this->SetupInputData(300, 100, 3, "both");
