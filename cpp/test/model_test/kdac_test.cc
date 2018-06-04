@@ -230,6 +230,17 @@ TYPED_TEST(KDACTest, BOTH_30_100_3) {
   this->Output();
 }
 
+TYPED_TEST(KDACTest, BOTH_120_100_3) {
+  this->SetupInputData(120, 100, 3, "both");
+  this->kdac_cpu_->SetVerbose(true);
+  this->kdac_gpu_->SetVerbose(true);
+  std::cout << "\nCPU:\n";
+  this->kdac_cpu_->Fit(this->data_matrix_, this->existing_y_);
+  std::cout << "\nGPU:\n";
+  this->kdac_gpu_->Fit(this->data_matrix_, this->existing_y_);
+  this->Output();
+}
+
 TYPED_TEST(KDACTest, CPU_300_100_3) {
   this->SetupInputData(300, 100, 3, "cpu");
   this->kdac_->SetVerbose(true);
