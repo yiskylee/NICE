@@ -275,6 +275,7 @@ class KDAC : public ACL<T> {
   T phi_of_alpha_, phi_of_zero_, phi_of_zero_prime_;
   Matrix<T> gamma_gw_matrix_;
   bool gamma_gw_matrix_generated_;
+  // n x n matrix storing w_l * delta_x_ij
   Matrix<T> wl_deltaxij_proj_matrix_;
 
   virtual void InitX(const Matrix <T> &input_matrix) {
@@ -393,6 +394,7 @@ class KDAC : public ACL<T> {
         // Calculate the w gradient in equation 13, then find the gradient
         // that is vertical to the space spanned by w_0 to w_l
         // XILI
+        profiler_["gen_grad"].Start();
         Vector <T> grad_f = GenWGradient(w_l);
 //        if (l == 2)
 //          grad_f = GenWGradient(w_l, true);
@@ -401,10 +403,9 @@ class KDAC : public ACL<T> {
 //        util::Print(leftCols, "leftCols");
 //        util::Print(grad_f, "grad_f");
 //        // XILI
-        profiler_["gen_grad_vert"].Start();
         Vector <T> grad_f_vertical =
             GenOrthonormal(w_matrix_.leftCols(l + 1), grad_f);
-        profiler_["gen_grad_vert"].Record();
+        profiler_["gen_grad"].Record();
 
 //        if (l == 2) {
 //          std::cout << "Round " << i++ << std::endl;
@@ -463,9 +464,6 @@ class KDAC : public ACL<T> {
     k_matrix_ = g_of_w_;
     g_of_w_ = Matrix<T>::Constant(n_, n_, 1);
     profiler_["gen_grad"].SumRecords();
-    profiler_["gen_grad2"].SumRecords();
-    profiler_["gen_grad_all"].SumRecords();
-    profiler_["gen_grad_vert"].SumRecords();
     profiler_["gen_phi(alpha)"].SumRecords();
     profiler_["line_search"].SumRecords();
     if (verbose_)

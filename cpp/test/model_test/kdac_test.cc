@@ -100,18 +100,12 @@ class KDACTest : public ::testing::Test {
   void Output() {
     if (device_type_ != "both") {
       Nice::ACLProfiler profiler = kdac_->GetProfiler();
-      std::cout << "GenPhi(alpha): "
-                << profiler["gen_phi(alpha)"].GetTotalTime() << std::endl;
-      std::cout << "GenGradientTotal: "
-                << profiler["gen_grad_all"].GetTotalTime() << std::endl;
-      std::cout << "GenGradient: "
-                << profiler["gen_grad"].GetTotalTime() << std::endl;
-      std::cout << "GenGradientVert: "
-                << profiler["gen_grad_vert"].GetTotalTime() << std::endl;
-      std::cout << "GenGradientNew: "
-                << profiler["gen_grad2"].GetTotalTime() << std::endl;
-      std::cout << "Fit: "
-                << profiler["fit"].GetTotalTime() << std::endl;
+      double gen_phi = profiler["gen_phi(alpha)"].GetTotalTime();
+      double gen_grad = profiler["gen_grad"].GetTotalTime();
+      std::cout << "GenPhi(alpha): " << gen_phi << std::endl;
+      std::cout << "GenGradient: " << gen_grad << std::endl;
+      std::cout << "Ratio: " << gen_grad / gen_phi * 100 << "%" << std::endl;
+      std::cout << "Fit: " << profiler["fit"].GetTotalTime() << std::endl;
     } else {
       Nice::ACLProfiler profiler_cpu = kdac_cpu_->GetProfiler();
       std::cout << "\n CPU: \n";
