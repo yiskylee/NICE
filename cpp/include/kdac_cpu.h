@@ -39,23 +39,12 @@ namespace Nice {
 template<class T>
 class KDACCPU: public KDAC<T> {
  public:
-  using KDAC<T>::phi_of_alpha_;
-  using KDAC<T>::phi_of_zero_;
-  using KDAC<T>::phi_of_zero_prime_;
-  using KDAC<T>::gamma_matrix_;
-  using KDAC<T>::x_matrix_;
   using KDAC<T>::kernel_type_;
-  using KDAC<T>::g_of_w_;
-  using KDAC<T>::new_g_of_w_;
-  using KDAC<T>::kij_matrix_;
-  using KDAC<T>::profiler_;
-  using KDAC<T>::n_;
-  using KDAC<T>::d_;
-  using KDAC<T>::alpha_;
+  using KDAC<T>::x_matrix_;
   using KDAC<T>::constant_;
-  using KDAC<T>::gamma_gw_matrix_;
-  using KDAC<T>::gamma_gw_matrix_generated_;
+  using KDAC<T>::n_;
   using KDAC<T>::wl_deltaxij_proj_matrix_;
+  using KDAC<T>::kij_matrix_;
 
   /// This is the default constructor for KDAC
   KDACCPU() = default;
@@ -88,59 +77,7 @@ class KDACCPU: public KDAC<T> {
     }
   }
 
-  Vector<T> GenWGradient(const Vector<T> &w_l) {
-    bool output = false;
-    Vector<T> w_gradient = Vector<T>::Zero(d_);
-//    Matrix<T> kij_matrix = GenKij(w_l);
-    if (kernel_type_ == kGaussianKernel) {
-      T denom = -1.f / (2 * constant_ * constant_);
-      if (gamma_gw_matrix_generated_) {
-        for (int i = 0; i < n_; i++) {
-          for (int j = 0; j < n_; j++) {
-            Vector<T> delta_x_ij = x_matrix_.row(i) - x_matrix_.row(j);
-            w_gradient +=
-                gamma_gw_matrix_(i, j) * wl_deltaxij_proj_matrix_(i, j)
-                    * delta_x_ij;
-          }
-        }
-        w_gradient /= -(constant_ * constant_);
-      } else {
-        for (int i = 0; i < n_; i++) {
-          for (int j = 0; j < n_; j++) {
-            // scalar_term is -gamma_ij * 1/sigma^2 * g(w) * exp(-waw/2sigma^2)
-            Vector<T> delta_x_ij = x_matrix_.row(i) - x_matrix_.row(j);
-            T projection = w_l.dot(delta_x_ij);
-            T kij = std::exp(denom * projection * projection);
-            T scalar_term = -gamma_matrix_(i, j) * g_of_w_(i, j) *
-                kij / (constant_ * constant_);
-            // wl.dot(delta_x_ij)delta_x_ij is the Aijw term in equation 13
-            w_gradient += scalar_term * projection * delta_x_ij;
-            // XILI
-            if (output) {
-              if (i < 5 && j < 5) {
-                T temp = w_l.dot(delta_x_ij);
-//            std::cout << "(" << i << ", " << j << "): \n";
-//            util::Print(w_l, "w_l");
-//            util::Print(delta_x_ij, "delta_x_ij");
-                std::cout << "(" << i << ", " << j << "): "
-                          << "gamma: " << gamma_matrix_(i, j)
-                          << ", g_of_w: " << g_of_w_(i, j)
-                          << ", kij: " << kij
-                          << ", projection: " << projection
-                          << ", scalar: " << scalar_term
-                          << ", w*delta: " << temp << std::endl;
-                if (i == 0 && j == 1)
-                  util::Print(delta_x_ij, "delta01");
-//              }
-                // XILI
-              }
-            }
-          }
-        }
-      }
-    }
-    return w_gradient;
-  }
+
 };
 }  // namespace NICE
 

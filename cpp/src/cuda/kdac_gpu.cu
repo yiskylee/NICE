@@ -122,46 +122,6 @@ __device__ T reduce_sum(T *data_s, int n) {
 }
 
 
-template<typename T>
-__global__ void GenWGradientKernel(const T *x_matrix_d,
-                                   const T *g_of_w_d,
-                                   const T *w_l_d,
-                                   const T *gamma_matrix_d,
-                                   const float constant,
-                                   const int n,
-                                   const int d,
-                                   T *gradient_fs_d) {
-
-  T *delta_ij_s = SharedMemory<T>();
-  T *delta_w_s = SharedMemory<T>() + d;
-  int i = blockIdx.y;
-  int j = blockIdx.x;
-  int tx = threadIdx.x;
-  int block_size = blockDim.x;
-
-
-  for (int k = tx; k < d; k += block_size) {
-    delta_ij_s[k] = x_matrix_d[IDXC(i, k, n)] - x_matrix_d[IDXC(j, k, n)];
-    // Dot product for delta' * w
-    delta_w_s[k] = delta_ij_s[k] * w_l_d[k];
-  }
-  __syncthreads();
-
-  T delta_w = reduce_sum(delta_w_s, d);
-  T waw = delta_w * delta_w;
-
-  T sigma_sq = constant * constant;
-
-  int index_ij = IDXC(i, j, n);
-  T gamma_ij = gamma_matrix_d[index_ij];
-  T g_of_w_ij = g_of_w_d[index_ij];
-  T exp_term = expf(-waw / (2 * sigma_sq));
-  T coeff = -gamma_ij * g_of_w_ij * exp_term / sigma_sq;
-  T *gradient_f_ij = gradient_fs_d + IDXR(i, j, n) * d;
-  // delta * delta_w == Aij * w
-  for (int k = tx; k < d; k += block_size)
-    gradient_f_ij[k] = coeff * delta_ij_s[k] * delta_w;
-}
 
 template<typename T>
 __global__ void GenKijKernel(const T *x_matrix_d,
@@ -169,7 +129,8 @@ __global__ void GenKijKernel(const T *x_matrix_d,
                        const float sigma,
                        const int n,
                        const int d,
-                       T *kij_matrix_d) {
+                       T *kij_matrix_d,
+                       T *projection_matrix_d) {
   T *delta_ij_s = SharedMemory<T>();
   T *delta_w_s = SharedMemory<T>() + d;
   int i = blockIdx.y;
@@ -188,86 +149,131 @@ __global__ void GenKijKernel(const T *x_matrix_d,
   T denom = -1.f / (2 * sigma * sigma);
   int index_ij = IDXC(i, j, n);
 
-  if (tx == 0)
+  if (tx == 0) {
     kij_matrix_d[index_ij] = expf(denom * projection * projection);
-}
-
-
-template<typename T>
-Vector<T> KDACGPU<T>::GenWGradient(const Vector <T> &w_l) {
-  Vector<T> w_gradient = Vector<T>::Zero(d_);
-  if (kernel_type_ == kGaussianKernel) {
-    gpu_util_->EigenToDevBuffer(w_l_d_, w_l);
-    gpu_util_->EigenToDevBuffer(g_of_w_d_, g_of_w_);
-
-//    CUDA_CALL(cudaMemcpy(w_l_d_, &w_l(0), d_ * sizeof(T),
-//                         cudaMemcpyHostToDevice));
-    // When block_limit is 512
-    // If d is 128, block_size is 64
-    // If d is 6, block_size is 4
-    // If d is 1025, block_size is 512
-    unsigned int block_size = (d_ < block_limit_ * 2) ?
-                              nextPow2((d_+1)/2) : block_limit_;
-
-    int shared_mem_size = 2 * d_ * sizeof(T);
-
-    dim3 dim_block(block_size, 1);
-    dim3 dim_grid(n_, n_);
-    GenWGradientKernel
-        << < dim_grid, dim_block, shared_mem_size >> >
-        (x_matrix_d_,
-            g_of_w_d_,
-            w_l_d_,
-            gamma_matrix_d_,
-            constant_,
-            n_,
-            d_,
-            grad_f_arr_d_);
-    CUDA_CALL(cudaGetLastError());
-    CUDA_CALL(cudaMemcpy(grad_f_arr_h_, grad_f_arr_d_,
-                         n_ * n_ * d_ * sizeof(T),
-                         cudaMemcpyDeviceToHost));
-
-
-    for (int i = 0; i < n_; i++) {
-      for (int j = 0; j < n_; j++) {
-        T *grad_f_ij = grad_f_arr_h_ + IDXR(i, j, n_) * d_;
-        Vector<T> grad_temp = Eigen::Map < Vector < T >> (grad_f_ij, d_);
-        util::CheckFinite(grad_temp, "grad_temp_"+std::to_string(i));
-        w_gradient = w_gradient + grad_temp;
-      }
-    }
+    projection_matrix_d[index_ij] = projection;
   }
-  util::CheckFinite(w_gradient, "w_gradient");
-  return w_gradient;
 }
-
-template
-Vector<float> KDACGPU<float>::GenWGradient(const Vector<float> &w_l);
-template
-Vector<double> KDACGPU<double>::GenWGradient(const Vector<double> &w_l);
 
 template<typename T>
 void KDACGPU<T>::GenKij(const Vector<T> &w_l) {
   if (kernel_type_ == kGaussianKernel) {
     gpu_util_->EigenToDevBuffer(w_l_d_, w_l);
     unsigned int block_size = (d_ < block_limit_ * 2) ?
-                              nextPow2(d_+1/2) : block_limit_;
+                              nextPow2((d_+1)/2) : block_limit_;
     int shared_mem_size = 2 * d_ * sizeof(T);
     dim3 dim_block(block_size, 1);
     dim3 dim_grid(n_, n_);
     GenKijKernel<<<dim_grid, dim_block, shared_mem_size>>>(
         x_matrix_d_,
-        w_l_d_,
-        constant_,
-        n_,
-        d_,
-        kij_matrix_d_);
+            w_l_d_,
+            constant_,
+            n_,
+            d_,
+            kij_matrix_d_,
+            wl_deltaxij_proj_matrix_d_);
 
     gpu_util_->DevBufferToEigen(kij_matrix_, kij_matrix_d_);
+    gpu_util_->DevBufferToEigen(wl_deltaxij_proj_matrix_, wl_deltaxij_proj_matrix_d_);
   }
 }
 template void KDACGPU<float>::GenKij(const Vector<float> &w_l);
 template void KDACGPU<double>::GenKij(const Vector<double> &w_l);
+
+//template<typename T>
+//__global__ void GenWGradientKernel(const T *x_matrix_d,
+//                                   const T *g_of_w_d,
+//                                   const T *w_l_d,
+//                                   const T *gamma_matrix_d,
+//                                   const float constant,
+//                                   const int n,
+//                                   const int d,
+//                                   T *gradient_fs_d) {
+//
+//  T *delta_ij_s = SharedMemory<T>();
+//  T *delta_w_s = SharedMemory<T>() + d;
+//  int i = blockIdx.y;
+//  int j = blockIdx.x;
+//  int tx = threadIdx.x;
+//  int block_size = blockDim.x;
+//
+//
+//  for (int k = tx; k < d; k += block_size) {
+//    delta_ij_s[k] = x_matrix_d[IDXC(i, k, n)] - x_matrix_d[IDXC(j, k, n)];
+//    // Dot product for delta' * w
+//    delta_w_s[k] = delta_ij_s[k] * w_l_d[k];
+//  }
+//  __syncthreads();
+//
+//  T delta_w = reduce_sum(delta_w_s, d);
+//  T waw = delta_w * delta_w;
+//
+//  T sigma_sq = constant * constant;
+//
+//  int index_ij = IDXC(i, j, n);
+//  T gamma_ij = gamma_matrix_d[index_ij];
+//  T g_of_w_ij = g_of_w_d[index_ij];
+//  T exp_term = expf(-waw / (2 * sigma_sq));
+//  T coeff = -gamma_ij * g_of_w_ij * exp_term / sigma_sq;
+//  T *gradient_f_ij = gradient_fs_d + IDXR(i, j, n) * d;
+//  // delta * delta_w == Aij * w
+//  for (int k = tx; k < d; k += block_size)
+//    gradient_f_ij[k] = coeff * delta_ij_s[k] * delta_w;
+//}
+
+
+//template<typename T>
+//Vector<T> KDACGPU<T>::GenWGradient(const Vector <T> &w_l) {
+//  Vector<T> w_gradient = Vector<T>::Zero(d_);
+//  if (kernel_type_ == kGaussianKernel) {
+//    gpu_util_->EigenToDevBuffer(w_l_d_, w_l);
+//    gpu_util_->EigenToDevBuffer(g_of_w_d_, g_of_w_);
+//
+////    CUDA_CALL(cudaMemcpy(w_l_d_, &w_l(0), d_ * sizeof(T),
+////                         cudaMemcpyHostToDevice));
+//    // When block_limit is 512
+//    // If d is 128, block_size is 64
+//    // If d is 6, block_size is 4
+//    // If d is 1025, block_size is 512
+//    unsigned int block_size = (d_ < block_limit_ * 2) ?
+//                              nextPow2((d_+1)/2) : block_limit_;
+//
+//    int shared_mem_size = 2 * d_ * sizeof(T);
+//
+//    dim3 dim_block(block_size, 1);
+//    dim3 dim_grid(n_, n_);
+//    GenWGradientKernel
+//        << < dim_grid, dim_block, shared_mem_size >> >
+//        (x_matrix_d_,
+//            g_of_w_d_,
+//            w_l_d_,
+//            gamma_matrix_d_,
+//            constant_,
+//            n_,
+//            d_,
+//            grad_f_arr_d_);
+//    CUDA_CALL(cudaGetLastError());
+//    CUDA_CALL(cudaMemcpy(grad_f_arr_h_, grad_f_arr_d_,
+//                         n_ * n_ * d_ * sizeof(T),
+//                         cudaMemcpyDeviceToHost));
+//
+//
+//    for (int i = 0; i < n_; i++) {
+//      for (int j = 0; j < n_; j++) {
+//        T *grad_f_ij = grad_f_arr_h_ + IDXR(i, j, n_) * d_;
+//        Vector<T> grad_temp = Eigen::Map < Vector < T >> (grad_f_ij, d_);
+//        util::CheckFinite(grad_temp, "grad_temp_"+std::to_string(i));
+//        w_gradient = w_gradient + grad_temp;
+//      }
+//    }
+//  }
+//  util::CheckFinite(w_gradient, "w_gradient");
+//  return w_gradient;
+//}
+//
+//template
+//Vector<float> KDACGPU<float>::GenWGradient(const Vector<float> &w_l);
+//template
+//Vector<double> KDACGPU<double>::GenWGradient(const Vector<double> &w_l);
 
 }  // Namespace NICE

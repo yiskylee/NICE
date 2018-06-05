@@ -58,6 +58,7 @@ class KDACGPU: public KDAC<T> {
   using KDAC<T>::phi_of_zero_prime_;
   using KDAC<T>::constant_;
   using KDAC<T>::kij_matrix_;
+  using KDAC<T>::wl_deltaxij_proj_matrix_;
 
   /// This is the default constructor for KDACGPU
   /// Number of clusters c and reduced dimension q will be both set to 2
@@ -73,10 +74,11 @@ class KDACGPU: public KDAC<T> {
     CUDA_CALL(cudaFree(grad_f_arr_d_));
     delete[] grad_f_arr_h_;
     CUDA_CALL(cudaFree(kij_matrix_d_));
+    CUDA_CALL(cudaFree(wl_deltaxij_proj_matrix_d_));
   }
   KDACGPU(const KDACGPU &rhs) {}
 
-  Vector<T> GenWGradient(const Vector<T> &w_l);
+//  Vector<T> GenWGradient(const Vector<T> &w_l);
   void GenKij(const Vector<T> &w_l);
 
  private:
@@ -88,6 +90,8 @@ class KDACGPU: public KDAC<T> {
   // Kernel matrix kij for X's projection on one column w_l
   // Temporarily store kernel matrix for converged w_ls
   T* kij_matrix_d_;
+  // Store the projection of w_l on delta_x_ij
+  T* wl_deltaxij_proj_matrix_d_;
   T* gamma_matrix_d_;
   // Device memory for each column (1 x d) in W,
   T* w_l_d_;
@@ -111,6 +115,7 @@ class KDACGPU: public KDAC<T> {
     gpu_util_->SetupMem(&grad_f_arr_d_, nullptr, n_ * n_ * d_, false);
     grad_f_arr_h_ = new T[n_ * n_ * d_];
     gpu_util_->SetupMem(&kij_matrix_d_, nullptr, n_ * n_, false);
+    gpu_util_->SetupMem(&wl_deltaxij_proj_matrix_d_, nullptr, n_ * n_, false);
   }
 
   void OptimizeW() {
