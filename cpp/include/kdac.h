@@ -466,6 +466,7 @@ class KDAC : public ACL<T> {
     profiler_["gen_grad"].SumRecords();
     profiler_["gen_phi(alpha)"].SumRecords();
     profiler_["line_search"].SumRecords();
+    profiler_["DeviceToHost"].SumRecords();
     if (verbose_)
       std::cout << "W Optimized\n";
   }

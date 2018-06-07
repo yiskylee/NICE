@@ -106,6 +106,10 @@ class KDACTest : public ::testing::Test {
       std::cout << "GenGradient: " << gen_grad << std::endl;
       std::cout << "Ratio: " << gen_grad / gen_phi * 100 << "%" << std::endl;
       std::cout << "Fit: " << profiler["fit"].GetTotalTime() << std::endl;
+      if (device_type_ == "gpu") {
+        std::cout << "DeviceToHost: "
+                  << profiler["DeviceToHost"].GetTotalTime() << std::endl;
+      }
     } else {
       Nice::ACLProfiler profiler_cpu = kdac_cpu_->GetProfiler();
       std::cout << "\n CPU: \n";
@@ -230,6 +234,13 @@ TYPED_TEST(KDACTest, BOTH_30_100_3) {
   this->Output();
 }
 
+TYPED_TEST(KDACTest, GPU_120_100_3) {
+  this->SetupInputData(120, 100, 3, "gpu");
+  this->kdac_->SetVerbose(true);
+  this->kdac_->Fit(this->data_matrix_, this->existing_y_);
+  this->Output();
+}
+
 TYPED_TEST(KDACTest, BOTH_120_100_3) {
   this->SetupInputData(120, 100, 3, "both");
   this->kdac_cpu_->SetVerbose(true);
@@ -248,6 +259,12 @@ TYPED_TEST(KDACTest, CPU_300_100_3) {
   this->Output();
 }
 
+TYPED_TEST(KDACTest, GPU_300_100_3) {
+  this->SetupInputData(300, 100, 3, "gpu");
+  this->kdac_->SetVerbose(true);
+  this->kdac_->Fit(this->data_matrix_, this->existing_y_);
+  this->Output();
+}
 
 TYPED_TEST(KDACTest, BOTH_300_100_3) {
   this->SetupInputData(300, 100, 3, "both");

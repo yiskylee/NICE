@@ -131,21 +131,22 @@ __global__ void GenKijKernel(const T *x_matrix_d,
                        const int d,
                        T *kij_matrix_d,
                        T *projection_matrix_d) {
-  T *delta_ij_s = SharedMemory<T>();
-  T *delta_w_s = SharedMemory<T>() + d;
+  T *delta_w_s = SharedMemory<T>();
   int i = blockIdx.y;
   int j = blockIdx.x;
   int tx = threadIdx.x;
   int block_size = blockDim.x;
 
+  T sum = 0;
   for (int k = tx; k < d; k += block_size) {
-    delta_ij_s[k] = x_matrix_d[IDXC(i, k, n)] - x_matrix_d[IDXC(j, k, n)];
+//    delta_ij_s[k] = x_matrix_d[IDXC(i, k, n)] - x_matrix_d[IDXC(j, k, n)];
     // Dot product for delta' * w
-    delta_w_s[k] = delta_ij_s[k] * w_l_d[k];
+     sum += (x_matrix_d[IDXC(i, k, n)] - x_matrix_d[IDXC(j, k, n)]) * w_l_d[k];
   }
+  delta_w_s[tx] = sum;
   __syncthreads();
 
-  T projection = reduce_sum(delta_w_s, d);
+  T projection = reduce_sum(delta_w_s, block_size);
   T denom = -1.f / (2 * sigma * sigma);
   int index_ij = IDXC(i, j, n);
 
@@ -161,7 +162,7 @@ void KDACGPU<T>::GenKij(const Vector<T> &w_l) {
     gpu_util_->EigenToDevBuffer(w_l_d_, w_l);
     unsigned int block_size = (d_ < block_limit_ * 2) ?
                               nextPow2((d_+1)/2) : block_limit_;
-    int shared_mem_size = 2 * d_ * sizeof(T);
+    int shared_mem_size = block_size * sizeof(T);
     dim3 dim_block(block_size, 1);
     dim3 dim_grid(n_, n_);
     GenKijKernel<<<dim_grid, dim_block, shared_mem_size>>>(
@@ -172,9 +173,11 @@ void KDACGPU<T>::GenKij(const Vector<T> &w_l) {
             d_,
             kij_matrix_d_,
             wl_deltaxij_proj_matrix_d_);
-
+    CUDA_CALL(cudaDeviceSynchronize());
+    profiler_["DeviceToHost"].Start();
     gpu_util_->DevBufferToEigen(kij_matrix_, kij_matrix_d_);
     gpu_util_->DevBufferToEigen(wl_deltaxij_proj_matrix_, wl_deltaxij_proj_matrix_d_);
+    profiler_["DeviceToHost"].Record();
   }
 }
 template void KDACGPU<float>::GenKij(const Vector<float> &w_l);
