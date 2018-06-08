@@ -86,7 +86,7 @@ class Timer {
     return GetTotalTime() / GetNumIters();
   }
 
-  Matrix<double> GetTimePerIter() {
+  Matrix<double> GetTimeInEachIter() {
     if (vec_.empty()) {
       throw "ERROR: Number of iterations equals to 0";
     }

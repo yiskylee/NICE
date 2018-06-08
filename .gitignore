@@ -4,6 +4,7 @@
 .settings
 Debug
 *.m
+*.pyc
 cpp/build/
 cpp/dlib/build/
 cpp/standalone_build

@@ -69,17 +69,19 @@ class ACL(object):
     self.acl.Predict(pred, self.n, 1)
     return pred.flatten()
 
-  def GenProfile(self, per_iter_list):
+  def GenProfile(self, each_iter_list=None):
     self.acl.GetProfiler(self.profiling)
-    self.GetTimePerIter(per_iter_list)
+    if each_iter_list is not None:
+      self.GetTimeInEachIter(each_iter_list)
+
     return self.profiling
 
-  def GetTimePerIter(self, per_iter_list):
+  def GetTimeInEachIter(self, each_iter_list):
     num_iters = self.profiling['num_iters']
-    time_per_iter = np.zeros(num_iters)
-    for name in per_iter_list:
-      self.acl.GetTimePerIter(time_per_iter, num_iters, name)
-      self.profiling[name+'_per_iter'] = np.array(time_per_iter.copy())
+    time_in_each_iter = np.zeros(num_iters)
+    for name in each_iter_list:
+      self.acl.GetTimeInEachIter(time_in_each_iter, num_iters, name)
+      self.profiling[name+'_time_in_each_iter'] = np.array(time_in_each_iter.copy())
 
   def OutputConfigs(self):
     self.acl.OutputConfigs()
