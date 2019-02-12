@@ -60,7 +60,7 @@ class ACL {
       verbose_(false),
       debug_(false),
       max_time_exceeded_(false),
-      max_time_(100),
+      max_time_(2000),
       method_(""),
       mode_(""),
       clustering_result_(),
@@ -313,7 +313,7 @@ class ACL {
   /// value
   void CheckMaxTime() {
     profiler_["exit_timer"].Stop();
-    // If the whole program runs for more than 20 hours, it returns
+    // If the whole program runs for more than 20 minutes, it returns
     if (profiler_["exit_timer"].vec_.back() / 1e3 > max_time_) {
       std::cout << "Exceeds maximum time limit: " << max_time_ << std::endl;
       max_time_exceeded_ = true;
@@ -385,7 +385,7 @@ class ACL {
   bool verbose_;
   bool debug_;
   bool max_time_exceeded_;
-  // Maximum time before exiting, 72000 seconds by default
+  // Maximum time before exiting, 1200 seconds by default
   int max_time_;
   // Either KDAC or ISM
   std::string method_;

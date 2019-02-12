@@ -3,19 +3,18 @@ import numpy as np
 from sklearn.metrics.pairwise import pairwise_distances
 
 class ACL(object):
-  def __init__(self, type, method, device):
+  def __init__(self, data_type, method, device):
     self.device = device
     self.params = {'kernel': 'Gaussian', 'debug': 0.0,
-                   'lambda': 1.0, 'sigma': 0.5, 'verbose': 0.0, 'max_time': 100,
-                   'vectorization': 1.0}
+                   'lambda': 1.0, 'verbose': 0.0, 'vectorization': 1.0}
 
     # Call this so the mkl libarary is loaded before C++ is called
     pairwise_distances(np.zeros((4,4)), Y=None, metric='euclidean')
 
-    if type == 'float':
+    if data_type == 'float':
       self.data_type = np.float32
       self.acl = Nice4Py.ACL(method, device)
-    elif type == "double":
+    elif data_type == "double":
       self.data_type = np.float
       self.acl = Nice4Py.ACLDouble(method, device)
 

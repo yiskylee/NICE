@@ -141,6 +141,21 @@ class TestACL(unittest.TestCase):
     self.assertAlmostEqual(nmi1, 0.0)
     self.assertAlmostEqual(nmi2, 0.0)
 
+  def test_8_ISM(self):
+    data = self.load_data(n=40, d=2, c=2, name='gaussian', data_type='float')
+    acl = ACL('float', 'ISM', 'cpu')
+    acl.set_params(sigma=0.5, c=2, q=1, verbose=1, vectorization=1)
+    acl.Fit(data)
+    pred = acl.Predict()
+    acl.Fit()
+    pred_alt = acl.Predict()
+    ground_truth = np.concatenate((np.ones(20), np.zeros(20)))
+    self.plot_comparison(ground_truth, pred, 0, 1)
+    nmi1 = normalized_mutual_info_score(pred, pred_alt)
+    nmi2 = normalized_mutual_info_score(ground_truth, pred_alt)
+    self.assertAlmostEqual(nmi1, 0.0)
+    self.assertAlmostEqual(nmi2, 0.0)
+
   def test_9(self):
     data = self.load_data(n=400, d=4, c=2, name='gaussian', data_type='float')
     acl = ACL('float', 'KDAC', 'cpu')
@@ -268,21 +283,22 @@ class TestACL(unittest.TestCase):
     self.plot_comparison(label2, pred, 2, 3)
     print nmi
 
-  # def test_14(self):
-  #   data = self.load_data(n=1040, d=139, c=4, name='webkb', type='double')
-  #   label_univ = self.readLabel('univ')
-  #   label_topic = self.readLabel('topic')
-  #   y = self.labelToY(label_univ)
-  #   acl = ACL('double', 'cpu')
-  #   d_matrix = pairwise_distances(data, Y=None, metric='euclidean')
-  #   acl.set_params(q=4, c=4, sigma=np.median(d_matrix), Lambda=0.057)
-  #   acl.set_params(debug=0, verbose=1)
-  #   acl.Fit(data, y)
-  #   pred = acl.Predict()
-  #   against_alter = normalized_mutual_info_score(label_univ, pred)
-  #   against_truth = normalized_mutual_info_score(label_topic, pred)
-  #   print against_alter#0.00956
-  #   print against_truth#0.3675
+  def test_14(self):
+    data = self.load_data(n=1040, d=139, c=4, name='webkb', data_type='float')
+    label_univ = self.load_label('webkb', 1)
+    label_topic = self.load_label('webkb', 2)
+    y = self.label_to_y(label_univ)
+    np.savetxt('./y1_webkb_1040_139_4.csv', y, delimiter=',')
+    acl = ACL('double', 'ISM', 'cpu')
+    d_matrix = pairwise_distances(data, Y=None, metric='euclidean')
+    acl.set_params(q=4, c=4, sigma=np.median(d_matrix), Lambda=0.057)
+    acl.set_params(debug=0, verbose=1)
+    acl.Fit(data, y)
+    pred = acl.Predict()
+    against_alter = normalized_mutual_info_score(label_univ, pred)
+    against_truth = normalized_mutual_info_score(label_topic, pred)
+    print against_alter#0.00956
+    print against_truth#0.3675
   #
   # def test_14_kdac(self):
   #   data = self.load_data(n=1040, d=139, c=4, name='webkb', type='double')

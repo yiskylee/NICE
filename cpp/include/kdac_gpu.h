@@ -71,8 +71,6 @@ class KDACGPU: public KDAC<T> {
     CUDA_CALL(cudaFree(g_of_w_d_));
     CUDA_CALL(cudaFree(gamma_matrix_d_));
     CUDA_CALL(cudaFree(w_l_d_));
-    CUDA_CALL(cudaFree(grad_f_arr_d_));
-    delete[] grad_f_arr_h_;
     CUDA_CALL(cudaFree(kij_matrix_d_));
     CUDA_CALL(cudaFree(wl_deltaxij_proj_matrix_d_));
   }
@@ -95,9 +93,6 @@ class KDACGPU: public KDAC<T> {
   T* gamma_matrix_d_;
   // Device memory for each column (1 x d) in W,
   T* w_l_d_;
-  // Store all n * n gradient before summing them up to become the
-  // final gradient
-  T *grad_f_arr_d_, *grad_f_arr_h_;
   // GPUUtil object to setup memory etc.
   GpuUtil<T> *gpu_util_;
   unsigned int block_limit_;
@@ -112,8 +107,6 @@ class KDACGPU: public KDAC<T> {
     KDAC<T>::InitW();
     gpu_util_->SetupMem(&gamma_matrix_d_, nullptr, n_ * n_, false);
     gpu_util_->SetupMem(&w_l_d_, nullptr, d_, false);
-    gpu_util_->SetupMem(&grad_f_arr_d_, nullptr, n_ * n_ * d_, false);
-    grad_f_arr_h_ = new T[n_ * n_ * d_];
     gpu_util_->SetupMem(&kij_matrix_d_, nullptr, n_ * n_, false);
     gpu_util_->SetupMem(&wl_deltaxij_proj_matrix_d_, nullptr, n_ * n_, false);
   }

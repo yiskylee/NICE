@@ -502,8 +502,6 @@ class KDAC : public ACL<T> {
 
       while (phi_of_alpha_ <
           phi_of_zero_ + a1 * alpha_ * phi_of_zero_prime_) {
-        if (verbose_)
-          std::cout << "(" << phi_of_alpha_ << ", " << alpha_ << "), ";
         alpha_ *= rho;
         alpha_square = alpha_ * alpha_;
         sqrt_one_minus_alpha = std::sqrt(1-alpha_square);
