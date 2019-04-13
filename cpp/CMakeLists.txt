@@ -11,7 +11,7 @@ set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_MACOSX_RPATH 1)
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 if(CMAKE_COMPILER_IS_GNUCXX)
-  add_definitions(-Wall -ansi -Wno-deprecated -pthread -fPIC -std=c++11)
+  add_definitions(-Wall -ansi -Wno-deprecated -pthread -fPIC -std=c++11 -Wno-deprecated-declarations -Wno-cpp)
   #  add_definitions(-Wall -ansi -Wno-deprecated -std=c++11)
 endif()
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
@@ -70,7 +70,7 @@ if (enable-condamkl AND DEFINED ENV{MKLROOTCONDA})
   message(STATUS "CONDA MKL Found")
   message(STATUS $ENV{MKLROOTCONDA})
   add_definitions(-m64 -DEIGEN_USE_MKL_ALL -Wno-unused-local-typedefs)
-  include_directories($ENV{MKLROOT}/include)
+  include_directories($ENV{MKLINCLUDECONDA})
   find_library(MKL_LP64 mkl_intel_lp64 HINTS $ENV{MKLROOTCONDA})
   find_library(MKL_CORE mkl_core HINTS $ENV{MKLROOTCONDA})
   find_library(MKL_THREAD mkl_intel_thread HINTS $ENV{MKLROOTCONDA})
@@ -84,7 +84,7 @@ find_package(CUDA)
 
 # Detect GPU device
 if(CUDA_FOUND)
-  message("CUDA_FOUND")
+  message(STATUS "CUDA_FOUND: ${CUDA_TOOLKIT_INCLUDE} ${CUDA_CUDART_LIBRARY}")
   try_run(RUN_RESULT_VAR COMPILE_RESULT_VAR
     ${CMAKE_BINARY_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/tools/has_cuda_gpu.c
@@ -93,9 +93,6 @@ if(CUDA_FOUND)
       -DLINK_LIBRARIES:STRING=${CUDA_CUDART_LIBRARY}
     COMPILE_OUTPUT_VARIABLE COMPILE_OUTPUT_VAR
     RUN_OUTPUT_VARIABLE RUN_OUTPUT_VAR)
-
-  # Display number of GPUs found
-  message("${RUN_OUTPUT_VAR}")
 
   # COMPILE_RESULT_VAR is TRUE when compile succeeds
   # RUN_RESULT_VAR is zero when a GPU is found
@@ -111,12 +108,12 @@ endif()
 # Dirty hack to not compile CUDA code
 # set(CUDA_AND_GPU FALSE)
 # Set GPU True
-add_definitions(-DCUDA_AND_GPU)
+# add_definitions(-DCUDA_AND_GPU)
 # set(CUDA_AND_GPU TRUE)
 
 # Build NICE library with/without CUDA
 if (CUDA_AND_GPU)
-#   Print messge to indicate that CUDA exists
+  # Print messge to indicate that CUDA exists
   message(STATUS "GPU device exists")
   # Set source files
   file(GLOB_RECURSE SOURCES RELATIVE ${CMAKE_SOURCE_DIR} src/*.cc src/*.cu)
@@ -128,13 +125,14 @@ if (CUDA_AND_GPU)
   include(FindCUDA)
 
   # Set NVCC flags
-  set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -std=c++11 -O3
+  set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -std=c++11 -O3 
+          "--expt-relaxed-constexpr"
 #          -gencode arch=compute_20,code=sm_20
           -gencode arch=compute_30,code=sm_30
 #          -gencode arch=compute_35,code=sm_35
 #          -gencode arch=compute_37,code=sm_37
           -gencode arch=compute_50,code=sm_50
-          --relaxed-constexpr
+#          -Wno-cpp
 #          -gencode arch=compute_52,code=sm_52
           )
 
@@ -220,7 +218,6 @@ if (enable-test)
       ${GTEST_LIBS_DIR}/libgtest_main.a
       ${PROJECT_NAME}
       ${CMAKE_THREAD_LIBS_INIT})
-
   # Add test
   add_test(test1 ${PROJECT_TEST_NAME} "--gtest_color=yes")
 endif()
