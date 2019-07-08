@@ -5,6 +5,8 @@
 Debug
 *.m
 *.pyc
+*.ipynb_checkpoints/
+*.so
 cpp/build/
 cpp/dlib/build/
 cpp/standalone_build
@@ -17,5 +19,11 @@ data_for_test/
 cmake-build-debug
 *.out
 cpp/configure.sh
-cpp/configure.sh
-cpp/configure.sh
+cpp/build.sh
+tools/
+python/test_*/
+python/venv/
+python/project-nice
+python/debug/
+
+
