@@ -11,7 +11,8 @@ set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_MACOSX_RPATH 1)
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 if(CMAKE_COMPILER_IS_GNUCXX)
-  add_definitions(-Wall -ansi -Wno-deprecated -pthread -fPIC -std=c++11 -Wno-deprecated-declarations -Wno-cpp)
+  # -Wall removed
+  add_definitions(-ansi -Wno-deprecated -pthread -fPIC -std=c++11 -Wno-deprecated-declarations -Wno-cpp)
   #  add_definitions(-Wall -ansi -Wno-deprecated -std=c++11)
 endif()
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
@@ -24,12 +25,6 @@ endif()
 set(COMMON_INCLUDES ${PROJECT_SOURCE_DIR})
 include_directories(${EIGEN_INCLUDE_DIRS})
 include_directories(${COMMON_INCLUDES})
-
-# This is a Hack for Clion to know where eigen is
-include_directories(./build/eigen/src/eigen)
-include_directories(./)
-include_directories(./include)
-include_directories(./build/gtest/src/googletest/googletest/include)
 
 #get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
 #foreach(dir ${dirs})
@@ -128,11 +123,12 @@ if (CUDA_AND_GPU)
   set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -std=c++11 -O3 
           "--expt-relaxed-constexpr"
 #          -gencode arch=compute_20,code=sm_20
-          -gencode arch=compute_30,code=sm_30
+          # -gencode arch=compute_30,code=sm_30
 #          -gencode arch=compute_35,code=sm_35
 #          -gencode arch=compute_37,code=sm_37
-          -gencode arch=compute_50,code=sm_50
-#          -Wno-cpp
+          # -gencode arch=compute_50,code=sm_50
+          -gencode arch=compute_52,code=sm_52
+# This does not work (not an NVCC arg)          -Wno-cpp
 #          -gencode arch=compute_52,code=sm_52
           )
 
