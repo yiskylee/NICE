@@ -30,6 +30,8 @@
 #include "../../include/kdac_gpu.h"
 #include "../../include/kernel_types.h"
 
+#define FULL_MASK 0xffffffff
+
 namespace Nice {
 
 unsigned int nextPow2(unsigned int x) {
@@ -112,8 +114,8 @@ __device__ T reduce_sum(T *data_s, int n) {
   if (tx < 32) {
     if (block_size >= 64)
       sum += data_s[tx + 32];
-    for (int offset = warpSize / 2; offset >0; offset /=2)
-      sum += __shfl_down(sum, offset);
+    for (int offset = warpSize / 2; offset > 0; offset /=2)
+      sum += __shfl_down_sync(FULL_MASK, sum, offset);
   }
   if (tx == 0)
     data_s[tx] = sum;
