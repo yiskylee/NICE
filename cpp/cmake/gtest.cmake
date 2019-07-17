@@ -20,4 +20,4 @@ set(GTEST_INCLUDE_DIRS ${source_dir}/googletest/include)
 
 # Specify MainTest's link libraries
 ExternalProject_Get_Property(googletest binary_dir)
-set(GTEST_LIBS_DIR ${binary_dir}/googlemock/gtest)
+set(GTEST_LIBS_DIR ${binary_dir}/lib)
