@@ -9,11 +9,11 @@ Debug
 *.so
 cpp/build/
 cpp/dlib/build/
-cpp/standalone_build
+cpp/standalone_build/
 # cpp/dlib/
 # python
 # cpp/doc/
-.idea
+*.idea
 matlab
 data_for_test/
 cmake-build-debug
@@ -25,5 +25,4 @@ python/test_*/
 python/venv/
 python/project-nice
 python/debug/
-
-
+*.json
