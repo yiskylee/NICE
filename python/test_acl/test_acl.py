@@ -1,5 +1,6 @@
-import Nice4Py.acl
+from Nice4Py.acl import ACL
 import numpy as np
+import os
 import unittest
 import matplotlib
 import matplotlib.pyplot as plt
@@ -16,6 +17,8 @@ class TestACL(unittest.TestCase):
     def setUp(self):
         # Call this so the mkl libarary is loaded before C++ is called
         pairwise_distances(np.zeros((4, 4)), Y=None, metric='euclidean')
+        self.syn_data_dir = os.environ['CLOUD_BOX'] + '/git_project/NICE/cpp/test/data_for_test/kdac/'
+        self.real_data_dir = os.environ['CLOUD_BOX'] + '/git_project/NICE/python/test_acl/data/'
 
     def plot_data(self, ax, label, dim1, dim2):
         markers = ['x', 'o', '^', '*']
@@ -46,20 +49,16 @@ class TestACL(unittest.TestCase):
         self.n = n
         self.d = d
         self.c = c
-        if synthetic:
-            root_dir = '/home/xiangyu/Dropbox/git_project/' \
-                       'NICE/cpp/test/data_for_test/kdac/'
-        else:
-            root_dir = '/home/xiangyu/Dropbox/git_project/NICE/python/test_acl/data/'
+        data_dir = self.syn_data_dir if synthetic else self.real_data_dir
 
         self.sub_name = '_'.join([str(n), str(d), str(c)]) + '.csv'
         if data_type == 'float':
             self.data_type = np.float32
-            data = np.genfromtxt(root_dir + 'data_' + name + '_' + self.sub_name,
+            data = np.genfromtxt(data_dir + 'data_' + name + '_' + self.sub_name,
                                  delimiter=',', dtype=self.data_type)
         elif data_type == 'double':
             self.data_type = np.float
-            data = np.genfromtxt(root_dir + 'data_' + name + '_' + self.sub_name,
+            data = np.genfromtxt(data_dir + 'data_' + name + '_' + self.sub_name,
                                  delimiter=',', dtype=self.data_type)
         else:
             raise "No Such Type " + data_type
@@ -67,12 +66,8 @@ class TestACL(unittest.TestCase):
         return data
 
     def load_label(self, name, num, synthetic=False):
-        if synthetic:
-            root_dir = '/home/xiangyu/Dropbox/git_project/NICE/' \
-                       'cpp/test/data_for_test/kdac/'
-        else:
-            root_dir = '/home/xiangyu/Dropbox/git_project/NICE/python/test_acl/data/'
-        label = np.genfromtxt(root_dir + 'label' + str(num) + '_' + name + '_' +
+        data_dir = self.syn_data_dir if synthetic else self.real_data_dir
+        label = np.genfromtxt(data_dir + 'label' + str(num) + '_' + name + '_' +
                               self.sub_name, delimiter=',', dtype=self.data_type)
         return label
 
@@ -211,8 +206,8 @@ class TestACL(unittest.TestCase):
         nmi1 = normalized_mutual_info_score(pred2, label)
         nmi2 = normalized_mutual_info_score(pred1, pred2)
 
-        print 'Alternative against ground truth: ', nmi1
-        print 'Original against alternative:', nmi2
+        print('Alternative against ground truth: ', nmi1)
+        print('Original against alternative:', nmi2)
 
         # self.assertAlmostEqual(nmi1, 2.97609971442e-05)
         # self.assertAlmostEqual(nmi2, 0.000289983682863)
@@ -232,8 +227,8 @@ class TestACL(unittest.TestCase):
         pred = acl.Predict()
         against_identity = normalized_mutual_info_score(pred, label_identity)
         against_pose = normalized_mutual_info_score(pred, label_pose)
-        print 'Alternative against identity: ', against_identity
-        print 'Alternative against pose:', against_pose
+        print('Alternative against identity: ', against_identity)
+        print('Alternative against pose:', against_pose)
 
     def test_13(self):
         data = self.load_data(n=164, d=7, c=2, name='moon', data_type='double')
@@ -273,7 +268,7 @@ class TestACL(unittest.TestCase):
         pred = acl.Predict()
         nmi = normalized_mutual_info_score(pred, label2)
         self.plot_comparison(label2, pred, 2, 3)
-        print nmi
+        print(nmi)
 
     def cpu_270_100_3_ism(self):
         data = self.load_data(n=270, d=100, c=3, name='gaussian',
@@ -288,7 +283,7 @@ class TestACL(unittest.TestCase):
         pred = acl.Predict()
         nmi = normalized_mutual_info_score(pred, label2)
         self.plot_comparison(label2, pred, 2, 3)
-        print nmi
+        print(nmi)
 
     def test_14(self):
         data = self.load_data(n=1040, d=139, c=4,
@@ -305,8 +300,8 @@ class TestACL(unittest.TestCase):
         pred = acl.Predict()
         against_alter = normalized_mutual_info_score(label_univ, pred)
         against_truth = normalized_mutual_info_score(label_topic, pred)
-        print against_alter  # 0.00956
-        print against_truth  # 0.3675
+        print(against_alter)  # 0.00956
+        print(against_truth)  # 0.3675
     #
     # def test_14_kdac(self):
     #   data = self.load_data(n=1040, d=139, c=4, name='webkb', type='double')

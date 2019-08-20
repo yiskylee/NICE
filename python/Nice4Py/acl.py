@@ -15,6 +15,7 @@ class ACL(object):
         if data_type == 'float':
             self.data_type = np.float32
             self.acl = Nice4Py.ACL(method, device)
+
         elif data_type == "double":
             self.data_type = np.float
             self.acl = Nice4Py.ACLDouble(method, device)
@@ -47,7 +48,7 @@ class ACL(object):
         if thresh1 is not None:
             self.params['threshold1'] = thresh1
         if thresh2 is not None:
-            print thresh2
+            print(thresh2)
             self.params['threshold2'] = thresh2
 
         self.acl.SetupParams(self.params)
